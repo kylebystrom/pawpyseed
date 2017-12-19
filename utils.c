@@ -45,13 +45,14 @@ void free_kpoint(kpoint_t* kpt) {
 }
 
 void free_pswf(pswf_t* wf) {
-	for (int )
+	for (int i = 0; i < wf->nwk * wf->nspin; i++)
+		free_kpoint(wf->kpts[i]);
 }
 
 double* get_occs(pswf_t* wf) {
 	kpoint_t** kpts = wf->kpts;
-	double* occs = (double*) malloc(wf->nwk*wf->nband**wf->nspin*sizeof(double))
-	int NUM_KPTS = wf->nwk * wf->spin;
+	double* occs = (double*) malloc(wf->nwk*wf->nband*wf->nspin*sizeof(double));
+	int NUM_KPTS = wf->nwk * wf->nspin;
 	for (int kpt_num = 0; kpt_num < NUM_KPTS; kpt_num++) {
 		for (int band_num = 0; band_num < wf->nband; band_num++) {
 			occs[band_num*NUM_KPTS+kpt_num] = kpts[kpt_num]->bands[band_num]->occ;

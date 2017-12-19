@@ -109,7 +109,7 @@ void setup(char* filename, int* pnrecl, int* pnspin, int* pnwk, int* pnband,
 	*ecut = encut;
 }
 
-kpoint_t** read_wavefunctions(char* filename, double* kpt_weights) {
+pswf_t* read_wavefunctions(char* filename, double* kpt_weights) {
 
 	int nrecli, nspin, nwk, nband;
 	double nb1max, nb2max, nb3max, encut;
@@ -220,7 +220,6 @@ kpoint_t** read_wavefunctions(char* filename, double* kpt_weights) {
 				coeff[iplane] = cptr[iplane];
 			}
 			kpt->bands[iband]->Cs = coeff;
-			kpt->bands[iband]->Gs = igall;
 		}
 		
 		//printf("iwk %d\n", iwk);
@@ -328,7 +327,6 @@ kpoint_t** read_one_band(int* G_bounds, double* kpt_weights, int* ns, int* nk, i
 			coeff[iplane] = cptr[iplane];
 		}
 		kpt->bands[0]->Cs = coeff;
-		kpt->bands[0]->Gs = igall;
 		kpt->weight = kpt_weights[iwk%nwk];
 		kpt->Gs = igall;
 		kpts[iwk] = kpt;

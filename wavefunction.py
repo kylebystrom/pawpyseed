@@ -1,9 +1,7 @@
-
 from pymatgen.io.vasp.inputs import Potcar
 from pymatgen.io.vasp.outputs import Vasprun
 from pymatgen.core.structure import Structure
 import numpy as np
-import matplotlib.pyplot as plt
 from ctypes import *
 import os
 import numpy as np
@@ -129,6 +127,7 @@ class PseudoWavefunction:
 		kws = (c_double * len(weights))()
 		for i in range(len(weights)):
 			kws[i] = weights[i]
+		self.kws = weights
 		self.wf_ptr = self.reader.read_wavefunctions(filename, byref(kws))
 
 class Wavefunction:
@@ -168,22 +167,35 @@ class Wavefunction:
 		return zip(M_R, M_S), N_R, N_S, N_RS
 
 
-	def full_projection(basis):
-		self.make_site_lists(basis)
+	def full_projection(self, basis):
+		#self.make_site_lists(basis)
 		res = (c_double * 2)()
-		self.projector.full_pseudoprojection(basis, self.pwf, res)
+		#self.projector.full_pseudoprojection(basis, self.pwf, res)
 		return np.array((res[0], res[1]))
 
-	def single_band_projection(band_num, basis):
+	def single_band_projection(self, band_num, basis):
 		res = self.projector.pseudoprojection(basis.pwf.wf_ptr, self.pwf.wf_ptr, band_num)
 		nband = self.projector.get_nband(basis.pwf.wf_ptr)
 		nwk = self.projector.get_nwk(basis.pwf.wf_ptr)
-		nspin = self.projector.get_nspin(basis.pwf.ptr)
+		nspin = self.projector.get_nspin(basis.pwf.wf_ptr)
 		res = cfloat_to_numpy(res, 2*nband*nwk*nspin)
 		print res
+		re = res[::2]
+		im = res[1::2]
+		mag = re**2 + im**2
+		for i in range(len(mag)):
+			mag[i] *= self.pwf.kws[i%len(self.pwf.kws)]
+		print sum(mag[:256*32]), sum(mag[256*32:])
+		#pass
 
-	def proportion_conduction(band_num, bulk):
+	def proportion_conduction(self, band_num, bulk):
 		pass
 
-potcar = Potcar.from_file("../Si_POTCAR")
-CoreRegion(potcar)
+
+pwf1 = PseudoWavefunction("bulk/WAVECAR", "bulk/vasprun.xml")
+pwf2 = PseudoWavefunction("charge_0/WAVECAR", "charge_0/vasprun.xml")
+
+wf1 = Wavefunction(None, pwf1, None)
+wf2 = Wavefunction(None, pwf2, None)
+for i in range(253,257):
+	wf2.single_band_projection(i, wf1)

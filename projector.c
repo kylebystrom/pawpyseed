@@ -80,7 +80,7 @@ float* pseudoprojection(pswf_t* wf_ref, pswf_t* wf_proj, int BAND_NUM) {
 		for (int kpt_num = 0; kpt_num < NUM_KPTS; kpt_num++)
 		{
 			float complex curr_overlap = 0;
-			float complex* C1s = kptspro[kpt_num]->bands[0]->Cs;
+			float complex* C1s = kptspro[kpt_num]->bands[BAND_NUM]->Cs;
 			float complex* C2s = kpts[kpt_num]->bands[b]->Cs;
 			int num_waves = kpts[kpt_num]->bands[b]->num_waves;
 			for (int w = 0; w < num_waves; w++)
@@ -94,7 +94,7 @@ float* pseudoprojection(pswf_t* wf_ref, pswf_t* wf_proj, int BAND_NUM) {
 
 	return projections;
 }
-
+/*
 double* read_and_project(int BAND_NUM, double* kpt_weights, char* bulkfile, char* defectfile) {
 	printf("%lf\n", kpt_weights[0]);
 	printf("%lf\n", kpt_weights[1]);
@@ -113,4 +113,4 @@ double* read_and_project(int BAND_NUM, double* kpt_weights, char* bulkfile, char
 	free(kptspro);
 	free(G_bounds);
 	return results;
-}
+}*/

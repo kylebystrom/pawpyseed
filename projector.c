@@ -24,7 +24,6 @@ void vc_pseudoprojection(pswf_t* wf_ref, pswf_t* wf_proj, int BAND_NUM, double* 
 	#pragma omp parallel for 
 	for (int b = 0; b < NUM_BANDS; b++)
 	{
-		//printf("occ %d %lf\n", b, kpts[0]->bands[b]->occ);
 		for (int kpt_num = 0; kpt_num < NUM_KPTS; kpt_num++)
 		{
 			float complex curr_overlap = 0;
@@ -48,7 +47,6 @@ void vc_pseudoprojection(pswf_t* wf_ref, pswf_t* wf_proj, int BAND_NUM, double* 
 	double ctotal = 0.0;
 	double vtotal = 0.0;
 	for (int kpt_num = 0; kpt_num < NUM_KPTS; kpt_num++) {
-		//printf("%lf %lf\n", cband[kpt_num], kpts[kpt_num]->weight);
 		ctotal += cband[kpt_num] * kpts[kpt_num]->weight;
 		vtotal += vband[kpt_num] * kpts[kpt_num]->weight;
 	}
@@ -74,12 +72,11 @@ float* pseudoprojection(pswf_t* wf_ref, pswf_t* wf_proj, int BAND_NUM) {
 	int NUM_KPTS = wf_ref->nwk * wf_ref->nspin;
 	int NUM_BANDS = wf_ref->nband;
 
-	float* projections = (float complex*) malloc(2*NUM_BANDS*NUM_KPTS*sizeof(float complex));
+	float* projections = (float*) malloc(2*NUM_BANDS*NUM_KPTS*sizeof(float));
 
 	#pragma omp parallel for 
 	for (int b = 0; b < NUM_BANDS; b++)
 	{
-		//printf("occ %d %lf\n", b, kpts[0]->bands[b]->occ);
 		for (int kpt_num = 0; kpt_num < NUM_KPTS; kpt_num++)
 		{
 			float complex curr_overlap = 0;
@@ -109,7 +106,6 @@ double* read_and_project(int BAND_NUM, double* kpt_weights, char* bulkfile, char
 	kpoint_t** kptsref = read_wavefunctions(G_bounds, kpt_weights, &NUM_SPINS, &NUM_KPTS, &NUM_BANDS, bulkfile);
 	get_band_projection(BAND_NUM, NUM_KPTS, NUM_BANDS, kptsref, kptspro, G_bounds, results);
 	for (int kpt_num = 0; kpt_num < NUM_KPTS; kpt_num++) {
-		//printf("%d\n", kpt_num);
 		free_kpoint(kptsref[kpt_num]);
 		free_kpoint(kptspro[kpt_num]);
 	}

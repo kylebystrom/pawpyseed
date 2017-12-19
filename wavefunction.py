@@ -1,6 +1,7 @@
 
 from pymatgen.io.vasp.inputs import Potcar
 from pymatgen.io.vasp.outputs import Vasprun
+from pymatgen.core.structure import Structure
 import numpy as np
 import matplotlib.pyplot as plt
 from ctypes import *
@@ -10,18 +11,34 @@ import json
 
 MODULE_DIR = os.path.dirname(os.path.abspath(__file__))
 
-def c_to_numpy(arr, length):
+def cdouble_to_numpy(arr, length):
 	arr = cast(arr, POINTER(c_double))
 	newarr = np.zeros(length)
 	for i in range(length):
 		newarr[i] = arr[i]
 	return newarr
 
-def numpy_to_c(arr):
+def cfloat_to_numpy(arr, length):
+	arr = cast(arr, POINTER(c_float))
+	newarr = np.zeros(length)
+	for i in range(length):
+		newarr[i] = arr[i]
+	return newarr
+
+def numpy_to_cdouble(arr):
 	newarr = (c_double * len(weights))()
 	for i in range(len(arr)):
 		newarr[i] = arr[i]
 	return newarr
+
+def numpy_to_cfloat(arr):
+	newarr = (c_float * len(weights))()
+	for i in range(len(arr)):
+		newarr[i] = arr[i]
+	return newarr
+
+def el(site):
+	return site.specie.element.symbol
 
 class Pseudopotential:
 
@@ -29,6 +46,7 @@ class Pseudopotential:
 		nonradial, radial = data.split("PAW radial sets", 1)
 		partial_waves = radial.split("pseudo wavefunction")
 		gridstr, partial_waves = partial_waves[0], partial_waves[1:]
+		self.rmax = rmax
 		self.pswaves = []
 		self.aewaves = []
 		self.recipprojs = []
@@ -104,7 +122,7 @@ class CoreRegion:
 class PseudoWavefunction:
 
 	def __init__(self, filename="WAVECAR", vr="vasprun.xml"):
-		self.reader = CDLL(os.path.join(MODULE_DIR, "reader.so"))
+		self.reader = CDLL(os.path.join(MODULE_DIR, "pawpy.so"))
 		if type(vr) == str:
 			vr = Vasprun(vr)
 		weights = vr.actual_kpoints_weights
@@ -115,21 +133,54 @@ class PseudoWavefunction:
 
 class Wavefunction:
 
-	def __init__(self, pwf, cr):
+	def __init__(self, struct, pwf, cr):
+		self.structure = struct
 		self.pwf = pwf
 		self.cr = cr
-		self.projector = CDLL(os.path.join(MODULE_DIR, "projector.so"))
+		self.projector = pwf.reader
 
 	def from_files(self, pwf="WAVECAR", cr="POTCAR", vr="vasprun.xml"):
 		return Wavefunction(PseudoWavefunction(pwf, vr), Potcar.from_file(cr))
 
+	def make_site_lists(self, basis):
+		ref_sites = basis.structure.sites
+		sites = self.structure.sites
+		M_R = []
+		M_S = []
+		for i in range(len(ref_sites)):
+			for j in range(len(sites)):
+				if ref_sites[i].distance(sites[j]) <= 0.02:
+					M_R.append(i)
+					M_S.append(j)
+		N_R = []
+		N_S = []
+		for i in range(len(ref_sites)):
+			if not i in M_R:
+				N_R.append(i)
+			for j in range(len(sites)):
+				if (not j in N_S) and (not j in M_S):
+					N_S.append(j)
+		N_RS = []
+		for i in N_R:
+			for j in N_S:
+				if ref_sites[i].distance(sites[j]) < self.cr.pps(el(ref_sites[i])).rmax + self.cr.pps(el(sites[j])).rmax:
+					N_RS.append((i,j))
+		return zip(M_R, M_S), N_R, N_S, N_RS
+
+
 	def full_projection(basis):
+		self.make_site_lists(basis)
 		res = (c_double * 2)()
 		self.projector.full_pseudoprojection(basis, self.pwf, res)
 		return np.array((res[0], res[1]))
 
 	def single_band_projection(band_num, basis):
-		pass
+		res = self.projector.pseudoprojection(basis.pwf.wf_ptr, self.pwf.wf_ptr, band_num)
+		nband = self.projector.get_nband(basis.pwf.wf_ptr)
+		nwk = self.projector.get_nwk(basis.pwf.wf_ptr)
+		nspin = self.projector.get_nspin(basis.pwf.ptr)
+		res = cfloat_to_numpy(res, 2*nband*nwk*nspin)
+		print res
 
 	def proportion_conduction(band_num, bulk):
 		pass

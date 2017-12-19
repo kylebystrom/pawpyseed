@@ -15,9 +15,7 @@ typedef struct band {
 	double occ;
 	double N;
 	double complex energy;
-	int* Gs;
 	float complex* Cs;
-	double complex* C_grid;
 } band_t;
 
 typedef struct kpoint {

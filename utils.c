@@ -44,6 +44,33 @@ void free_kpoint(kpoint_t* kpt) {
 	free(kpt);
 }
 
+void free_pswf(pswf_t* wf) {
+	for (int )
+}
+
+double* get_occs(pswf_t* wf) {
+	kpoint_t** kpts = wf->kpts;
+	double* occs = (double*) malloc(wf->nwk*wf->nband**wf->nspin*sizeof(double))
+	int NUM_KPTS = wf->nwk * wf->spin;
+	for (int kpt_num = 0; kpt_num < NUM_KPTS; kpt_num++) {
+		for (int band_num = 0; band_num < wf->nband; band_num++) {
+			occs[band_num*NUM_KPTS+kpt_num] = kpts[kpt_num]->bands[band_num]->occ;
+		}
+	}
+}
+
+int get_nband(pswf_t* wf) {
+	return wf->nband;
+}
+
+int get_nwk(pswf_t* wf) {
+	return wf->nwk;
+}
+
+int get_nspin(pswf_t* wf) {
+	return wf->nspin;
+}
+
 void ALLOCATION_FAILED() {
 	printf("ALLOCATION FAILED");
 	exit(-1);

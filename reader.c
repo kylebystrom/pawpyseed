@@ -4,7 +4,8 @@
 #include <math.h>
 #include <omp.h>
 #include <time.h>
-#include "utils.c"
+#include "utils.h"
+#include "reader.h"
 
 #define PI 3.14159265359
 #define c 0.262465831

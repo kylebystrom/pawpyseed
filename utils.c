@@ -4,6 +4,7 @@
 #include <math.h>
 #include <omp.h>
 #include <time.h>
+#include "utils.h"
 
 void vcross(double* res, double* top, double* bottom) {
 	res[0] = top[1] * bottom[2] - top[2] * bottom[1];
@@ -27,36 +28,6 @@ double determinant(double* m) {
 		-  m[1] * m[3] * m[8]
 		-  m[0] * m[5] * m[7];
 }
-
-typedef struct band {
-	int n;
-	int num_waves;
-	double occ;
-	double N;
-	double complex energy;
-	int* Gs;
-	float complex* Cs;
-	double complex* C_grid;
-} band_t;
-
-typedef struct kpoint {
-	short int up;
-	int* Gs;
-	double* k;
-	double weight;
-	int num_bands;
-	band_t** bands;
-} kpoint_t;
-
-typedef struct pswf {
-	int* G_bounds;
-	kpoint_t** kpts;
-	int nspin;
-	int nband;
-	int nwk;
-	double* lattice;
-	double* reclattice;
-} pswf_t
 
 void free_kpoint(kpoint_t* kpt) {
 	for (int b = 0; b < kpt->num_bands; b++) {

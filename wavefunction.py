@@ -1,4 +1,4 @@
-from pymatgen.io.vasp.inputs import Potcar
+from pymatgen.io.vasp.inputs import Potcar, Poscar
 from pymatgen.io.vasp.outputs import Vasprun
 from pymatgen.core.structure import Structure
 import numpy as np
@@ -8,6 +8,7 @@ import numpy as np
 import json
 
 MODULE_DIR = os.path.dirname(os.path.abspath(__file__))
+PAWC = CDLL(os.path.join(MODULE_DIR, "pawpy.so"))
 
 def cdouble_to_numpy(arr, length):
 	arr = cast(arr, POINTER(c_double))
@@ -23,6 +24,13 @@ def cfloat_to_numpy(arr, length):
 		newarr[i] = arr[i]
 	return newarr
 
+def cfloat_to_numpy(arr, length):
+	arr = cast(arr, POINTER(c_int))
+	newarr = np.zeros(length)
+	for i in range(length):
+		newarr[i] = arr[i]
+	return newarr
+
 def numpy_to_cdouble(arr):
 	newarr = (c_double * len(weights))()
 	for i in range(len(arr)):
@@ -31,6 +39,12 @@ def numpy_to_cdouble(arr):
 
 def numpy_to_cfloat(arr):
 	newarr = (c_float * len(weights))()
+	for i in range(len(arr)):
+		newarr[i] = arr[i]
+	return newarr
+
+def numpy_to_cint(arr):
+	newarr = (c_int * len(weights))()
 	for i in range(len(arr)):
 		newarr[i] = arr[i]
 	return newarr
@@ -97,14 +111,13 @@ class Pseudopotential:
 				self.realprojs.append(self.make_nums(realproj))
 				self.ls.append(l)
 
-		projgridstr = settingstr.split("STEP   =")[-1]
+		settingstr, projgridstr = settingstr.split("STEP   =")
+		ndata = int(settingstr.split()[-1])
 		projgridstr = projgridstr.split("END")[0]
 		self.projgrid = self.make_nums(projgridstr)
 		self.step = (self.projgrid[0], self.projgrid[1])
-		self.projgrid = self.projgrid[2:]
 
-		self.projgrid = np.linspace(0,rmax/1.88973,100,False)
-		y = self.realprojs[1]
+		self.projgrid = np.linspace(0,rmax/1.88973,ndata,False)
 
 	def make_nums(self, numstring):
 		return np.array([float(num) for num in numstring.split()])
@@ -120,7 +133,6 @@ class CoreRegion:
 class PseudoWavefunction:
 
 	def __init__(self, filename="WAVECAR", vr="vasprun.xml"):
-		self.reader = CDLL(os.path.join(MODULE_DIR, "pawpy.so"))
 		if type(vr) == str:
 			vr = Vasprun(vr)
 		weights = vr.actual_kpoints_weights
@@ -128,7 +140,7 @@ class PseudoWavefunction:
 		for i in range(len(weights)):
 			kws[i] = weights[i]
 		self.kws = weights
-		self.wf_ptr = self.reader.read_wavefunctions(filename, byref(kws))
+		self.wf_ptr = PAWC.read_wavefunctions(filename, byref(kws))
 
 class Wavefunction:
 
@@ -136,10 +148,10 @@ class Wavefunction:
 		self.structure = struct
 		self.pwf = pwf
 		self.cr = cr
-		self.projector = pwf.reader
+		self.projector = PAWC
 
-	def from_files(self, pwf="WAVECAR", cr="POTCAR", vr="vasprun.xml"):
-		return Wavefunction(PseudoWavefunction(pwf, vr), Potcar.from_file(cr))
+	def from_files(self, struct="CONTCAR", pwf="WAVECAR", cr="POTCAR", vr="vasprun.xml"):
+		return Wavefunction(Poscar.from_file(struct), PseudoWavefunction(pwf, vr), Potcar.from_file(cr))
 
 	def make_site_lists(self, basis):
 		ref_sites = basis.structure.sites
@@ -148,7 +160,7 @@ class Wavefunction:
 		M_S = []
 		for i in range(len(ref_sites)):
 			for j in range(len(sites)):
-				if ref_sites[i].distance(sites[j]) <= 0.02:
+				if ref_sites[i].distance(sites[j]) <= 0.02 and el(ref_sites[i]) == el(sites[j]):
 					M_R.append(i)
 					M_S.append(j)
 		N_R = []
@@ -164,7 +176,7 @@ class Wavefunction:
 			for j in N_S:
 				if ref_sites[i].distance(sites[j]) < self.cr.pps(el(ref_sites[i])).rmax + self.cr.pps(el(sites[j])).rmax:
 					N_RS.append((i,j))
-		return zip(M_R, M_S), N_R, N_S, N_RS
+		return M_R, N_R, N_S, N_RS
 
 
 	def full_projection(self, basis):
@@ -179,14 +191,65 @@ class Wavefunction:
 		nwk = self.projector.get_nwk(basis.pwf.wf_ptr)
 		nspin = self.projector.get_nspin(basis.pwf.wf_ptr)
 		res = cfloat_to_numpy(res, 2*nband*nwk*nspin)
-		print res
-		re = res[::2]
-		im = res[1::2]
-		mag = re**2 + im**2
-		for i in range(len(mag)):
-			mag[i] *= self.pwf.kws[i%len(self.pwf.kws)]
-		print sum(mag[:256*32]), sum(mag[256*32:])
-		#pass
+		M_R, N_R, N_S, N_RS = self.make_site_lists(basis)
+		projector_list, selfnums, selfcoords, basisnums, basiscoords = self.make_c_projectors(basis)
+		self.projector.compensation_terms(elf.pwf.wf_ptr, basis.pwf.wf_ptr, projector_list, numpy_to_cint(M_R),
+			numpy_to_cint(N_R), numpy_to_cint(N_S), numpy_to_cint(N_RS), numpy_to_cint(selfnums),
+			numpy_to_cdouble(selfcoords), numpy_to_cint(basisnums), numpy_to_cdouble(basiscoords))
+
+	def make_c_projectors(self, basis=None):
+		pps = {}
+		labels = {}
+		label = 0
+		for e in self.cr.pps:
+			pps[label] = self.cr.pps[e]
+			labels[e] = label
+			label += 1
+		if basis != None:
+			for e in basis.cr.pps:
+				if not e in pps:
+					pps[e] = basis.cr.pps[e]
+					labels[e] = label
+					label += 1
+		clabels = np.array([], np.int32)
+		ls = np.array([], np.int32)
+		projectors = np.array([], np.float64)
+		aewaves = np.array([], np.float64)
+		pswaves = np.array([], np.float64)
+		wgrids = np.array([], np.float64)
+		pgrids = np.array([], np.float64)
+		num_els = 0
+
+		for num in pps:
+			pp = pps[num]
+			clabels = np.append(clabels, [num, len(pp.ls), pp.ndata, len(pp.grid)])
+			ls = np.append(ls, pp.ls)
+			wgrids = np.append(wgrids, pp.grid)
+			pgrids = np.append(pgrids, pp.projgrid)
+			num_els += 1
+			for i in range(len(pp.ls)):
+				proj = pp.realprojs[i]
+				aepw = pp.aewaves[i]
+				pspw = pp.pswaves[i]
+				projectors = np.append(projectors, proj)
+				aewaves = np.append(aewaves, aepw)
+				pswaves = np.append(pswaves, pspw)
+
+		projector_list = self.projector.get_projector_list(num_els, numpy_to_cint(clabels),
+			numpy_to_cint(ls), numpy_to_cdouble(pgrids), numpy_to_cdouble(wgrids),
+			numpy_to_cdouble(projectors), numpy_to_cdouble(aewaves), numpy_to_cdouble(pswaves))
+		selfnums = np.array([labels[el(s)] for s in self.structure], dtype=np.int32)
+		basisnums = np.array([labels[el(s)] for s in basis.structure], dtype=np.int32)
+		selfcoords = np.array([], np.float64)
+		basisnums = np.array([], np.float64)
+
+		for s in self.structure:
+			selfcoords = np.append(selfcoords, s.frac_coords)
+		if basis != None:
+			for s in basis.structure:
+				basiscoords = np.append(basiscoords, s.frac_coords)
+			return projector_list, selfnums, selfcoords, basisnums, basiscoords
+		return projector_list, selfnums, selfcoords
 
 	def proportion_conduction(self, band_num, bulk):
 		pass
@@ -199,3 +262,12 @@ wf1 = Wavefunction(None, pwf1, None)
 wf2 = Wavefunction(None, pwf2, None)
 for i in range(253,257):
 	wf2.single_band_projection(i, wf1)
+
+#For each structure
+#numerical element label for each site
+#Fractional coordinates of sites
+#grid for each element
+#Labels (element, l, ndata, length) for each projector-partial set for each element
+#projector functions for each label above for each element
+#AE partial waves for each label above for each element
+#PS partial waves for each label above for each element

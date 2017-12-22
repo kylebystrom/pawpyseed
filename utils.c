@@ -6,6 +6,8 @@
 #include <time.h>
 #include "utils.h"
 
+#define PI 3.14159265359
+
 void vcross(double* res, double* top, double* bottom) {
 	res[0] = top[1] * bottom[2] - top[2] * bottom[1];
 	res[1] = top[2] * bottom[0] - top[0] * bottom[2];
@@ -70,6 +72,34 @@ int get_nwk(pswf_t* wf) {
 
 int get_nspin(pswf_t* wf) {
 	return wf->nspin;
+}
+
+double legendre(int l, double x) {
+	double p0 = 1;
+	double p1 = x;
+	if (l == 0) return p0;
+	if (l == 1) return p1;
+	double pf;
+	for (int currl = 1; currl < l; currl++) {
+		pf = ((2*currl+1) * x * p1 - currl * p0) / (l+1);
+		p1 = pf;
+		p0 = p1;
+	}
+	return pf;
+}
+
+double fac(n) {
+	int m = 1;
+	int t = 1;
+	while (m <= n) {
+		t *= m;
+		m++;
+	}
+	return t;
+}
+
+double complex Ylm(int l, int m, double theta, double phi) {
+	return pow(-1, m) * pow((2*l+1)/(4*PI)*fac(l-m)/fac(l+m), 0.5) * legendre(cos(theta)) * cexp(I*m*phi);
 }
 
 void ALLOCATION_FAILED() {

@@ -37,6 +37,22 @@ typedef struct pswf {
 	double* reclattice;
 } pswf_t;
 
+typedef struct proj_ae_ps {
+	int l;
+	double* proj;
+	double* aewave;
+	double* pswave;
+} funcset_t
+
+typedef struct pseudopot {
+	int num_projs;
+	funcset_t* funcs;
+	int proj_gridsize;
+	int wave_gridsize;
+	double* wave_grid;
+	double* proj_grid;
+} ppot_t;
+
 void free_kpoint(kpoint_t* kpt);
 
 void ALLOCATION_FAILED();

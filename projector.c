@@ -94,6 +94,63 @@ float* pseudoprojection(pswf_t* wf_ref, pswf_t* wf_proj, int BAND_NUM) {
 
 	return projections;
 }
+
+ppot_t* get_projector_list(int num_els, int* labels, int* ls, double* proj_grids, double* wave_grids,
+	double* projectors, double* aewaves, double* pswaves) {
+	ppot_t* pps = (ppot_t*) malloc(num_els * sizeof(ppot_t));
+	int wt = 0;
+	int pt = 0;
+	int wgt = 0;
+	int pgt = 0;
+	for (int i = 0; i < num_els; i++) {
+		pps[i].num_projs = labels[4*i+1];
+		pps[i].proj_gridsize = labels[4*i+2];
+		pps[i].wave_gridsize = labels[4*i+3];
+		pps[i].wave_grid = (double*) malloc(pps[i].wave_gridsize*sizeof(double));
+		for (int j = 0; j < pps[i].wave_gridsize; j++) {
+			pps[i].wave_grid[j] = wave_grids[wgt];
+			wgt++;
+		}
+		pps[i].proj_grid = (double*) malloc(pps[i].proj_gridsize*sizeof(double));
+		for (int j = 0; j < pps[i].proj_gridsize; j++) {
+			pps[i].proj_grid[j] = proj_grids[pgt];
+			pgt++;
+		}
+		funcset_t* funcs = (functset_t*) malloc(pps[i].num_projs*sizeof(funcset_t));
+		for (int k = 0; k < pps[i].num_projs; k++) {
+			funcs[k].proj = (double*) malloc(sizeof(double)*pps[i].proj_gridsize);
+			funcs[k].aewave = (double*) malloc(sizeof(double)*pps[i].wave_gridsize);
+			funcs[k].pswave = (double*) malloc(sizeof(double)*pps[i].wave_gridsize);
+			for (int j = 0; j < funcs.wave_gridsize; j++) {
+				funcs[k].aewave[j] = aewaves[wt];
+				funcs[k].pswave[j] = pswaves[wt];
+				wt++;
+			}
+			for (int j = 0; j < funcs.proj_gridsize; j++) {
+				funcs[k].proj[j] = projectors[pt];
+				pt++;
+			}
+		}
+	}
+	return pps;
+}
+
+double* onto_projector(int* labels, double* coords, int* G_bounds, int)
+
+double* compensation_terms(pswf* wf_proj, pswf* wf_ref, ppot_t* pps,
+	int num_M, int num_N_R, int num_N_S, int num_N_RS,
+	int* M, int* N_R, int* N_S, int* N_RS,
+	int* proj_labels, double* proj_coords, int* ref_labels, double* ref_coords) {
+
+	NUM_KPTS = wf_proj->nwk * wf_proj->nspin;
+	NUM_BANDS = wf_proj->nband;
+	#pragma omp parallel for
+	for (int w = 0; w < NUM_BANDS * NUM_KPTS; w++) {
+		onto_projector(proj_labels, proj_coords,
+			wf_proj->G_bounds, wf_proj->lattice, wf_proj->kpts[w%NUM_KPTS]->Gs,
+			wf_proj->kpts[w%NUM_KPTS]->bands[w/NUM_KPTS]->Cs, num_M, M, pps);
+	}
+}
 /*
 double* read_and_project(int BAND_NUM, double* kpt_weights, char* bulkfile, char* defectfile) {
 	printf("%lf\n", kpt_weights[0]);
@@ -114,3 +171,5 @@ double* read_and_project(int BAND_NUM, double* kpt_weights, char* bulkfile, char
 	free(G_bounds);
 	return results;
 }*/
+
+

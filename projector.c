@@ -135,7 +135,86 @@ ppot_t* get_projector_list(int num_els, int* labels, int* ls, double* proj_grids
 	return pps;
 }
 
-double* onto_projector(int* labels, double* coords, int* G_bounds, int)
+double* onto_projector(int* labels, double* coords, int* G_bounds, double* lattice,
+	double* Gs, double* Cs, int num_waves, int num_M, int* M, ppot_t* pps) {
+	int dg1 = G_bounds[1] - G_bounds[0];
+	int dg2 = G_bounds[3] - G_bounds[2];
+	int dg3 = G_bounds[5] - G_bounds[4];
+	int dg[3];
+	dg[0]=dg1;
+	dg[1]=dg2;
+	dg[2]=dg3;
+	MKL_LONG status = 0;
+	DFTI_DESCRIPTOR_HANDLE handle = 0;
+	MKL_Complex16* x = (MKL_Complex16*) mkl_malloc(fftg[0]*fftg[1]*fftg[2]*sizeof(MKL_Complex16), 128);
+	for (int w = 0; w < num_waves; w++) {
+		int g1 = Gs[3*w]-G_bounds[0], g2 = Gs[3*w+1]-G_bounds[2], g3 = Gs[3*w+2]-G_bounds[4];
+		x[g1*fftg[1]*fftg[2] + g2*fftg[2] + g3] = Cs[w];
+	}
+
+	DftiCreateDescriptor(&handle, DFTI_DOUBLE, DFTI_COMPLEX, 3, dg);
+	DftiCommitDescriptor(handle);
+	DftiComputeBackward(handle, x);
+
+	double kmins[3] = {G_bounds[0] + k[0], G_bounds[2] + k[1], G_bounds[4] + k[2]};
+
+	double* overlap = (double*) malloc(num_M*sizeof(double));
+
+	for (int i = 0; i < fftg[0]; i++) {
+		for (int j = 0; j < fftg[1]; j++) {
+			for (int k = 0; k  < fftg[2]; k++) {
+				double frac[3] = {(double)i/fftg[0], (double)j/fftg[1], (double)k/fftg[2]};
+				x[i*fftg[1]*fftg[2] + j*fftg[2] + k] *= cexp(I*2*PI*(dot(kmins, frac)));
+				for (int q = 0; q < num_M; q++) {
+					int p = M[q];
+					ppot_t pp = pps[labels[p]];
+					if (dist_from_frac(coords[3*p], frac, lattice) < pp.rmax) {
+						for (int n = 0; n < pp.num_projs; n++) {
+							overlap[p] += proj_value(pp.funcs[n], coords[3*p], frac)
+										* x[i*fftg[1]*fftg[2] + j*fftg[2] + k]
+										/ (fftg[0]*fftg[1]*fftg[2]);
+						}
+						break;
+					}
+				}
+			}
+		}
+	}
+
+	return overlap;
+}
+
+double* make_pwave_overlap_matrices(ppot_t pp) {
+	int size = pp.num_projs * pp.num_projs
+	double* psov = (double*) calloc(size * sizeof(double));
+	double* aeov = (double*) calloc(size * sizeof(double));
+	double* diov = (double*) calloc(size * sizeof(double));
+	double** ptrs = (double**) malloc(3 * sizeof(double*));
+	ptrs[0] = psov;
+	ptrs[1] = aeov;
+	ptrs[2] = diov;
+
+	for (int i = 0; i < pp.num_projs; i++) {
+		for (int j = i; j < pp.num_projs; j++) {
+			if (pp.funcs[i].l == pp.funcs[j].l) {
+				double* ps1 = pp.funcs[i].pswave;
+				double* ps2 = pp.funcs[j].pswave;
+				double* ae1 = pp.funcs[i].aewave;
+				double* ae2 = pp.funcs[j].aewave;
+				double dr = pp.wave_grid[0];
+				double r = pp.wave_grid[0];
+				for (int k = 0; k < pp.wave_gridsize; k++) {
+					psov[4*i+j] += r * r * ps1[k] * ps2[k] * dr;
+					aeov[4*i+j] += r * r * ae1[k] * ae2[k] * dr;
+					diov[4*i+j] += r * r * (ae1[k]-ps1[k]) * (ae2[k]-ps2[k]) * dr;
+					dr = pp.wave_grid[k+1] - pp.wave_grid[k];
+				}
+			}
+		}
+	}
+
+	return ptrs;
+}
 
 double* compensation_terms(pswf* wf_proj, pswf* wf_ref, ppot_t* pps,
 	int num_M, int num_N_R, int num_N_S, int num_N_RS,
@@ -148,28 +227,7 @@ double* compensation_terms(pswf* wf_proj, pswf* wf_ref, ppot_t* pps,
 	for (int w = 0; w < NUM_BANDS * NUM_KPTS; w++) {
 		onto_projector(proj_labels, proj_coords,
 			wf_proj->G_bounds, wf_proj->lattice, wf_proj->kpts[w%NUM_KPTS]->Gs,
-			wf_proj->kpts[w%NUM_KPTS]->bands[w/NUM_KPTS]->Cs, num_M, M, pps);
+			wf_proj->kpts[w%NUM_KPTS]->bands[w/NUM_KPTS]->Cs,
+			wf_proj->kpts[w%NUM_KPTS]->bands[w/NUM_KPTS]->num_waves, num_M, M, pps);
 	}
 }
-/*
-double* read_and_project(int BAND_NUM, double* kpt_weights, char* bulkfile, char* defectfile) {
-	printf("%lf\n", kpt_weights[0]);
-	printf("%lf\n", kpt_weights[1]);
-	printf("%lf\n", kpt_weights[5]);
-	int* G_bounds = (int*) malloc(6*sizeof(double));
-	double* results = (double*) malloc(2*sizeof(double));
-	int NUM_SPINS, NUM_KPTS, NUM_BANDS;
-	kpoint_t** kptspro = read_one_band(G_bounds, kpt_weights, &NUM_SPINS, &NUM_KPTS, &NUM_BANDS, BAND_NUM, defectfile);
-	kpoint_t** kptsref = read_wavefunctions(G_bounds, kpt_weights, &NUM_SPINS, &NUM_KPTS, &NUM_BANDS, bulkfile);
-	get_band_projection(BAND_NUM, NUM_KPTS, NUM_BANDS, kptsref, kptspro, G_bounds, results);
-	for (int kpt_num = 0; kpt_num < NUM_KPTS; kpt_num++) {
-		free_kpoint(kptsref[kpt_num]);
-		free_kpoint(kptspro[kpt_num]);
-	}
-	free(kptsref);
-	free(kptspro);
-	free(G_bounds);
-	return results;
-}*/
-
-

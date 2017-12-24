@@ -168,7 +168,7 @@ class Wavefunction:
 		projector: ctypes object for interfacing with C code
 	"""
 
-	def __init__(self, struct, pwf, cr):
+	def __init__(self, struct, pwf, cr, dim):
 		"""
 		Arguments:
 			struct (pymatgen.core.Structure): structure that the wavefunction describes
@@ -182,6 +182,7 @@ class Wavefunction:
 		self.pwf = pwf
 		self.cr = cr
 		self.projector = PAWC
+		self.dim = np.array(dim);
 
 	def from_files(self, struct="CONTCAR", pwf="WAVECAR", cr="POTCAR", vr="vasprun.xml"):
 		"""
@@ -254,9 +255,11 @@ class Wavefunction:
 		res = cfloat_to_numpy(res, 2*nband*nwk*nspin)
 		M_R, N_R, N_S, N_RS = self.make_site_lists(basis)
 		projector_list, selfnums, selfcoords, basisnums, basiscoords = self.make_c_projectors(basis)
-		self.projector.compensation_terms(elf.pwf.wf_ptr, basis.pwf.wf_ptr, projector_list, numpy_to_cint(M_R),
+		ct = self.projector.compensation_terms(elf.pwf.wf_ptr, basis.pwf.wf_ptr, projector_list, numpy_to_cint(M_R),
 			numpy_to_cint(N_R), numpy_to_cint(N_S), numpy_to_cint(N_RS), numpy_to_cint(selfnums),
-			numpy_to_cdouble(selfcoords), numpy_to_cint(basisnums), numpy_to_cdouble(basiscoords))
+			numpy_to_cdouble(selfcoords), numpy_to_cint(basisnums), numpy_to_cdouble(basiscoords),
+			numpy_to_cdouble(self.dim))
+		ct = cdouble_to_numpy
 
 	def make_c_projectors(self, basis=None):
 		"""

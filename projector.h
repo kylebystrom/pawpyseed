@@ -9,7 +9,7 @@ ppot_t* get_projector_list(int num_els, int* labels, int* ls, double* proj_grids
 	double* projectors, double* aewaves, double* pswaves);
 
 double* onto_projector(int* labels, double* coords, int* G_bounds, double* lattice,
-	double* Gs, double* Cs, int num_waves, int num_M, int* M, ppot_t* pps);
+	double* Gs, double* Cs, int num_waves, int num_M, int* M, ppot_t* pps, int* fftg);
 
 double* make_pwave_overlap_matrices(ppot_t pp);
 

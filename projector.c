@@ -160,6 +160,11 @@ double* onto_projector(int* labels, double* coords, int* G_bounds, double* latti
 
 	double kmins[3] = {G_bounds[0] + k[0], G_bounds[2] + k[1], G_bounds[4] + k[2]};
 
+	int t_projs = 0;
+	for (int i = 0; i < num_M; i++) {
+		t_projs += pps[labels[M[i]]].num_projs;
+	}
+
 	double* overlap = (double*) malloc(num_M*sizeof(double));
 
 	for (int i = 0; i < fftg[0]; i++) {
@@ -167,14 +172,16 @@ double* onto_projector(int* labels, double* coords, int* G_bounds, double* latti
 			for (int k = 0; k  < fftg[2]; k++) {
 				double frac[3] = {(double)i/fftg[0], (double)j/fftg[1], (double)k/fftg[2]};
 				x[i*fftg[1]*fftg[2] + j*fftg[2] + k] *= cexp(I*2*PI*(dot(kmins, frac)));
+				int t = 0;
 				for (int q = 0; q < num_M; q++) {
 					int p = M[q];
 					ppot_t pp = pps[labels[p]];
 					if (dist_from_frac(coords[3*p], frac, lattice) < pp.rmax) {
 						for (int n = 0; n < pp.num_projs; n++) {
-							overlap[p] += proj_value(pp.funcs[n], coords[3*p], frac)
+							overlap[t] += proj_value(pp.funcs[n], coords[3*p], frac)
 										* x[i*fftg[1]*fftg[2] + j*fftg[2] + k]
 										/ (fftg[0]*fftg[1]*fftg[2]);
+							t++;
 						}
 						break;
 					}
@@ -231,13 +238,19 @@ double* compensation_terms(pswf* wf_proj, pswf* wf_ref, ppot_t* pps,
 
 	double complex* overlap = (double complex*) calloc(NUM_BANDS * NUM_KPTS * sizeof(double complex));
 
+	double complex** lst_proj_projs = (double complex**) malloc(NUM_KPTS*sizeof(double complex*));
+	#pragma omp parallel for 
+	for (int kpt_num = 0; kpt_num < NUM_KPTS; kpt_num++) {
+		lst_proj_projs[kpt_num] = onto_projector(proj_labels, proj_coords,
+			wf_proj->G_bounds, wf_proj->lattice, wf_proj->kpts[kpt_num]->Gs,
+			wf_proj->kpts[kpt_num]->bands[BAND_NUM]->Cs,
+			wf_proj->kpts[kpt_num]->bands[BAND_NUM]->num_waves, num_M, M, pps, fft_grid);
+	}
+
 	#pragma omp parallel for
 	for (int w = 0; w < NUM_BANDS * NUM_KPTS; w++) {
 
-		double complex* proj_projs = onto_projector(proj_labels, proj_coords,
-			wf_proj->G_bounds, wf_proj->lattice, wf_proj->kpts[w%NUM_KPTS]->Gs,
-			wf_proj->kpts[w%NUM_KPTS]->bands[w/NUM_KPTS]->Cs,
-			wf_proj->kpts[w%NUM_KPTS]->bands[w/NUM_KPTS]->num_waves, num_M, M, pps, fft_grid);
+		double complex* proj_projs = lst_proj_projs[w%NUM_KPTS];
 		double complex* ref_projs = onto_projector(ref_labels, ref_coords,
 			wf_ref->G_bounds, wf_ref->lattice, wf_ref->kpts[w%NUM_KPTS]->Gs,
 			wf_ref->kpts[w%NUM_KPTS]->bands[w/NUM_KPTS]->Cs,
@@ -256,9 +269,13 @@ double* compensation_terms(pswf* wf_proj, pswf* wf_ref, ppot_t* pps,
 			t += pp.num_projs;
 		}
 
-		free(proj_projs);
 		free(ref_projs);
 	}
+
+	for (int kpt_num = 0; kpt_num < NUM_KPTS; kpt_num++) {
+		free(lst_proj_projs[kpt_num]);
+	}
+	free(lst_proj_projs);
 
 	return overlap;
 }

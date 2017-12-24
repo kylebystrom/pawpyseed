@@ -57,6 +57,8 @@ double mag(double* x1);
 
 double determinant(double* m);
 
+double dist_from_frac(double* coords1, double* coords2, double* lattice);
+
 void free_kpoint(kpoint_t* kpt);
 
 void free_pswf(pswf_t* wf);

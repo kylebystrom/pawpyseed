@@ -16,7 +16,7 @@ double* make_pwave_overlap_matrices(ppot_t pp);
 double* compensation_terms(pswf* wf_proj, pswf* wf_ref, ppot_t* pps,
 	int num_M, int num_N_R, int num_N_S, int num_N_RS,
 	int* M, int* N_R, int* N_S, int* N_RS,
-	int* proj_labels, double* proj_coords, int* ref_labels, double* ref_coords);
+	int* proj_labels, double* proj_coords, int* ref_labels, double* ref_coords, int* fft_grid);
 
 #endif
 

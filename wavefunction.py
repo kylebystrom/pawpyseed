@@ -53,6 +53,10 @@ def el(site):
 	return site.specie.element.symbol
 
 class Pseudopotential:
+	"""
+	Contains important attributes from a VASP pseudopotential files. POTCAR
+	"settings" can be read from the pymatgen POTCAR object
+	"""
 
 	def __init__(self, data, rmax):
 		nonradial, radial = data.split("PAW radial sets", 1)
@@ -123,6 +127,9 @@ class Pseudopotential:
 		return np.array([float(num) for num in numstring.split()])
 
 class CoreRegion:
+	"""
+	List of Pseudopotential objects to describe the core region of a structure.
+	"""
 
 	def __init__(self, potcar):
 		self.pps = {}
@@ -131,6 +138,11 @@ class CoreRegion:
 		
 
 class PseudoWavefunction:
+	"""
+	Class for storing pseudowavefunction from WAVECAR file. Most important attribute
+	is wf_ptr, a C pointer used in the C portion of the program for storing
+	plane wave coefficients
+	"""
 
 	def __init__(self, filename="WAVECAR", vr="vasprun.xml"):
 		if type(vr) == str:
@@ -143,17 +155,66 @@ class PseudoWavefunction:
 		self.wf_ptr = PAWC.read_wavefunctions(filename, byref(kws))
 
 class Wavefunction:
+	"""
+	Class for storing and manipulating all electron wave functions in the PAW
+	formalism.
+
+	Attributes:
+		structure (pymatgen.core.structure.Structure): stucture of the material
+			that the wave function describes
+		pwf (PseudoWavefunction): Pseudowavefunction componenet
+		cr (CoreRegion): Contains the pseudopotentials, with projectors and
+			partials waves, for the structure
+		projector: ctypes object for interfacing with C code
+	"""
 
 	def __init__(self, struct, pwf, cr):
+		"""
+		Arguments:
+			struct (pymatgen.core.Structure): structure that the wavefunction describes
+			pwf (PseudoWavefunction): Pseudowavefunction componenet
+			cr (CoreRegion): Contains the pseudopotentials, with projectors and
+				partials waves, for the structure
+		Returns:
+			Wavefunction object
+		"""
 		self.structure = struct
 		self.pwf = pwf
 		self.cr = cr
 		self.projector = PAWC
 
 	def from_files(self, struct="CONTCAR", pwf="WAVECAR", cr="POTCAR", vr="vasprun.xml"):
+		"""
+		Construct a Wavefunction object from file paths.
+		Arguments:
+			struct (str): VASP POSCAR or CONTCAR file path
+			pwf (str): VASP WAVECAR file path
+			vr (str): VASP vasprun file path
+		Returns:
+			Wavefunction object
+		"""
 		return Wavefunction(Poscar.from_file(struct), PseudoWavefunction(pwf, vr), Potcar.from_file(cr))
 
 	def make_site_lists(self, basis):
+		"""
+		Organizes sites into sets for use in the projection scheme. M_R and M_S contain site indices
+		of sites which are identical in structures R (basis) and S (self). N_R and N_S contain all other
+		site indices, and N_RS contains pairs of indices in R and S with overlapping augmentation
+		spheres in the PAW formalism.
+
+		Arguments:
+			basis (Wavefunction object): Wavefunction in the same lattice as self.
+				The bands in self will be projected onto the bands in basis
+		Returns:
+			M_R (numpy array): Indices of sites in basis which have an identical site in
+				S (self) (same element and position to within tolerance of 0.02 Angstroms).
+			M_S (numpy array): Indices of sites in self which match sites in M_R
+				(i.e. M_R[i] is an identical site to M_S[i])
+			N_R (numpy array): Indices of sites in basis but not in M_R
+			N_S (numpy array): Indices of sites in self but not in M_S
+			N_RS (numpy array): Pairs of indices (one in basis and one in self) which
+				are not identical but have overlapping augmentation regions
+		"""
 		ref_sites = basis.structure.sites
 		sites = self.structure.sites
 		M_R = []
@@ -176,7 +237,7 @@ class Wavefunction:
 			for j in N_S:
 				if ref_sites[i].distance(sites[j]) < self.cr.pps(el(ref_sites[i])).rmax + self.cr.pps(el(sites[j])).rmax:
 					N_RS.append((i,j))
-		return M_R, N_R, N_S, N_RS
+		return M_R, M_S, N_R, N_S, N_RS
 
 
 	def full_projection(self, basis):
@@ -198,6 +259,26 @@ class Wavefunction:
 			numpy_to_cdouble(selfcoords), numpy_to_cint(basisnums), numpy_to_cdouble(basiscoords))
 
 	def make_c_projectors(self, basis=None):
+		"""
+		Uses the CoreRegion objects in self and basis (if not None)
+		to construct C representations of the projectors and partial waves
+		for a structure. Also assigns numerical labels for each element and
+		returns a list of indices and positions which can be easily converted
+		to C lists for projection functions.
+
+		Arguments:
+			basis (None or Wavefunction): an additional structure from which
+				to include pseudopotentials. E.g. can be useful if a basis contains
+				some different elements than self.
+		Returns:
+			projector_list (C pointer): describes the pseudopotential data in C
+			selfnums (int32 numpy array): numerical element label for each site in
+				the structure
+			selfcoords (float64 numpy array): flattened list of coordinates of each site
+				in self
+			basisnums (if basis != None): same as selfnums, but for basis
+			basiscoords (if basis != None): same as selfcoords, but for basis
+		"""
 		pps = {}
 		labels = {}
 		label = 0

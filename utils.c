@@ -31,6 +31,15 @@ double determinant(double* m) {
 		-  m[0] * m[5] * m[7];
 }
 
+double dist_from_frac(double* coords1, double* coords2, double* lattice) {
+	double f1 = fmin(fabs(coords1[0]-coords2[0]), 1-fabs(coords1[0]-coords2[0]));
+	double f2 = fmin(fabs(coords1[1]-coords2[1]), 1-fabs(coords1[1]-coords2[1]));
+	double f3 = fmin(fabs(coords1[2]-coords2[2]), 1-fabs(coords1[2]-coords2[2]));
+	return pow(pow(f1*lattice[0]+f2*lattice[3]+f3*lattice[6], 2)
+		+ pow(f1*lattice[1]+f2*lattice[4]+f3*lattice[7], 2)
+		+ pow(f1*lattice[2]+f2*lattice[5]+f3*lattice[8], 2), 0.5);
+}
+
 void free_kpoint(kpoint_t* kpt) {
 	for (int b = 0; b < kpt->num_bands; b++) {
 		band_t* curr_band = kpt->bands[b];

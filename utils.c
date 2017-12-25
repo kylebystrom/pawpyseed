@@ -97,18 +97,18 @@ double legendre(int l, double x) {
 	return pf;
 }
 
-double fac(n) {
+double fac(int n) {
 	int m = 1;
 	int t = 1;
 	while (m <= n) {
 		t *= m;
 		m++;
 	}
-	return t;
+	return (double)t;
 }
 
 double complex Ylm(int l, int m, double theta, double phi) {
-	return pow(-1, m) * pow((2*l+1)/(4*PI)*fac(l-m)/fac(l+m), 0.5) * legendre(cos(theta)) * cexp(I*m*phi);
+	return pow(-1, m) * pow((2*l+1)/(4*PI)*fac(l-m)/fac(l+m), 0.5) * legendre(l, cos(theta)) * cexp(I*m*phi);
 }
 
 void ALLOCATION_FAILED() {

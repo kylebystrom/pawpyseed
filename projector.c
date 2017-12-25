@@ -4,6 +4,8 @@
 #include <math.h>
 #include <omp.h>
 #include <time.h>
+#include <mkl.h>
+#include <mkl_types.h>
 #include "utils.h"
 #include "projector.h"
 
@@ -116,17 +118,17 @@ ppot_t* get_projector_list(int num_els, int* labels, int* ls, double* proj_grids
 			pps[i].proj_grid[j] = proj_grids[pgt];
 			pgt++;
 		}
-		funcset_t* funcs = (functset_t*) malloc(pps[i].num_projs*sizeof(funcset_t));
+		funcset_t* funcs = (funcset_t*) malloc(pps[i].num_projs*sizeof(funcset_t));
 		for (int k = 0; k < pps[i].num_projs; k++) {
 			funcs[k].proj = (double*) malloc(sizeof(double)*pps[i].proj_gridsize);
 			funcs[k].aewave = (double*) malloc(sizeof(double)*pps[i].wave_gridsize);
 			funcs[k].pswave = (double*) malloc(sizeof(double)*pps[i].wave_gridsize);
-			for (int j = 0; j < funcs.wave_gridsize; j++) {
+			for (int j = 0; j < pps[i].wave_gridsize; j++) {
 				funcs[k].aewave[j] = aewaves[wt];
 				funcs[k].pswave[j] = pswaves[wt];
 				wt++;
 			}
-			for (int j = 0; j < funcs.proj_gridsize; j++) {
+			for (int j = 0; j < pps[i].proj_gridsize; j++) {
 				funcs[k].proj[j] = projectors[pt];
 				pt++;
 			}
@@ -135,8 +137,8 @@ ppot_t* get_projector_list(int num_els, int* labels, int* ls, double* proj_grids
 	return pps;
 }
 
-double* onto_projector(int* labels, double* coords, int* G_bounds, double* lattice,
-	double* Gs, double* Cs, int num_waves, int num_M, int* M, ppot_t* pps, int* fftg) {
+double complex* onto_projector(int* labels, double* coords, int* G_bounds, double* lattice,
+	double* k, int* Gs, float complex* Cs, int num_waves, int num_M, int* M, ppot_t* pps, int* fftg) {
 	int dg1 = G_bounds[1] - G_bounds[0];
 	int dg2 = G_bounds[3] - G_bounds[2];
 	int dg3 = G_bounds[5] - G_bounds[4];
@@ -146,12 +148,12 @@ double* onto_projector(int* labels, double* coords, int* G_bounds, double* latti
 	dg[2]=dg3;
 	MKL_LONG status = 0;
 	DFTI_DESCRIPTOR_HANDLE handle = 0;
-	MKL_Complex16* x = (MKL_Complex16*) mkl_malloc(fftg[0]*fftg[1]*fftg[2]*sizeof(MKL_Complex16),
-		sizeof(MKL_Complex16));
+	MKL_Complex16* x = (MKL_Complex16*) mkl_calloc(fftg[0]*fftg[1]*fftg[2], sizeof(MKL_Complex16), 64);
 
 	for (int w = 0; w < num_waves; w++) {
 		int g1 = Gs[3*w]-G_bounds[0], g2 = Gs[3*w+1]-G_bounds[2], g3 = Gs[3*w+2]-G_bounds[4];
-		x[g1*fftg[1]*fftg[2] + g2*fftg[2] + g3] = Cs[w];
+		x[g1*fftg[1]*fftg[2] + g2*fftg[2] + g3].real = creal(Cs[w]);
+		x[g1*fftg[1]*fftg[2] + g2*fftg[2] + g3].imag = cimag(Cs[w]);
 	}
 
 	DftiCreateDescriptor(&handle, DFTI_DOUBLE, DFTI_COMPLEX, 3, dg);
@@ -165,7 +167,7 @@ double* onto_projector(int* labels, double* coords, int* G_bounds, double* latti
 		t_projs += pps[labels[M[i]]].num_projs;
 	}
 
-	double* overlap = (double*) malloc(num_M*sizeof(double));
+	double complex* overlap = (double complex*) malloc(num_M*sizeof(double complex));
 
 	for (int i = 0; i < fftg[0]; i++) {
 		for (int j = 0; j < fftg[1]; j++) {
@@ -176,7 +178,7 @@ double* onto_projector(int* labels, double* coords, int* G_bounds, double* latti
 				for (int q = 0; q < num_M; q++) {
 					int p = M[q];
 					ppot_t pp = pps[labels[p]];
-					if (dist_from_frac(coords[3*p], frac, lattice) < pp.rmax) {
+					if (dist_from_frac(coords+3*p, frac, lattice) < pp.rmax) {
 						for (int n = 0; n < pp.num_projs; n++) {
 							overlap[t] += proj_value(pp.funcs[n], coords[3*p], frac)
 										* x[i*fftg[1]*fftg[2] + j*fftg[2] + k]
@@ -194,10 +196,10 @@ double* onto_projector(int* labels, double* coords, int* G_bounds, double* latti
 }
 
 void make_pwave_overlap_matrices(ppot_t pp) {
-	int size = pp.num_projs * pp.num_projs
-	double* psov = (double*) calloc(size * sizeof(double));
-	double* aeov = (double*) calloc(size * sizeof(double));
-	double* diov = (double*) calloc(size * sizeof(double));
+	int size = pp.num_projs * pp.num_projs;
+	double* psov = (double*) calloc(size, sizeof(double));
+	double* aeov = (double*) calloc(size, sizeof(double));
+	double* diov = (double*) calloc(size, sizeof(double));
 
 	for (int i = 0; i < pp.num_projs; i++) {
 		for (int j = i; j < pp.num_projs; j++) {
@@ -223,27 +225,27 @@ void make_pwave_overlap_matrices(ppot_t pp) {
 	pp.diff_overlap_matrix = diov;
 }
 
-double* compensation_terms(pswf* wf_proj, pswf* wf_ref, ppot_t* pps,
-	int num_M, int num_N_R, int num_N_S, int num_N_RS,
+double complex* compensation_terms(int BAND_NUM, pswf_t* wf_proj, pswf_t* wf_ref, ppot_t* pps,
+	int num_elems, int num_M, int num_N_R, int num_N_S, int num_N_RS,
 	int* M, int* N_R, int* N_S, int* N_RS,
 	int* proj_labels, double* proj_coords, int* ref_labels, double* ref_coords,
 	int* fft_grid) {
 
-	NUM_KPTS = wf_proj->nwk * wf_proj->nspin;
-	NUM_BANDS = wf_proj->nband;
+	int NUM_KPTS = wf_proj->nwk * wf_proj->nspin;
+	int NUM_BANDS = wf_proj->nband;
 	#pragma omp parallel for 
-	for (int p = 0; p < ; p++) {
+	for (int p = 0; p < num_elems; p++) {
 		make_pwave_overlap_matrices(pps[p]);
 	}
 
-	double complex* overlap = (double complex*) calloc(NUM_BANDS * NUM_KPTS * sizeof(double complex));
+	double complex* overlap = (double complex*) calloc(NUM_BANDS * NUM_KPTS, sizeof(double complex));
 
 	double complex** lst_proj_projs = (double complex**) malloc(NUM_KPTS*sizeof(double complex*));
 	#pragma omp parallel for 
 	for (int kpt_num = 0; kpt_num < NUM_KPTS; kpt_num++) {
 		lst_proj_projs[kpt_num] = onto_projector(proj_labels, proj_coords,
-			wf_proj->G_bounds, wf_proj->lattice, wf_proj->kpts[kpt_num]->Gs,
-			wf_proj->kpts[kpt_num]->bands[BAND_NUM]->Cs,
+			wf_proj->G_bounds, wf_proj->lattice, wf_proj->kpts[kpt_num]->k,
+			wf_proj->kpts[kpt_num]->Gs, wf_proj->kpts[kpt_num]->bands[BAND_NUM]->Cs,
 			wf_proj->kpts[kpt_num]->bands[BAND_NUM]->num_waves, num_M, M, pps, fft_grid);
 	}
 
@@ -252,13 +254,13 @@ double* compensation_terms(pswf* wf_proj, pswf* wf_ref, ppot_t* pps,
 
 		double complex* proj_projs = lst_proj_projs[w%NUM_KPTS];
 		double complex* ref_projs = onto_projector(ref_labels, ref_coords,
-			wf_ref->G_bounds, wf_ref->lattice, wf_ref->kpts[w%NUM_KPTS]->Gs,
-			wf_ref->kpts[w%NUM_KPTS]->bands[w/NUM_KPTS]->Cs,
+			wf_ref->G_bounds, wf_ref->lattice, wf_ref->kpts[w%NUM_KPTS]->k,
+			wf_ref->kpts[w%NUM_KPTS]->Gs, wf_ref->kpts[w%NUM_KPTS]->bands[w/NUM_KPTS]->Cs,
 			wf_ref->kpts[w%NUM_KPTS]->bands[w/NUM_KPTS]->num_waves, num_M, M, pps, fft_grid);
 
 		int t = 0;
 		for (int s = 0; s < num_M; s++) {
-			ppot_t pp = pps[labels[M[s]]];
+			ppot_t pp = pps[ref_labels[M[s]]];
 			for (int i = 0; i < pp.num_projs; i++) {
 				for (int j = 0; j < pp.num_projs; j++) {
 					overlap[w] += conj(ref_projs[t+j])

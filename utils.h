@@ -34,7 +34,7 @@ typedef struct proj_ae_ps {
 	double* proj;
 	double* aewave;
 	double* pswave;
-} funcset_t
+} funcset_t;
 
 typedef struct pseudopot {
 	int num_projs;
@@ -73,7 +73,7 @@ int get_nspin(pswf_t* wf);
 
 double legendre(int l, double x);
 
-double fac(n);
+double fac(int n);
 
 double complex Ylm(int l, int m, double theta, double phi);
 

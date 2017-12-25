@@ -40,6 +40,16 @@ double dist_from_frac(double* coords1, double* coords2, double* lattice) {
 		+ pow(f1*lattice[2]+f2*lattice[5]+f3*lattice[8], 2), 0.5);
 }
 
+void frac_to_cartesian(double* coord, double* lattice) {
+	double temp[3] = {0,0,0};
+	temp[0] = coord[0] * lattice[0] + coord[1] * lattice[3] + coord[2] * lattice[6];
+	temp[1] = coord[0] * lattice[1] + coord[1] * lattice[4] + coord[2] * lattice[7];
+	temp[2] = coord[0] * lattice[2] + coord[1] * lattice[5] + coord[2] * lattice[8];
+	coord[0] = temp[0];
+	coord[1] = temp[1];
+	coord[2] = temp[2];
+}
+
 void free_kpoint(kpoint_t* kpt) {
 	for (int b = 0; b < kpt->num_bands; b++) {
 		band_t* curr_band = kpt->bands[b];
@@ -83,18 +93,11 @@ int get_nspin(pswf_t* wf) {
 	return wf->nspin;
 }
 
-double legendre(int l, double x) {
-	double p0 = 1;
-	double p1 = x;
-	if (l == 0) return p0;
-	if (l == 1) return p1;
-	double pf;
-	for (int currl = 1; currl < l; currl++) {
-		pf = ((2*currl+1) * x * p1 - currl * p0) / (l+1);
-		p1 = pf;
-		p0 = p1;
+double legendre(int l, int m, double x) {
+	for (int n == l; n >= 0 && 2*n-l-m >= 0; l--) {
+		total += pow(2*n-l-m) * fac(2*n) / fac(2*n-l-m) / fac(n) / fac(l-m) * pow(-1, l+m-n);
 	}
-	return pf;
+	return total * pow(1 - x * x, m/2.0) / pow(2, l);
 }
 
 double fac(int n) {
@@ -108,7 +111,29 @@ double fac(int n) {
 }
 
 double complex Ylm(int l, int m, double theta, double phi) {
-	return pow(-1, m) * pow((2*l+1)/(4*PI)*fac(l-m)/fac(l+m), 0.5) * legendre(l, cos(theta)) * cexp(I*m*phi);
+	return pow(-1, m) * pow((2*l+1)/(4*PI)*fac(l-m)/fac(l+m), 0.5) *
+		legendre(l, m, cos(theta)) * cexp(I*m*phi);
+}
+
+double complex proj_value(funcset_t funcs, int m, double rmax,
+	double* ion_pos, double* pos, double* lattice) {
+	double r = dist_from_frac(ion_pos, pos, lattice);
+	double radial_val = funcs.proj[(int)(r/rmax*100)];
+	double theta = 0, phi = 0;
+	double temp[3] = {0,0,0};
+	for (int i = 0; i < 3; i++) {
+		temp[i] = pos[i] - ion_pos[i];
+		if (fabs(pos[i] - ion_pos[i]) > fabs(pos[i] + 1 - ion_pos[i]))
+			temp[i] += 1;
+		if (fabs(temp[i]) > fabs(pos[i] - 1 - ion_pos[i]))
+			temp[i] = pos[i] - 1 - ion_pos[i];
+	}
+	frac_to_cartesian(temp, lattice);
+	theta = acos(temp[2]/r);
+	phi = atan(temp[1]/temp[0]);
+	if (temp[0] < 0) phi += PI;
+
+	double sph_val = Ylm(funcs.l, m, theta, phi);
 }
 
 void ALLOCATION_FAILED() {

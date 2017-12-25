@@ -180,7 +180,7 @@ double complex* onto_projector(int* labels, double* coords, int* G_bounds, doubl
 					ppot_t pp = pps[labels[p]];
 					if (dist_from_frac(coords+3*p, frac, lattice) < pp.rmax) {
 						for (int n = 0; n < pp.num_projs; n++) {
-							overlap[t] += proj_value(pp.funcs[n], coords[3*p], frac)
+							overlap[t] += proj_value(pp.funcs[n], coords[3*p], frac, lattice)
 										* x[i*fftg[1]*fftg[2] + j*fftg[2] + k]
 										/ (fftg[0]*fftg[1]*fftg[2]);
 							t++;

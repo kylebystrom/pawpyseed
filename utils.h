@@ -59,6 +59,8 @@ double determinant(double* m);
 
 double dist_from_frac(double* coords1, double* coords2, double* lattice);
 
+void frac_to_cartesian(double* coord, double* lattice);
+
 void free_kpoint(kpoint_t* kpt);
 
 void free_pswf(pswf_t* wf);
@@ -71,11 +73,14 @@ int get_nwk(pswf_t* wf);
 
 int get_nspin(pswf_t* wf);
 
-double legendre(int l, double x);
+double legendre(int l, int m, double x);
 
 double fac(int n);
 
 double complex Ylm(int l, int m, double theta, double phi);
+
+double complex proj_value(funcset_t funcs, int m, double rmax,
+	double* ion_pos, double* pos, double* lattice);
 
 void ALLOCATION_FAILED();
 

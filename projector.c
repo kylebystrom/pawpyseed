@@ -167,7 +167,7 @@ double complex* onto_projector(int* labels, double* coords, int* G_bounds, doubl
 		t_projs += pps[labels[M[i]]].num_projs * (2 * pps[labels[M[i]]].l + 1);
 	}
 
-	double complex* overlap = (double complex*) malloc(t_projs*sizeof(double complex));
+	double complex* overlap = (double complex*) calloc(t_projs, sizeof(double complex));
 
 	for (int i = 0; i < fftg[0]; i++) {
 		for (int j = 0; j < fftg[1]; j++) {

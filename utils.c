@@ -94,8 +94,9 @@ int get_nspin(pswf_t* wf) {
 }
 
 double legendre(int l, int m, double x) {
-	for (int n == l; n >= 0 && 2*n-l-m >= 0; l--) {
-		total += pow(2*n-l-m) * fac(2*n) / fac(2*n-l-m) / fac(n) / fac(l-m) * pow(-1, l+m-n);
+	double total = 0;
+	for (int n = l; n >= 0 && 2*n-l-m >= 0; l--) {
+		total += pow(x, 2*n-l-m) * fac(2*n) / fac(2*n-l-m) / fac(n) / fac(l-m) * pow(-1, l+m-n);
 	}
 	return total * pow(1 - x * x, m/2.0) / pow(2, l);
 }

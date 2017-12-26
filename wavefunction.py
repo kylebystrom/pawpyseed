@@ -338,12 +338,14 @@ class Wavefunction:
 	def proportion_conduction(self, band_num, bulk):
 		pass
 
-
+posb = Poscar.from_file("bulk/CONTCAR")
+posd = Poscar.from_file("charge_0/CONTCAR")
+pot = Potcar.from_file("bulk/POTCAR")
 pwf1 = PseudoWavefunction("bulk/WAVECAR", "bulk/vasprun.xml")
 pwf2 = PseudoWavefunction("charge_0/WAVECAR", "charge_0/vasprun.xml")
 
-wf1 = Wavefunction(None, pwf1, None)
-wf2 = Wavefunction(None, pwf2, None)
+wf1 = Wavefunction(posb, pwf1, pot, (240,240,240))
+wf2 = Wavefunction(posd, pwf2, pot, (240,240,240))
 for i in range(253,257):
 	wf2.single_band_projection(i, wf1)
 

@@ -275,7 +275,9 @@ double complex* compensation_terms(int BAND_NUM, pswf_t* wf_proj, pswf_t* wf_ref
 		for (int s = 0; s < num_M; s++) {
 			ppot_t pp = pps[ref_labels[M[s]]];
 			int ti = 0;
+			int ttemp = 0;
 			for (int i = 0; i < pp.num_projs; i++) {
+				ttemp += 2*pp.funcs[i].l+1;
 				for (int temp1 = 0; temp1 < 2*pp.funcs[i].l+1; temp1++) {
 					int tj = 0;
 					for (int j = 0; j < pp.num_projs; j++) {
@@ -289,7 +291,7 @@ double complex* compensation_terms(int BAND_NUM, pswf_t* wf_proj, pswf_t* wf_ref
 					ti++;
 				}
 			}
-			t += pp.num_projs;
+			t += ttemp;
 		}
 
 		free(ref_projs);

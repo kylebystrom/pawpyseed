@@ -259,7 +259,7 @@ double complex* compensation_terms(int BAND_NUM, pswf_t* wf_proj, pswf_t* wf_ref
 		lst_proj_projs[kpt_num] = onto_projector(proj_labels, proj_coords,
 			wf_proj->G_bounds, wf_proj->lattice, wf_proj->kpts[kpt_num]->k,
 			wf_proj->kpts[kpt_num]->Gs, wf_proj->kpts[kpt_num]->bands[BAND_NUM]->Cs,
-			wf_proj->kpts[kpt_num]->bands[BAND_NUM]->num_waves, num_M, M, pps, fft_grid);
+			wf_proj->kpts[kpt_num]->bands[BAND_NUM]->num_waves, num_M, N_RS, pps, fft_grid);
 	}
 
 	#pragma omp parallel for

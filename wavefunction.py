@@ -32,25 +32,26 @@ def cfloat_to_numpy(arr, length):
 	return newarr
 
 def numpy_to_cdouble(arr):
-	newarr = (c_double * len(weights))()
+	newarr = (c_double * len(arr))()
 	for i in range(len(arr)):
 		newarr[i] = arr[i]
 	return newarr
 
 def numpy_to_cfloat(arr):
-	newarr = (c_float * len(weights))()
+	newarr = (c_float * len(arr))()
 	for i in range(len(arr)):
 		newarr[i] = arr[i]
 	return newarr
 
 def numpy_to_cint(arr):
-	newarr = (c_int * len(weights))()
+	print arr
+	newarr = (c_int * len(arr))()
 	for i in range(len(arr)):
-		newarr[i] = arr[i]
+		newarr[i] = int(arr[i])
 	return newarr
 
 def el(site):
-	return site.specie.element.symbol
+	return site.specie.symbol
 
 class Pseudopotential:
 	"""
@@ -116,12 +117,12 @@ class Pseudopotential:
 				self.ls.append(l)
 
 		settingstr, projgridstr = settingstr.split("STEP   =")
-		ndata = int(settingstr.split()[-1])
+		self.ndata = int(settingstr.split()[-1])
 		projgridstr = projgridstr.split("END")[0]
 		self.projgrid = self.make_nums(projgridstr)
 		self.step = (self.projgrid[0], self.projgrid[1])
 
-		self.projgrid = np.linspace(0,rmax/1.88973,ndata,False)
+		self.projgrid = np.linspace(0,rmax/1.88973,self.ndata,False)
 
 	def make_nums(self, numstring):
 		return np.array([float(num) for num in numstring.split()])
@@ -236,7 +237,7 @@ class Wavefunction:
 		N_RS = []
 		for i in N_R:
 			for j in N_S:
-				if ref_sites[i].distance(sites[j]) < self.cr.pps(el(ref_sites[i])).rmax + self.cr.pps(el(sites[j])).rmax:
+				if ref_sites[i].distance(sites[j]) < self.cr.pps[el(ref_sites[i])].rmax + self.cr.pps[el(sites[j])].rmax:
 					N_RS.append((i,j))
 		return M_R, M_S, N_R, N_S, N_RS
 
@@ -253,13 +254,13 @@ class Wavefunction:
 		nwk = self.projector.get_nwk(basis.pwf.wf_ptr)
 		nspin = self.projector.get_nspin(basis.pwf.wf_ptr)
 		res = cfloat_to_numpy(res, 2*nband*nwk*nspin)
-		M_R, N_R, N_S, N_RS = self.make_site_lists(basis)
+		M_R, M_S, N_R, N_S, N_RS = self.make_site_lists(basis)
 		projector_list, selfnums, selfcoords, basisnums, basiscoords = self.make_c_projectors(basis)
-		ct = self.projector.compensation_terms(elf.pwf.wf_ptr, basis.pwf.wf_ptr, projector_list, numpy_to_cint(M_R),
-			numpy_to_cint(N_R), numpy_to_cint(N_S), numpy_to_cint(N_RS), numpy_to_cint(selfnums),
+		ct = self.projector.compensation_terms(self.pwf.wf_ptr, basis.pwf.wf_ptr, projector_list, numpy_to_cint(M_R),
+			numpy_to_cint(N_R), numpy_to_cint(N_S), numpy_to_cint(M_S), numpy_to_cint(selfnums),
 			numpy_to_cdouble(selfcoords), numpy_to_cint(basisnums), numpy_to_cdouble(basiscoords),
 			numpy_to_cdouble(self.dim))
-		ct = cdouble_to_numpy(ct, )
+		ct = cdouble_to_numpy(ct, 360*32)
 
 	def make_c_projectors(self, basis=None):
 		"""
@@ -292,7 +293,7 @@ class Wavefunction:
 		if basis != None:
 			for e in basis.cr.pps:
 				if not e in pps:
-					pps[e] = basis.cr.pps[e]
+					pps[label] = basis.cr.pps[e]
 					labels[e] = label
 					label += 1
 		clabels = np.array([], np.int32)
@@ -325,7 +326,7 @@ class Wavefunction:
 		selfnums = np.array([labels[el(s)] for s in self.structure], dtype=np.int32)
 		basisnums = np.array([labels[el(s)] for s in basis.structure], dtype=np.int32)
 		selfcoords = np.array([], np.float64)
-		basisnums = np.array([], np.float64)
+		basiscoords = np.array([], np.float64)
 
 		for s in self.structure:
 			selfcoords = np.append(selfcoords, s.frac_coords)
@@ -338,14 +339,14 @@ class Wavefunction:
 	def proportion_conduction(self, band_num, bulk):
 		pass
 
-posb = Poscar.from_file("bulk/CONTCAR")
-posd = Poscar.from_file("charge_0/CONTCAR")
+posb = Poscar.from_file("bulk/CONTCAR").structure
+posd = Poscar.from_file("charge_0/CONTCAR").structure
 pot = Potcar.from_file("bulk/POTCAR")
 pwf1 = PseudoWavefunction("bulk/WAVECAR", "bulk/vasprun.xml")
 pwf2 = PseudoWavefunction("charge_0/WAVECAR", "charge_0/vasprun.xml")
 
-wf1 = Wavefunction(posb, pwf1, pot, (240,240,240))
-wf2 = Wavefunction(posd, pwf2, pot, (240,240,240))
+wf1 = Wavefunction(posb, pwf1, CoreRegion(pot), (240,240,240))
+wf2 = Wavefunction(posd, pwf2, CoreRegion(pot), (240,240,240))
 for i in range(253,257):
 	wf2.single_band_projection(i, wf1)
 

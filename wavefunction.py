@@ -259,7 +259,7 @@ class Wavefunction:
 			numpy_to_cint(N_R), numpy_to_cint(N_S), numpy_to_cint(N_RS), numpy_to_cint(selfnums),
 			numpy_to_cdouble(selfcoords), numpy_to_cint(basisnums), numpy_to_cdouble(basiscoords),
 			numpy_to_cdouble(self.dim))
-		ct = cdouble_to_numpy
+		ct = cdouble_to_numpy(ct, )
 
 	def make_c_projectors(self, basis=None):
 		"""

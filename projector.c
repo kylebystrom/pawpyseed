@@ -164,7 +164,8 @@ double complex* onto_projector(int* labels, double* coords, int* G_bounds, doubl
 
 	int t_projs = 0;
 	for (int i = 0; i < num_M; i++) {
-		t_projs += pps[labels[M[i]]].num_projs * (2 * pps[labels[M[i]]].l + 1);
+		for (int j = 0; j < pps[labels[M[i]]].num_projs; j++)
+			t_projs += 2 * pps[labels[M[i]]].funcs[j].l + 1;
 	}
 
 	double complex* overlap = (double complex*) calloc(t_projs, sizeof(double complex));
@@ -173,7 +174,9 @@ double complex* onto_projector(int* labels, double* coords, int* G_bounds, doubl
 		for (int j = 0; j < fftg[1]; j++) {
 			for (int k = 0; k  < fftg[2]; k++) {
 				double frac[3] = {(double)i/fftg[0], (double)j/fftg[1], (double)k/fftg[2]};
-				x[i*fftg[1]*fftg[2] + j*fftg[2] + k] *= cexp(I*2*PI*(dot(kmins, frac)));
+				double complex temp = (x[i*fftg[1]*fftg[2] + j*fftg[2] + k].real
+					+ I * x[i*fftg[1]*fftg[2] + j*fftg[2] + k].imag)
+					* cexp(I*2*PI*(dot(kmins, frac)));
 				int t = 0;
 				for (int q = 0; q < num_M; q++) {
 					int p = M[q];
@@ -181,8 +184,8 @@ double complex* onto_projector(int* labels, double* coords, int* G_bounds, doubl
 					if (dist_from_frac(coords+3*p, frac, lattice) < pp.rmax) {
 						for (int n = 0; n < pp.num_projs; n++) {
 							for (int m = -pp.funcs[n].l; m <= pp.funcs[n].l; m++) {
-								overlap[t] += proj_value(pp.funcs[n], m, pp.rmax, coords[3*p], frac, lattice)
-											* x[i*fftg[1]*fftg[2] + j*fftg[2] + k]
+								overlap[t] += proj_value(pp.funcs[n], m, pp.rmax, coords+3*p, frac, lattice)
+											* temp
 											/ (fftg[0]*fftg[1]*fftg[2]);
 								t++;
 							}

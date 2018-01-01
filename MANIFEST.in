@@ -1,0 +1,6 @@
+include LICENSE *.txt
+include paper *.tex
+recursive-include pawpyseed *
+recursive-exclude pawpyseed *.pyc
+recursive-include docs *
+recursive-exclude docs *.pyc

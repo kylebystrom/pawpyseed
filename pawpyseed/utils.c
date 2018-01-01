@@ -95,8 +95,9 @@ int get_nspin(pswf_t* wf) {
 
 double legendre(int l, int m, double x) {
 	double total = 0;
-	for (int n = l; n >= 0 && 2*n-l-m >= 0; l--) {
-		total += pow(x, 2*n-l-m) * fac(2*n) / fac(2*n-l-m) / fac(n) / fac(l-m) * pow(-1, l+m-n);
+	if (m < 0) return pow(-1.0, m) * fac(l+m) / fac(l-m) * legendre(l, -m, x);
+	for (int n = l; n >= 0 && 2*n-l-m >= 0; n--) {
+		total += pow(x, 2*n-l-m) * fac(2*n) / fac(2*n-l-m) / fac(n) / fac(l-n) * pow(-1, l+m-n);
 	}
 	return total * pow(1 - x * x, m/2.0) / pow(2, l);
 }
@@ -112,9 +113,17 @@ double fac(int n) {
 }
 
 double complex Ylm(int l, int m, double theta, double phi) {
+	//printf("%lf %lf %lf\n", pow((2*l+1)/(4*PI)*fac(l-m)/fac(l+m), 0.5), legendre(l, m, cos(theta)),
+	//	creal(cexp(I*m*phi)));
 	return pow(-1, m) * pow((2*l+1)/(4*PI)*fac(l-m)/fac(l+m), 0.5) *
 		legendre(l, m, cos(theta)) * cexp(I*m*phi);
 }
+
+double Ylmr(int l, int m, double theta, double phi) {
+	//printf("%lf", creal(Ylm(l, m, theta, phi)));
+		return creal(Ylm(l, m, theta, phi));
+}
+double Ylmi(int l, int m, double theta, double phi) {return cimag(Ylm(l, m, theta, phi));}
 
 double complex proj_value(funcset_t funcs, int m, double rmax,
 	double* ion_pos, double* pos, double* lattice) {
@@ -131,10 +140,11 @@ double complex proj_value(funcset_t funcs, int m, double rmax,
 	}
 	frac_to_cartesian(temp, lattice);
 	theta = acos(temp[2]/r);
-	phi = atan(temp[1]/temp[0]);
-	if (temp[0] < 0) phi += PI;
+	phi = acos(temp[0]/pow(temp[0]*temp[0]+temp[1]+temp[1], 0.5));
+	if (temp[0] < 0) phi = 2*PI - phi;
 
 	double sph_val = Ylm(funcs.l, m, theta, phi);
+	return radial_val * sph_val;
 }
 
 void ALLOCATION_FAILED() {

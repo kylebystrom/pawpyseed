@@ -104,12 +104,13 @@ ppot_t* get_projector_list(int num_els, int* labels, int* ls, double* proj_grids
 	int pt = 0;
 	int wgt = 0;
 	int pgt = 0;
+	int l_num = 0;
 	for (int i = 0; i < num_els; i++) {
 		pps[i].num_projs = labels[4*i+1];
 		pps[i].proj_gridsize = labels[4*i+2];
 		pps[i].wave_gridsize = labels[4*i+3];
-		pps[i].wave_grid = (double*) malloc(pps[i].wave_gridsize*sizeof(double));
-		for (int j = 0; j < pps[i].wave_gridsize; j++) {
+		pps[i].wave_grid = (double*) malloc((pps[i].wave_gridsize+1)*sizeof(double));
+		for (int j = 0; j < pps[i].wave_gridsize + 1; j++) {
 			pps[i].wave_grid[j] = wave_grids[wgt];
 			wgt++;
 		}
@@ -123,6 +124,8 @@ ppot_t* get_projector_list(int num_els, int* labels, int* ls, double* proj_grids
 			funcs[k].proj = (double*) malloc(sizeof(double)*pps[i].proj_gridsize);
 			funcs[k].aewave = (double*) malloc(sizeof(double)*pps[i].wave_gridsize);
 			funcs[k].pswave = (double*) malloc(sizeof(double)*pps[i].wave_gridsize);
+			funcs[k].l = ls[l_num];
+			l_num++;
 			for (int j = 0; j < pps[i].wave_gridsize; j++) {
 				funcs[k].aewave[j] = aewaves[wt];
 				funcs[k].pswave[j] = pswaves[wt];
@@ -133,12 +136,15 @@ ppot_t* get_projector_list(int num_els, int* labels, int* ls, double* proj_grids
 				pt++;
 			}
 		}
+		pps[i].funcs = funcs;
+		printf("%d\n", pps[i].funcs[0].l);
 	}
 	return pps;
 }
 
 double complex* onto_projector(int* labels, double* coords, int* G_bounds, double* lattice,
 	double* kpt, int* Gs, float complex* Cs, int num_waves, int num_M, int* M, ppot_t* pps, int* fftg) {
+	
 	int dg1 = G_bounds[1] - G_bounds[0];
 	int dg2 = G_bounds[3] - G_bounds[2];
 	int dg3 = G_bounds[5] - G_bounds[4];
@@ -202,7 +208,6 @@ double complex* onto_projector(int* labels, double* coords, int* G_bounds, doubl
 
 void make_pwave_overlap_matrices(ppot_t pp) {
 	int size = pp.num_projs * pp.num_projs;
-
 	double* psov = (double*) calloc(size, sizeof(double));
 	double* aeov = (double*) calloc(size, sizeof(double));
 	double* diov = (double*) calloc(size, sizeof(double));
@@ -217,22 +222,23 @@ void make_pwave_overlap_matrices(ppot_t pp) {
 				double dr = pp.wave_grid[0];
 				double r = pp.wave_grid[0];
 				for (int k = 0; k < pp.wave_gridsize; k++) {
-					psov[4*i+j] += r * r * ps1[k] * ps2[k] * dr;
-					aeov[4*i+j] += r * r * ae1[k] * ae2[k] * dr;
-					diov[4*i+j] += r * r * (ae1[k]-ps1[k]) * (ae2[k]-ps2[k]) * dr;
+					r = pp.wave_grid[k];
 					dr = pp.wave_grid[k+1] - pp.wave_grid[k];
+					psov[pp.num_projs*i+j] += r * r * ps1[k] * ps2[k] * dr;
+					aeov[pp.num_projs*i+j] += r * r * ae1[k] * ae2[k] * dr;
+					diov[pp.num_projs*i+j] += r * r * (ae1[k]-ps1[k]) * (ae2[k]-ps2[k]) * dr;
 				}
 			}
 		}
 	}
 	for (int i = 1; i < pp.num_projs; i++) {
 		for (int j = 0; j < i; j++) {
-			psov[4*i+j] = conj(psov[4*j+1]);
-			aeov[4*i+j] = conj(aeov[4*j+1]);
-			diov[4*i+j] = conj(diov[4*j+1]);
+			psov[pp.num_projs*i+j] = conj(psov[pp.num_projs*j+i]);
+			aeov[pp.num_projs*i+j] = conj(aeov[pp.num_projs*j+i]);
+			diov[pp.num_projs*i+j] = conj(diov[pp.num_projs*j+i]);
 		}
 	}
-
+	
 	pp.pspw_overlap_matrix = psov;
 	pp.aepw_overlap_matrix = aeov;
 	pp.diff_overlap_matrix = diov;
@@ -244,9 +250,14 @@ double complex* compensation_terms(int BAND_NUM, pswf_t* wf_proj, pswf_t* wf_ref
 	int* proj_labels, double* proj_coords, int* ref_labels, double* ref_coords,
 	int* fft_grid) {
 
+	printf("%d %d %d %d %d %d\n", BAND_NUM, num_elems, num_M, num_N_R, num_N_S, num_N_RS);
+	printf("%d %lf %d %lf %d\n", proj_labels[0], proj_coords[0], ref_labels[0], ref_coords[0], fft_grid[1]);
+	printf("%d %d %d %d %d %d %d\n", wf_proj->nband, wf_ref->nband, pps[0].funcs[0].l, M[0], N_R[0], N_S[0], N_RS[0]);
+	
 	int NUM_KPTS = wf_proj->nwk * wf_proj->nspin;
 	int NUM_BANDS = wf_proj->nband;
-	#pragma omp parallel for 
+
+	//#pragma omp parallel for 
 	for (int p = 0; p < num_elems; p++) {
 		make_pwave_overlap_matrices(pps[p]);
 	}

@@ -10,6 +10,9 @@ import json
 MODULE_DIR = os.path.dirname(os.path.abspath(__file__))
 PAWC = CDLL(os.path.join(MODULE_DIR, "pawpy.so"))
 
+PAWC.read_wavefunctions.restype = POINTER(None)
+PAWC.get_projector_list.restype = POINTER(None)
+
 def cdouble_to_numpy(arr, length):
 	arr = cast(arr, POINTER(c_double))
 	newarr = np.zeros(length)
@@ -44,7 +47,6 @@ def numpy_to_cfloat(arr):
 	return newarr
 
 def numpy_to_cint(arr):
-	print arr
 	newarr = (c_int * len(arr))()
 	for i in range(len(arr)):
 		newarr[i] = int(arr[i])
@@ -77,7 +79,7 @@ class Pseudopotential:
 		corechgstr, kenstr = corechgstr.split("kinetic energy-density", 1)
 		kenstr, pspotstr = kenstr.split("pspotential", 1)
 		pspotstr, pscorechgstr = pspotstr.split("core charge-density (pseudized)", 1)
-		self.grid = self.make_nums(gridstr)
+		self.grid = self.make_nums(gridstr + ' 0')
 		self.aepotential = self.make_nums(aepotstr)
 		self.aecorecharge = self.make_nums(corechgstr)
 		self.kinetic = self.make_nums(kenstr)
@@ -153,7 +155,7 @@ class PseudoWavefunction:
 		for i in range(len(weights)):
 			kws[i] = weights[i]
 		self.kws = weights
-		self.wf_ptr = PAWC.read_wavefunctions(filename, byref(kws))
+		self.wf_ptr = PAWC.read_wavefunctions(filename.encode('utf-8'), byref(kws))
 
 class Wavefunction:
 	"""
@@ -256,10 +258,11 @@ class Wavefunction:
 		res = cfloat_to_numpy(res, 2*nband*nwk*nspin)
 		M_R, M_S, N_R, N_S, N_RS = self.make_site_lists(basis)
 		projector_list, selfnums, selfcoords, basisnums, basiscoords = self.make_c_projectors(basis)
-		ct = self.projector.compensation_terms(self.pwf.wf_ptr, basis.pwf.wf_ptr, projector_list, numpy_to_cint(M_R),
+		ct = self.projector.compensation_terms(band_num, self.pwf.wf_ptr, basis.pwf.wf_ptr, projector_list, 
+			len(self.cr.pps), len(M_R), len(N_R), len(N_S), len(M_S), numpy_to_cint(M_R),
 			numpy_to_cint(N_R), numpy_to_cint(N_S), numpy_to_cint(M_S), numpy_to_cint(selfnums),
 			numpy_to_cdouble(selfcoords), numpy_to_cint(basisnums), numpy_to_cdouble(basiscoords),
-			numpy_to_cdouble(self.dim))
+			numpy_to_cint(self.dim))
 		ct = cdouble_to_numpy(ct, 360*32)
 
 	def make_c_projectors(self, basis=None):

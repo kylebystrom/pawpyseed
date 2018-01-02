@@ -79,6 +79,7 @@ double* get_occs(pswf_t* wf) {
 			occs[band_num*NUM_KPTS+kpt_num] = kpts[kpt_num]->bands[band_num]->occ;
 		}
 	}
+	return occs;
 }
 
 int get_nband(pswf_t* wf) {

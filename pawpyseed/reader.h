@@ -1,5 +1,6 @@
 #ifndef READER_H
 #define READER_H
+#include "utils.h"
 
 void setup(char* filename, int* pnrecl, int* pnspin, int* pnwk, int* pnband,
 	double* nb1, double* nb2, double* nb3, double* ecut,

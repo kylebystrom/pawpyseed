@@ -1,6 +1,7 @@
 #ifndef UTILS_H
 #define UTILS_H
-
+#include <complex.h>
+#include <math.h>
 typedef struct band {
 	int n;
 	int num_waves;

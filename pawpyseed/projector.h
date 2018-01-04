@@ -8,8 +8,13 @@ float* pseudoprojection(pswf_t* wf_ref, pswf_t* wf_proj, int BAND_NUM);
 ppot_t* get_projector_list(int num_els, int* labels, int* ls, double* proj_grids, double* wave_grids,
 	double* projectors, double* aewaves, double* pswaves);
 
+real_proj_site_t* projector_values(int num_sites, int* labels, double* coords,
+	double* lattice, ppot_t* pps, int* fftg);
+
 double complex* onto_projector(int* labels, double* coords, int* G_bounds, double* lattice,
 	double* k, int* Gs, float complex* Cs, int num_waves, int num_M, int* M, ppot_t* pps, int* fftg);
+
+void add_num_cart_gridpts(ppot_t pp, double* lattice, int* fftg);
 
 void make_pwave_overlap_matrices(ppot_t pp);
 

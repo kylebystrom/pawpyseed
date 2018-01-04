@@ -99,6 +99,7 @@ float* pseudoprojection(pswf_t* wf_ref, pswf_t* wf_proj, int BAND_NUM) {
 
 ppot_t* get_projector_list(int num_els, int* labels, int* ls, double* proj_grids, double* wave_grids,
 	double* projectors, double* aewaves, double* pswaves) {
+
 	ppot_t* pps = (ppot_t*) malloc(num_els * sizeof(ppot_t));
 	int wt = 0;
 	int pt = 0;
@@ -200,7 +201,7 @@ real_proj_site_t* projector_values(int num_sites, int* labels, double* coords,
 	return sites;
 }
 
-double complex* onto_projector(int* labels, double* coords, int* G_bounds, double* lattice,
+double complex* onto_projector(real_proj_site_t* sites, int* labels, int* G_bounds, double* lattice,
 	double* kpt, int* Gs, float complex* Cs, int num_waves, int num_M, int* M, ppot_t* pps, int* fftg) {
 	
 	MKL_LONG status = 0;
@@ -366,10 +367,15 @@ double complex* compensation_terms(int BAND_NUM, pswf_t* wf_proj, pswf_t* wf_ref
 
 	double complex* overlap = (double complex*) calloc(NUM_BANDS * NUM_KPTS, sizeof(double complex));
 
+	real_proj_site_t* ref_sites = projector_values(int num_sites, int* ref_labels, double* ref_coords,
+		double* wf_ref->lattice, ppot_t* pps, int* fft_grid);
+	real_proj_site_t* proj_sites = projector_values(int num_sites, int* proj_labels, double* proj_coords,
+		double* wf_proj->lattice, ppot_t* pps, int* fft_grid);
+
 	double complex** lst_proj_projs = (double complex**) malloc(NUM_KPTS*sizeof(double complex*));
 	#pragma omp parallel for 
 	for (int kpt_num = 0; kpt_num < NUM_KPTS; kpt_num++) {
-		lst_proj_projs[kpt_num] = onto_projector(proj_labels, proj_coords,
+		lst_proj_projs[kpt_num] = onto_projector(proj_sites, proj_labels, proj_coords,
 			wf_proj->G_bounds, wf_proj->lattice, wf_proj->kpts[kpt_num]->k,
 			wf_proj->kpts[kpt_num]->Gs, wf_proj->kpts[kpt_num]->bands[BAND_NUM]->Cs,
 			wf_proj->kpts[kpt_num]->bands[BAND_NUM]->num_waves, num_M, N_RS, pps, fft_grid);
@@ -379,7 +385,7 @@ double complex* compensation_terms(int BAND_NUM, pswf_t* wf_proj, pswf_t* wf_ref
 	for (int w = 0; w < NUM_BANDS * NUM_KPTS; w++) {
 
 		double complex* proj_projs = lst_proj_projs[w%NUM_KPTS];
-		double complex* ref_projs = onto_projector(ref_labels, ref_coords,
+		double complex* ref_projs = onto_projector(ref_sites, ref_labels, ref_coords,
 			wf_ref->G_bounds, wf_ref->lattice, wf_ref->kpts[w%NUM_KPTS]->k,
 			wf_ref->kpts[w%NUM_KPTS]->Gs, wf_ref->kpts[w%NUM_KPTS]->bands[w/NUM_KPTS]->Cs,
 			wf_ref->kpts[w%NUM_KPTS]->bands[w/NUM_KPTS]->num_waves, num_M, M, pps, fft_grid);
@@ -396,7 +402,8 @@ double complex* compensation_terms(int BAND_NUM, pswf_t* wf_proj, pswf_t* wf_ref
 					for (int j = 0; j < pp.num_projs; j++) {
 						for (int temp2 = 0; temp2 < 2*pp.funcs[j].l+1; temp2++) {
 							overlap[w] += conj(ref_projs[t+tj])
-								* (pp.aepw_overlap_matrix[4*i+j] - pp.pspw_overlap_matrix[4*i+j])
+								* (pp.aepw_overlap_matrix[pp.num_projs*i+j]
+									- pp.pspw_overlap_matrix[pp.num_projs*i+j])
 								* proj_projs[t+i];
 							tj++;
 						}

@@ -253,7 +253,7 @@ double complex* onto_projector(int* labels, double* coords, int* G_bounds, doubl
 			double complex* values = sites[s].projs[p].values;
 			for (int i = 0; i < num_indices; i++) {
 				index = indices[i];
-				overlap[t] += conj(values[i]) * (x[index].real + I*x[index].imag) * dV;
+				overlap[t] += conj(values[i]) * (x[index].real + I*x[index].imag) * dv;
 			}
 			t++;
 		}
@@ -277,27 +277,27 @@ void add_num_cart_gridpts(ppot_t pp, double* lattice, int* fftg) {
 	vcross(vtemp, lattice+0, lattice+3);
 	vmag = mag(vtemp);
 	sinphi123 = dot(lattice+6, vtemp) / (vmag * maga3);
-	double na1maxA = sites[i].rmax / (maga1 * fabs(sin(phi12))) + 1;
-	double na2maxA = sites[i].rmax / (maga2 * fabs(sin(phi12))) + 1;
-	double na3maxA = sites[i].rmax / (maga3 * fabs(sinphi123)) + 1;
+	double na1maxA = pp.rmax / (maga1 * fabs(sin(phi12))) + 1;
+	double na2maxA = pp.rmax / (maga2 * fabs(sin(phi12))) + 1;
+	double na3maxA = pp.rmax / (maga3 * fabs(sinphi123)) + 1;
 	int npmaxA = (int) round(4.0/3.0*PI*na1maxA*na2maxA*na3maxA);
 
 	double phi13 = acos(dot(lattice+0, lattice+6) / (maga1 * maga3));
 	vcross(vtemp, lattice+0, lattice+6);
 	vmag = mag(vtemp);
 	sinphi123 = dot(lattice+3, vtemp) / (vmag * maga2);
-	double na1maxB = sites[i].rmax / (maga1 * fabs(sin(phi13))) + 1;
-	double na2maxB = sites[i].rmax / (maga2 * fabs(sinphi123)) + 1;
-	double na3maxB = sites[i].rmax / (maga3 * fabs(sin(phi13))) + 1;
+	double na1maxB = pp.rmax / (maga1 * fabs(sin(phi13))) + 1;
+	double na2maxB = pp.rmax / (maga2 * fabs(sinphi123)) + 1;
+	double na3maxB = pp.rmax / (maga3 * fabs(sin(phi13))) + 1;
 	int npmaxB = (int) round(4.0/3.0*PI*na1maxB*na2maxB*na3maxB);
 
 	double phi23 = acos(dot(lattice+3, lattice+6) / (maga2 * maga3));
 	vcross(vtemp, lattice+3, lattice+6);
 	vmag = mag(vtemp);
 	sinphi123 = dot(lattice, vtemp) / (vmag * maga1);
-	double na1maxC = sites[i].rmax / (maga1 * fabs(sinphi123)) + 1;
-	double na2maxC = sites[i].rmax / (maga2 * fabs(sin(phi23))) + 1;
-	double na3maxC = sites[i].rmax / (maga3 * fabs(sin(phi23))) + 1;
+	double na1maxC = pp.rmax / (maga1 * fabs(sinphi123)) + 1;
+	double na2maxC = pp.rmax / (maga2 * fabs(sin(phi23))) + 1;
+	double na3maxC = pp.rmax / (maga3 * fabs(sin(phi23))) + 1;
 	int npmaxC = (int) round(4.0/3.0*PI*na1maxC*na2maxC*na3maxC);
 
 	int npmax = npmaxA;
@@ -361,7 +361,7 @@ double complex* compensation_terms(int BAND_NUM, pswf_t* wf_proj, pswf_t* wf_ref
 	//#pragma omp parallel for 
 	for (int p = 0; p < num_elems; p++) {
 		make_pwave_overlap_matrices(pps[p]);
-		add_num_cart_gridpts(pps[p], wf_ref->lattice, fftg);
+		add_num_cart_gridpts(pps[p], wf_ref->lattice, fft_grid);
 	}
 
 	double complex* overlap = (double complex*) calloc(NUM_BANDS * NUM_KPTS, sizeof(double complex));

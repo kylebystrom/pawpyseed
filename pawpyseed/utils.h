@@ -37,6 +37,23 @@ typedef struct proj_ae_ps {
 	double* pswave;
 } funcset_t;
 
+typedef struct real_proj {
+	int l;
+	int m;
+	double complex* values;
+} real_proj_t;
+
+typedef struct real_proj_site {
+	int index;
+	int elem;
+	int num_projs;
+	int total_projs;
+	int num_indices;
+	double rmax;
+	int* indices;
+	real_proj_t* projs;
+} real_proj_site_t;
+
 typedef struct pseudopot {
 	int num_projs;
 	funcset_t* funcs;
@@ -46,6 +63,7 @@ typedef struct pseudopot {
 	double* diff_overlap_matrix;
 	int proj_gridsize;
 	int wave_gridsize;
+	int num_cart_gridpts;
 	double* wave_grid;
 	double* proj_grid;
 } ppot_t;

@@ -142,7 +142,7 @@ ppot_t* get_projector_list(int num_els, int* labels, int* ls, double* proj_grids
 	return pps;
 }
 
-double complex** projector_values(int num_sites, int* labels, double* coords,
+real_proj_site_t* projector_values(int num_sites, int* labels, double* coords,
 	double* lattice, ppot_t* pps, int* fftg) {
 
 	int t_projs = 0;
@@ -197,19 +197,12 @@ double complex** projector_values(int num_sites, int* labels, double* coords,
 		}
 	}
 
-	return overlap;
+	return sites;
 }
 
 double complex* onto_projector(int* labels, double* coords, int* G_bounds, double* lattice,
 	double* kpt, int* Gs, float complex* Cs, int num_waves, int num_M, int* M, ppot_t* pps, int* fftg) {
 	
-	int dg1 = G_bounds[1] - G_bounds[0];
-	int dg2 = G_bounds[3] - G_bounds[2];
-	int dg3 = G_bounds[5] - G_bounds[4];
-	int dg[3];
-	dg[0]=dg1;
-	dg[1]=dg2;
-	dg[2]=dg3;
 	MKL_LONG status = 0;
 	DFTI_DESCRIPTOR_HANDLE handle = 0;
 	MKL_Complex16* x = (MKL_Complex16*) mkl_calloc(fftg[0]*fftg[1]*fftg[2], sizeof(MKL_Complex16), 64);
@@ -220,11 +213,13 @@ double complex* onto_projector(int* labels, double* coords, int* G_bounds, doubl
 		x[g1*fftg[1]*fftg[2] + g2*fftg[2] + g3].imag = cimag(Cs[w]);
 	}
 
-	DftiCreateDescriptor(&handle, DFTI_DOUBLE, DFTI_COMPLEX, 3, dg);
+	DftiCreateDescriptor(&handle, DFTI_DOUBLE, DFTI_COMPLEX, 3, fftg);
 	DftiCommitDescriptor(handle);
 	DftiComputeBackward(handle, x);
 
 	double kmins[3] = {G_bounds[0] + kpt[0], G_bounds[2] + kpt[1], G_bounds[4] + kpt[2]};
+	double dv = determinant(lattice) / fftg[0] / fftg[1] / fftg[2];
+	inv_sqrt_vol = pow(determinant(lattice), -0.5);
 
 	int t_projs = 0;
 	for (int i = 0; i < num_M; i++) {
@@ -233,33 +228,38 @@ double complex* onto_projector(int* labels, double* coords, int* G_bounds, doubl
 	}
 
 	double complex* overlap = (double complex*) calloc(t_projs, sizeof(double complex));
+	double frac[3];
+	double kdotr;
 
 	for (int i = 0; i < fftg[0]; i++) {
 		for (int j = 0; j < fftg[1]; j++) {
 			for (int k = 0; k  < fftg[2]; k++) {
-				double frac[3] = {(double)i/fftg[0], (double)j/fftg[1], (double)k/fftg[2]};
-				double complex temp = (x[i*fftg[1]*fftg[2] + j*fftg[2] + k].real
-					+ I * x[i*fftg[1]*fftg[2] + j*fftg[2] + k].imag)
-					* cexp(I*2*PI*(dot(kmins, frac)));
-				int t = 0;
-				for (int q = 0; q < num_M; q++) {
-					int p = M[q];
-					ppot_t pp = pps[labels[p]];
-					if (dist_from_frac(coords+3*p, frac, lattice) < pp.rmax) {
-						for (int n = 0; n < pp.num_projs; n++) {
-							for (int m = -pp.funcs[n].l; m <= pp.funcs[n].l; m++) {
-								overlap[t] += proj_value(pp.funcs[n], m, pp.rmax, coords+3*p, frac, lattice)
-											* temp
-											/ (fftg[0]*fftg[1]*fftg[2]);
-								t++;
-							}
-						}
-						break;
-					}
-				}
+				frac[0] = (double)i/fftg[0];
+				frac[1] = (double)j/fftg[1];
+				frac[2] = (double)k/fftg[2];
+				kdotr = 2 * PI * dot(kmins, frac);
+				x[i*fftg[1]*fftg[2] + j*fftg[2] + k].real *= inv_sqrt_vol * cos(kdotr);
+				x[i*fftg[1]*fftg[2] + j*fftg[2] + k].imag *= inv_sqrt_vol * sin(kdotr);
 			}
 		}
 	}
+
+	int s, num_indices, index, t=0;
+	for (int m = 0; m < num_M; m++) {
+		s = M[m];
+		num_indices = sites[s].num_indices;
+		int* indices = sites[s].indices;
+		for (int p = 0; p < sites[s].total_projs; p++) {
+			double complex* values = sites[s].projs[p].values;
+			for (int i = 0; i < num_indices; i++) {
+				index = indices[i];
+				overlap[t] += conj(values[i]) * (x[index].real + I*x[index].imag) * dV;
+			}
+			t++;
+		}
+	}
+
+	mkl_free(x);
 
 	return overlap;
 }

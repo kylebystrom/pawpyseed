@@ -49,7 +49,7 @@ void setup(char* filename, int* pnrecl, int* pnspin, int* pnwk, int* pnband,
 	double magb2 = mag(reclattice+3);
 	double magb3 = mag(reclattice+6);
 	double vtemp[3];
-	double vmag, sinphi123, phi123;
+	double vmag, sinphi123;
 	
 	double phi12 = acos(dot(reclattice+0, reclattice+3) / (magb1 * magb2));
 	vcross(vtemp, reclattice+0, reclattice+3);
@@ -144,6 +144,7 @@ pswf_t* read_wavefunctions(char* filename, double* kpt_weights) {
 	wf->kpts = kpts;
 	wf->lattice = lattice;
 	wf->reclattice = reclattice;
+	wf->G_bounds = (int*) calloc(6, sizeof(int));
 
 	double* kptr = (double*) malloc(nrecl);
 	float complex* cptr = (float complex*) malloc(nrecl);
@@ -166,9 +167,11 @@ pswf_t* read_wavefunctions(char* filename, double* kpt_weights) {
 		if (igall == NULL) {
 		    	ALLOCATION_FAILED();
 		}
-		double kx = kptr[1];
-		double ky = kptr[2];
-		double kz = kptr[3];
+		kpt->k = (double*) malloc(3*sizeof(double));
+		kpt->k[0] = kptr[1];
+		kpt->k[1] = kptr[2];
+		kpt->k[2] = kptr[3];
+		double kx = kpt->k[0], ky = kpt->k[1], kz = kpt->k[2];
 		for (int i = 0; i < nband; i++) {
 			cener[i] = kptr[4+i*3];
 			occ[i] = kptr[6+i*3];
@@ -203,6 +206,12 @@ pswf_t* read_wavefunctions(char* filename, double* kpt_weights) {
 						igall[ncnt*3+0] = ig1p;
 						igall[ncnt*3+1] = ig2p;
 						igall[ncnt*3+2] = ig3p;
+						if (ig1p < wf->G_bounds[0]) wf->G_bounds[0] = ig1p;
+						else if (ig1p > wf->G_bounds[1]) wf->G_bounds[1] = ig1p;
+						if (ig2p < wf->G_bounds[2]) wf->G_bounds[2] = ig2p;
+						else if (ig2p > wf->G_bounds[3]) wf->G_bounds[3] = ig2p;
+						if (ig3p < wf->G_bounds[4]) wf->G_bounds[4] = ig3p;
+						else if (ig3p > wf->G_bounds[5]) wf->G_bounds[5] = ig3p;
 					}
 				}
 			}

@@ -67,14 +67,14 @@ void vc_pseudoprojection(pswf_t* wf_ref, pswf_t* wf_proj, int BAND_NUM, double* 
 
 }
 
-float* pseudoprojection(pswf_t* wf_ref, pswf_t* wf_proj, int BAND_NUM) {
+double* pseudoprojection(pswf_t* wf_ref, pswf_t* wf_proj, int BAND_NUM) {
 
 	kpoint_t** kpts = wf_ref->kpts;
 	kpoint_t** kptspro = wf_proj->kpts;
 	int NUM_KPTS = wf_ref->nwk * wf_ref->nspin;
 	int NUM_BANDS = wf_ref->nband;
 
-	float* projections = (float*) malloc(2*NUM_BANDS*NUM_KPTS*sizeof(float));
+	double* projections = (double*) malloc(2*NUM_BANDS*NUM_KPTS*sizeof(double));
 
 	#pragma omp parallel for 
 	for (int b = 0; b < NUM_BANDS; b++)
@@ -98,7 +98,7 @@ float* pseudoprojection(pswf_t* wf_ref, pswf_t* wf_proj, int BAND_NUM) {
 }
 
 ppot_t* get_projector_list(int num_els, int* labels, int* ls, double* proj_grids, double* wave_grids,
-	double* projectors, double* aewaves, double* pswaves) {
+	double* projectors, double* aewaves, double* pswaves, double* rmaxs) {
 
 	ppot_t* pps = (ppot_t*) malloc(num_els * sizeof(ppot_t));
 	int wt = 0;
@@ -108,6 +108,7 @@ ppot_t* get_projector_list(int num_els, int* labels, int* ls, double* proj_grids
 	int l_num = 0;
 	for (int i = 0; i < num_els; i++) {
 		pps[i].num_projs = labels[4*i+1];
+		pps[i].rmax = rmaxs[i];
 		pps[i].proj_gridsize = labels[4*i+2];
 		pps[i].wave_gridsize = labels[4*i+3];
 		pps[i].wave_grid = (double*) malloc((pps[i].wave_gridsize+1)*sizeof(double));
@@ -146,12 +147,6 @@ ppot_t* get_projector_list(int num_els, int* labels, int* ls, double* proj_grids
 real_proj_site_t* projector_values(int num_sites, int* labels, double* coords,
 	double* lattice, ppot_t* pps, int* fftg) {
 
-	int t_projs = 0;
-	for (int i = 0; i < num_M; i++) {
-		for (int j = 0; j < pps[labels[M[i]]].num_projs; j++)
-			t_projs += 2 * pps[labels[M[i]]].funcs[j].l + 1;
-	}
-
 	double intervals[3] = {mag(lattice)/fftg[0], mag(lattice+3)/fftg[1], mag(lattice+6)/fftg[2]};
 	double vol = determinant(lattice);
 	int num_pts = fftg[0] * fftg[1] * fftg[2];
@@ -173,6 +168,7 @@ real_proj_site_t* projector_values(int num_sites, int* labels, double* coords,
 			for (int m = -pps[labels[i]].funcs[j].l; m <= pps[labels[i]].funcs[j].l; m++) {
 				sites[i].projs[p].l = pps[labels[i]].funcs[j].l;
 				sites[i].projs[p].m = m;
+				sites[i].projs[p].func_num = j;
 				sites[i].projs[p].values = calloc(pps[labels[i]].num_cart_gridpts, sizeof(double complex));
 				p++;
 			}
@@ -185,12 +181,13 @@ real_proj_site_t* projector_values(int num_sites, int* labels, double* coords,
 				double frac[3] = {(double)i/fftg[0], (double)j/fftg[1], (double)k/fftg[2]};
 				for (int p = 0; p < num_sites; p++) {
 					if (dist_from_frac(coords+3*p, frac, lattice) < sites[p].rmax) {
-						sites[p].indices[sites[p].total_projs] = i*fftg[1]*fftg[2] + j*fftg[2] + k;
+						sites[p].indices[sites[p].num_indices] = i*fftg[1]*fftg[2] + j*fftg[2] + k;
 						for (int n = 0; n < sites[p].total_projs; n++) {
-							sites[p].projs[n].values[sites[p].total_projs] = 
-								proj_value(pp.funcs[n], m, pp.rmax, coords+3*p, frac, lattice);
+							sites[p].projs[n].values[sites[p].num_indices] = 
+								proj_value(pps[labels[p]].funcs[sites[p].projs[n].func_num],
+								sites[i].projs[p].m, sites[i].rmax, coords+3*p, frac, lattice);
 						}
-						sites[p].total_projs++;
+						sites[p].num_indices++;
 						break;
 					}
 				}
@@ -203,7 +200,6 @@ real_proj_site_t* projector_values(int num_sites, int* labels, double* coords,
 
 double complex* onto_projector(real_proj_site_t* sites, int* labels, int* G_bounds, double* lattice,
 	double* kpt, int* Gs, float complex* Cs, int num_waves, int num_M, int* M, ppot_t* pps, int* fftg) {
-	
 	MKL_LONG status = 0;
 	DFTI_DESCRIPTOR_HANDLE handle = 0;
 	MKL_Complex16* x = (MKL_Complex16*) mkl_calloc(fftg[0]*fftg[1]*fftg[2], sizeof(MKL_Complex16), 64);
@@ -220,7 +216,7 @@ double complex* onto_projector(real_proj_site_t* sites, int* labels, int* G_boun
 
 	double kmins[3] = {G_bounds[0] + kpt[0], G_bounds[2] + kpt[1], G_bounds[4] + kpt[2]};
 	double dv = determinant(lattice) / fftg[0] / fftg[1] / fftg[2];
-	inv_sqrt_vol = pow(determinant(lattice), -0.5);
+	double inv_sqrt_vol = pow(determinant(lattice), -0.5);
 
 	int t_projs = 0;
 	for (int i = 0; i < num_M; i++) {
@@ -265,11 +261,13 @@ double complex* onto_projector(real_proj_site_t* sites, int* labels, int* G_boun
 	return overlap;
 }
 
-void add_num_cart_gridpts(ppot_t pp, double* lattice, int* fftg) {
+void add_num_cart_gridpts(ppot_t* pp_ptr, double* lattice, int* fftg) {
 
-	double maga1 = mag(lattice+0) / fftg[0];
-	double maga2 = mag(lattice+3) / fftg[1];
-	double maga3 = mag(lattice+6) / fftg[2];
+	ppot_t pp = *pp_ptr;
+
+	double maga1 = mag(lattice+0);
+	double maga2 = mag(lattice+3);
+	double maga3 = mag(lattice+6);
 
 	double vtemp[3];
 	double vmag, sinphi123;
@@ -278,37 +276,40 @@ void add_num_cart_gridpts(ppot_t pp, double* lattice, int* fftg) {
 	vcross(vtemp, lattice+0, lattice+3);
 	vmag = mag(vtemp);
 	sinphi123 = dot(lattice+6, vtemp) / (vmag * maga3);
-	double na1maxA = pp.rmax / (maga1 * fabs(sin(phi12))) + 1;
-	double na2maxA = pp.rmax / (maga2 * fabs(sin(phi12))) + 1;
-	double na3maxA = pp.rmax / (maga3 * fabs(sinphi123)) + 1;
-	int npmaxA = (int) round(4.0/3.0*PI*na1maxA*na2maxA*na3maxA);
+	double na1maxA = pp.rmax * fftg[0] / (maga1 * fabs(sin(phi12))) + 1;
+	double na2maxA = pp.rmax * fftg[1] / (maga2 * fabs(sin(phi12))) + 1;
+	double na3maxA = pp.rmax * fftg[2] / (maga3 * fabs(sinphi123)) + 1;
+	int npmaxA = (int)(4.0/3.0*PI*na1maxA*na2maxA*na3maxA) + 1;
 
 	double phi13 = acos(dot(lattice+0, lattice+6) / (maga1 * maga3));
 	vcross(vtemp, lattice+0, lattice+6);
 	vmag = mag(vtemp);
 	sinphi123 = dot(lattice+3, vtemp) / (vmag * maga2);
-	double na1maxB = pp.rmax / (maga1 * fabs(sin(phi13))) + 1;
-	double na2maxB = pp.rmax / (maga2 * fabs(sinphi123)) + 1;
-	double na3maxB = pp.rmax / (maga3 * fabs(sin(phi13))) + 1;
-	int npmaxB = (int) round(4.0/3.0*PI*na1maxB*na2maxB*na3maxB);
+	double na1maxB = pp.rmax * fftg[0] / (maga1 * fabs(sin(phi13))) + 1;
+	double na2maxB = pp.rmax * fftg[1] / (maga2 * fabs(sinphi123)) + 1;
+	double na3maxB = pp.rmax * fftg[2] / (maga3 * fabs(sin(phi13))) + 1;
+	int npmaxB = (int)(4.0/3.0*PI*na1maxB*na2maxB*na3maxB) + 1;
 
 	double phi23 = acos(dot(lattice+3, lattice+6) / (maga2 * maga3));
 	vcross(vtemp, lattice+3, lattice+6);
 	vmag = mag(vtemp);
 	sinphi123 = dot(lattice, vtemp) / (vmag * maga1);
-	double na1maxC = pp.rmax / (maga1 * fabs(sinphi123)) + 1;
-	double na2maxC = pp.rmax / (maga2 * fabs(sin(phi23))) + 1;
-	double na3maxC = pp.rmax / (maga3 * fabs(sin(phi23))) + 1;
-	int npmaxC = (int) round(4.0/3.0*PI*na1maxC*na2maxC*na3maxC);
+	double na1maxC = pp.rmax * fftg[0] / (maga1 * fabs(sinphi123)) + 1;
+	double na2maxC = pp.rmax * fftg[1] / (maga2 * fabs(sin(phi23))) + 1;
+	double na3maxC = pp.rmax * fftg[2] / (maga3 * fabs(sin(phi23))) + 1;
+	int npmaxC = (int)(4.0/3.0*PI*na1maxC*na2maxC*na3maxC) + 1;
+
+	printf("ancg %lf %lf %lf %lf %lf %d %d %d", maga1, maga2, maga3, na2maxA, na3maxA, npmaxA, npmaxB, npmaxC);
 
 	int npmax = npmaxA;
 	if (npmaxB < npmax) npmax = npmaxB;
 	if (npmaxC < npmax) npmax = npmaxC;
 
-	pp.num_cart_gridpts = npmax;
+	pp_ptr->num_cart_gridpts = npmax;
 }
 
-void make_pwave_overlap_matrices(ppot_t pp) {
+void make_pwave_overlap_matrices(ppot_t* pp_ptr) {
+	ppot_t pp = *pp_ptr;
 	int size = pp.num_projs * pp.num_projs;
 	double* psov = (double*) calloc(size, sizeof(double));
 	double* aeov = (double*) calloc(size, sizeof(double));
@@ -340,17 +341,22 @@ void make_pwave_overlap_matrices(ppot_t pp) {
 			diov[pp.num_projs*i+j] = conj(diov[pp.num_projs*j+i]);
 		}
 	}
+
+	printf("checkit %lf\n", creal(psov[0]));
 	
-	pp.pspw_overlap_matrix = psov;
-	pp.aepw_overlap_matrix = aeov;
-	pp.diff_overlap_matrix = diov;
+	pp_ptr->pspw_overlap_matrix = psov;
+	pp_ptr->aepw_overlap_matrix = aeov;
+	pp_ptr->diff_overlap_matrix = diov;
 }
 
-double complex* compensation_terms(int BAND_NUM, pswf_t* wf_proj, pswf_t* wf_ref, ppot_t* pps,
+double* compensation_terms(int BAND_NUM, pswf_t* wf_proj, pswf_t* wf_ref, ppot_t* pps,
 	int num_elems, int num_M, int num_N_R, int num_N_S, int num_N_RS,
 	int* M, int* N_R, int* N_S, int* N_RS,
 	int* proj_labels, double* proj_coords, int* ref_labels, double* ref_coords,
 	int* fft_grid) {
+
+	freopen("tst.out", "w", stdout);
+	setbuf(stdout, NULL);
 
 	printf("%d %d %d %d %d %d\n", BAND_NUM, num_elems, num_M, num_N_R, num_N_S, num_N_RS);
 	printf("%d %lf %d %lf %d\n", proj_labels[0], proj_coords[0], ref_labels[0], ref_coords[0], fft_grid[1]);
@@ -361,35 +367,43 @@ double complex* compensation_terms(int BAND_NUM, pswf_t* wf_proj, pswf_t* wf_ref
 
 	//#pragma omp parallel for 
 	for (int p = 0; p < num_elems; p++) {
-		make_pwave_overlap_matrices(pps[p]);
-		add_num_cart_gridpts(pps[p], wf_ref->lattice, fft_grid);
+		make_pwave_overlap_matrices(pps+p);
+		add_num_cart_gridpts(pps+p, wf_ref->lattice, fft_grid);
 	}
 
-	double complex* overlap = (double complex*) calloc(NUM_BANDS * NUM_KPTS, sizeof(double complex));
+	double* overlap = (double*) calloc(2 * NUM_BANDS * NUM_KPTS, sizeof(double));
+	time_t start = clock();
+	real_proj_site_t* ref_sites = projector_values(num_M + num_N_R, ref_labels, ref_coords,
+		wf_ref->lattice, pps, fft_grid);
+	real_proj_site_t* proj_sites = projector_values(num_M + num_N_S, proj_labels, proj_coords,
+		wf_proj->lattice, pps, fft_grid);
+	time_t stop = clock();
+	printf("time %ld\n", (stop - start)/CLOCKS_PER_SEC);
 
-	real_proj_site_t* ref_sites = projector_values(int num_sites, int* ref_labels, double* ref_coords,
-		double* wf_ref->lattice, ppot_t* pps, int* fft_grid);
-	real_proj_site_t* proj_sites = projector_values(int num_sites, int* proj_labels, double* proj_coords,
-		double* wf_proj->lattice, ppot_t* pps, int* fft_grid);
-
+	start = clock();
 	double complex** lst_proj_projs = (double complex**) malloc(NUM_KPTS*sizeof(double complex*));
+	if (lst_proj_projs == NULL) ALLOCATION_FAILED();
 	#pragma omp parallel for 
 	for (int kpt_num = 0; kpt_num < NUM_KPTS; kpt_num++) {
-		lst_proj_projs[kpt_num] = onto_projector(proj_sites, proj_labels, proj_coords,
+		lst_proj_projs[kpt_num] = onto_projector(proj_sites, proj_labels,
 			wf_proj->G_bounds, wf_proj->lattice, wf_proj->kpts[kpt_num]->k,
 			wf_proj->kpts[kpt_num]->Gs, wf_proj->kpts[kpt_num]->bands[BAND_NUM]->Cs,
 			wf_proj->kpts[kpt_num]->bands[BAND_NUM]->num_waves, num_M, N_RS, pps, fft_grid);
 	}
-
+	stop = clock();
+	printf("time %ld\n", (stop - start)/CLOCKS_PER_SEC);
+	printf("test overlap mat %lf %lf %d\n", creal(pps[0].pspw_overlap_matrix[0]),
+		cimag(pps[0].pspw_overlap_matrix[0]), pps[0].num_cart_gridpts);
+	//printf("test sites %lf", creal(ref_sites[0].projs[0].values[0]));
 	#pragma omp parallel for
 	for (int w = 0; w < NUM_BANDS * NUM_KPTS; w++) {
-
+		double complex temp = 0;
 		double complex* proj_projs = lst_proj_projs[w%NUM_KPTS];
-		double complex* ref_projs = onto_projector(ref_sites, ref_labels, ref_coords,
+		double complex* ref_projs = onto_projector(ref_sites, ref_labels,
 			wf_ref->G_bounds, wf_ref->lattice, wf_ref->kpts[w%NUM_KPTS]->k,
 			wf_ref->kpts[w%NUM_KPTS]->Gs, wf_ref->kpts[w%NUM_KPTS]->bands[w/NUM_KPTS]->Cs,
 			wf_ref->kpts[w%NUM_KPTS]->bands[w/NUM_KPTS]->num_waves, num_M, M, pps, fft_grid);
-
+		printf("stat check %lf %lf\n", creal(proj_projs[50]), creal(ref_projs[50]));
 		int t = 0;
 		for (int s = 0; s < num_M; s++) {
 			ppot_t pp = pps[ref_labels[M[s]]];
@@ -401,10 +415,10 @@ double complex* compensation_terms(int BAND_NUM, pswf_t* wf_proj, pswf_t* wf_ref
 					int tj = 0;
 					for (int j = 0; j < pp.num_projs; j++) {
 						for (int temp2 = 0; temp2 < 2*pp.funcs[j].l+1; temp2++) {
-							overlap[w] += conj(ref_projs[t+tj])
+							temp += conj(ref_projs[t+tj])
 								* (pp.aepw_overlap_matrix[pp.num_projs*i+j]
 									- pp.pspw_overlap_matrix[pp.num_projs*i+j])
-								* proj_projs[t+i];
+								* proj_projs[t+ti];
 							tj++;
 						}
 					}
@@ -415,6 +429,8 @@ double complex* compensation_terms(int BAND_NUM, pswf_t* wf_proj, pswf_t* wf_ref
 		}
 
 		free(ref_projs);
+		overlap[2*w] = creal(temp);
+		overlap[2*w+1]= cimag(temp);
 	}
 
 	for (int kpt_num = 0; kpt_num < NUM_KPTS; kpt_num++) {

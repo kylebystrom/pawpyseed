@@ -40,6 +40,7 @@ typedef struct proj_ae_ps {
 typedef struct real_proj {
 	int l;
 	int m;
+	int func_num;
 	double complex* values;
 } real_proj_t;
 

@@ -7,11 +7,16 @@ import os
 import numpy as np
 import json
 
+import sys
+sys.stdout.flush()
+
 MODULE_DIR = os.path.dirname(os.path.abspath(__file__))
 PAWC = CDLL(os.path.join(MODULE_DIR, "pawpy.so"))
 
 PAWC.read_wavefunctions.restype = POINTER(None)
 PAWC.get_projector_list.restype = POINTER(None)
+PAWC.compensation_terms.restype = POINTER(c_double)
+PAWC.compensation_terms.restype = POINTER(c_double)
 
 def cdouble_to_numpy(arr, length):
 	arr = cast(arr, POINTER(c_double))
@@ -255,7 +260,7 @@ class Wavefunction:
 		nband = self.projector.get_nband(basis.pwf.wf_ptr)
 		nwk = self.projector.get_nwk(basis.pwf.wf_ptr)
 		nspin = self.projector.get_nspin(basis.pwf.wf_ptr)
-		res = cfloat_to_numpy(res, 2*nband*nwk*nspin)
+		res = cdouble_to_numpy(res, 2*nband*nwk*nspin)
 		M_R, M_S, N_R, N_S, N_RS = self.make_site_lists(basis)
 		projector_list, selfnums, selfcoords, basisnums, basiscoords = self.make_c_projectors(basis)
 		ct = self.projector.compensation_terms(band_num, self.pwf.wf_ptr, basis.pwf.wf_ptr, projector_list, 
@@ -263,7 +268,18 @@ class Wavefunction:
 			numpy_to_cint(N_R), numpy_to_cint(N_S), numpy_to_cint(M_S), numpy_to_cint(selfnums),
 			numpy_to_cdouble(selfcoords), numpy_to_cint(basisnums), numpy_to_cdouble(basiscoords),
 			numpy_to_cint(self.dim))
-		ct = cdouble_to_numpy(ct, 360*32)
+		ct = cdouble_to_numpy(ct, 2*nband*nwk*nspin)
+		occs = cdouble_to_numpy(self.projector.get_occs(basis.pwf.wf_ptr), nband*nwk*nspin)
+		c, v = 0, 0
+		for i in range(nband*nwk*nspin):
+			temp = (res[2*i]+ct[2*i]) + 1j * (res[2*i+1]+ct[2*i+1])
+			if occs[i] > 0.5:
+				v += np.absolute(temp) ** 2
+			else:
+				c += np.absolute(temp) ** 2
+		print (res)
+		print (ct)
+		print ('c, v', c, v)
 
 	def make_c_projectors(self, basis=None):
 		"""
@@ -325,7 +341,8 @@ class Wavefunction:
 
 		projector_list = self.projector.get_projector_list(num_els, numpy_to_cint(clabels),
 			numpy_to_cint(ls), numpy_to_cdouble(pgrids), numpy_to_cdouble(wgrids),
-			numpy_to_cdouble(projectors), numpy_to_cdouble(aewaves), numpy_to_cdouble(pswaves))
+			numpy_to_cdouble(projectors), numpy_to_cdouble(aewaves), numpy_to_cdouble(pswaves),
+			numpy_to_cdouble(np.array([1.05])))
 		selfnums = np.array([labels[el(s)] for s in self.structure], dtype=np.int32)
 		basisnums = np.array([labels[el(s)] for s in basis.structure], dtype=np.int32)
 		selfcoords = np.array([], np.float64)
@@ -350,7 +367,7 @@ pwf2 = PseudoWavefunction("charge_0/WAVECAR", "charge_0/vasprun.xml")
 
 wf1 = Wavefunction(posb, pwf1, CoreRegion(pot), (240,240,240))
 wf2 = Wavefunction(posd, pwf2, CoreRegion(pot), (240,240,240))
-for i in range(253,257):
+for i in range(253,254):
 	wf2.single_band_projection(i, wf1)
 
 #For each structure

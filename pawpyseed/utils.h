@@ -99,9 +99,6 @@ double fac(int n);
 
 double complex Ylm(int l, int m, double theta, double phi);
 
-double Ylmr(int l, int m, double theta, double phi);
-double Ylmi(int l, int m, double theta, double phi);
-
 double complex proj_value(funcset_t funcs, int m, double rmax,
 	double* ion_pos, double* pos, double* lattice);
 

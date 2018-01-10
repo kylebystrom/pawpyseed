@@ -185,7 +185,7 @@ real_proj_site_t* projector_values(int num_sites, int* labels, double* coords,
 						for (int n = 0; n < sites[p].total_projs; n++) {
 							sites[p].projs[n].values[sites[p].num_indices] = 
 								proj_value(pps[labels[p]].funcs[sites[p].projs[n].func_num],
-								sites[i].projs[p].m, sites[i].rmax, coords+3*p, frac, lattice);
+								sites[p].projs[n].m, sites[p].rmax, coords+3*p, frac, lattice);
 						}
 						sites[p].num_indices++;
 						break;
@@ -194,29 +194,40 @@ real_proj_site_t* projector_values(int num_sites, int* labels, double* coords,
 			}
 		}
 	}
+	//for (int i = 0; i < num_sites; i++) {
+	//	printf("looking for nan %e\n", creal(sites[i].projs[0].values[0]));
+	//}
 
 	return sites;
 }
 
 double complex* onto_projector(real_proj_site_t* sites, int* labels, int* G_bounds, double* lattice,
 	double* kpt, int* Gs, float complex* Cs, int num_waves, int num_M, int* M, ppot_t* pps, int* fftg) {
+	
 	MKL_LONG status = 0;
 	DFTI_DESCRIPTOR_HANDLE handle = 0;
 	MKL_Complex16* x = (MKL_Complex16*) mkl_calloc(fftg[0]*fftg[1]*fftg[2], sizeof(MKL_Complex16), 64);
+	MKL_LONG dim = 3;
+	MKL_LONG length[3] = {fftg[0], fftg[1], fftg[2]};
 
+	//double test_total = 0;
 	for (int w = 0; w < num_waves; w++) {
 		int g1 = Gs[3*w]-G_bounds[0], g2 = Gs[3*w+1]-G_bounds[2], g3 = Gs[3*w+2]-G_bounds[4];
 		x[g1*fftg[1]*fftg[2] + g2*fftg[2] + g3].real = creal(Cs[w]);
 		x[g1*fftg[1]*fftg[2] + g2*fftg[2] + g3].imag = cimag(Cs[w]);
+		//test_total += cabs(Cs[w]) * cabs(Cs[w]);
 	}
 
-	DftiCreateDescriptor(&handle, DFTI_DOUBLE, DFTI_COMPLEX, 3, fftg);
-	DftiCommitDescriptor(handle);
-	DftiComputeBackward(handle, x);
+	MKL_LONG status1 = DftiCreateDescriptor(&handle, DFTI_DOUBLE, DFTI_COMPLEX, dim, length);
+	MKL_LONG status2 = DftiCommitDescriptor(handle);
+	MKL_LONG status3 = DftiComputeBackward(handle, x);
+	//printf("%s\n%s\n%s\n", DftiErrorMessage(status1), DftiErrorMessage(status2), DftiErrorMessage(status3));
 
 	double kmins[3] = {G_bounds[0] + kpt[0], G_bounds[2] + kpt[1], G_bounds[4] + kpt[2]};
 	double dv = determinant(lattice) / fftg[0] / fftg[1] / fftg[2];
 	double inv_sqrt_vol = pow(determinant(lattice), -0.5);
+	//printf("integrating params %e %e %e %e %e\n", dv, inv_sqrt_vol, kmins[0], kmins[1], kmins[2]);
+	//printf("determinant %lf\n", determinant(lattice));
 
 	int t_projs = 0;
 	for (int i = 0; i < num_M; i++) {
@@ -228,6 +239,8 @@ double complex* onto_projector(real_proj_site_t* sites, int* labels, int* G_boun
 	double frac[3];
 	double kdotr;
 
+	//double total = 0;
+	double rp, ip;
 	for (int i = 0; i < fftg[0]; i++) {
 		for (int j = 0; j < fftg[1]; j++) {
 			for (int k = 0; k  < fftg[2]; k++) {
@@ -235,11 +248,17 @@ double complex* onto_projector(real_proj_site_t* sites, int* labels, int* G_boun
 				frac[1] = (double)j/fftg[1];
 				frac[2] = (double)k/fftg[2];
 				kdotr = 2 * PI * dot(kmins, frac);
-				x[i*fftg[1]*fftg[2] + j*fftg[2] + k].real *= inv_sqrt_vol * cos(kdotr);
-				x[i*fftg[1]*fftg[2] + j*fftg[2] + k].imag *= inv_sqrt_vol * sin(kdotr);
+				rp = x[i*fftg[1]*fftg[2] + j*fftg[2] + k].real * inv_sqrt_vol;
+				ip = x[i*fftg[1]*fftg[2] + j*fftg[2] + k].imag * inv_sqrt_vol;
+				x[i*fftg[1]*fftg[2] + j*fftg[2] + k].real = rp * cos(kdotr) - ip * sin(kdotr);
+				x[i*fftg[1]*fftg[2] + j*fftg[2] + k].imag = ip * cos(kdotr) + rp * sin(kdotr);
+				//total += (pow(x[i*fftg[1]*fftg[2] + j*fftg[2] + k].real, 2)
+				//	+ pow(x[i*fftg[1]*fftg[2] + j*fftg[2] + k].imag, 2)) * dv;
 			}
 		}
 	}
+
+	//printf("total %lf %lf\n", test_total, total);
 
 	int s, num_indices, index, t=0;
 	for (int m = 0; m < num_M; m++) {
@@ -299,11 +318,11 @@ void add_num_cart_gridpts(ppot_t* pp_ptr, double* lattice, int* fftg) {
 	double na3maxC = pp.rmax * fftg[2] / (maga3 * fabs(sin(phi23))) + 1;
 	int npmaxC = (int)(4.0/3.0*PI*na1maxC*na2maxC*na3maxC) + 1;
 
-	printf("ancg %lf %lf %lf %lf %lf %d %d %d", maga1, maga2, maga3, na2maxA, na3maxA, npmaxA, npmaxB, npmaxC);
+	printf("ancg %lf %lf %lf %lf %lf %d %d %d\n", maga1, maga2, maga3, na2maxA, na3maxA, npmaxA, npmaxB, npmaxC);
 
 	int npmax = npmaxA;
-	if (npmaxB < npmax) npmax = npmaxB;
-	if (npmaxC < npmax) npmax = npmaxC;
+	if (npmaxB > npmax) npmax = npmaxB;
+	if (npmaxC > npmax) npmax = npmaxC;
 
 	pp_ptr->num_cart_gridpts = npmax;
 }
@@ -325,7 +344,7 @@ void make_pwave_overlap_matrices(ppot_t* pp_ptr) {
 				double dr = pp.wave_grid[0];
 				double r = pp.wave_grid[0];
 				for (int k = 0; k < pp.wave_gridsize; k++) {
-					r = pp.wave_grid[k];
+					r = pp.wave_grid[k+1];
 					dr = pp.wave_grid[k+1] - pp.wave_grid[k];
 					psov[pp.num_projs*i+j] += r * r * ps1[k] * ps2[k] * dr;
 					aeov[pp.num_projs*i+j] += r * r * ae1[k] * ae2[k] * dr;
@@ -336,14 +355,12 @@ void make_pwave_overlap_matrices(ppot_t* pp_ptr) {
 	}
 	for (int i = 1; i < pp.num_projs; i++) {
 		for (int j = 0; j < i; j++) {
-			psov[pp.num_projs*i+j] = conj(psov[pp.num_projs*j+i]);
-			aeov[pp.num_projs*i+j] = conj(aeov[pp.num_projs*j+i]);
-			diov[pp.num_projs*i+j] = conj(diov[pp.num_projs*j+i]);
+			psov[pp.num_projs*i+j] = psov[pp.num_projs*j+i];
+			aeov[pp.num_projs*i+j] = aeov[pp.num_projs*j+i];
+			diov[pp.num_projs*i+j] = diov[pp.num_projs*j+i];
 		}
 	}
 
-	printf("checkit %lf\n", creal(psov[0]));
-	
 	pp_ptr->pspw_overlap_matrix = psov;
 	pp_ptr->aepw_overlap_matrix = aeov;
 	pp_ptr->diff_overlap_matrix = diov;
@@ -392,8 +409,7 @@ double* compensation_terms(int BAND_NUM, pswf_t* wf_proj, pswf_t* wf_ref, ppot_t
 	}
 	stop = clock();
 	printf("time %ld\n", (stop - start)/CLOCKS_PER_SEC);
-	printf("test overlap mat %lf %lf %d\n", creal(pps[0].pspw_overlap_matrix[0]),
-		cimag(pps[0].pspw_overlap_matrix[0]), pps[0].num_cart_gridpts);
+	printf("test overlap mat %lf %d\n", pps[0].aepw_overlap_matrix[0],pps[0].num_cart_gridpts);
 	//printf("test sites %lf", creal(ref_sites[0].projs[0].values[0]));
 	#pragma omp parallel for
 	for (int w = 0; w < NUM_BANDS * NUM_KPTS; w++) {
@@ -403,7 +419,7 @@ double* compensation_terms(int BAND_NUM, pswf_t* wf_proj, pswf_t* wf_ref, ppot_t
 			wf_ref->G_bounds, wf_ref->lattice, wf_ref->kpts[w%NUM_KPTS]->k,
 			wf_ref->kpts[w%NUM_KPTS]->Gs, wf_ref->kpts[w%NUM_KPTS]->bands[w/NUM_KPTS]->Cs,
 			wf_ref->kpts[w%NUM_KPTS]->bands[w/NUM_KPTS]->num_waves, num_M, M, pps, fft_grid);
-		printf("stat check %lf %lf\n", creal(proj_projs[50]), creal(ref_projs[50]));
+		printf("stat check %e %e\n", creal(proj_projs[50]), creal(ref_projs[50]));
 		int t = 0;
 		for (int s = 0; s < num_M; s++) {
 			ppot_t pp = pps[ref_labels[M[s]]];
@@ -416,7 +432,7 @@ double* compensation_terms(int BAND_NUM, pswf_t* wf_proj, pswf_t* wf_ref, ppot_t
 					for (int j = 0; j < pp.num_projs; j++) {
 						for (int temp2 = 0; temp2 < 2*pp.funcs[j].l+1; temp2++) {
 							temp += conj(ref_projs[t+tj])
-								* (pp.aepw_overlap_matrix[pp.num_projs*i+j]
+								* (double complex)(pp.aepw_overlap_matrix[pp.num_projs*i+j]
 									- pp.pspw_overlap_matrix[pp.num_projs*i+j])
 								* proj_projs[t+ti];
 							tj++;

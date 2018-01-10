@@ -260,6 +260,7 @@ class Wavefunction:
 		nband = self.projector.get_nband(basis.pwf.wf_ptr)
 		nwk = self.projector.get_nwk(basis.pwf.wf_ptr)
 		nspin = self.projector.get_nspin(basis.pwf.wf_ptr)
+		print("datsa", nband, nwk, nspin)
 		res = cdouble_to_numpy(res, 2*nband*nwk*nspin)
 		M_R, M_S, N_R, N_S, N_RS = self.make_site_lists(basis)
 		projector_list, selfnums, selfcoords, basisnums, basiscoords = self.make_c_projectors(basis)
@@ -272,13 +273,14 @@ class Wavefunction:
 		occs = cdouble_to_numpy(self.projector.get_occs(basis.pwf.wf_ptr), nband*nwk*nspin)
 		c, v = 0, 0
 		for i in range(nband*nwk*nspin):
-			temp = (res[2*i]+ct[2*i]) + 1j * (res[2*i+1]+ct[2*i+1])
+			temp = (ct[2*i] + res[2*i]) + 1j * (ct[2*i+1] + res[2*i+1])
+			#temp = (ct[2*i]) + 1j * (ct[2*i+1])
 			if occs[i] > 0.5:
-				v += np.absolute(temp) ** 2
+				v += np.absolute(temp) ** 2 * self.pwf.kws[i%nwk] / nspin
 			else:
-				c += np.absolute(temp) ** 2
-		print (res)
-		print (ct)
+				c += np.absolute(temp) ** 2 * self.pwf.kws[i%nwk] / nspin
+		print (res.shape, res)
+		print (ct.shape, ct)
 		print ('c, v', c, v)
 
 	def make_c_projectors(self, basis=None):
@@ -309,9 +311,10 @@ class Wavefunction:
 			pps[label] = self.cr.pps[e]
 			labels[e] = label
 			label += 1
+		print (pps, labels)
 		if basis != None:
 			for e in basis.cr.pps:
-				if not e in pps:
+				if not e in labels:
 					pps[label] = basis.cr.pps[e]
 					labels[e] = label
 					label += 1
@@ -338,11 +341,12 @@ class Wavefunction:
 				projectors = np.append(projectors, proj)
 				aewaves = np.append(aewaves, aepw)
 				pswaves = np.append(pswaves, pspw)
+		print ("rmax", self.cr.pps['Ga'].rmax * 0.529177)
 
 		projector_list = self.projector.get_projector_list(num_els, numpy_to_cint(clabels),
 			numpy_to_cint(ls), numpy_to_cdouble(pgrids), numpy_to_cdouble(wgrids),
 			numpy_to_cdouble(projectors), numpy_to_cdouble(aewaves), numpy_to_cdouble(pswaves),
-			numpy_to_cdouble(np.array([1.05])))
+			numpy_to_cdouble(np.array([self.cr.pps['Ga'].rmax * 0.529177])))
 		selfnums = np.array([labels[el(s)] for s in self.structure], dtype=np.int32)
 		basisnums = np.array([labels[el(s)] for s in basis.structure], dtype=np.int32)
 		selfcoords = np.array([], np.float64)
@@ -359,15 +363,15 @@ class Wavefunction:
 	def proportion_conduction(self, band_num, bulk):
 		pass
 
-posb = Poscar.from_file("bulk/CONTCAR").structure
-posd = Poscar.from_file("charge_0/CONTCAR").structure
-pot = Potcar.from_file("bulk/POTCAR")
-pwf1 = PseudoWavefunction("bulk/WAVECAR", "bulk/vasprun.xml")
-pwf2 = PseudoWavefunction("charge_0/WAVECAR", "charge_0/vasprun.xml")
+posb = Poscar.from_file("CONTCAR").structure
+posd = Poscar.from_file("CONTCAR").structure
+pot = Potcar.from_file("POTCAR")
+pwf1 = PseudoWavefunction("WAVECAR", "vasprun.xml")
+pwf2 = PseudoWavefunction("WAVECAR", "vasprun.xml")
 
-wf1 = Wavefunction(posb, pwf1, CoreRegion(pot), (240,240,240))
-wf2 = Wavefunction(posd, pwf2, CoreRegion(pot), (240,240,240))
-for i in range(253,254):
+wf1 = Wavefunction(posb, pwf1, CoreRegion(pot), (40,40,40))
+wf2 = Wavefunction(posd, pwf2, CoreRegion(pot), (40,40,40))
+for i in range(0,1):
 	wf2.single_band_projection(i, wf1)
 
 #For each structure

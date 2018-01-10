@@ -120,16 +120,16 @@ double complex Ylm(int l, int m, double theta, double phi) {
 		legendre(l, m, cos(theta)) * cexp(I*m*phi);
 }
 
-double Ylmr(int l, int m, double theta, double phi) {
-	//printf("%lf", creal(Ylm(l, m, theta, phi)));
-		return creal(Ylm(l, m, theta, phi));
-}
-double Ylmi(int l, int m, double theta, double phi) {return cimag(Ylm(l, m, theta, phi));}
+double Ylmr(int l, int m, double theta, double phi) { return creal(Ylm(l, m, theta, phi)); }
+
+double Ylmi(int l, int m, double theta, double phi) { return cimag(Ylm(l, m, theta, phi)); }
 
 double complex proj_value(funcset_t funcs, int m, double rmax,
 	double* ion_pos, double* pos, double* lattice) {
+
 	double r = dist_from_frac(ion_pos, pos, lattice);
 	double radial_val = funcs.proj[(int)(r/rmax*100)];
+	if (r < 0.001) return Ylm(funcs.l, m, 0, 0) * radial_val;
 	double theta = 0, phi = 0;
 	double temp[3] = {0,0,0};
 	for (int i = 0; i < 3; i++) {
@@ -141,14 +141,18 @@ double complex proj_value(funcset_t funcs, int m, double rmax,
 	}
 	frac_to_cartesian(temp, lattice);
 	theta = acos(temp[2]/r);
-	phi = acos(temp[0]/pow(temp[0]*temp[0]+temp[1]+temp[1], 0.5));
+	if (fabs(r - fabs(temp[2])) < 0.01) phi = 0;
+	else phi = acos(temp[0] / pow(temp[0]*temp[0] + temp[1]*temp[1], 0.5));
 	if (temp[0] < 0) phi = 2*PI - phi;
-
-	double sph_val = Ylm(funcs.l, m, theta, phi);
+	//printf("inp %d %lf %d\n", m, rmax, funcs.l);
+	double complex sph_val = Ylm(funcs.l, m, theta, phi);
+	//printf("out %lf %lf %lf %lf %lf %lf %lf %lf %lf\n", phi, theta, r, temp[0], temp[1], temp[2], radial_val, creal(sph_val), cimag(sph_val));
 	return radial_val * sph_val;
 }
 
+
+
 void ALLOCATION_FAILED() {
-	printf("ALLOCATION FAILED");
+	printf("ALLOCATION FAILED\n");
 	exit(-1);
 }

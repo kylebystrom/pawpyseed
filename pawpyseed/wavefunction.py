@@ -376,7 +376,7 @@ class Wavefunction:
 		pass
 
 	def free_all(self):
-		self.projector.free_pswf(self.wf_ptr)
+		self.projector.free_pswf(self.pwf.wf_ptr)
 		self.projector.free_ppot_list(self.projector_list, len(self.cr.pps))
 
 posb = Poscar.from_file("CONTCAR").structure

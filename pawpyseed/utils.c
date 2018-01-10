@@ -110,7 +110,7 @@ void free_real_proj_site(real_proj_site_t* site) {
 	for (int i = 0; i < site->total_projs; i++) {
 		free_real_proj(site->projs + i);
 	}
-	free(sites->projs);
+	free(site->projs);
 	free(site->indices);
 }
 
@@ -211,8 +211,6 @@ double complex proj_value(funcset_t funcs, int m, double rmax,
 	//printf("out %lf %lf %lf %lf %lf %lf %lf %lf %lf\n", phi, theta, r, temp[0], temp[1], temp[2], radial_val, creal(sph_val), cimag(sph_val));
 	return radial_val * sph_val;
 }
-
-
 
 void ALLOCATION_FAILED() {
 	printf("ALLOCATION FAILED\n");

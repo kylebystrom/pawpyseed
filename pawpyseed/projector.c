@@ -449,7 +449,7 @@ double* compensation_terms(int BAND_NUM, pswf_t* wf_proj, pswf_t* wf_ref, ppot_t
 		overlap[2*w+1]= cimag(temp);
 	}
 
-	free_real_proj_site_list(ref_sites);
+	free_real_proj_site_list(ref_sites, num_M + num_N_R);
 	free_real_proj_site_list(proj_sites);
 
 	for (int kpt_num = 0; kpt_num < NUM_KPTS; kpt_num++) {

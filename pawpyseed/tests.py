@@ -1,5 +1,5 @@
 import unittest
-import os
+import os, subprocess
 import time
 
 import numpy as np
@@ -65,8 +65,28 @@ class TestC:
 				assert 2*(t2-t1) > t3 - t2
 				assert_almost_equal(np.linalg.norm(ys-ys2),0.0)
 
-	
+class TestMem:
 
+	def setup(self):
+		pass
+
+	def teardown(self):
+		pass
+
+	def test_read(self):
+		f = open('readtest.out', 'w')
+		subprocess.call('valgrind ./memtest read'.split(), stdout=f, stderr=f)
+		f.close()
+
+	def test_pseudo(self):
+		f = open('pseudotest.out', 'w')
+		subprocess.call('valgrind ./memtest pseudo'.split(), stdout=f, stderr=f)
+		f.close()
+
+	def test_list(self):
+		f = open('listtest.out', 'w')
+		subprocess.call('valgrind ./memtest list'.split(), stdout=f, stderr=f)
+		f.close()
 
 class TestPy:
 
@@ -76,6 +96,11 @@ class TestPy:
 	def teardown():
 		pass
 
-t = TestC()
-t.test_legendre()
-t.test_Ylm()
+#t = TestC()
+#t.test_legendre()
+#t.test_Ylm()
+
+t = TestMem()
+t.test_read()
+t.test_pseudo()
+t.test_list()

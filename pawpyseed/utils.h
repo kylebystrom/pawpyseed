@@ -85,7 +85,19 @@ void min_cart_path(double* coord, double* center, double* lattice, double* path,
 
 void free_kpoint(kpoint_t* kpt);
 
+void free_ppot(ppot_t* pp);
+
+void free_real_proj(real_proj_t* proj);
+
+void free_real_proj_site(real_proj_site_t* site);
+
 void free_pswf(pswf_t* wf);
+
+void free_ptr(void* ptr);
+
+void free_real_proj_site_list(real_proj_site_t* sites, int length);
+
+void free_ppot_list(ppot_t* pps, int length);
 
 double* get_occs(pswf_t* wf);
 

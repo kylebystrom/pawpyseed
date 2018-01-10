@@ -88,9 +88,58 @@ void free_kpoint(kpoint_t* kpt) {
 	free(kpt);
 }
 
+void free_ppot(ppot_t* pp) {
+	for (int i = 0; i < pp->num_projs; i++) {
+		free(pp->funcs[i].proj);
+		free(pp->funcs[i].pswave);
+		free(pp->funcs[i].aewave);
+	}
+	free(pp->funcs);
+	free(pp->wave_grid);
+	free(pp->proj_grid);
+	free(pspw_overlap_matrix);
+	free(aepw_overlap_matrix);
+	free(diff_overlap_matrix);
+}
+
+void free_real_proj(real_proj_t* proj) {
+	free(proj->values);
+}
+
+void free_real_proj_site(real_proj_site_t* site) {
+	for (int i = 0; i < site->total_projs; i++) {
+		free_real_proj(site->projs + i);
+	}
+	free(sites->projs);
+	free(site->indices);
+}
+
 void free_pswf(pswf_t* wf) {
 	for (int i = 0; i < wf->nwk * wf->nspin; i++)
 		free_kpoint(wf->kpts[i]);
+	free(wf->kpts);
+	free(wf->G_bounds);
+	free(wf->lattice);
+	free(wf->reclattice);
+	free(wf);
+}
+
+void free_ptr(void* ptr) {
+	free(ptr);
+}
+
+void free_real_proj_site_list(real_proj_site_t* sites, int length) {
+	for (int i = 0; i < length; i++) {
+		free_real_proj_site(sites + i);
+	}
+	free(sites);
+}
+
+void free_ppot_list(ppot_t* pps, int length) {
+	for (int i = 0; i < length; i++) {
+		free_ppot(pps + i);
+	}
+	free(pps);
 }
 
 double* get_occs(pswf_t* wf) {

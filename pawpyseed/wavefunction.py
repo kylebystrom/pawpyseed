@@ -15,14 +15,23 @@ PAWC = CDLL(os.path.join(MODULE_DIR, "pawpy.so"))
 
 PAWC.read_wavefunctions.restype = POINTER(None)
 PAWC.get_projector_list.restype = POINTER(None)
+PAWC.read_wavefunctions.restype = POINTER(None)
 PAWC.compensation_terms.restype = POINTER(c_double)
-PAWC.compensation_terms.restype = POINTER(c_double)
+PAWC.get_occs.restype = POINTER(c_double)
+PAWC.get_nband.restype = c_int
+PAWC.get_nwk.restype = c_int
+PAWC.get_nspin.restype = c_int
+
+PAWC.free_ptr.restype = None
+PAWC.free_ppot_list.restype = None
+PAWC.free_pswf.restype = None
 
 def cdouble_to_numpy(arr, length):
 	arr = cast(arr, POINTER(c_double))
 	newarr = np.zeros(length)
 	for i in range(length):
 		newarr[i] = arr[i]
+	PAWC.free_ptr(arr)
 	return newarr
 
 def cfloat_to_numpy(arr, length):
@@ -30,6 +39,7 @@ def cfloat_to_numpy(arr, length):
 	newarr = np.zeros(length)
 	for i in range(length):
 		newarr[i] = arr[i]
+	PAWC.free_ptr(arr)
 	return newarr
 
 def cfloat_to_numpy(arr, length):
@@ -37,6 +47,7 @@ def cfloat_to_numpy(arr, length):
 	newarr = np.zeros(length)
 	for i in range(length):
 		newarr[i] = arr[i]
+	PAWC.free_ptr(arr)
 	return newarr
 
 def numpy_to_cdouble(arr):
@@ -282,6 +293,7 @@ class Wavefunction:
 		print (res.shape, res)
 		print (ct.shape, ct)
 		print ('c, v', c, v)
+		self.projector_list = projector_list
 
 	def make_c_projectors(self, basis=None):
 		"""
@@ -363,6 +375,10 @@ class Wavefunction:
 	def proportion_conduction(self, band_num, bulk):
 		pass
 
+	def free_all(self):
+		self.projector.free_pswf(self.wf_ptr)
+		self.projector.free_ppot_list(self.projector_list, len(self.cr.pps))
+
 posb = Poscar.from_file("CONTCAR").structure
 posd = Poscar.from_file("CONTCAR").structure
 pot = Potcar.from_file("POTCAR")
@@ -373,6 +389,9 @@ wf1 = Wavefunction(posb, pwf1, CoreRegion(pot), (40,40,40))
 wf2 = Wavefunction(posd, pwf2, CoreRegion(pot), (40,40,40))
 for i in range(0,1):
 	wf2.single_band_projection(i, wf1)
+
+wf1.free_all()
+wf2.free_all()
 
 #For each structure
 #numerical element label for each site

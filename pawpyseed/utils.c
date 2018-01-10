@@ -31,6 +31,29 @@ double determinant(double* m) {
 		-  m[0] * m[5] * m[7];
 }
 
+void min_cart_path(double* coord, double* center, double* lattice, double* path, double* r) {
+	*r = INFINITY;
+	double testvec[3];
+	double testdist;
+	for (int i = -1; i <= 1; i++) {
+		for (int j = -1; j <= 1; j++) {
+			for (int k = -1; k <= 1; k++) {
+				testvec[0] = coord[0] + i - center[0];
+				testvec[1] = coord[1] + j - center[1];
+				testvec[2] = coord[2] + k - center[2];
+				frac_to_cartesian(testvec, lattice);
+				testdist = mag(testvec);
+				if (testdist < *r) {
+					path[0] = testvec[0];
+					path[1] = testvec[1];
+					path[2] = testvec[2];
+					*r = testdist;
+				}
+			}
+		}
+	}	
+}
+
 double dist_from_frac(double* coords1, double* coords2, double* lattice) {
 	double f1 = fmin(fabs(coords1[0]-coords2[0]), 1-fabs(coords1[0]-coords2[0]));
 	double f2 = fmin(fabs(coords1[1]-coords2[1]), 1-fabs(coords1[1]-coords2[1]));
@@ -98,7 +121,7 @@ double legendre(int l, int m, double x) {
 	double total = 0;
 	if (m < 0) return pow(-1.0, m) * fac(l+m) / fac(l-m) * legendre(l, -m, x);
 	for (int n = l; n >= 0 && 2*n-l-m >= 0; n--) {
-		total += pow(x, 2*n-l-m) * fac(2*n) / fac(2*n-l-m) / fac(n) / fac(l-n) * pow(-1, l+m-n);
+		total += pow(x, 2*n-l-m) * fac(2*n) / fac(2*n-l-m) / fac(n) / fac(l-n) * pow(-1, l-n);
 	}
 	return total * pow(1 - x * x, m/2.0) / pow(2, l);
 }
@@ -123,19 +146,13 @@ double complex Ylm(int l, int m, double theta, double phi) {
 double complex proj_value(funcset_t funcs, int m, double rmax,
 	double* ion_pos, double* pos, double* lattice) {
 
-	double r = dist_from_frac(ion_pos, pos, lattice);
+	double temp[3] = {0,0,0};
+	double r = 0;
+	min_cart_path(pos, ion_pos, lattice, temp, &r);
 	double radial_val = funcs.proj[(int)(r/rmax*100)];
 	if (r == 0) return Ylm(funcs.l, m, 0, 0) * radial_val;
 	double theta = 0, phi = 0;
-	double temp[3] = {0,0,0};
-	for (int i = 0; i < 3; i++) {
-		temp[i] = pos[i] - ion_pos[i];
-		if (fabs(pos[i] - ion_pos[i]) > fabs(pos[i] + 1 - ion_pos[i]))
-			temp[i] += 1;
-		if (fabs(temp[i]) > fabs(pos[i] - 1 - ion_pos[i]))
-			temp[i] = pos[i] - 1 - ion_pos[i];
-	}
-	frac_to_cartesian(temp, lattice);
+	printf("ERROR %lf %lf\n", mag(temp), r);
 	theta = acos(temp[2]/r);
 	if (r - fabs(temp[2]) == 0) phi = 0;
 	else phi = acos(temp[0] / pow(temp[0]*temp[0] + temp[1]*temp[1], 0.5));

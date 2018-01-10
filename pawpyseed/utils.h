@@ -81,6 +81,8 @@ double dist_from_frac(double* coords1, double* coords2, double* lattice);
 
 void frac_to_cartesian(double* coord, double* lattice);
 
+void min_cart_path(double* coord, double* center, double* lattice, double* path, double* r);
+
 void free_kpoint(kpoint_t* kpt);
 
 void free_pswf(pswf_t* wf);

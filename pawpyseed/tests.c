@@ -3,6 +3,7 @@
 #include <complex.h>
 #include <math.h>
 #include "tests.h"
+#include "utils.h"
 
 double Ylmr(int l, int m, double theta, double phi) { return creal(Ylm(l, m, theta, phi)); }
 

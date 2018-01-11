@@ -172,7 +172,7 @@ double legendre(int l, int m, double x) {
 	for (int n = l; n >= 0 && 2*n-l-m >= 0; n--) {
 		total += pow(x, 2*n-l-m) * fac(2*n) / fac(2*n-l-m) / fac(n) / fac(l-n) * pow(-1, l-n);
 	}
-	return total * pow(1 - x * x, m/2.0) / pow(2, l);
+	return total * pow(-1, m) * pow(1 - x * x, m/2.0) / pow(2, l);
 }
 
 double fac(int n) {
@@ -188,7 +188,7 @@ double fac(int n) {
 double complex Ylm(int l, int m, double theta, double phi) {
 	//printf("%lf %lf %lf\n", pow((2*l+1)/(4*PI)*fac(l-m)/fac(l+m), 0.5), legendre(l, m, cos(theta)),
 	//	creal(cexp(I*m*phi)));
-	return pow(-1, m) * pow((2*l+1)/(4*PI)*fac(l-m)/fac(l+m), 0.5) *
+	return pow((2*l+1)/(4*PI)*fac(l-m)/fac(l+m), 0.5) *
 		legendre(l, m, cos(theta)) * cexp(I*m*phi);
 }
 

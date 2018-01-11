@@ -84,7 +84,7 @@ void free_kpoint(kpoint_t* kpt) {
 	//printf("ya");
 	free(kpt->Gs);
 	free(kpt->bands);
-	//free(kpt->k);
+	free(kpt->k);
 	free(kpt);
 }
 
@@ -97,9 +97,9 @@ void free_ppot(ppot_t* pp) {
 	free(pp->funcs);
 	free(pp->wave_grid);
 	free(pp->proj_grid);
-	free(pspw_overlap_matrix);
-	free(aepw_overlap_matrix);
-	free(diff_overlap_matrix);
+	free(pp->pspw_overlap_matrix);
+	free(pp->aepw_overlap_matrix);
+	free(pp->diff_overlap_matrix);
 }
 
 void free_real_proj(real_proj_t* proj) {
@@ -201,7 +201,6 @@ double complex proj_value(funcset_t funcs, int m, double rmax,
 	double radial_val = funcs.proj[(int)(r/rmax*100)];
 	if (r == 0) return Ylm(funcs.l, m, 0, 0) * radial_val;
 	double theta = 0, phi = 0;
-	printf("ERROR %lf %lf\n", mag(temp), r);
 	theta = acos(temp[2]/r);
 	if (r - fabs(temp[2]) == 0) phi = 0;
 	else phi = acos(temp[0] / pow(temp[0]*temp[0] + temp[1]*temp[1], 0.5));

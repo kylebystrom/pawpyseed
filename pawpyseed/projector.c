@@ -175,12 +175,15 @@ real_proj_site_t* projector_values(int num_sites, int* labels, double* coords,
 		}
 	}
 
+	double path[3] = {0,0,0};
+	double r = 0;
 	for (int i = 0; i < fftg[0]; i++) {
 		for (int j = 0; j < fftg[1]; j++) {
 			for (int k = 0; k  < fftg[2]; k++) {
 				double frac[3] = {(double)i/fftg[0], (double)j/fftg[1], (double)k/fftg[2]};
 				for (int p = 0; p < num_sites; p++) {
-					if (dist_from_frac(coords+3*p, frac, lattice) < sites[p].rmax) {
+					min_cart_path(frac, coords+3*p, lattice, path, &r);
+					if (r < sites[p].rmax) {
 						sites[p].indices[sites[p].num_indices] = i*fftg[1]*fftg[2] + j*fftg[2] + k;
 						for (int n = 0; n < sites[p].total_projs; n++) {
 							sites[p].projs[n].values[sites[p].num_indices] = 
@@ -194,9 +197,9 @@ real_proj_site_t* projector_values(int num_sites, int* labels, double* coords,
 			}
 		}
 	}
-	//for (int i = 0; i < num_sites; i++) {
-	//	printf("looking for nan %e\n", creal(sites[i].projs[0].values[0]));
-	//}
+	for (int i = 0; i < num_sites; i++) {
+		printf("looking for nan %d %e\n", sites[0].num_indices, creal(sites[i].projs[0].values[0]));
+	}
 
 	return sites;
 }
@@ -234,7 +237,7 @@ double complex* onto_projector(real_proj_site_t* sites, int* labels, int* G_boun
 		for (int j = 0; j < pps[labels[M[i]]].num_projs; j++)
 			t_projs += 2 * pps[labels[M[i]]].funcs[j].l + 1;
 	}
-
+	printf("onto2 %d", t_projs);
 	double complex* overlap = (double complex*) calloc(t_projs, sizeof(double complex));
 	double frac[3];
 	double kdotr;
@@ -407,10 +410,31 @@ double* compensation_terms(int BAND_NUM, pswf_t* wf_proj, pswf_t* wf_ref, ppot_t
 			wf_proj->kpts[kpt_num]->Gs, wf_proj->kpts[kpt_num]->bands[BAND_NUM]->Cs,
 			wf_proj->kpts[kpt_num]->bands[BAND_NUM]->num_waves, num_M, N_RS, pps, fft_grid);
 	}
+	for (int i = 0; i < 4; i++) {
+		printf("quick check %d %d\n", M[i], N_RS[i]);
+	}
 	stop = clock();
 	printf("time %ld\n", (stop - start)/CLOCKS_PER_SEC);
-	printf("test overlap mat %lf %d\n", pps[0].aepw_overlap_matrix[0],pps[0].num_cart_gridpts);
+	printf("test overlap mat %lf %lf %d\n", pps[0].aepw_overlap_matrix[0] - pps[0].pspw_overlap_matrix[0],
+						pps[0].aepw_overlap_matrix[5] - pps[0].pspw_overlap_matrix[5],
+						pps[0].num_cart_gridpts);
 	//printf("test sites %lf", creal(ref_sites[0].projs[0].values[0]));
+//	double mymat[25] = {1.227, -0.936, 0,0,0,
+//				-0.936, -0.1119, 0,0,0,
+//			0,0,0.641,-0.0962, 0,
+//			0,0,-0.0962,0.00525,0,
+//			0,0,0,0,4.265};	
+//	double mymat[25] = {-.292062035887E+00,  -.375473398257E-01,  0,0,0,
+// -.375473398257E-01,  -.572218536460E-02,0, 0,0,
+//0,0,  -.407149241649E-01,  -.490280055892E-02,  0,
+//  0,0,-.490280055892E-02  ,-.955532870297E-03,  0,
+//  0,0,0,0,  .697731914902E-01};
+//	double mymat[25] = {-.292062035887E+00,  -.375473398257E-01,  -.108102931184E+00,  -.168378085579E-01,  -.749841796375E-01,
+//  -.375473398257E-01,  -.572218536460E-02,  -.119317339964E-01,  -.248833474970E-02,  -.716350860052E-02,
+//  -.108102931184E+00,  -.119317339964E-01,  -.407149241649E-01,  -.490280055892E-02,  -.251609311975E-01,
+//  -.168378085579E-01,  -.248833474970E-02,  -.490280055892E-02,  -.955532870297E-03,  -.348693200378E-02,
+//  -.749841796375E-01,  -.716350860052E-02,  -.251609311975E-01,  -.348693200378E-02,   .697731914902E-01,
+//};
 	#pragma omp parallel for
 	for (int w = 0; w < NUM_BANDS * NUM_KPTS; w++) {
 		double complex temp = 0;
@@ -431,8 +455,8 @@ double* compensation_terms(int BAND_NUM, pswf_t* wf_proj, pswf_t* wf_ref, ppot_t
 					int tj = 0;
 					for (int j = 0; j < pp.num_projs; j++) {
 						for (int temp2 = 0; temp2 < 2*pp.funcs[j].l+1; temp2++) {
-							temp += conj(ref_projs[t+tj])
-								* (double complex)(pp.aepw_overlap_matrix[pp.num_projs*i+j]
+							temp += conj(ref_projs[t+tj]) *
+								(pp.aepw_overlap_matrix[pp.num_projs*i+j]
 									- pp.pspw_overlap_matrix[pp.num_projs*i+j])
 								* proj_projs[t+ti];
 							tj++;
@@ -450,7 +474,7 @@ double* compensation_terms(int BAND_NUM, pswf_t* wf_proj, pswf_t* wf_ref, ppot_t
 	}
 
 	free_real_proj_site_list(ref_sites, num_M + num_N_R);
-	free_real_proj_site_list(proj_sites);
+	free_real_proj_site_list(proj_sites, num_M + num_N_S);
 
 	for (int kpt_num = 0; kpt_num < NUM_KPTS; kpt_num++) {
 		free(lst_proj_projs[kpt_num]);

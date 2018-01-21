@@ -2,6 +2,7 @@
 #define UTILS_H
 #include <complex.h>
 #include <math.h>
+
 typedef struct band {
 	int n;
 	int num_waves;
@@ -33,9 +34,14 @@ typedef struct pswf {
 typedef struct proj_ae_ps {
 	int l;
 	double* proj;
+	double** proj_spline;
 	double* aewave;
 	double* pswave;
 } funcset_t;
+
+typedef struct projgrid {
+	double complex* values;
+} projgrid_t;
 
 typedef struct real_proj {
 	int l;
@@ -51,12 +57,14 @@ typedef struct real_proj_site {
 	int total_projs;
 	int num_indices;
 	double rmax;
+	double* coord;
 	int* indices;
 	real_proj_t* projs;
 } real_proj_site_t;
 
 typedef struct pseudopot {
 	int num_projs;
+	int total_projs;
 	funcset_t* funcs;
 	double rmax;
 	double* pspw_overlap_matrix;
@@ -68,6 +76,8 @@ typedef struct pseudopot {
 	double* wave_grid;
 	double* proj_grid;
 } ppot_t;
+
+int min(int a, int b);
 
 void vcross(double* res, double* top, double* bottom);
 
@@ -81,7 +91,11 @@ double dist_from_frac(double* coords1, double* coords2, double* lattice);
 
 void frac_to_cartesian(double* coord, double* lattice);
 
+void cartesian_to_frac(double* coord, double* reclattice);
+
 void min_cart_path(double* coord, double* center, double* lattice, double* path, double* r);
+
+double complex trilinear_interpolate(double complex* c, double* frac, int* fftg);
 
 void free_kpoint(kpoint_t* kpt);
 
@@ -113,8 +127,14 @@ double fac(int n);
 
 double complex Ylm(int l, int m, double theta, double phi);
 
-double complex proj_value(funcset_t funcs, int m, double rmax,
+double complex Ylm2(int l, int m, double costheta, double phi);
+
+double complex proj_value(funcset_t funcs, double* x, int m, double rmax,
 	double* ion_pos, double* pos, double* lattice);
+
+double** spline_coeff(double* x, double* y, int N);
+
+void frac_from_index(int index, double* coord, int* fftg);
 
 void ALLOCATION_FAILED();
 

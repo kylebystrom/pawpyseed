@@ -4,6 +4,8 @@
 #include <math.h>
 #include <omp.h>
 #include <time.h>
+#include <mkl.h>
+#include <mkl_types.h>
 #include "utils.h"
 
 #define PI 3.14159265359
@@ -54,6 +56,40 @@ void min_cart_path(double* coord, double* center, double* lattice, double* path,
 	}	
 }
 
+void frac_from_spherical(double* ion_frac, double r, double theta, double phi,
+	double* lattice, double* reclattice, double* result) {
+
+	double cart[3];
+	cart[0] = r * sin(theta) * cos(phi);
+	cart[1] = r * sin(theta) * sin(phi);
+	cart[2] = r * cos(theta);
+	cartesian_to_frac(cart, reclattice);
+	result[0] = fmod(cart[0] + ion_frac[0], 1.00);
+	result[1] = fmod(cart[1] + ion_frac[1], 1.00);
+	result[2] = fmod(cart[2] + ion_frac[2], 1.00);
+	if (result[0] < 0) result[0] += 1;
+	if (result[1] < 0) result[1] += 1;
+	if (result[2] < 0) result[2] += 1;
+}
+
+double complex trilinear_interpolate(double complex* c, double* frac, int* fftg) {
+	//values: c000, c001, c010, c011, c100, c101, c110, c111
+	double d[3];
+	d[0] = fmod(frac[0] * fftg[0], 1.0);
+	d[1] = fmod(frac[1] * fftg[1], 1.0);
+	d[2] = fmod(frac[2] * fftg[2], 1.0);
+	//printf("%lf %lf %lf\n", d[0], d[1], d[2]);
+	double complex c00 = c[0] * (1-d[0]) + c[4] * d[0];
+	double complex c01 = c[1] * (1-d[0]) + c[5] * d[0];
+	double complex c10 = c[2] * (1-d[0]) + c[6] * d[0];
+	double complex c11 = c[3] * (1-d[0]) + c[7] * d[0];
+
+	double complex c0 = c00 * (1-d[1]) + c10 * d[1];
+	double complex c1 = c01 * (1-d[1]) + c11 * d[1];
+
+	return c0 * (1-d[2]) + c1 * d[2];
+}
+
 double dist_from_frac(double* coords1, double* coords2, double* lattice) {
 	double f1 = fmin(fabs(coords1[0]-coords2[0]), 1-fabs(coords1[0]-coords2[0]));
 	double f2 = fmin(fabs(coords1[1]-coords2[1]), 1-fabs(coords1[1]-coords2[1]));
@@ -71,6 +107,16 @@ void frac_to_cartesian(double* coord, double* lattice) {
 	coord[0] = temp[0];
 	coord[1] = temp[1];
 	coord[2] = temp[2];
+}
+
+void cartesian_to_frac(double* coord, double* reclattice) {
+	double temp[3] = {0,0,0};
+	temp[0] = coord[0] * reclattice[0] + coord[1] * reclattice[1] + coord[2] * reclattice[2];
+	temp[1] = coord[0] * reclattice[3] + coord[1] * reclattice[4] + coord[2] * reclattice[5];
+	temp[2] = coord[0] * reclattice[6] + coord[1] * reclattice[7] + coord[2] * reclattice[8];
+	coord[0] = temp[0] / 2 / PI;
+	coord[1] = temp[1] / 2 / PI;
+	coord[2] = temp[2] / 2 / PI;
 }
 
 void free_kpoint(kpoint_t* kpt) {
@@ -97,21 +143,13 @@ void free_ppot(ppot_t* pp) {
 	free(pp->funcs);
 	free(pp->wave_grid);
 	free(pp->proj_grid);
-	free(pp->pspw_overlap_matrix);
-	free(pp->aepw_overlap_matrix);
-	free(pp->diff_overlap_matrix);
+	if (pp->pspw_overlap_matrix != NULL) free(pp->pspw_overlap_matrix);
+	if (pp->aepw_overlap_matrix != NULL) free(pp->aepw_overlap_matrix);
+	if (pp->diff_overlap_matrix != NULL) free(pp->diff_overlap_matrix);
 }
 
 void free_real_proj(real_proj_t* proj) {
 	free(proj->values);
-}
-
-void free_real_proj_site(real_proj_site_t* site) {
-	for (int i = 0; i < site->total_projs; i++) {
-		free_real_proj(site->projs + i);
-	}
-	free(site->projs);
-	free(site->indices);
 }
 
 void free_pswf(pswf_t* wf) {
@@ -122,6 +160,14 @@ void free_pswf(pswf_t* wf) {
 	free(wf->lattice);
 	free(wf->reclattice);
 	free(wf);
+}
+
+void free_real_proj_site(real_proj_site_t* site) {
+	for (int i = 0; i < site->total_projs; i++) {
+		free_real_proj(site->projs + i);
+	}
+	free(site->projs);
+	free(site->indices);
 }
 
 void free_ptr(void* ptr) {
@@ -140,6 +186,12 @@ void free_ppot_list(ppot_t* pps, int length) {
 		free_ppot(pps + i);
 	}
 	free(pps);
+}
+
+int min(int a, int b) {
+	if (a > b)
+		return b;
+	return a;
 }
 
 double* get_occs(pswf_t* wf) {
@@ -192,13 +244,25 @@ double complex Ylm(int l, int m, double theta, double phi) {
 		legendre(l, m, cos(theta)) * cexp(I*m*phi);
 }
 
-double complex proj_value(funcset_t funcs, int m, double rmax,
+double complex Ylm2(int l, int m, double costheta, double phi) {
+	//printf("%lf %lf %lf\n", pow((2*l+1)/(4*PI)*fac(l-m)/fac(l+m), 0.5), legendre(l, m, cos(theta)),
+	//	creal(cexp(I*m*phi)));
+	return pow((2*l+1)/(4*PI)*fac(l-m)/fac(l+m), 0.5) *
+		legendre(l, m, costheta) * cexp(I*m*phi);
+}
+
+double complex proj_value(funcset_t funcs, double* x, int m, double rmax,
 	double* ion_pos, double* pos, double* lattice) {
 
 	double temp[3] = {0,0,0};
 	double r = 0;
 	min_cart_path(pos, ion_pos, lattice, temp, &r);
-	double radial_val = funcs.proj[(int)(r/rmax*100)];
+
+	int ind = min((int)(r/rmax*100)+1, 99);
+	double rem = r - x[ind];
+	double radial_val = (funcs.proj[ind] + rem * (funcs.proj_spline[0][ind] +
+						rem * (funcs.proj_spline[1][ind] +
+						rem * funcs.proj_spline[2][ind])));
 	if (r == 0) return Ylm(funcs.l, m, 0, 0) * radial_val;
 	double theta = 0, phi = 0;
 	theta = acos(temp[2]/r);
@@ -209,6 +273,54 @@ double complex proj_value(funcset_t funcs, int m, double rmax,
 	double complex sph_val = Ylm(funcs.l, m, theta, phi);
 	//printf("out %lf %lf %lf %lf %lf %lf %lf %lf %lf\n", phi, theta, r, temp[0], temp[1], temp[2], radial_val, creal(sph_val), cimag(sph_val));
 	return radial_val * sph_val;
+}
+
+//adapted from VASP source code
+double** spline_coeff(double* x, double* y, int N) {
+	double** coeff = (double**) malloc(3 * sizeof(double*));
+	coeff[0] = (double*) malloc(N * sizeof(double));
+	coeff[1] = (double*) malloc(N * sizeof(double));
+	coeff[2] = (double*) malloc(N * sizeof(double));
+
+	printf("pl %d\n", N);
+	double d1p1 = (y[1] - y[0]) / (x[1] - x[0]);
+
+	coeff[1][0] = -0.5;
+	coeff[0][0] = (3 / (x[1] - x[0])) * ((y[1] - y[0]) / (x[1] - x[0]) - d1p1);
+
+	double s, r;
+
+	for (int i = 1; i < N - 1; i++) {
+		s = (x[i] - x[i-1]) / (x[i+1] - x[i-1]);
+		r = s * coeff[1][i-1] + 2;
+		coeff[1][i] = (s - 1) / r;
+		coeff[0][i] = (6 * ( (y[i+1] - y[i]) / (x[i+1] - x[i]) -
+			(y[i] - y[i-1]) / (x[i] - x[i-1])) /
+			(x[i+1] - x[i-1]) - s*coeff[0][i-1]) / r;
+	}
+
+	coeff[1][N-1] = 0;
+	coeff[2][N-1] = 0;
+
+	for (int i = N-2; i >= 0; i--) {
+		coeff[1][i] = coeff[1][i] * coeff[1][i+1] + coeff[0][i];
+	}
+
+	for (int i = 0; i < N-1; i++) {
+		s = x[i+1] - x[i];
+		r = (coeff[1][i+1] - coeff[1][i]) / 6;
+		coeff[2][i] = r / s;
+		coeff[1][i] /= 2;
+		coeff[0][i] = (y[i+1]-y[i]) / s - (coeff[1][i] + r) * s;
+	}
+
+	return coeff;
+}
+
+void frac_from_index(int index, double* coord, int* fftg) {
+	coord[0] = ((double) (index / fftg[1] / fftg[2])) / fftg[0];
+	coord[1] = ((double) ((index % (fftg[1] * fftg[2])) / fftg[2])) / fftg[1];
+	coord[2] = ((double) (index % fftg[2])) / fftg[2];
 }
 
 void ALLOCATION_FAILED() {

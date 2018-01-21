@@ -3,7 +3,7 @@
 projector:
 	rm -f $(PWD)/pawpy.so
 	source ~/.bashrcmkl
-	icc -shared -o pawpy.so projector.c reader.c utils.c -L${MKLROOT}/lib/intel64 -lmkl_rt -lpthread -ldl -I${MKLROOT}/include -lm -fopenmp -std=c99 -O3 -fPIC -Wall
+	icc -shared -o pawpy.so projector.c fft.c quadrature.c reader.c utils.c tests.c -L${MKLROOT}/lib/intel64 -lmkl_rt -lpthread -ldl -I${MKLROOT}/include -lm -fopenmp -std=c99 -O3 -fPIC -Wall
 
 debug:
 	rm -f $(PWD)/pawpy.so
@@ -15,4 +15,16 @@ readtest:
 
 tester:
 	rm -f $(PWD)/pawpy.so
-	gcc -shared -o pawpy.so reader.c utils.c -lm -std=c99 -O3 -fPIC
+	icc -shared -o pawpy.so reader.c utils.c tests.c -lm -std=c99 -O3 -fPIC
+
+forval:
+	rm -f $(PWD)/pawpy.so
+	source ~/.bashrcmkl
+	icc -o memtest memtest.c projector.c fft.c quadrature.c reader.c tests.c utils.c -mkl=sequential -L${MKLROOT}/lib/intel64 -lmkl_rt -lpthread -ldl -I${MKLROOT}/include -lm -std=c99 -O0 -fPIC -Wall -g
+
+formem:
+	rm -f $(PWD)/pawpy.so
+	source ~/.bashrcmkl
+	icc -o memtest projector.c reader.c utils.c memtest.c -L${MKLROOT}/lib/intel64 -lmkl_rt -lpthread -ldl -I${MKLROOT}/include -lm -std=c99 -O0 -fPIC -Wall -g
+
+

@@ -95,7 +95,7 @@ class Pseudopotential:
 		corechgstr, kenstr = corechgstr.split("kinetic energy-density", 1)
 		kenstr, pspotstr = kenstr.split("pspotential", 1)
 		pspotstr, pscorechgstr = pspotstr.split("core charge-density (pseudized)", 1)
-		self.grid = self.make_nums(gridstr + ' 0')
+		self.grid = self.make_nums(gridstr+' 0')
 		self.aepotential = self.make_nums(aepotstr)
 		self.aecorecharge = self.make_nums(corechgstr)
 		self.kinetic = self.make_nums(kenstr)
@@ -104,8 +104,8 @@ class Pseudopotential:
 
 		for pwave in partial_waves:
 			lst = pwave.split("ae wavefunction", 1)
-			self.pswaves.append(self.make_nums(lst[0]))
-			self.aewaves.append(self.make_nums(lst[1]))
+			self.pswaves.append(self.make_nums(lst[0]+' 0'))
+			self.aewaves.append(self.make_nums(lst[1]+' 0'))
 
 		projstrs = nonradial.split("Non local Part")
 		topstr, projstrs = projstrs[0], projstrs[1:]
@@ -202,6 +202,7 @@ class Wavefunction:
 		self.cr = cr
 		self.projector = PAWC
 		self.dim = np.array(dim);
+		self.projector_list = None
 
 	def from_files(self, struct="CONTCAR", pwf="WAVECAR", cr="POTCAR", vr="vasprun.xml"):
 		"""
@@ -377,7 +378,8 @@ class Wavefunction:
 
 	def free_all(self):
 		self.projector.free_pswf(self.pwf.wf_ptr)
-		self.projector.free_ppot_list(self.projector_list, len(self.cr.pps))
+		if self.projector_list != None:
+			self.projector.free_ppot_list(self.projector_list, len(self.cr.pps))
 
 posb = Poscar.from_file("CONTCAR").structure
 posd = Poscar.from_file("CONTCAR").structure

@@ -209,12 +209,18 @@ class TestC:
 		vr = Vasprun("vasprun.xml")
 		cr = CoreRegion(Potcar.from_file("POTCAR"))
 		struct = Poscar.from_file("POSCAR").structure
-		grid = cr.projgrid
-		vals = cr.realprojs[0]
+		grid = cr[0].projgrid
+		vals = cr[0].realprojs[0]
+		rmax = cr[0].rmax
 		tst = np.linspace(0, max(grid), 400)
 		res1 = scipy.interpolate.CubicSpline(grid, vals, extrapolate=True)(tst)
-		pwf = PseudoWavefunction("WAVECAR", vr)
-		wf = Wavefunction(struct, pwf, cr, np.array([30,30,30]))
+		x, y = numpy_to_cdouble(grid), numpy_to_cdouble(vals)
+		cof = PAWC.spline_coeff(x, y, 100)
+		res2 = (c_double * tst.shape[0])()
+		for i in range(tst.shape[0]):
+			res2[i] = PAWC.proj_interpolate(c_double(tst[i]), c_double(rmax), x, y, cof)
+		res2 = cdouble_to_numpy(res2)
+		print (res1-res2)
 
 
 	def test_fft3d(self):

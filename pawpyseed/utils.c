@@ -251,6 +251,14 @@ double complex Ylm2(int l, int m, double costheta, double phi) {
 		legendre(l, m, costheta) * cexp(I*m*phi);
 }
 
+double proj_interpolate(double r, double* x, double* proj, double* coeff) {
+	int ind = min((int)(r/rmax*100), 98);
+	double rem = r - x[ind];
+	return proj[ind] + rem * (proj_spline[0][ind] +
+						rem * (proj_spline[1][ind] +
+						rem * proj_spline[2][ind]));
+}
+
 double complex proj_value(funcset_t funcs, double* x, int m, double rmax,
 	double* ion_pos, double* pos, double* lattice) {
 
@@ -258,11 +266,7 @@ double complex proj_value(funcset_t funcs, double* x, int m, double rmax,
 	double r = 0;
 	min_cart_path(pos, ion_pos, lattice, temp, &r);
 
-	int ind = min((int)(r/rmax*100)+1, 99);
-	double rem = r - x[ind];
-	double radial_val = (funcs.proj[ind] + rem * (funcs.proj_spline[0][ind] +
-						rem * (funcs.proj_spline[1][ind] +
-						rem * funcs.proj_spline[2][ind])));
+	double radial_val = proj_interpolate(r, x, funcs.proj, funcs.proj_spline);
 	if (r == 0) return Ylm(funcs.l, m, 0, 0) * radial_val;
 	double theta = 0, phi = 0;
 	theta = acos(temp[2]/r);
@@ -299,6 +303,7 @@ double** spline_coeff(double* x, double* y, int N) {
 			(x[i+1] - x[i-1]) - s*coeff[0][i-1]) / r;
 	}
 
+	coeff[0][N-1] = 0;
 	coeff[1][N-1] = 0;
 	coeff[2][N-1] = 0;
 
@@ -310,7 +315,7 @@ double** spline_coeff(double* x, double* y, int N) {
 		s = x[i+1] - x[i];
 		r = (coeff[1][i+1] - coeff[1][i]) / 6;
 		coeff[2][i] = r / s;
-		coeff[1][i] /= 2;
+		coeff[1][i] = coeff[1][i] / 2;
 		coeff[0][i] = (y[i+1]-y[i]) / s - (coeff[1][i] + r) * s;
 	}
 

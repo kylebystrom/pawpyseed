@@ -7,7 +7,7 @@ from numpy.testing import assert_almost_equal
 
 from scipy.special import lpmn, sph_harm
 
-from pymatgen.io.vasp.inputs import Poscar
+from pymatgen.io.vasp.inputs import Poscar, Potcar
 from pymatgen.io.vasp.outputs import Vasprun
 from pymatgen.core.structure import Structure
 
@@ -20,6 +20,8 @@ PAWC = CDLL(os.path.join(MODULE_DIR, "pawpy.so"))
 PAWC.legendre.restype = c_double
 PAWC.Ylmr.restype = c_double
 PAWC.Ylmi.restype = c_double
+PAWC.spline_coeff.restype = POINTER(PORINT(c_double))
+PAWC.proj_interpolate.restype = c_double
 
 def cdouble_to_numpy(arr, length):
 	arr = cast(arr, POINTER(c_double))
@@ -202,6 +204,18 @@ class TestC:
 			temp2 = cdouble_to_numpy(ccoord, 3)
 			assert_almost_equal(np.linalg.norm(temp2-fcoord), 0.0)
 			print(temp2)
+
+	def test_spline(self):
+		vr = Vasprun("vasprun.xml")
+		cr = CoreRegion(Potcar.from_file("POTCAR"))
+		struct = Poscar.from_file("POSCAR").structure
+		grid = cr.projgrid
+		vals = cr.realprojs[0]
+		tst = np.linspace(0, max(grid), 400)
+		res1 = scipy.interpolate.CubicSpline(grid, vals, extrapolate=True)(tst)
+		pwf = PseudoWavefunction("WAVECAR", vr)
+		wf = Wavefunction(struct, pwf, cr, np.array([30,30,30]))
+
 
 	def test_fft3d(self):
 		vr = Vasprun("vasprun.xml")

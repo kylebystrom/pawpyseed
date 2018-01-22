@@ -129,6 +129,8 @@ double complex Ylm(int l, int m, double theta, double phi);
 
 double complex Ylm2(int l, int m, double costheta, double phi);
 
+double proj_interpolate(double r, double rmax, double* x, double* proj, double** proj_spline);
+
 double complex proj_value(funcset_t funcs, double* x, int m, double rmax,
 	double* ion_pos, double* pos, double* lattice);
 

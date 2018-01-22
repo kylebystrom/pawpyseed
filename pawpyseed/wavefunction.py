@@ -171,6 +171,7 @@ class PseudoWavefunction:
 		for i in range(len(weights)):
 			kws[i] = weights[i]
 		self.kws = weights
+		self.kpts = vr.actual_kpoints
 		self.wf_ptr = PAWC.read_wavefunctions(filename.encode('utf-8'), byref(kws))
 
 class Wavefunction:
@@ -291,10 +292,16 @@ class Wavefunction:
 				v += np.absolute(temp) ** 2 * self.pwf.kws[i%nwk] / nspin
 			else:
 				c += np.absolute(temp) ** 2 * self.pwf.kws[i%nwk] / nspin
-		print (res.shape, res)
-		print (ct.shape, ct)
+		#print (res.shape, res)
+		#print (ct.shape, ct)
 		print ('c, v', c, v)
 		self.projector_list = projector_list
+		check = res + ct
+		fin = np.zeros(nband*nwk*nspin)
+		for i in range(nband*nwk*nspin):
+			fin[i] = (check[2*i]**2 +check[2*i+1]**2)
+		#print (fin.tolist())
+		#print (self.pwf.kpts)
 
 	def make_c_projectors(self, basis=None):
 		"""
@@ -387,9 +394,9 @@ pot = Potcar.from_file("POTCAR")
 pwf1 = PseudoWavefunction("WAVECAR", "vasprun.xml")
 pwf2 = PseudoWavefunction("WAVECAR", "vasprun.xml")
 
-wf1 = Wavefunction(posb, pwf1, CoreRegion(pot), (40,40,40))
-wf2 = Wavefunction(posd, pwf2, CoreRegion(pot), (40,40,40))
-for i in range(0,1):
+wf1 = Wavefunction(posb, pwf1, CoreRegion(pot), (60,60,60))
+wf2 = Wavefunction(posd, pwf2, CoreRegion(pot), (60,60,60))
+for i in range(0,24):
 	wf2.single_band_projection(i, wf1)
 
 wf1.free_all()

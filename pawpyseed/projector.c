@@ -461,9 +461,9 @@ double* compensation_terms(int BAND_NUM, pswf_t* wf_proj, pswf_t* wf_ref, ppot_t
 						for (int m2 = -l2; m2 <= l2; m2++) {
 							if (l1 == l2 && m1 == m2) {
 								temp += conj(ref_projs[t+tj])
-									//* (mymat[pp.num_projs*i+j])
-									* (pp.aepw_overlap_matrix[pp.num_projs*i+j]
-									- pp.pspw_overlap_matrix[pp.num_projs*i+j])
+									* (mymat[pp.num_projs*i+j])
+									//* (pp.aepw_overlap_matrix[pp.num_projs*i+j]
+									//- pp.pspw_overlap_matrix[pp.num_projs*i+j])
 									* proj_projs[t+ti];
 							}
 							tj++;

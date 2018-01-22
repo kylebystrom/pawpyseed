@@ -219,13 +219,8 @@ real_proj_site_t* projector_values(int num_sites, int* labels, double* coords,
 	return sites;
 }
 
-double complex* onto_projector(real_proj_site_t* sites, int* labels, int* G_bounds, double* lattice,
-	double* kpt, int* Gs, float complex* Cs, int num_waves, int num_M, int* M, ppot_t* pps, int* fftg) {
-	
-	MKL_Complex16* x = (MKL_Complex16*) mkl_calloc(fftg[0]*fftg[1]*fftg[2], sizeof(MKL_Complex16), 64);
-	//printf("integrating params %e %e %e %e %e\n", dv, inv_sqrt_vol, kmins[0], kmins[1], kmins[2]);
-	//printf("determinant %lf\n", determinant(lattice));
-	fft3d(x, G_bounds, lattice, kpt, Gs, Cs, num_waves, fftg);
+double complex* onto_projector_helper(real_proj_site_t* sites, int* labels,
+	double* lattice, ppot_t* pps, int* fftg) {
 
 	double dv = determinant(lattice) / fftg[0] / fftg[1] / fftg[2];
 
@@ -233,7 +228,6 @@ double complex* onto_projector(real_proj_site_t* sites, int* labels, int* G_boun
 	for (int i = 0; i < num_M; i++) {
 		t_projs += pps[labels[M[i]]].total_projs;
 	}
-	//printf("onto2 %d", t_projs);
 
 	double complex* overlap = (double complex*) calloc(t_projs, sizeof(double complex));
 
@@ -260,6 +254,19 @@ double complex* onto_projector(real_proj_site_t* sites, int* labels, int* G_boun
 			t++;
 		}
 	}
+
+	return overlap;
+}
+
+double complex* onto_projector(real_proj_site_t* sites, int* labels, int* G_bounds, double* lattice,
+	double* kpt, int* Gs, float complex* Cs, int num_waves, int num_M, int* M, ppot_t* pps, int* fftg) {
+	
+	MKL_Complex16* x = (MKL_Complex16*) mkl_calloc(fftg[0]*fftg[1]*fftg[2], sizeof(MKL_Complex16), 64);
+	//printf("integrating params %e %e %e %e %e\n", dv, inv_sqrt_vol, kmins[0], kmins[1], kmins[2]);
+	//printf("determinant %lf\n", determinant(lattice));
+	fft3d(x, G_bounds, lattice, kpt, Gs, Cs, num_waves, fftg);
+
+	double complex* overlap = onto_projector_helper(sites, labels, lattice, pps, fftg);
 
 	mkl_free(x);
 

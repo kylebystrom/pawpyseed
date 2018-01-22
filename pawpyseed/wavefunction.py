@@ -140,7 +140,7 @@ class Pseudopotential:
 		self.projgrid = self.make_nums(projgridstr)
 		self.step = (self.projgrid[0], self.projgrid[1])
 
-		self.projgrid = np.linspace(0,rmax/1.88973,self.ndata,False)
+		self.projgrid = np.linspace(0,rmax/1.88973,self.ndata,False,dtype=np.float64)
 
 	def make_nums(self, numstring):
 		return np.array([float(num) for num in numstring.split()])
@@ -359,7 +359,7 @@ class Wavefunction:
 		projector_list = self.projector.get_projector_list(num_els, numpy_to_cint(clabels),
 			numpy_to_cint(ls), numpy_to_cdouble(pgrids), numpy_to_cdouble(wgrids),
 			numpy_to_cdouble(projectors), numpy_to_cdouble(aewaves), numpy_to_cdouble(pswaves),
-			numpy_to_cdouble(np.array([self.cr.pps['Ga'].rmax * 0.529177])))
+			numpy_to_cdouble(np.array([2.10244619055465565])))
 		selfnums = np.array([labels[el(s)] for s in self.structure], dtype=np.int32)
 		basisnums = np.array([labels[el(s)] for s in basis.structure], dtype=np.int32)
 		selfcoords = np.array([], np.float64)

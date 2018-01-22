@@ -36,7 +36,9 @@ typedef struct proj_ae_ps {
 	double* proj;
 	double** proj_spline;
 	double* aewave;
+	double** aewave_spline;
 	double* pswave;
+	double** pswave_spline;
 } funcset_t;
 
 typedef struct projgrid {

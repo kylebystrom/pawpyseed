@@ -219,8 +219,8 @@ real_proj_site_t* projector_values(int num_sites, int* labels, double* coords,
 	return sites;
 }
 
-double complex* onto_projector_helper(real_proj_site_t* sites, int* labels,
-	double* lattice, ppot_t* pps, int* fftg) {
+double complex* onto_projector_helper(MKL_Complex16* x, real_proj_site_t* sites, int* labels,
+	double* lattice, double* kpt, ppot_t* pps, int* fftg, int* M, int num_M) {
 
 	double dv = determinant(lattice) / fftg[0] / fftg[1] / fftg[2];
 
@@ -266,7 +266,7 @@ double complex* onto_projector(real_proj_site_t* sites, int* labels, int* G_boun
 	//printf("determinant %lf\n", determinant(lattice));
 	fft3d(x, G_bounds, lattice, kpt, Gs, Cs, num_waves, fftg);
 
-	double complex* overlap = onto_projector_helper(sites, labels, lattice, pps, fftg);
+	double complex* overlap = onto_projector_helper(x, sites, labels, lattice, kpt, pps, fftg, M, num_M);
 
 	mkl_free(x);
 

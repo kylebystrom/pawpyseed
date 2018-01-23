@@ -191,7 +191,8 @@ void free_ppot_list(ppot_t* pps, int length) {
 int min(int a, int b) {
 	if (a > b)
 		return b;
-	return a;
+	else
+		return a;
 }
 
 double* get_occs(pswf_t* wf) {
@@ -240,8 +241,12 @@ double fac(int n) {
 double complex Ylm(int l, int m, double theta, double phi) {
 	//printf("%lf %lf %lf\n", pow((2*l+1)/(4*PI)*fac(l-m)/fac(l+m), 0.5), legendre(l, m, cos(theta)),
 	//	creal(cexp(I*m*phi)));
+	double complex multiplier = 0;
+	if (m == 0) multiplier = 1;
+	else if (m < 0) multiplier = pow(2.0, 0.5) * cos(-m*phi);
+	else multiplier = pow(2.0, 0.5) * sin(m*phi);
 	return pow((2*l+1)/(4*PI)*fac(l-m)/fac(l+m), 0.5) *
-		legendre(l, m, cos(theta)) * cexp(I*m*phi);
+		legendre(l, m, cos(theta))* multiplier;//* cexp(I*m*phi);
 }
 
 double complex Ylm2(int l, int m, double costheta, double phi) {
@@ -254,9 +259,10 @@ double complex Ylm2(int l, int m, double costheta, double phi) {
 double proj_interpolate(double r, double rmax, double* x, double* proj, double** proj_spline) {
 	int ind = min((int)(r/rmax*100), 98);
 	double rem = r - x[ind];
-	return proj[ind] + rem * (proj_spline[0][ind] +
+	double radval = proj[ind] + rem * (proj_spline[0][ind] +
 						rem * (proj_spline[1][ind] +
 						rem * proj_spline[2][ind]));
+	return radval;
 }
 
 double complex proj_value(funcset_t funcs, double* x, int m, double rmax,

@@ -490,3 +490,11 @@ double* compensation_terms(int BAND_NUM, pswf_t* wf_proj, pswf_t* wf_ref, ppot_t
 	mkl_free_buffers();
 	return overlap;
 }
+
+double* nonlocal_compensation_terms(int BAND_NUM, pswf_t* wf_proj, pswf_t* wf_ref, ppot_t* pps,
+	int num_elems, int num_M, int num_N_R, int num_N_S, int num_N_RS,
+	int* M, int* N_R, int* N_S, int* N_RS,
+	int* proj_labels, double* proj_coords, int* ref_labels, double* ref_coords,
+	int* fft_grid) {
+	
+}

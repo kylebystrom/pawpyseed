@@ -328,6 +328,84 @@ void frac_from_index(int index, double* coord, int* fftg) {
 	coord[2] = ((double) (index % fftg[2])) / fftg[2];
 }
 
+void direction(double* cart, double* dir) {
+	double theta = 0, phi = 0;
+	theta = acos(cart[2]/r);
+	if (r - fabs(cart[2]) == 0) phi = 0;
+	else phi = acos(cart[0] / pow(cart[0]*cart[0] + cart[1]*cart[1], 0.5));
+	if (cart[1] < 0) phi = 2*PI - phi;
+	dir[0] = theta;
+	dir[1] = phi;
+}
+
+double sph_bessel(double k, double r, int l) {
+	double x = k * r;
+	if (l == 0)
+		return sin(x) / x;
+	else if (l == 1)
+		return sin(x) / (x*x) - cos(x) / x;
+	else if (l == 2)
+		return (3 / (x*x) -1) * sin(x) / x - 3 * cos(x) / (x*x);
+	else if (l == 3)
+		return (15 / (x*x*x) - 6 / x) * sin(x) / x - (15 / (x*x) -1) * cos(x) / x;
+	else
+		printf("ERROR: sph_bessel l too high");
+		return 0;
+}
+
+double complex rayexp(double* kpt, int* Gs, float complex* Cs, int l, int m,
+	int num_waves, double* sum_terms, double* ionp) {
+
+	double complex result = 0;
+	double pvec[3] = {0,0,0};
+	for (int w = 0; w < num_waves; w++) {
+		pvec[0] = kpt[0] + Gs[3*w+0];
+		pvec[1] = kpt[1] + Gs[3*w+1];
+		pvec[2] = kpt[2] + Gs[3*w+2];
+		phase = cexp(2*PI*I*dot(ionp, pvec));
+		result += phase * Cs[w] * ssum_terms[(2*l+1)*w+l+m]
+	}
+}
+
+double complex* rayexp_terms(double* kpt, int* Gs, int num_waves,
+	int l, int wavegridsize, double* wave_grid,
+	double* aewave, double* pswave, double* reclattice) {
+
+	double complex phase = 4 * PI * cpow(I, l);
+	double complex ylmdir = 0;
+	double k = 0;
+	double complex* terms = malloc((2*l+1) * num_waves * sizeof(double complex));
+
+	double pvec[3] = {0,0,0}
+	double phat[2] = {0,0};
+	for (int w = 0; w < num_waves; w++) {
+		pvec[0] = kpt[0] + Gs[3*w+0];
+		pvec[1] = kpt[1] + Gs[3*w+1];
+		pvec[2] = kpt[2] + Gs[3*w+2];
+		frac_to_cartesian(pvec, reclattice);
+		k = mag(pvec);
+		direction(pvec, phat);
+		for (int m = -l; m <= l; m++) {
+			ylmdir = conj(Ylm(l, m, phat[0], phat[1]));
+			double overlap = 0;
+			double dr = pp.wave_grid[0];
+			double r = pp.wave_grid[0];
+			for (int i = 0; i < pp.wave_gridsize - 1; i++) {
+				r = pp.wave_grid[i];
+				dr = pp.wave_grid[i+1] - pp.wave_grid[i];
+				overlap += r * sph_bessel(k, r, l) * (aewave[k]-pswave[k]) * dr/2;
+			}
+			for (int i = 1; i < pp.wave_gridsize; i++) {
+				r = pp.wave_grid[i];
+				dr = pp.wave_grid[i] - pp.wave_grid[i-1];
+				overlap += r * sph_bessel(k, r, l) * (aewave[k]-pswave[k]) * dr/2; 
+			}
+			terms[(2*l+1)*w+l+m] = ylmdir * overlap * phase;
+		}
+
+	}
+}
+
 void ALLOCATION_FAILED() {
 	printf("ALLOCATION FAILED\n");
 	exit(-1);

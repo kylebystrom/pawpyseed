@@ -19,6 +19,7 @@ typedef struct rayleigh_terms {
 
 typedef struct kpoint {
 	short int up;
+	int num_waves;
 	int* Gs;
 	double* k;
 	double weight;
@@ -152,7 +153,7 @@ double complex rayexp(double* kpt, int* Gs, float complex* Cs, int l, int m,
 	int num_waves, double complex* sum_terms, double* ionp);
 
 double complex* rayexp_terms(double* kpt, int* Gs, int num_waves,
-	int l, int wavegridsize, double* wave_grid,
+	int l, int wave_gridsize, double* wave_grid,
 	double* aewave, double* pswave, double* reclattice);
 
 void generate_rayleigh_expansion_terms(pswf_t* wf, ppot_t* pps, int num_elems);

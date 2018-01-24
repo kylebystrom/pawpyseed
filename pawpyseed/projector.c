@@ -383,7 +383,7 @@ double* compensation_terms(int BAND_NUM, pswf_t* wf_proj, pswf_t* wf_ref, ppot_t
 
 	printf("%d %d %d %d %d %d\n", BAND_NUM, num_elems, num_M, num_N_R, num_N_S, num_N_RS);
 	printf("%d %lf %d %lf %d\n", proj_labels[0], proj_coords[0], ref_labels[0], ref_coords[0], fft_grid[1]);
-	printf("%d %d %d %d %d %d %d\n", wf_proj->nband, wf_ref->nband, pps[0].funcs[0].l, M[0], N_R[0], N_S[0], N_RS[0]);
+	printf("%d %d %d %d %d %d %d\n", wf_proj->nband, wf_ref->nband, pps[0].funcs[0].l, M_R[0], N_R[0], N_S[0], N_RS[0]);
 	
 	int NUM_KPTS = wf_proj->nwk * wf_proj->nspin;
 	int NUM_BANDS = wf_proj->nband;
@@ -414,7 +414,7 @@ double* compensation_terms(int BAND_NUM, pswf_t* wf_proj, pswf_t* wf_ref, ppot_t
 			wf_proj->kpts[kpt_num]->bands[BAND_NUM]->num_waves, num_M, M_S, pps, fft_grid);
 	}
 	for (int i = 0; i < 4; i++) {
-		printf("quick check %d %d\n", M[i], N_RS[i]);
+		printf("quick check %d %d\n", M_R[i], N_RS[i]);
 	}
 	stop = clock();
 	printf("time %ld\n", (stop - start)/CLOCKS_PER_SEC);
@@ -454,7 +454,7 @@ double* compensation_terms(int BAND_NUM, pswf_t* wf_proj, pswf_t* wf_ref, ppot_t
 		//printf("stat check %e %e\n", creal(proj_projs[50]), creal(ref_projs[50]));
 		int t = 0;
 		for (int s = 0; s < num_M; s++) {
-			ppot_t pp = pps[ref_labels[M[s]]];
+			ppot_t pp = pps[ref_labels[M_R[s]]];
 			int ti = 0;
 			for (int i = 0; i < pp.num_projs; i++) {
 				l1 = pp.funcs[i].l;
@@ -490,8 +490,8 @@ double* compensation_terms(int BAND_NUM, pswf_t* wf_proj, pswf_t* wf_ref, ppot_t
 					rayexp(wf_proj->kpts[w%NUM_KPTS]->k, wf_proj->kpts[w%NUM_KPTS]->Gs,
 						wf_proj->kpts[w%NUM_KPTS]->bands[w/NUM_KPTS]->Cs, pp.funcs[i].l, m,
 						wf_proj->kpts[w%NUM_KPTS]->num_waves,
-						wf_ref->kpts[w%NUM_KPTS]->expansion[ref_labels[N_R[s]]][i].values,
-						coords + N_R[s]*3);
+						wf_ref->kpts[w%NUM_KPTS]->expansion[ref_labels[N_R[s]]][i].terms,
+						ref_coords + N_R[s]*3);
 				}
 			}
 		}

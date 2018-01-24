@@ -157,6 +157,7 @@ pswf_t* read_wavefunctions(char* filename, double* kpt_weights) {
 		fread(kptr, 8, nrecl/8, pfp);
 		
 		int nplane = (int) round(kptr[0]);
+		kpt->num_waves = nplane;
 		int* igall = malloc(3*nplane*sizeof(int));
 		if (igall == NULL) {
 		    	ALLOCATION_FAILED();

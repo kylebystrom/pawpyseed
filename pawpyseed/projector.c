@@ -371,7 +371,7 @@ void make_pwave_overlap_matrices(ppot_t* pp_ptr) {
 
 double* compensation_terms(int BAND_NUM, pswf_t* wf_proj, pswf_t* wf_ref, ppot_t* pps,
 	int num_elems, int num_M, int num_N_R, int num_N_S, int num_N_RS,
-	int* M, int* N_R, int* N_S, int* N_RS,
+	int* M_R, int* M_S, int* N_R, int* N_S, int* N_RS,
 	int* proj_labels, double* proj_coords, int* ref_labels, double* ref_coords,
 	int* fft_grid) {
 
@@ -411,7 +411,7 @@ double* compensation_terms(int BAND_NUM, pswf_t* wf_proj, pswf_t* wf_ref, ppot_t
 		lst_proj_projs[kpt_num] = onto_projector(proj_sites, proj_labels,
 			wf_proj->G_bounds, wf_proj->lattice, wf_proj->kpts[kpt_num]->k,
 			wf_proj->kpts[kpt_num]->Gs, wf_proj->kpts[kpt_num]->bands[BAND_NUM]->Cs,
-			wf_proj->kpts[kpt_num]->bands[BAND_NUM]->num_waves, num_M, N_RS, pps, fft_grid);
+			wf_proj->kpts[kpt_num]->bands[BAND_NUM]->num_waves, num_M, M_S, pps, fft_grid);
 	}
 	for (int i = 0; i < 4; i++) {
 		printf("quick check %d %d\n", M[i], N_RS[i]);
@@ -438,6 +438,10 @@ double* compensation_terms(int BAND_NUM, pswf_t* wf_proj, pswf_t* wf_ref, ppot_t
 //  -.168378085579E-01,  -.248833474970E-02,  -.490280055892E-02,  -.955532870297E-03,  -.348693200378E-02,
 //  -.749841796375E-01,  -.716350860052E-02,  -.251609311975E-01,  -.348693200378E-02,   .697731914902E-01,
 //};
+
+  	generate_rayleigh_expansion_terms(wf_ref, pps, num_elems);
+  	generate_rayleigh_expansion_terms(wf_proj, pps, num_elems);
+
 	int l1 = 0, l2 = 0;
 	#pragma omp parallel for
 	for (int w = 0; w < NUM_BANDS * NUM_KPTS; w++) {
@@ -446,7 +450,7 @@ double* compensation_terms(int BAND_NUM, pswf_t* wf_proj, pswf_t* wf_ref, ppot_t
 		double complex* ref_projs = onto_projector(ref_sites, ref_labels,
 			wf_ref->G_bounds, wf_ref->lattice, wf_ref->kpts[w%NUM_KPTS]->k,
 			wf_ref->kpts[w%NUM_KPTS]->Gs, wf_ref->kpts[w%NUM_KPTS]->bands[w/NUM_KPTS]->Cs,
-			wf_ref->kpts[w%NUM_KPTS]->bands[w/NUM_KPTS]->num_waves, num_M, M, pps, fft_grid);
+			wf_ref->kpts[w%NUM_KPTS]->bands[w/NUM_KPTS]->num_waves, num_M, M_R, pps, fft_grid);
 		//printf("stat check %e %e\n", creal(proj_projs[50]), creal(ref_projs[50]));
 		int t = 0;
 		for (int s = 0; s < num_M; s++) {
@@ -477,6 +481,20 @@ double* compensation_terms(int BAND_NUM, pswf_t* wf_proj, pswf_t* wf_ref, ppot_t
 		free(ref_projs);
 		overlap[2*w] = creal(temp);
 		overlap[2*w+1]= cimag(temp);
+
+
+		for (int s = 0; s < num_N_R; s++) {
+			ppot_t pp = pps[ref_labels[N_R[s]]];
+			for (int i = 0; i < pp.num_projs; i++) {
+				for (int m = -pp.funcs[i].l; m <= pp.funcs[i].l; m++) {
+					rayexp(wf_proj->kpts[w%NUM_KPTS]->k, wf_proj->kpts[w%NUM_KPTS]->Gs,
+						wf_proj->kpts[w%NUM_KPTS]->bands[w/NUM_KPTS]->Cs, pp.funcs[i].l, m,
+						wf_proj->kpts[w%NUM_KPTS]->num_waves,
+						wf_ref->kpts[w%NUM_KPTS]->expansion[ref_labels[N_R[s]]][i].values,
+						coords + N_R[s]*3);
+				}
+			}
+		}
 	}
 
 	free_real_proj_site_list(ref_sites, num_M + num_N_R);
@@ -489,12 +507,4 @@ double* compensation_terms(int BAND_NUM, pswf_t* wf_proj, pswf_t* wf_ref, ppot_t
 
 	mkl_free_buffers();
 	return overlap;
-}
-
-double* nonlocal_compensation_terms(int BAND_NUM, pswf_t* wf_proj, pswf_t* wf_ref, ppot_t* pps,
-	int num_elems, int num_M, int num_N_R, int num_N_S, int num_N_RS,
-	int* M, int* N_R, int* N_S, int* N_RS,
-	int* proj_labels, double* proj_coords, int* ref_labels, double* ref_coords,
-	int* fft_grid) {
-	
 }

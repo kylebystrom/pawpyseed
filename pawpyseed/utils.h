@@ -12,6 +12,11 @@ typedef struct band {
 	float complex* Cs;
 } band_t;
 
+typedef struct rayleigh_terms {
+	int l;
+	double complex* terms;
+} rayleigh_set_t;
+
 typedef struct kpoint {
 	short int up;
 	int* Gs;
@@ -19,6 +24,7 @@ typedef struct kpoint {
 	double weight;
 	int num_bands;
 	band_t** bands;
+	rayleigh_set_t** expansion;
 } kpoint_t;
 
 typedef struct pswf {
@@ -139,6 +145,17 @@ double complex proj_value(funcset_t funcs, double* x, int m, double rmax,
 double** spline_coeff(double* x, double* y, int N);
 
 void frac_from_index(int index, double* coord, int* fftg);
+
+double sph_bessel(double k, double r, int l);
+
+double complex rayexp(double* kpt, int* Gs, float complex* Cs, int l, int m,
+	int num_waves, double complex* sum_terms, double* ionp);
+
+double complex* rayexp_terms(double* kpt, int* Gs, int num_waves,
+	int l, int wavegridsize, double* wave_grid,
+	double* aewave, double* pswave, double* reclattice);
+
+void generate_rayleigh_expansion_terms(pswf_t* wf, ppot_t* pps, int num_elems);
 
 void ALLOCATION_FAILED();
 

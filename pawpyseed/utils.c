@@ -329,9 +329,13 @@ double** spline_coeff(double* x, double* y, int N) {
 }
 
 void frac_from_index(int index, double* coord, int* fftg) {
-	coord[0] = ((double) (index / fftg[1] / fftg[2])) / fftg[0];
-	coord[1] = ((double) ((index % (fftg[1] * fftg[2])) / fftg[2])) / fftg[1];
-	coord[2] = ((double) (index % fftg[2])) / fftg[2];
+	int t1 = index / (fftg[1] * fftg[2]);
+	int t2 = index % (fftg[1] * fftg[2]);
+	int t3 = t2 % fftg[2];
+	t2 /= fftg[2];
+	coord[0] = ((double) t1) / fftg[0];
+	coord[1] = ((double) t2) / fftg[1];
+	coord[2] = ((double) t3) / fftg[2];
 }
 
 void direction(double* cart, double* dir) {
@@ -360,7 +364,7 @@ double sph_bessel(double k, double r, int l) {
 }
 
 double complex rayexp(double* kpt, int* Gs, float complex* Cs, int l, int m,
-	int num_waves, double* sum_terms, double* ionp) {
+	int num_waves, double complex* sum_terms, double* ionp) {
 
 	double complex result = 0;
 	double pvec[3] = {0,0,0};
@@ -371,6 +375,8 @@ double complex rayexp(double* kpt, int* Gs, float complex* Cs, int l, int m,
 		phase = cexp(2*PI*I*dot(ionp, pvec));
 		result += phase * Cs[w] * ssum_terms[(2*l+1)*w+l+m]
 	}
+
+	return result;
 }
 
 double complex* rayexp_terms(double* kpt, int* Gs, int num_waves,
@@ -380,7 +386,7 @@ double complex* rayexp_terms(double* kpt, int* Gs, int num_waves,
 	double complex phase = 4 * PI * cpow(I, l);
 	double complex ylmdir = 0;
 	double k = 0;
-	double complex* terms = malloc((2*l+1) * num_waves * sizeof(double complex));
+	double complex* terms = (double complex*) malloc((2*l+1) * num_waves * sizeof(double complex));
 
 	double pvec[3] = {0,0,0}
 	double phat[2] = {0,0};
@@ -409,6 +415,24 @@ double complex* rayexp_terms(double* kpt, int* Gs, int num_waves,
 			terms[(2*l+1)*w+l+m] = ylmdir * overlap * phase;
 		}
 
+	}
+}
+
+void generate_rayleigh_expansion_terms(pswf_t* wf, ppot_t* pps, int num_elems) {
+	for (int k_num = 0; k_num < wf->nwk * wf->nspin; k_num++) {
+		kpoint_t* kpt = wf->kpts[k_num];
+		kpt->expansion = (rayleigh_set_t**) malloc(num_elems * sizeof(rayleigh_set_t*));
+		for (int i = 0; i < num_elems; i++) {
+			kpt->expansion[i] = (rayleigh_set_t*) malloc(pp.num_projs * sizeof(rayleigh_set_t));
+			ppot_t pp = pps[i];
+			for (int j = 0; j < pp.num_projs; j++) {
+				double complex* terms = rayexp_terms(kpt->k, kpt->Gs, kpt->num_waves,
+					pp.funcs[j].l, pp.wave_gridsize, pp.wave_grid,
+					pp.funcs[j].aewave, pp.funcs[j].pswave, wf->reclattice);
+				kpt->expansion[i][j].terms = terms;
+				kpt->expansion[i][j].l = pp.funcs[j].l;
+			}
+		}
 	}
 }
 

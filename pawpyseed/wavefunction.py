@@ -276,10 +276,11 @@ class Wavefunction:
 		print("datsa", nband, nwk, nspin)
 		res = cdouble_to_numpy(res, 2*nband*nwk*nspin)
 		M_R, M_S, N_R, N_S, N_RS = self.make_site_lists(basis)
+		num_N_RS, N_RS = len(N_RS), np.array(N_RS).flatten()
 		projector_list, selfnums, selfcoords, basisnums, basiscoords = self.make_c_projectors(basis)
 		ct = self.projector.compensation_terms(band_num, self.pwf.wf_ptr, basis.pwf.wf_ptr, projector_list, 
-			len(self.cr.pps), len(M_R), len(N_R), len(N_S), len(M_S), numpy_to_cint(M_R),
-			numpy_to_cint(N_R), numpy_to_cint(N_S), numpy_to_cint(M_S), numpy_to_cint(selfnums),
+			len(self.cr.pps), len(M_R), len(N_R), len(N_S), len(M_S), numpy_to_cint(M_R), numpy_to_cint(M_S),
+			numpy_to_cint(N_R), numpy_to_cint(N_S), numpy_to_cint(N_RS), numpy_to_cint(selfnums),
 			numpy_to_cdouble(selfcoords), numpy_to_cint(basisnums), numpy_to_cdouble(basiscoords),
 			numpy_to_cint(self.dim))
 		ct = cdouble_to_numpy(ct, 2*nband*nwk*nspin)

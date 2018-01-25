@@ -478,16 +478,16 @@ double* compensation_terms(int BAND_NUM, pswf_t* wf_proj, pswf_t* wf_ref, ppot_t
 			}
 			t += ti;
 		}
-		free(ref_projs);
 		overlap[2*w] = creal(temp);
 		overlap[2*w+1]= cimag(temp);
+		printf("temp 1 %lf %lf\n", creal(temp), cimag(temp));
 
-
+		temp = 0;
 		for (int s = 0; s < num_N_R; s++) {
 			ppot_t pp = pps[ref_labels[N_R[s]]];
 			for (int i = 0; i < pp.num_projs; i++) {
 				for (int m = -pp.funcs[i].l; m <= pp.funcs[i].l; m++) {
-					rayexp(wf_proj->kpts[w%NUM_KPTS]->k, wf_proj->kpts[w%NUM_KPTS]->Gs,
+					temp += rayexp(wf_proj->kpts[w%NUM_KPTS]->k, wf_proj->kpts[w%NUM_KPTS]->Gs,
 						wf_proj->kpts[w%NUM_KPTS]->bands[w/NUM_KPTS]->Cs, pp.funcs[i].l, m,
 						wf_proj->kpts[w%NUM_KPTS]->num_waves,
 						wf_ref->kpts[w%NUM_KPTS]->expansion[ref_labels[N_R[s]]][i].terms,
@@ -495,6 +495,58 @@ double* compensation_terms(int BAND_NUM, pswf_t* wf_proj, pswf_t* wf_ref, ppot_t
 				}
 			}
 		}
+		overlap[2*w] += creal(temp);
+		overlap[2*w+1]+= cimag(temp);
+		printf("temp 2 %lf %lf\n", creal(temp), cimag(temp));
+
+		temp = 0;
+		for (int s = 0; s < num_N_S; s++) {
+			ppot_t pp = pps[ref_labels[N_S[s]]];
+			for (int i = 0; i < pp.num_projs; i++) {
+				for (int m = -pp.funcs[i].l; m <= pp.funcs[i].l; m++) {
+					temp += rayexp(wf_ref->kpts[w%NUM_KPTS]->k, wf_ref->kpts[w%NUM_KPTS]->Gs,
+						wf_ref->kpts[w%NUM_KPTS]->bands[w/NUM_KPTS]->Cs, pp.funcs[i].l, m,
+						wf_ref->kpts[w%NUM_KPTS]->num_waves,
+						wf_proj->kpts[w%NUM_KPTS]->expansion[ref_labels[N_S[s]]][i].terms,
+						proj_coords + N_S[s]*3);
+				}
+			}
+		}
+		overlap[2*w] += creal(temp);
+		overlap[2*w+1]+= cimag(temp);
+		printf("temp 3 %lf %lf\n", creal(temp), cimag(temp));
+
+		temp = 0;
+		t = 0;
+		for (int s = 0; s < num_N_RS / 2; s++) {
+			ppot_t ppi = pps[ref_labels[N_RS[2*s+0]]];
+			ppot_t ppj = pps[ref_labels[N_RS[2*s+1]]];
+			int ti = 0;
+			for (int i = 0; i < pp.num_projs; i++) {
+				l1 = ppi.funcs[i].l;
+				for (int m1 = -l1; m1 <= l1; m1++) {
+					int tj = 0;
+					for (int j = 0; j < pp.num_projs; j++) {
+						l2 = ppj.funcs[j].l;
+						for (int m2 = -l2; m2 <= l2; m2++) {
+							if (l1 == l2 && m1 == m2) {
+								//NOTE: THIS DOESN'T WORK FOR NONIDENTICAL STRUCTURES
+								temp += conj(ref_projs[t+tj])
+									//* (mymat[pp.num_projs*i+j])
+									* (ppi.diff_overlap_matrix[pp.num_projs*i+j])
+									* proj_projs[t+ti];
+							}
+							tj++;
+						}
+					}
+					ti++;
+				}
+			}
+		}
+		free(ref_projs);
+		overlap[2*w] += creal(temp);
+		overlap[2*w+1]+= cimag(temp);
+		printf("temp 4 %lf %lf\n", creal(temp), cimag(temp));
 	}
 
 	free_real_proj_site_list(ref_sites, num_M + num_N_R);

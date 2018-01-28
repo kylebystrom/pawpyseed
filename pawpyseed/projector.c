@@ -244,9 +244,9 @@ double complex* onto_projector_helper(MKL_Complex16* x, real_proj_site_t* sites,
 			for (int i = 0; i < num_indices; i++) {
 				index = indices[i];
 				frac_from_index(index, frac, fftg);
-				frac[0] = frac[0] - sites[s].coord[0];
-				frac[1] = frac[1] - sites[s].coord[1];
-				frac[2] = frac[2] - sites[s].coord[2];
+				frac[0] = sites[s].coord[0];
+				frac[1] = sites[s].coord[1];
+				frac[2] = sites[s].coord[2];
 				kdotr = 2 * PI * dot(kpt, frac);
 				overlap[t] += conj(values[i]) * (x[index].real + I*x[index].imag) * dv
 						* cexp(-I * kdotr);
@@ -413,6 +413,14 @@ double* compensation_terms(int BAND_NUM, pswf_t* wf_proj, pswf_t* wf_ref, ppot_t
 			wf_proj->kpts[kpt_num]->Gs, wf_proj->kpts[kpt_num]->bands[BAND_NUM]->Cs,
 			wf_proj->kpts[kpt_num]->bands[BAND_NUM]->num_waves, num_M, M_S, pps, fft_grid);
 	}
+	double complex** lst_proj_projs2 = (double complex**) malloc(NUM_KPTS*sizeof(double complex*));
+	#pragma omp parallel for
+	for (int kpt_num = 0; kpt_num < NUM_KPTS; kpt_num++) {
+                lst_proj_projs2[kpt_num] = onto_projector(proj_sites, proj_labels,
+                        wf_proj->G_bounds, wf_proj->lattice, wf_proj->kpts[kpt_num]->k,
+                        wf_proj->kpts[kpt_num]->Gs, wf_proj->kpts[kpt_num]->bands[BAND_NUM]->Cs,
+                        wf_proj->kpts[kpt_num]->bands[BAND_NUM]->num_waves, num_N_RS, N_RS_S, pps, fft_grid);
+        }
 	for (int i = 0; i < 4; i++) {
 		printf("quick check %d %d\n", M_R[i], N_RS[i]);
 	}
@@ -478,6 +486,7 @@ double* compensation_terms(int BAND_NUM, pswf_t* wf_proj, pswf_t* wf_ref, ppot_t
 			}
 			t += ti;
 		}
+		free(ref_projs);
 		overlap[2*w] = creal(temp);
 		overlap[2*w+1]= cimag(temp);
 		printf("temp 1 %lf %lf\n", creal(temp), cimag(temp));
@@ -518,22 +527,26 @@ double* compensation_terms(int BAND_NUM, pswf_t* wf_proj, pswf_t* wf_ref, ppot_t
 
 		temp = 0;
 		t = 0;
-		for (int s = 0; s < num_N_RS / 2; s++) {
-			ppot_t ppi = pps[ref_labels[N_RS[2*s+0]]];
-			ppot_t ppj = pps[ref_labels[N_RS[2*s+1]]];
+		double complex* ref_projs = onto_projector(ref_sites, ref_labels,
+                        wf_ref->G_bounds, wf_ref->lattice, wf_ref->kpts[w%NUM_KPTS]->k,
+                        wf_ref->kpts[w%NUM_KPTS]->Gs, wf_ref->kpts[w%NUM_KPTS]->bands[w/NUM_KPTS]->Cs,
+                        wf_ref->kpts[w%NUM_KPTS]->bands[w/NUM_KPTS]->num_waves, num_N_RS, N_RS_R, pps, fft_grid);
+		for (int s = 0; s < num_N_RS; s++) {
+			ppot_t ppi = pps[0];
+			ppot_t ppj = pps[0];
 			int ti = 0;
-			for (int i = 0; i < pp.num_projs; i++) {
+			for (int i = 0; i < ppi.num_projs; i++) {
 				l1 = ppi.funcs[i].l;
 				for (int m1 = -l1; m1 <= l1; m1++) {
 					int tj = 0;
-					for (int j = 0; j < pp.num_projs; j++) {
+					for (int j = 0; j < ppj.num_projs; j++) {
 						l2 = ppj.funcs[j].l;
 						for (int m2 = -l2; m2 <= l2; m2++) {
 							if (l1 == l2 && m1 == m2) {
+								//printf("looking for a problem %d %d %d\n", t, ti, tj);
 								//NOTE: THIS DOESN'T WORK FOR NONIDENTICAL STRUCTURES
 								temp += conj(ref_projs[t+tj])
-									//* (mymat[pp.num_projs*i+j])
-									* (ppi.diff_overlap_matrix[pp.num_projs*i+j])
+									* (ppi.diff_overlap_matrix[ppi.num_projs*i+j])
 									* proj_projs[t+ti];
 							}
 							tj++;
@@ -542,6 +555,7 @@ double* compensation_terms(int BAND_NUM, pswf_t* wf_proj, pswf_t* wf_ref, ppot_t
 					ti++;
 				}
 			}
+			t += ti;
 		}
 		free(ref_projs);
 		overlap[2*w] += creal(temp);

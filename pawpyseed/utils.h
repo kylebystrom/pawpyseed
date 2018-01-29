@@ -3,6 +3,15 @@
 #include <complex.h>
 #include <math.h>
 
+typedef struct projection {
+	int num_projs;
+	int total_projs;
+	int* ns;
+	int* ls;
+	int* ms;
+	double complex* overlaps;
+} projection_t;
+
 typedef struct band {
 	int n;
 	int num_waves;
@@ -10,6 +19,7 @@ typedef struct band {
 	double N;
 	double complex energy;
 	float complex* Cs;
+	projection_t* projections;
 } band_t;
 
 typedef struct rayleigh_terms {
@@ -46,6 +56,8 @@ typedef struct proj_ae_ps {
 	double** aewave_spline;
 	double* pswave;
 	double** pswave_spline;
+	double* diffwave;
+	double** diffwave_spline;
 } funcset_t;
 
 typedef struct projgrid {

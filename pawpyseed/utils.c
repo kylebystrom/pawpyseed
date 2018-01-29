@@ -35,7 +35,7 @@ double determinant(double* m) {
 
 void min_cart_path(double* coord, double* center, double* lattice, double* path, double* r) {
 	*r = INFINITY;
-	double testvec[3];
+	double testvec[3]= {0,0,0};
 	double testdist;
 	for (int i = -1; i <= 1; i++) {
 		for (int j = -1; j <= 1; j++) {
@@ -265,6 +265,14 @@ double proj_interpolate(double r, double rmax, double* x, double* proj, double**
 	return radval;
 }
 
+double wave_interpolate(double r, double* x, double* f, double** wave_spline) {
+	int ind = (int) (log(r/x[0]) / log(x[1] / x[0]));
+	double rem = r - x[ind];
+	return f[ind] + rem * (wave_spline[0][ind] + 
+				rem * (wave_spline[1][ind] +
+				rem * wave_spline[2][ind]));
+}
+
 double complex proj_value(funcset_t funcs, double* x, int m, double rmax,
 	double* ion_pos, double* pos, double* lattice) {
 
@@ -283,6 +291,23 @@ double complex proj_value(funcset_t funcs, double* x, int m, double rmax,
 	double complex sph_val = Ylm(funcs.l, m, theta, phi);
 	//printf("out %lf %lf %lf %lf %lf %lf %lf %lf %lf\n", phi, theta, r, temp[0], temp[1], temp[2], radial_val, creal(sph_val), cimag(sph_val));
 	return radial_val * sph_val;
+}
+
+double complex onto_partial_wave(double* pvec, double* reclattice, double complex* kwave,
+	double kappamin, double dkappa, int N, double** wave_spline) {
+
+	double temp[3] = {0,0,0};
+	temp[0] = reclattice[0] * pvec[0] + reclattice[3] * pvec[1] + reclattice[6] * pvec[2];
+	temp[0] = reclattice[1] * pvec[0] + reclattice[4] * pvec[1] + reclattice[7] * pvec[2];
+	temp[0] = reclattice[2] * pvec[0] + reclattice[5] * pvec[1] + reclattice[8] * pvec[2];
+
+	int n = (int) ((log(mag(temp)) - kappamin) / dkappa);
+	double rem = mag(temp) - exp(kappamin + n * dkappa);
+	double val = kwave[n] + rem * (wave_spline[0][n] +
+				rem * (wave_spline[1][n] + 
+				rem * wave_spline[2][n]));
+	return val;
+
 }
 
 //adapted from VASP source code

@@ -1,5 +1,6 @@
 #ifndef PROJECTOR_H
 #define PROJECTOR_H
+#include <mkl_types.h>
 
 void vc_pseudoprojection(pswf_t* wf_ref, pswf_t* wf_proj, int BAND_NUM, double* results);
 
@@ -20,6 +21,13 @@ void onto_projector(kpoint_t* kpt, int band_num, real_proj_site_t* sites, int nu
 void add_num_cart_gridpts(ppot_t* pp_ptr, double* lattice, int* fftg);
 
 void make_pwave_overlap_matrices(ppot_t* pp_ptr);
+
+void setup_projections(pswf_t* wf, ppot_t* pps, int num_elems,
+	int num_sites, int* fftg, int* labels, double* coords);
+
+double complex** overlap_setup(pswf_t* wf_R, pswf_t* wf_S, ppot_t* pps,
+	int* labels_R, int* labels_S, double* coords_R, double* coords_S,
+	int* N_RS_R, int* N_RS_S, int num_N_RS);
 
 double* compensation_terms(int BAND_NUM, pswf_t* wf_proj, pswf_t* wf_ref, ppot_t* pps,
 	int num_elems, int num_M, int num_N_R, int num_N_S, int num_N_RS,

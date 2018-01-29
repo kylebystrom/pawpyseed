@@ -152,6 +152,8 @@ double complex Ylm2(int l, int m, double costheta, double phi);
 
 double proj_interpolate(double r, double rmax, double* x, double* proj, double** proj_spline);
 
+double wave_interpolate(double r, double* x, double* f, double** wave_spline);
+
 double complex proj_value(funcset_t funcs, double* x, int m, double rmax,
 	double* ion_pos, double* pos, double* lattice);
 

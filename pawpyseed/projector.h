@@ -9,7 +9,7 @@ ppot_t* get_projector_list(int num_els, int* labels, int* ls, double* proj_grids
 	double* projectors, double* aewaves, double* pswaves, double* rmaxs);
 
 real_proj_site_t* projector_values(int num_sites, int* labels, double* coords,
-	double* lattice, double* reclattice, ppot_t* pps, int* fftg, int num_kohn_sham);
+	double* lattice, double* reclattice, ppot_t* pps, int* fftg);
 
 void onto_projector_helper(band_t* band, MKL_Complex16* x, real_proj_site_t* sites,
 	int num_sites, int* labels, double* lattice, double* kpt, ppot_t* pps, int* fftg);

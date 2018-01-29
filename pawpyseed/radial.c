@@ -3,25 +3,30 @@
 #include <complex.h>
 #include <math.h>
 #include <omp.h>
+#include "quadrature.h"
 #include "utils.h"
+#include "radial.h"
+
+#define PI 3.14159265359
 
 double complex offsite_wave_overlap(double* coord1, double* r1, double* f1, double** spline1, int size1,
 	double* coord2, double* r2, double* f2, double** spline2, int size2,
 	double* lattice, int l1, int m1, int l2, int m2) {
 
 	double dcoord[3] = {0,0,0};
+	double temp[3] = {0,0,0};
 	double R = 0;
 	min_cart_path(coord2, coord1, lattice, dcoord, &R);
 	double r1max = r1[size1-1];
 	double r2max = r2[size2-1];
 	double dphi = PI / 30;
-	double THETA, PHI, R1, R2, costheta, dcostheta, sintheta;
+	double THETA, PHI, R1, R2, costheta, dcostheta, sintheta, phi, F1, F2, integral = 0;
 
 	//loop over 1st coord
-	dr = r1[0];
-	costhetas = QUADRATURE_POINTS[26];
-	dcosthetas = QUADRATURE_WEIGHTS[26];
-	for (int rstep = 0; rstep < size; rstep++) {
+	double dr = r1[0];
+	double* costhetas = QUADRATURE_POINTS[26];
+	double* dcosthetas = QUADRATURE_WEIGHTS[26];
+	for (int rstep = 0; rstep < size1; rstep++) {
 		R1 = r1[rstep];
 		for (int thetastep = 0; thetastep < 29; thetastep++) {
 			costheta = costhetas[thetastep];
@@ -48,7 +53,7 @@ double complex offsite_wave_overlap(double* coord1, double* r1, double* f1, doub
 	}
 
 	dr = r2[0];
-	for (int rstep = 0; rstep < size; rstep++) {
+	for (int rstep = 0; rstep < size2; rstep++) {
 		R2 = r2[rstep];
 		for (int thetastep = 0; thetastep < 29; thetastep++) {
 			costheta = costhetas[thetastep];

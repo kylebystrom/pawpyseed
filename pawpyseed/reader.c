@@ -7,7 +7,7 @@
 #include "utils.h"
 #include "reader.h"
 
-#define PI 3.14159265359
+#define PI 3.14159265358979323846
 #define c 0.262465831
 
 void setup(char* filename, int* pnrecl, int* pnspin, int* pnwk, int* pnband,

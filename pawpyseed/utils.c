@@ -8,7 +8,7 @@
 #include <mkl_types.h>
 #include "utils.h"
 
-#define PI M_PI
+#define PI 3.14159265358979323846
 
 void vcross(double* res, double* top, double* bottom) {
 	res[0] = top[1] * bottom[2] - top[2] * bottom[1];

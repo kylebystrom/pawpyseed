@@ -246,7 +246,7 @@ double complex Ylm(int l, int m, double theta, double phi) {
 	else if (m < 0) multiplier = pow(2.0, 0.5) * cos(-m*phi);
 	else multiplier = pow(2.0, 0.5) * sin(m*phi);
 	return pow((2*l+1)/(4*PI)*fac(l-m)/fac(l+m), 0.5) *
-		legendre(l, m, cos(theta))* multiplier;//* cexp(I*m*phi);
+		legendre(l, m, cos(theta))* cexp(I*m*phi);
 }
 
 double complex Ylm2(int l, int m, double costheta, double phi) {

@@ -235,6 +235,7 @@ void onto_projector_helper(band_t* band, MKL_Complex16* x, real_proj_site_t* sit
 
 	int num_indices, index, t=0;
 	for (int s = 0; s < num_sites; s++) {
+		printf("checking coord %lf %lf %lf\n", sites[s].coord[0], sites[s].coord[1], sites[s].coord[2]);
 		num_indices = sites[s].num_indices;
 		int* indices = sites[s].indices;
 		projection_t* projections = band->projections;
@@ -258,7 +259,7 @@ void onto_projector_helper(band_t* band, MKL_Complex16* x, real_proj_site_t* sit
 				frac[2] -= sites[s].coord[2];
 				kdotr = 2 * PI * dot(kpt, frac);
 				total += conj(values[i]) * (x[index].real + I*x[index].imag)
-							* dv * cexp(-I * kdotr);
+							* dv * cexp(I * kdotr);
 			}
 			projections[s].overlaps[p] = total;
 		}
@@ -382,7 +383,7 @@ void make_pwave_overlap_matrices(ppot_t* pp_ptr) {
 void setup_projections(pswf_t* wf, ppot_t* pps, int num_elems,
 		int num_sites, int* fftg, int* labels, double* coords) {
 
-	#pragma omp parallel for 
+	//#pragma omp parallel for 
 	for (int p = 0; p < num_elems; p++) {
 		make_pwave_overlap_matrices(pps+p);
 		add_num_cart_gridpts(pps+p, wf->lattice, fftg);
@@ -391,7 +392,7 @@ void setup_projections(pswf_t* wf, ppot_t* pps, int num_elems,
 	int NUM_BANDS = wf->nband;
 	real_proj_site_t* sites = projector_values(num_sites, labels, coords,
 		wf->lattice, wf->reclattice, pps, fftg);
-	#pragma omp parallel for 
+	//#pragma omp parallel for 
 	for (int w = 0; w < NUM_BANDS * NUM_KPTS; w++) {
 		kpoint_t* kpt = wf->kpts[w % NUM_KPTS];
 		int band_num = w / NUM_KPTS;
@@ -399,6 +400,7 @@ void setup_projections(pswf_t* wf, ppot_t* pps, int num_elems,
 			wf->G_bounds, wf->lattice, pps, fftg);
 	}
 	free_real_proj_site_list(sites, num_sites);
+	generate_rayleigh_expansion_terms(wf, pps, num_elems);
 }
 
 double complex** overlap_setup(pswf_t* wf_R, pswf_t* wf_S, ppot_t* pps,
@@ -458,16 +460,13 @@ double* compensation_terms(int BAND_NUM, pswf_t* wf_proj, pswf_t* wf_ref, ppot_t
 	int NUM_KPTS = wf_proj->nwk * wf_proj->nspin;
 	int NUM_BANDS = wf_proj->nband;
 
-	double* overlap = (double*) calloc(2* NUM_KPTS * NUM_BANDS, sizeof(double));
+	double* overlap = (double*) calloc(2 * NUM_KPTS * NUM_BANDS, sizeof(double));
 
 	double mymat[25] = {-.292062035887E+00,  -.375473398257E-01,  0,0,0,
  -.375473398257E-01,  -.572218536460E-02,0, 0,0,
 0,0,  -.407149241649E-01,  -.490280055892E-02,  0,
   0,0,-.490280055892E-02  ,-.955532870297E-03,  0,
   0,0,0,0,  .697731914902E-01};
-
-  	generate_rayleigh_expansion_terms(wf_ref, pps, num_elems);
-  	generate_rayleigh_expansion_terms(wf_proj, pps, num_elems);
 
 	int l1 = 0, l2 = 0;
 	#pragma omp parallel for
@@ -483,7 +482,7 @@ double* compensation_terms(int BAND_NUM, pswf_t* wf_proj, pswf_t* wf_ref, ppot_t
 			band_t* tmpb = tmpk->bands[w/NUM_KPTS];
 			projection_t* tmpp = tmpb->projections;
 			projection_t pron = tmpp[site_num];
-			projection_t ppron = wf_proj->kpts[w%NUM_KPTS]->bands[w/NUM_KPTS]->projections[site_num];
+			projection_t ppron = wf_proj->kpts[w%NUM_KPTS]->bands[BAND_NUM]->projections[site_num];
 			for (int i = 0; i < pron.total_projs; i++) {
 				for (int j = 0; j < ppron.total_projs; j++) {
 					if (pron.ls[i] == ppron.ls[j]  && pron.ms[i] == ppron.ms[j]) {

@@ -10,7 +10,7 @@
 #include "sbt.h"
 
 #define c 0.262465831
-#define PI M_PI
+#define PI 3.14159265358979323846
 
 double complex* spherical_bessel_transform_setup(double encut, double enbuf, int lmax, int N, double* r) {
 

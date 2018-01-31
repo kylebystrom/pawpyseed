@@ -3,7 +3,7 @@
 projector:
 	rm -f $(PWD)/pawpy.so
 	source ~/.bashrc
-	icc -shared -o pawpy.so projector.c fft.c quadrature.c reader.c utils.c radial.c tests.c -std=c11 -L${MKLROOT}/lib/intel64 -lmkl_rt -lpthread -ldl -I${MKLROOT}/include -lm -fopenmp -O3 -fPIC -Wall
+	icc -shared -o pawpy.so projector.c fft.c quadrature.c reader.c utils.c radial.c tests.c -std=c11 -L${MKLROOT}/lib/intel64 -lmkl_rt -lpthread -ldl -I${MKLROOT}/include -lm -O3 -fPIC -Wall
 
 debug:
 	rm -f $(PWD)/pawpy.so

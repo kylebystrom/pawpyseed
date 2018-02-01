@@ -68,6 +68,7 @@ typedef struct real_proj {
 	int l;
 	int m;
 	int func_num;
+	double* paths;
 	double complex* values;
 } real_proj_t;
 

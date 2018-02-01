@@ -244,16 +244,20 @@ double complex Ylm(int l, int m, double theta, double phi) {
 	double complex multiplier = 0;
 	if (m == 0) multiplier = 1;
 	else if (m < 0) multiplier = pow(2.0, 0.5) * cos(-m*phi);
-	else multiplier = pow(2.0, 0.5) * sin(m*phi);
+	else multiplier = pow(-1,m) * pow(2.0, 0.5) * sin(m*phi);
 	return pow((2*l+1)/(4*PI)*fac(l-m)/fac(l+m), 0.5) *
-		legendre(l, m, cos(theta))* cexp(I*m*phi);
+		legendre(l, m, cos(theta))*multiplier;// cexp(I*m*phi);
 }
 
 double complex Ylm2(int l, int m, double costheta, double phi) {
 	//printf("%lf %lf %lf\n", pow((2*l+1)/(4*PI)*fac(l-m)/fac(l+m), 0.5), legendre(l, m, cos(theta)),
 	//	creal(cexp(I*m*phi)));
+	double complex multiplier = 0;
+        if (m == 0) multiplier = 1;
+        else if (m < 0) multiplier = pow(2.0, 0.5) * cos(-m*phi);
+        else multiplier = pow(-1,m) * pow(2.0, 0.5) * sin(m*phi);
 	return pow((2*l+1)/(4*PI)*fac(l-m)/fac(l+m), 0.5) *
-		legendre(l, m, costheta) * cexp(I*m*phi);
+		legendre(l, m, costheta) *multiplier;//* cexp(I*m*phi);
 }
 
 double proj_interpolate(double r, double rmax, double* x, double* proj, double** proj_spline) {
@@ -319,9 +323,14 @@ double** spline_coeff(double* x, double* y, int N) {
 
 	printf("pl %d\n", N);
 	double d1p1 = (y[1] - y[0]) / (x[1] - x[0]);
-
-	coeff[1][0] = -0.5;
-	coeff[0][0] = (3 / (x[1] - x[0])) * ((y[1] - y[0]) / (x[1] - x[0]) - d1p1);
+	if (d1p1 > 0.99E30) {
+		coeff[1][0] = 0;
+		coeff[0][0] = 0;
+	}
+	else {
+		coeff[1][0] = -0.5;
+		coeff[0][0] = (3 / (x[1] - x[0])) * ((y[1] - y[0]) / (x[1] - x[0]) - d1p1);
+	}
 
 	double s = 0, r = 0;
 

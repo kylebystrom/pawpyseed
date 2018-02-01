@@ -13,10 +13,10 @@ real_proj_site_t* projector_values(int num_sites, int* labels, double* coords,
 	double* lattice, double* reclattice, ppot_t* pps, int* fftg);
 
 void onto_projector_helper(band_t* band, MKL_Complex16* x, real_proj_site_t* sites,
-	int num_sites, int* labels, double* lattice, double* kpt, ppot_t* pps, int* fftg);
+	int num_sites, int* labels, double* lattice, double* reclattice, double* kpt, ppot_t* pps, int* fftg);
 
 void onto_projector(kpoint_t* kpt, int band_num, real_proj_site_t* sites, int num_sites, int* labels,
-	int* G_bounds, double* lattice, ppot_t* pps, int* fftg);
+	int* G_bounds, double* lattice, double* reclattice, ppot_t* pps, int* fftg);
 
 void add_num_cart_gridpts(ppot_t* pp_ptr, double* lattice, int* fftg);
 

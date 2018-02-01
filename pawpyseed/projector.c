@@ -112,7 +112,7 @@ ppot_t* get_projector_list(int num_els, int* labels, int* ls, double* proj_grids
 	int l_num = 0;
 	for (int i = 0; i < num_els; i++) {
 		pps[i].num_projs = labels[4*i+1];
-		pps[i].rmax = rmaxs[i];
+		pps[i].rmax = 2.10244619055465565;//rmaxs[i];
 		pps[i].proj_gridsize = labels[4*i+2];
 		pps[i].wave_gridsize = labels[4*i+3];
 		printf("vals %d %d %d\n", pps[i].num_projs, pps[i].proj_gridsize, pps[i].wave_gridsize);
@@ -127,7 +127,7 @@ ppot_t* get_projector_list(int num_els, int* labels, int* ls, double* proj_grids
 		}
 		pps[i].proj_grid = (double*) malloc(pps[i].proj_gridsize*sizeof(double));
 		for (int j = 0; j < pps[i].proj_gridsize; j++) {
-			pps[i].proj_grid[j] = proj_grids[pgt];
+			pps[i].proj_grid[j] = pps[i].rmax / pps[i].proj_gridsize * j;
 			pgt++;
 		}
 		funcset_t* funcs = (funcset_t*) malloc(pps[i].num_projs*sizeof(funcset_t));
@@ -189,7 +189,8 @@ real_proj_site_t* projector_values(int num_sites, int* labels, double* coords,
 				sites[i].projs[p].l = pps[labels[i]].funcs[j].l;
 				sites[i].projs[p].m = m;
 				sites[i].projs[p].func_num = j;
-				sites[i].projs[p].values = calloc(pps[labels[i]].num_cart_gridpts, sizeof(double complex));
+				sites[i].projs[p].values = malloc(pps[labels[i]].num_cart_gridpts * sizeof(double complex));
+				sites[i].projs[p].paths = malloc(3*pps[labels[i]].num_cart_gridpts * sizeof(double));
 				p++;
 			}
 		}
@@ -206,10 +207,13 @@ real_proj_site_t* projector_values(int num_sites, int* labels, double* coords,
 					if (r < 0.99 * sites[p].rmax) {
 						sites[p].indices[sites[p].num_indices] = i*fftg[1]*fftg[2] + j*fftg[2] + k;
 						for (int n = 0; n < sites[p].total_projs; n++) {
-							sites[p].projs[n].values[sites[p].num_indices] = 
-								proj_value(pps[labels[p]].funcs[sites[p].projs[n].func_num],
+							sites[p].projs[n].paths[3*sites[p].num_indices] = path[0];
+							sites[p].projs[n].paths[3*sites[p].num_indices+1] = path[1];
+							sites[p].projs[n].paths[3*sites[p].num_indices+2] = path[2];
+							sites[p].projs[n].values[sites[p].num_indices] = proj_value(pps[labels[p]].funcs[sites[p].projs[n].func_num],
 								pps[labels[p]].proj_grid,
 								sites[p].projs[n].m, sites[p].rmax, coords+3*p, frac, lattice);
+						if (p == 0) printf("coordandval %lf %lf %lf %d %d\n", r, creal(sites[p].projs[n].values[sites[p].num_indices])*pow(vol,0.5), cimag(sites[p].projs[n].values[sites[p].num_indices])*pow(vol, 0.5), sites[p].num_indices,n);
 						}
 						sites[p].num_indices++;
 					}
@@ -225,14 +229,20 @@ real_proj_site_t* projector_values(int num_sites, int* labels, double* coords,
 }
 
 void onto_projector_helper(band_t* band, MKL_Complex16* x, real_proj_site_t* sites,
-	int num_sites, int* labels, double* lattice, double* kpt, ppot_t* pps, int* fftg) {
+	int num_sites, int* labels, double* lattice, double* reclattice, double* kpt, ppot_t* pps, int* fftg) {
 
 	double dv = determinant(lattice) / fftg[0] / fftg[1] / fftg[2];
 
 	band->projections = (projection_t*) malloc(num_sites * sizeof(projection_t));
 
-	double frac[3] = {0,0,0};
+	double path[3] = {0,0,0};
 	double kdotr = 0;
+
+	double kpt_cart[3] = {0,0,0};
+	kpt_cart[0] = kpt[0];
+	kpt_cart[1] = kpt[1];
+	kpt_cart[2] = kpt[2];
+	frac_to_cartesian(kpt_cart, reclattice);
 
 	int num_indices, index, t=0;
 	for (int s = 0; s < num_sites; s++) {
@@ -254,21 +264,18 @@ void onto_projector_helper(band_t* band, MKL_Complex16* x, real_proj_site_t* sit
 			double complex total = 0 + 0 * I;
 			for (int i = 0; i < num_indices; i++) {
 				index = indices[i];
-				frac_from_index(index, frac, fftg);
-				frac[0] -= sites[s].coord[0];
-				frac[1] -= sites[s].coord[1];
-				frac[2] -= sites[s].coord[2];
-				kdotr = 2 * PI * dot(kpt, frac);
+				kdotr = dot(kpt_cart, sites[s].projs[p].paths+i*3);
 				total += conj(values[i]) * (x[index].real + I*x[index].imag)
 							* dv * cexp(I * kdotr);
 			}
 			projections[s].overlaps[p] = total;
+			printf("site %d, proj %d %lf %lf\n", s,p,creal(total),cimag(total));
 		}
 	}
 }
 
 void onto_projector(kpoint_t* kpt, int band_num, real_proj_site_t* sites, int num_sites, int* labels,
-	int* G_bounds, double* lattice, ppot_t* pps, int* fftg) {
+	int* G_bounds, double* lattice, double* reclattice, ppot_t* pps, int* fftg) {
 
 	double* k = kpt->k;
 	int* Gs = kpt->Gs;
@@ -280,7 +287,7 @@ void onto_projector(kpoint_t* kpt, int band_num, real_proj_site_t* sites, int nu
 	//printf("determinant %lf\n", determinant(lattice));
 	fft3d(x, G_bounds, lattice, k, Gs, Cs, num_waves, fftg);
 
-	onto_projector_helper(kpt->bands[band_num], x, sites, num_sites, labels, lattice, k, pps, fftg);
+	onto_projector_helper(kpt->bands[band_num], x, sites, num_sites, labels, lattice, reclattice, k, pps, fftg);
 
 	mkl_free(x);
 }
@@ -398,7 +405,7 @@ void setup_projections(pswf_t* wf, ppot_t* pps, int num_elems,
 		kpoint_t* kpt = wf->kpts[w % NUM_KPTS];
 		int band_num = w / NUM_KPTS;
 		onto_projector(kpt, band_num, sites, num_sites, labels,
-			wf->G_bounds, wf->lattice, pps, fftg);
+			wf->G_bounds, wf->lattice, wf->reclattice, pps, fftg);
 	}
 	free_real_proj_site_list(sites, num_sites);
 	generate_rayleigh_expansion_terms(wf, pps, num_elems);
@@ -480,8 +487,8 @@ double* compensation_terms(int BAND_NUM, pswf_t* wf_proj, pswf_t* wf_ref, ppot_t
 		for (int s = 0; s < num_M; s++) {
 			ppot_t pp = pps[ref_labels[M_R[s]]];
 			int site_num = M_R[s];
-			printf("site num %d\n", site_num);
-			printf("kpt band %d %d", w%NUM_KPTS, w/NUM_KPTS);
+			//printf("site num %d\n", site_num);
+			//printf("kpt band %d %d", w%NUM_KPTS, w/NUM_KPTS);
 			kpoint_t* tmpk = wf_ref->kpts[w%NUM_KPTS];
 			band_t* tmpb = tmpk->bands[w/NUM_KPTS];
 			projection_t* tmpp = tmpb->projections;
@@ -522,7 +529,7 @@ double* compensation_terms(int BAND_NUM, pswf_t* wf_proj, pswf_t* wf_ref, ppot_t
 		}
 		overlap[2*w] += creal(temp);
 		overlap[2*w+1]+= cimag(temp);
-		printf("temp 2 %lf %lf\n", creal(temp), cimag(temp));
+		//printf("temp 2 %lf %lf\n", creal(temp), cimag(temp));
 
 		temp = 0 + 0 * I;
 		for (int s = 0; s < num_N_S; s++) {
@@ -543,7 +550,7 @@ double* compensation_terms(int BAND_NUM, pswf_t* wf_proj, pswf_t* wf_ref, ppot_t
 		}
 		overlap[2*w] += creal(temp);
 		overlap[2*w+1]+= cimag(temp);
-		printf("temp 3 %lf %lf\n", creal(temp), cimag(temp));
+		//printf("temp 3 %lf %lf\n", creal(temp), cimag(temp));
 
 		temp = 0 + 0 * I;
 		t = 0;
@@ -563,7 +570,7 @@ double* compensation_terms(int BAND_NUM, pswf_t* wf_proj, pswf_t* wf_ref, ppot_t
 		}
 		overlap[2*w] += creal(temp);
 		overlap[2*w+1]+= cimag(temp);
-		printf("temp 4 %lf %lf\n", creal(temp), cimag(temp));
+		//printf("temp 4 %lf %lf\n", creal(temp), cimag(temp));
 	}
 
 	mkl_free_buffers();

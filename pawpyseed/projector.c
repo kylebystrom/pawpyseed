@@ -68,6 +68,7 @@ void vc_pseudoprojection(pswf_t* wf_ref, pswf_t* wf_proj, int BAND_NUM, double* 
 	clock_t end = clock();
 	printf("%lf seconds for band projection\n", (double)(end - start) / CLOCKS_PER_SEC);
 
+	//return results[1]/(results[0]+results[1]);
 }
 
 double* pseudoprojection(pswf_t* wf_ref, pswf_t* wf_proj, int BAND_NUM) {
@@ -469,6 +470,9 @@ double* compensation_terms(int BAND_NUM, pswf_t* wf_proj, pswf_t* wf_ref, ppot_t
   0,0,0,0,  .697731914902E-01};
 
 	int l1 = 0, l2 = 0;
+	double complex** N_RS_overlaps = overlap_setup(wf_ref, wf_proj, pps, ref_labels, proj_labels,
+		ref_coords, proj_coords, N_RS_R, N_RS_S, num_N_RS);
+
 	#pragma omp parallel for
 	for (int w = 0; w < NUM_BANDS * NUM_KPTS; w++) {
 		double complex temp = 0 + 0 * I;
@@ -549,13 +553,11 @@ double* compensation_terms(int BAND_NUM, pswf_t* wf_proj, pswf_t* wf_ref, ppot_t
 			projection_t pron = wf_ref->kpts[w%NUM_KPTS]->bands[w/NUM_KPTS]->projections[site_num];
 			projection_t ppron = wf_proj->kpts[w%NUM_KPTS]->bands[w/NUM_KPTS]->projections[site_num];
 			for (int i = 0; i < pron.total_projs; i++) {
-				for (int j = 0; j < pron.total_projs; j++) {
+				for (int j = 0; j < ppron.total_projs; j++) {
 					//NOTE: CURRENTLY ONLY WORKS ON IDENTICAL STRUCTURES
-					if (pron.ls[i] == pron.ls[j]  && pron.ms[i] == pron.ms[j]) {
-						temp += conj(pron.overlaps[j])
-							* (pp.diff_overlap_matrix[pron.num_projs*pron.ns[i]+ppron.ns[j]])
-							* ppron.overlaps[i];
-					}
+					temp += conj(pron.overlaps[j])
+						* (N_RS_overlaps[s][i*ppron.total_projs+j])
+						* ppron.overlaps[i];
 				}
 			}
 		}

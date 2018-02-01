@@ -174,6 +174,11 @@ class PseudoWavefunction:
 		self.kpts = vr.actual_kpoints
 		self.wf_ptr = PAWC.read_wavefunctions(filename.encode('utf-8'), byref(kws))
 
+	def pseudoprojection(self, band_num, basis):
+		res = (c_double * len(weights))()
+		return PAWC.vc_pseudoprojection(basis.wf_ptr, self.wf_ptr, band_num, res)
+		return cdouble_to_numpy(res)
+
 class Wavefunction:
 	"""
 	Class for storing and manipulating all electron wave functions in the PAW

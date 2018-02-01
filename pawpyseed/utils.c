@@ -4,8 +4,6 @@
 #include <math.h>
 #include <omp.h>
 #include <time.h>
-#include <mkl.h>
-#include <mkl_types.h>
 #include "utils.h"
 
 #define PI 3.14159265358979323846

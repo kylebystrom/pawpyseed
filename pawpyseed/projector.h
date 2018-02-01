@@ -2,10 +2,6 @@
 #define PROJECTOR_H
 #include <mkl_types.h>
 
-void vc_pseudoprojection(pswf_t* wf_ref, pswf_t* wf_proj, int BAND_NUM, double* results);
-
-double* pseudoprojection(pswf_t* wf_ref, pswf_t* wf_proj, int BAND_NUM);
-
 ppot_t* get_projector_list(int num_els, int* labels, int* ls, double* proj_grids, double* wave_grids,
 	double* projectors, double* aewaves, double* pswaves, double* rmaxs);
 

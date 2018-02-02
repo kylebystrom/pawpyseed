@@ -53,7 +53,8 @@ void fft3d(MKL_Complex16* x, int* G_bounds, double* lattice,
 	MKL_LONG status3 = DftiComputeBackward(handle, x);
 	//printf("%s\n%s\n%s\n", DftiErrorMessage(status1), DftiErrorMessage(status2), DftiErrorMessage(status3));
 
-	double kmins[3] = {G_bounds[0] + kpt[0], G_bounds[2] + kpt[1], G_bounds[4] + kpt[2]};
+	//double kmins[3] = {G_bounds[0] + kpt[0], G_bounds[2] + kpt[1], G_bounds[4] + kpt[2]};
+	double kmins[3] = {G_bounds[0], G_bounds[2], G_bounds[4]};
 	double dv = determinant(lattice) / fftg[0] / fftg[1] / fftg[2];
 	double inv_sqrt_vol = pow(determinant(lattice), -0.5);
 

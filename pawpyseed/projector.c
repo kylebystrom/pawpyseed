@@ -16,7 +16,7 @@
 #define PI 3.14159265358979323846
 
 ppot_t* get_projector_list(int num_els, int* labels, int* ls, double* proj_grids, double* wave_grids,
-	double* projectors, double* aewaves, double* pswaves, double* rmaxs) {
+	double* projectors, double* aewaves, double* pswaves, char** rmaxs) {
 	
 	ppot_t* pps = (ppot_t*) malloc(num_els * sizeof(ppot_t));
 	int wt = 0;
@@ -26,7 +26,7 @@ ppot_t* get_projector_list(int num_els, int* labels, int* ls, double* proj_grids
 	int l_num = 0;
 	for (int i = 0; i < num_els; i++) {
 		pps[i].num_projs = labels[4*i+1];
-		pps[i].rmax = 2.10244619055465565;//rmaxs[i];
+		sscanf(rmaxs[i], "%lf", &(pps[i].rmax));
 		pps[i].proj_gridsize = labels[4*i+2];
 		pps[i].wave_gridsize = labels[4*i+3];
 		printf("vals %d %d %d\n", pps[i].num_projs, pps[i].proj_gridsize, pps[i].wave_gridsize);
@@ -393,6 +393,7 @@ double* compensation_terms(int BAND_NUM, pswf_t* wf_proj, pswf_t* wf_ref, ppot_t
 	int l1 = 0, l2 = 0;
 	double complex** N_RS_overlaps = overlap_setup(wf_ref, wf_proj, pps, ref_labels, proj_labels,
 		ref_coords, proj_coords, N_RS_R, N_RS_S, num_N_RS);
+	double inv_sqrt_vol = pow(determinant(wf->lattice), -0.5);
 
 	#pragma omp parallel for
 	for (int w = 0; w < NUM_BANDS * NUM_KPTS; w++) {
@@ -436,7 +437,7 @@ double* compensation_terms(int BAND_NUM, pswf_t* wf_proj, pswf_t* wf_ref, ppot_t
 						wf_proj->kpts[w%NUM_KPTS]->bands[w/NUM_KPTS]->Cs, pp.funcs[i].l, m,
 						wf_proj->kpts[w%NUM_KPTS]->num_waves,
 						wf_ref->kpts[w%NUM_KPTS]->expansion[ref_labels[N_R[s]]][i].terms,
-						ref_coords + N_R[s]*3) * conj(pron.overlaps[count]);
+						ref_coords + N_R[s]*3) * conj(pron.overlaps[count]) * inv_sqrt_vol;
 					count++;
 				}
 			}
@@ -457,7 +458,7 @@ double* compensation_terms(int BAND_NUM, pswf_t* wf_proj, pswf_t* wf_ref, ppot_t
 						wf_ref->kpts[w%NUM_KPTS]->bands[w/NUM_KPTS]->Cs, pp.funcs[i].l, m,
 						wf_ref->kpts[w%NUM_KPTS]->num_waves,
 						wf_proj->kpts[w%NUM_KPTS]->expansion[ref_labels[N_S[s]]][i].terms,
-						proj_coords + N_S[s]*3)) * pron.overlaps[count];
+						proj_coords + N_S[s]*3)) * pron.overlaps[count] * inv_sqrt_vol;
 					count++;
 				}
 			}

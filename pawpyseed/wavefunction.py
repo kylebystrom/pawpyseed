@@ -88,6 +88,7 @@ class Pseudopotential:
 		self.realprojs = []
 		self.nonlocalprojs = []
 		self.ls = []
+		self.rmaxstrs = []
 
 		auguccstr, gridstr = gridstr.split("grid", 1)
 		gridstr, aepotstr = gridstr.split("aepotential", 1)
@@ -124,6 +125,7 @@ class Pseudopotential:
 		for projstr in projstrs:
 			lst = projstr.split("Reciprocal Space Part")
 			nonlocalvals, projs = lst[0], lst[1:]
+			self.rmaxstr = c_char_p(nonlocalvals.split()[2])
 			nonlocalvals = self.make_nums(nonlocalvals)
 			l = nonlocalvals[0]
 			count = nonlocalvals[1]
@@ -395,11 +397,13 @@ class Wavefunction:
 		pswaves = np.array([], np.float64)
 		wgrids = np.array([], np.float64)
 		pgrids = np.array([], np.float64)
+		rmaxstrs = []
 		num_els = 0
 
 		for num in pps:
 			pp = pps[num]
 			clabels = np.append(clabels, [num, len(pp.ls), pp.ndata, len(pp.grid)])
+			rmaxstrs.append(pp.rmaxstr)
 			ls = np.append(ls, pp.ls)
 			wgrids = np.append(wgrids, pp.grid)
 			pgrids = np.append(pgrids, pp.projgrid)
@@ -416,7 +420,7 @@ class Wavefunction:
 		projector_list = self.projector.get_projector_list(num_els, numpy_to_cint(clabels),
 			numpy_to_cint(ls), numpy_to_cdouble(pgrids), numpy_to_cdouble(wgrids),
 			numpy_to_cdouble(projectors), numpy_to_cdouble(aewaves), numpy_to_cdouble(pswaves),
-			numpy_to_cdouble(np.array([2.10244619055465565])))
+			(c_char_p * 4)(rmaxstrs))
 		selfnums = np.array([labels[el(s)] for s in self.structure], dtype=np.int32)
 		basisnums = np.array([labels[el(s)] for s in basis.structure], dtype=np.int32)
 		selfcoords = np.array([], np.float64)

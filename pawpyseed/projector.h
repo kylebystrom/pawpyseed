@@ -3,7 +3,7 @@
 #include <mkl_types.h>
 
 ppot_t* get_projector_list(int num_els, int* labels, int* ls, double* proj_grids, double* wave_grids,
-	double* projectors, double* aewaves, double* pswaves, double* rmaxs);
+	double* projectors, double* aewaves, double* pswaves, char** rmaxs);
 
 real_proj_site_t* projector_values(int num_sites, int* labels, double* coords,
 	double* lattice, double* reclattice, ppot_t* pps, int* fftg);

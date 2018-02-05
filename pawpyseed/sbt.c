@@ -12,6 +12,14 @@
 #define c 0.262465831
 #define PI 3.14159265358979323846
 
+/*
+The following routines are based on the Fortran program NumSBT written by J. Talman.
+The algorithm performs a spherical Bessel transform in O(NlnN) time. If you adapt
+this code for any purpose, please cite:
+Talman, J. Computer Physics Communications 2009, 180, 332 –338.
+The code is distributed under the Standard CPC license.
+*/
+
 typedef struct sbt_setup {
 	double kmin;
 	double kappamin;
@@ -23,7 +31,7 @@ typedef struct sbt_setup {
 	double complex** mult_table;
 } sbt_desciptor_t;
 
-double complex* spherical_bessel_transform_setup(double encut, double enbuf, int lmax, int N, double* r) {
+sbt_desciptor_t* spherical_bessel_transform_setup(double encut, double enbuf, int lmax, int N, double* r) {
 
 	sbt_desciptor_t* descriptor = (sbt_desciptor_t*) malloc(sizeof(sbt_desciptor_t));
 
@@ -67,11 +75,11 @@ double complex* spherical_bessel_transform_setup(double encut, double enbuf, int
 	descriptor->dt = dt;
 	descriptor->N = N;
 	descriptor->mult_table = mult_table;
-
+	return descriptor;
 }
 
 double complex* wave_spherical_bessel_transform(sbt_desciptor_t* d,
-	double* r, double* f, int l, int m) {
+	double* r, double* f, double* ks, int l) {
 
 	double kmin = d->kmin;
 	double kappamin = d->kappamin;
@@ -120,6 +128,7 @@ double complex* wave_spherical_bessel_transform(sbt_desciptor_t* d,
 	double kp = 0;
 	for (int p = 0; p < N; p++) {
 		kp = kmin * exp(p * drho);
+		ks[p] = kp;
 		vals[p] = x[p].real + I * x[p].imag;
 		vals[p] *= 2 / N / pow(kp, 1.5);
 	}

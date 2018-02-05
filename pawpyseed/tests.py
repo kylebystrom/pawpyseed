@@ -20,8 +20,9 @@ PAWC = CDLL(os.path.join(MODULE_DIR, "pawpy.so"))
 PAWC.legendre.restype = c_double
 PAWC.Ylmr.restype = c_double
 PAWC.Ylmi.restype = c_double
-PAWC.spline_coeff.restype = POINTER(PORINT(c_double))
+PAWC.spline_coeff.restype = POINTER(POINTER(c_double))
 PAWC.proj_interpolate.restype = c_double
+PAWC.spherical_bessel_transform_setup.restype = POINTER(None)
 
 def cdouble_to_numpy(arr, length):
 	arr = cast(arr, POINTER(c_double))
@@ -230,6 +231,21 @@ class TestC:
 		for i in range(len(weights)):
 			kws[i] = weights[i]
 		PAWC.fft_check("WAVECAR", kws, numpy_to_cint(np.array([40,40,40])))
+
+	def test_sbt(self):
+		import scipy.special.spherical_jn as jn
+		k = 4
+		cr = CoreRegion(Potcar.from_file("POTCAR"))
+		r = cr.pps['Ga'].wavegrid
+		f = cr.pps['Ga'].aewaves[2] - cr.pps['Ga'].aewaves[2];
+		ks = (c_double * len(r))()
+		sbtd = PAWC.spherical_bessel_transform_setup(520, 520, 2, 323, r)
+		res = wave_spherical_bessel_transform(sbtd, numpy_to_cdouble(r),
+			numpy_to_cdouble(f), ks, 1)
+		vals = jn(1, r * k) * f
+		integral = np.trapz(vals, r)
+		print(ks)
+		print (integral)
 
 	def test_memory(self):
 		f = open('mtest.out', 'w')

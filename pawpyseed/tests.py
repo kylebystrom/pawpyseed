@@ -1,6 +1,7 @@
 import unittest
 import os, subprocess
 import time
+import scipy
 
 import numpy as np
 from numpy.testing import assert_almost_equal
@@ -20,7 +21,7 @@ PAWC = CDLL(os.path.join(MODULE_DIR, "pawpy.so"))
 PAWC.legendre.restype = c_double
 PAWC.Ylmr.restype = c_double
 PAWC.Ylmi.restype = c_double
-PAWC.spline_coeff.restype = POINTER(PORINT(c_double))
+PAWC.spline_coeff.restype = POINTER(POINTER(c_double))
 PAWC.proj_interpolate.restype = c_double
 
 def cdouble_to_numpy(arr, length):
@@ -209,9 +210,9 @@ class TestC:
 		vr = Vasprun("vasprun.xml")
 		cr = CoreRegion(Potcar.from_file("POTCAR"))
 		struct = Poscar.from_file("POSCAR").structure
-		grid = cr[0].projgrid
-		vals = cr[0].realprojs[0]
-		rmax = cr[0].rmax
+		grid = cr.pps['Ga'].projgrid
+		vals = cr.pps['Ga'].realprojs[0]
+		rmax = cr.pps['Ga'].rmax / 1.88973
 		tst = np.linspace(0, max(grid), 400)
 		res1 = scipy.interpolate.CubicSpline(grid, vals, extrapolate=True)(tst)
 		x, y = numpy_to_cdouble(grid), numpy_to_cdouble(vals)
@@ -219,8 +220,12 @@ class TestC:
 		res2 = (c_double * tst.shape[0])()
 		for i in range(tst.shape[0]):
 			res2[i] = PAWC.proj_interpolate(c_double(tst[i]), c_double(rmax), x, y, cof)
-		res2 = cdouble_to_numpy(res2)
+		res2 = cdouble_to_numpy(res2, tst.shape[0])
+		print ('Completed spline test')
+		print (res1)
+		print (res2)
 		print (res1-res2)
+		sys.stdout.flush()
 
 
 	def test_fft3d(self):
@@ -269,11 +274,12 @@ class TestPy:
 
 t = TestC()
 t.setup()
-t.test_legendre()
-t.test_Ylm()
-t.test_unit_conversion()
-t.test_fft3d()
+#t.test_legendre()
+#t.test_Ylm()
+#t.test_unit_conversion()
+#t.test_fft3d()
 t.test_memory()
+#t.test_spline()
 
 #t = TestMem()
 #t.test_read()

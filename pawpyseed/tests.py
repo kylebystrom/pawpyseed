@@ -1,5 +1,5 @@
 import unittest
-import os, subprocess
+import os, subprocess, sys
 import time
 import scipy
 
@@ -24,6 +24,7 @@ PAWC.Ylmi.restype = c_double
 PAWC.spline_coeff.restype = POINTER(POINTER(c_double))
 PAWC.proj_interpolate.restype = c_double
 PAWC.spherical_bessel_transform_setup.restype = POINTER(None)
+PAWC.real_wave_spherical_bessel_transform.restype = POINTER(c_double)
 
 def cdouble_to_numpy(arr, length):
 	arr = cast(arr, POINTER(c_double))
@@ -238,19 +239,30 @@ class TestC:
 		PAWC.fft_check("WAVECAR", kws, numpy_to_cint(np.array([40,40,40])))
 
 	def test_sbt(self):
-		import scipy.special.spherical_jn as jn
-		k = 4
+		from scipy.special import spherical_jn as jn
+		k = 0.152
 		cr = CoreRegion(Potcar.from_file("POTCAR"))
-		r = cr.pps['Ga'].wavegrid
-		f = cr.pps['Ga'].aewaves[2] - cr.pps['Ga'].aewaves[2];
+		r = cr.pps['Ga'].grid
+		f = cr.pps['Ga'].aewaves[0] - cr.pps['Ga'].pswaves[0];
 		ks = (c_double * len(r))()
-		sbtd = PAWC.spherical_bessel_transform_setup(520, 520, 2, 323, r)
-		res = wave_spherical_bessel_transform(sbtd, numpy_to_cdouble(r),
-			numpy_to_cdouble(f), ks, 1)
-		vals = jn(1, r * k) * f
+		print ('yo')
+		print (len(r), len(numpy_to_cdouble(r)))
+		sys.stdout.flush()
+		sbtd = PAWC.spherical_bessel_transform_setup(c_double(520), c_double(5000), 2, len(r), numpy_to_cdouble(r))
+		print ('yo')
+		sys.stdout.flush()
+		res = PAWC.real_wave_spherical_bessel_transform(sbtd, numpy_to_cdouble(r),
+			numpy_to_cdouble(f), ks, 0)
+		print ('hi')
+		sys.stdout.flush()
+		print (r, f)
+		vals = jn(0, r * k) * f * r
 		integral = np.trapz(vals, r)
-		print(ks)
+		#print (cdouble_to_numpy(ks, 388)[334])
 		print (integral)
+		print (ks[180])
+		print (res[180*2])
+		print (res[180*2+1])
 
 	def test_memory(self):
 		f = open('mtest.out', 'w')
@@ -289,11 +301,12 @@ class TestPy:
 		pass
 
 t = TestC()
-t.setup()
+#t.setup()
 #t.test_legendre()
 #t.test_Ylm()
 #t.test_unit_conversion()
 #t.test_fft3d()
+t.test_sbt()
 t.test_memory()
 #t.test_spline()
 

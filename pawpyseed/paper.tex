@@ -1,0 +1,211 @@
+\documentclass[12pt]{article}
+\usepackage{enumitem}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{amsfonts}
+\usepackage{gensymb}
+\usepackage{graphicx}
+\usepackage{caption}
+\usepackage{subcaption}
+\usepackage{hyperref}
+\usepackage{float}
+\usepackage{braket}
+\usepackage[margin=1.0in]{geometry}
+\usepackage[style=chem-acs,backend=bibtex,articletitle=false]{biblatex}
+\graphicspath{ {images/} }
+\bibliography{mybib}
+
+\begin{document}
+
+\newcommand{\ind}{lm\epsilon}
+
+\section{Theory}
+
+\subsection{Projector Augmented Wave (PAW) Method}
+
+\subsection{Projections}
+\begin{equation}
+\ket{\psi_{n\mathbf{k}}}=\ket{\widetilde{\psi}_{n\mathbf{k}}}+
+\sum_{a,n,l,m}(\ket{\phi_{a\ind}}-\ket{\widetilde{\phi}_{a\ind}})
+\braket{\widetilde{p}_{a\ind}|\widetilde{\psi}_{n\mathbf{k}}}
+\label{eq:1}
+\end{equation}
+
+\subsubsection{Projection onto Basis from Different Structure}
+In the pure physical picture of a quantum mechanical system, the eigenfunctions of the time
+independent Hamiltonian form a complete basis for any function in real space. By expressing
+a wavefunction from a system in the basis of the eigenstates of another system, one might
+be able to learn about the nature of the wavefunction in question. For example, projecting
+the wavefunction of a defect level in a periodic crystal onto the eigenfunctions of the
+bulk crystal might yield information about how the defect level is constructed. For example,
+the defect state might project primarily onto the conduction band, characterizing it
+as a weakly perturbed host state. Such an understanding of defect levels could help select
+corrections to perform on the defect system.\ref{eq:1}
+\begin{equation}
+\centering
+\begin{split}
+\braket{\psi_{Rn_1\mathbf{k}}|\psi_{Sn_2\mathbf{k}}}=\widetilde{O}+O_M+O_R+O_S+O_N\\
+O_M=\sum_{a\in M_{RS}}\sum_{l,m}\sum_{\epsilon_1}\sum_{\epsilon_2}
+\braket{\widetilde{\psi}_{Rn_1\mathbf{k}}|\widetilde{p}_{a\ind _1}}
+(\braket{\phi_{a\ind _1}|{\phi_{a\ind _2}}}
+-\bra{\widetilde{\phi}_{a\ind _1}}\ket{\widetilde{\phi}_{a\ind _2}})
+\braket{\widetilde{p}_{a\ind _2}|\widetilde{\psi}_{Sn_2\mathbf{k}}}\\
+O_R=\sum_{i\in N_R}\braket{\widetilde{\psi}_{Rn_1\mathbf{k}}|\widetilde{p}_i}
+(\bra{\phi_i}-\bra{\widetilde{\phi}_i})
+\ket{\widetilde{\psi}_{Sn_2\mathbf{k}}}\\
+O_S=\sum_{j\in N_S}\bra{\widetilde{\psi}_{Rn_1\mathbf{k}}}(\ket{\phi_j}-\ket{\widetilde{\phi}_j})
+\braket{\widetilde{p}_j|\widetilde{\psi}_{Sn_2\mathbf{k}}}\\
+O_N=\sum_{i,j\in N_{RS}}\braket{\widetilde{\psi}_{Rn_1\mathbf{k}}|
+\widetilde{p}_i}(\bra{\phi_i}-\bra{\widetilde{\phi}_i})
+(\ket{\phi_j}-\ket{\widetilde{\phi}_j})\braket{\widetilde{p}_j|\widetilde{\psi}_{Sn_2\mathbf{k}}}
+\end{split}
+\label{eq:finp}
+\end{equation}
+Equation \ref{eq:finp} is derived in Appendix A.
+
+\section{Implementation}
+
+\section*{Appendix A: Derivation of Overlap Operators from PAW Formalism}
+The starting point for this derivation is the transformation operator that
+is performed on the pseudowavefunction to obtain the all electron wavefunction
+\begin{equation}
+T=1+\sum_a\sum_l\sum_m\sum_{\epsilon}(\ket{\phi_{a\ind}}-\ket{\widetilde{\phi}_{a\ind}})
+\bra{\widetilde{p}_{a\ind}}=1+\sum_i(\ket{\phi_i}-\ket{\widetilde{\phi}_i})
+\bra{\widetilde{p}_i}
+\label{eq:T}
+\end{equation}
+where $\phi_{a\ind}$ are all electron (AE) partial waves, $\widetilde{\phi}_{a\ind}$
+are pseudo (PS) partial waves, $\widetilde{p}_{a\ind}$ are projector functions,
+$a$ are the site indices of each atom in the structure, and $l$, $m$, and $\epsilon$
+specify a spherical harmonic and index which uniquely specify partial wave at a given
+index. A summation over $i$ (or $j$, as below) represents a summation over $a$, $l$, $m$,
+and $\epsilon$. For further details on the PAW method, including the physical significance
+and construction of the partial waves and projector functions, see Blochl's original paper
+and Kresse and Joubert's paper relating ultrasoft pseudopotentials and PAW.\cite{blochl}
+The next step is to define and pseudo operator $\widetilde{A}$ for each operator $A$
+such that $\bra{\psi}A\ket{\psi}=\bra{\widetilde{\psi}}\widetilde{A}\ket{\widetilde{\psi}}$.
+Because $\ket{\psi}=T\ket{\widetilde{\psi}}$, one can write
+\begin{equation}
+\widetilde{A}=T^{\dagger}AT
+\label{eq:op}
+\end{equation}
+One can then plug Equation \ref{eq:T} into Equation \ref{eq:op} to find
+$$\widetilde{A}=[1+\sum_i\ket{\widetilde{p}_i}(\bra{\phi_i}-\bra{\widetilde{\phi}_i})]
+A[1+\sum_j(\ket{\phi_j}-\ket{\widetilde{\phi}_j})
+\bra{\widetilde{p}_j}]$$
+\begin{equation}
+\widetilde{A}=A+\sum_i\ket{\widetilde{p}_i}(\bra{\phi_i}-\bra{\widetilde{\phi}_i})A
++\sum_j A(\ket{\phi_j}-\ket{\widetilde{\phi}_j})\bra{\widetilde{p}_j}
++\sum_i\sum_j\ket{\widetilde{p}_i}(\bra{\phi_i}-\bra{\widetilde{\phi}_i})A
+(\ket{\phi_j}-\ket{\widetilde{\phi}_j})\bra{\widetilde{p}_j}
+\label{eq:res}
+\end{equation}
+Using the following relation,
+$$(\bra{\phi_i}-\bra{\widetilde{\phi}_i})A(\ket{\phi_j}-\ket{\widetilde{\phi}_j})
+=\bra{\phi_i}A\ket{\phi_j}-\bra{\widetilde{\phi}_i}A\ket{\phi_j}
+-(\bra{\phi_i}-\bra{\widetilde{\phi}_i})A\ket{\widetilde{\phi}_j}$$
+$$=\bra{\phi_i}A\ket{\phi_j}-\bra{\widetilde{\phi}_i}A(\ket{\phi_j}-\ket{\widetilde{\phi_j}})
+-(\bra{\phi_i}-\bra{\widetilde{\phi}_i})A\ket{\widetilde{\phi}_j}
+-\bra{\widetilde{\phi_i}}A\ket{\widetilde{\phi_j}}$$
+one can rearrange Equation \ref{eq:res} in the manner of Blochl\cite{blochl}:
+\begin{equation}
+\begin{split}
+\widetilde{A}=A+\sum_i\sum_j[\ket{\widetilde{p}_i}(\bra{\phi_i}A\ket{\phi_j}
+-\bra{\widetilde{\phi_i}}A\ket{\widetilde{\phi_j}})\bra{\widetilde{p}_j}] \\
++\sum_i[(1-\sum_j\ket{\widetilde{p}_j}\bra{\widetilde{\phi}_j})A(\ket{\phi_i}-\ket{\widetilde{\phi_i}})
+\bra{\widetilde{p}_i}+\ket{\widetilde{p}_i}
+(\bra{\phi_i}-\bra{\widetilde{\phi}_i})A(1-\sum_j\ket{\widetilde{\phi}_j}\bra{\widetilde{p}_j})]
+\end{split}
+\label{eq:nonloc}
+\end{equation}
+When the operator $A$ is local, then $\sum_j\ket{\widetilde{\phi}_j}\bra{\widetilde{p}_j}=1$,
+so the entire second line of Equation \ref{eq:nonloc} vanishes, giving Blochl's formulation:\cite{blochl}
+\begin{equation}
+\widetilde{A}=A+\sum_i\sum_j\ket{\widetilde{p}_i}(\bra{\phi_i}A\ket{\phi_j}
+-\bra{\widetilde{\phi_i}}A\ket{\widetilde{\phi_j}})\bra{\widetilde{p}_j}
+\label{eq:loc}
+\end{equation}
+
+However, while the overlap operator is local, the simplification in Equation \ref{eq:loc} assumes that
+the summations over $i$ and $j$ go over the same species at the same locations in the same lattice;
+only the third condition is always satisfied for systems of interest for projections between different
+bases. Equation \ref{eq:res} is a more convenient representation than Equation \ref{eq:nonloc} for this
+purpose because it is easily seen that all terms between projectors whose augmentation regions do not
+overlap vanish. In addition, the POTCAR file in VASP only stores the PS and AE partial waves out to the
+edge of the augmentation region, where they are equal but not nonzero, so it is useful to organize the terms
+so that they are guaranteed to vanish outside the augmentation regions. Replacing $A$ with unity
+allows the overlap between two bands
+in different structures $R$ and $S$ with the same lattice to be specified (note that the
+summation over $i$ is for structure $R$ and the summation over $j$ is for structure $S$):
+\begin{equation}
+\braket{\psi_{Rn_1\mathbf{k}}|\psi_{Sn_2\mathbf{k}}}=\widetilde{O}+O_1+O_2+O_3
+\label{eq:ov1}
+\end{equation}
+$$\widetilde{O}=\braket{\widetilde{\psi}_{Rn_1\mathbf{k}}|\widetilde{\psi}_{Sn_2\mathbf{k}}}$$
+$$O_1=\sum_i\braket{\widetilde{\psi}_{Rn_1\mathbf{k}}|\widetilde{p}_i}(\bra{\phi_i}-\bra{\widetilde{\phi}_i})
+\ket{\widetilde{\psi}_{Sn_2\mathbf{k}}}$$
+$$O_2=\sum_j\bra{\widetilde{\psi}_{Rn_1\mathbf{k}}}(\ket{\phi_j}-\ket{\widetilde{\phi}_j})
+\braket{\widetilde{p}_j|\widetilde{\psi}_{Sn_2\mathbf{k}}}$$
+$$O_3=\sum_i\sum_j\braket{\widetilde{\psi}_{Rn_1\mathbf{k}}|
+\widetilde{p}_i}(\bra{\phi_i}-\bra{\widetilde{\phi}_i})
+(\ket{\phi_j}-\ket{\widetilde{\phi}_j})\braket{\widetilde{p}_j|\widetilde{\psi}_{Sn_2\mathbf{k}}}$$
+The pseudowavefunctions can be expanded as a summation of plane waves,
+$$\widetilde{\psi}_{n\mathbf{k}}(\mathbf{r})=\sqrt{\frac{\omega_{\mathbf{k}}}{V}}
+e^{i\mathbf{k}\cdot \mathbf{r}}\sum_{\mathbf{G}} C_{n\mathbf{k}\mathbf{G}}
+e^{i\mathbf{G}\cdot \mathbf{r}}$$
+so the overlap between two pseudowavefunctions per unit cell can be written as
+$$\widetilde{O}=\braket{\widetilde{\psi}_{n_1\mathbf{k}_1}|\widetilde{\psi}_{n_2\mathbf{k}_2}}
+=\delta_{\mathbf{k}_1,\mathbf{k}_2}
+\omega_{\mathbf{k}} \sum_{\mathbf{G}} C^*_{n_1\mathbf{k}_1\mathbf{G}}C_{n_2\mathbf{k}_2\mathbf{G}}$$
+In VASP, structures with the same energy, k-points, and lattice will have the same basis set,
+so this projection is performed simply by reading plane wave coefficients from the VASP WAVECAR file.
+
+It is important to simplify the calculation of the other terms in equation \ref{eq:ov1} as much
+as possible because their calculation can be quite computationally intensive, and the number of
+necessary calculations for projecting onto an entire basis set can scale with the number
+of sites times the size of the basis set. One major simplification is that if a site $a$ in structure
+$R$ and site $b$ in structure $S$ have the same species and position, $a$ and $b$ will only have
+overlapping augmentation regions with each other and no other sites. Then, defining $O_{1a}$
+as the summation over on-site terms for the identical sites $a$ and $b$ in $O_1$:
+$$O_{1a}+O_{2a}+O_{3a}=\sum_{l,m}\sum_{\epsilon_1}\sum_{\epsilon_2}
+\braket{\widetilde{\psi}_{Rn_1\mathbf{k}}|\widetilde{p}_{a\ind _1}}
+(\braket{\phi_{a\ind _1}|{\phi_{a\ind _2}}}
+-\bra{\widetilde{\phi}_{a\ind _1}}\ket{\widetilde{\phi}_{a\ind _2}})
+\braket{\widetilde{p}_{a\ind _2}|\widetilde{\psi}_{Sn_2\mathbf{k}}}$$
+which is the local operator solution derived by Blochl. All three terms must
+be evaluated in full for the other sites, but terms in $O_3$ where $i$ and $j$ correspond
+to sites with nonoverlapping augmentation spheres vanish. Therefore, if $M_{RS}$ is the set
+of identical sites in the structures $R$ and $S$, $N_R$ and $N_S$ are the sets of sites
+in $R$ and $S$ not in $M_{RS}$, and $N_{RS}$ is the set of \emph{pairs} of sites not in
+$M$ with overlapping augmentation regions, then
+$$
+\braket{\psi_{Rn_1\mathbf{k}}|\psi_{Sn_2\mathbf{k}}}=\widetilde{O}+O_M+O_R+O_S+O_N
+$$
+$$
+O_M=\sum_{a\in M_{RS}}\sum_{l,m}\sum_{\epsilon_1}\sum_{\epsilon_2}
+\braket{\widetilde{\psi}_{Rn_1\mathbf{k}}|\widetilde{p}_{a\ind _1}}
+(\braket{\phi_{a\ind _1}|{\phi_{a\ind _2}}}
+-\bra{\widetilde{\phi}_{a\ind _1}}\ket{\widetilde{\phi}_{a\ind _2}})
+\braket{\widetilde{p}_{a\ind _2}|\widetilde{\psi}_{Sn_2\mathbf{k}}}
+$$
+$$
+O_R=\sum_{i\in N_R}\braket{\widetilde{\psi}_{Rn_1\mathbf{k}}|\widetilde{p}_i}
+(\bra{\phi_i}-\bra{\widetilde{\phi}_i})
+\ket{\widetilde{\psi}_{Sn_2\mathbf{k}}}
+$$
+$$
+O_S=\sum_{j\in N_S}\bra{\widetilde{\psi}_{Rn_1\mathbf{k}}}(\ket{\phi_j}-\ket{\widetilde{\phi}_j})
+\braket{\widetilde{p}_j|\widetilde{\psi}_{Sn_2\mathbf{k}}}
+$$
+$$
+O_N=\sum_{i,j\in N_{RS}}\braket{\widetilde{\psi}_{Rn_1\mathbf{k}}|
+\widetilde{p}_i}(\bra{\phi_i}-\bra{\widetilde{\phi}_i})
+(\ket{\phi_j}-\ket{\widetilde{\phi}_j})\braket{\widetilde{p}_j|\widetilde{\psi}_{Sn_2\mathbf{k}}}
+$$
+which is Equation \ref{eq:finp}.
+
+\section*{Appendix B: Comprehensive POTCAR Guide}
+
+\printbibliography
+
+\end{document}

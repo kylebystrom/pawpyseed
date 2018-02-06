@@ -11,6 +11,7 @@
 #include "fft.h"
 #include "quadrature.h"
 #include "radial.h"
+#include "sbt.h"
 
 #define c 0.262465831
 #define PI 3.14159265358979323846
@@ -309,6 +310,11 @@ void setup_projections(pswf_t* wf, ppot_t* pps, int num_elems,
 	for (int p = 0; p < num_elems; p++) {
 		make_pwave_overlap_matrices(pps+p);
 		add_num_cart_gridpts(pps+p, wf->lattice, fftg);
+		double* ks = (double*) malloc(pps[p].wave_gridsize * sizeof(double));
+		sbt_desciptor_t* d = spherical_bessel_transform_setup(520, 1000, 2, pps[p].wave_gridsize, pps[p].wave_grid);
+		for (int i = 0; i < pps[p].num_projs; i++)
+			wave_spherical_bessel_transform(d, pps[p].wave_grid, pps[p].funcs[i].aewave, ks, pps[p].funcs[i].l);
+		free(ks);
 	}
 	int NUM_KPTS = wf->nwk * wf->nspin;
 	int NUM_BANDS = wf->nband;
@@ -321,7 +327,7 @@ void setup_projections(pswf_t* wf, ppot_t* pps, int num_elems,
 		onto_projector(kpt, band_num, sites, num_sites, labels,
 			wf->G_bounds, wf->lattice, wf->reclattice, pps, fftg);
 	}
-	free_real_proj_site_list(sites, num_sites);
+	free_real_proj_site_list(sites, num_sites);	
 	generate_rayleigh_expansion_terms(wf, pps, num_elems);
 }
 
@@ -393,7 +399,7 @@ double* compensation_terms(int BAND_NUM, pswf_t* wf_proj, pswf_t* wf_ref, ppot_t
 	int l1 = 0, l2 = 0;
 	double complex** N_RS_overlaps = overlap_setup(wf_ref, wf_proj, pps, ref_labels, proj_labels,
 		ref_coords, proj_coords, N_RS_R, N_RS_S, num_N_RS);
-	double inv_sqrt_vol = pow(determinant(wf->lattice), -0.5);
+	double inv_sqrt_vol = pow(determinant(wf_ref->lattice), -0.5);
 
 	#pragma omp parallel for
 	for (int w = 0; w < NUM_BANDS * NUM_KPTS; w++) {

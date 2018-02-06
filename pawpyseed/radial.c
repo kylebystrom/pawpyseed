@@ -49,7 +49,7 @@ double complex offsite_wave_overlap(double* coord1, double* r1, double* f1, doub
 				}
 			}
 		}
-		dr = r1[rstep+1] - r1[rstep];
+		if (rstep+1 != size1) dr = r1[rstep+1] - r1[rstep];
 	}
 
 	dr = r2[0];
@@ -76,7 +76,7 @@ double complex offsite_wave_overlap(double* coord1, double* r1, double* f1, doub
 				}
 			}
 		}
-		dr = r2[rstep+1] - r2[rstep];
+		if (rstep+1 != size2) dr = r2[rstep+1] - r2[rstep];
 	}
 
 	return integral;

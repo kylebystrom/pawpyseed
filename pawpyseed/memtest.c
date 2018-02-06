@@ -4,6 +4,7 @@
 #include <math.h>
 #include <string.h>
 #include "utils.h"
+#include "pseudoprojector.h"
 #include "projector.h"
 #include "reader.h"
 #include "tests.h"
@@ -120,9 +121,10 @@ void test_compensation_terms() {
 
 	fclose(fp);
 
+	char* rm[1] = {"2.1042"};
 	printf("pps\n");
 	ppot_t* pps = get_projector_list(num_els, labels, ls, pgrids, wgrids,
-		projectors, aewaves, pswaves, rmaxs);
+		projectors, aewaves, pswaves, rm);
 
 	free(labels);
 	free(pgrids);

@@ -267,8 +267,8 @@ double proj_interpolate(double r, double rmax, double* x, double* proj, double**
 	return radval;
 }
 
-double wave_interpolate(double r, double* x, double* f, double** wave_spline) {
-	int ind = (int) (log(r/x[0]) / log(x[1] / x[0]));
+double wave_interpolate(double r, int size, double* x, double* f, double** wave_spline) {
+	int ind = min((int) (log(r/x[0]) / log(x[1]/x[0])), size-2);
 	double rem = r - x[ind];
 	return f[ind] + rem * (wave_spline[0][ind] + 
 				rem * (wave_spline[1][ind] +

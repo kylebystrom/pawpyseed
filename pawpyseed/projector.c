@@ -33,6 +33,8 @@ ppot_t* get_projector_list(int num_els, int* labels, int* ls, double* proj_grids
 		printf("vals %d %d %d\n", pps[i].num_projs, pps[i].proj_gridsize, pps[i].wave_gridsize);
 		pps[i].total_projs = 0;
 		pps[i].wave_grid = (double*) malloc((pps[i].wave_gridsize)*sizeof(double));
+		pps[i].kwave_grid = (double*) malloc((pps[i].wave_gridsize)*sizeof(double));
+		pps[i].lmax = 0;
 		pps[i].pspw_overlap_matrix = NULL;
 		pps[i].aepw_overlap_matrix = NULL;
 		pps[i].diff_overlap_matrix = NULL;
@@ -52,6 +54,8 @@ ppot_t* get_projector_list(int num_els, int* labels, int* ls, double* proj_grids
 			funcs[k].pswave = (double*) malloc(sizeof(double)*pps[i].wave_gridsize);
 			funcs[k].diffwave = (double*) malloc(sizeof(double)*pps[i].wave_gridsize);
 			funcs[k].l = ls[l_num];
+			if (funcs[k].l > pps[i].maxl)
+				pps[i].lmax = funcs[k].l;
 			pps[i].total_projs += 2 * ls[l_num] + 1;
 			l_num++;
 			for (int j = 0; j < pps[i].wave_gridsize; j++) {
@@ -69,8 +73,19 @@ ppot_t* get_projector_list(int num_els, int* labels, int* ls, double* proj_grids
 			funcs[k].pswave_spline = spline_coeff(pps[i].wave_grid, funcs[k].pswave, pps[i].wave_gridsize);
 			funcs[k].diffwave_spline = spline_coeff(pps[i].wave_grid, funcs[k].diffwave, pps[i].wave_gridsize);
 		}
+		sbt_desciptor_t* d = spherical_bessel_transform_setup(520, 520*4, pps[i].lmax,
+			pps[i].wave_gridsize, pps[i].wave_grid, pps[i].kwave_grid);
+		for (int k = 0; k < pps[i].num_projs; k++) {
+			funcs[k].kwave = wave_spherical_bessel_transform(d, pps[i].wave_grid,
+				funcs[k].diffwave, pps[i].kwave_grid, funcs[k].l);
+			funcs[k].kwave_spline = spline_coeff(pps[i].kwave_grid, funcs[k].kwave, pps[i].wave_gridsize);
+		}
+		for (int l = 0; l <= pps[i].lmax; l++) {
+			free(d->mult_table[i]);
+		}
+		free(d->mult_table);
+		free(d);
 		pps[i].funcs = funcs;
-		printf("hoobledooble %d\n", pps[i].total_projs);
 	}
 	return pps;
 }

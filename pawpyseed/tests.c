@@ -18,17 +18,11 @@ double Ylmr(int l, int m, double theta, double phi) { return creal(Ylm(l, m, the
 
 double Ylmi(int l, int m, double theta, double phi) { return cimag(Ylm(l, m, theta, phi)); }
 
-double* real_wave_spherical_bessel_transform(sbt_desciptor_t* d,
+double* real_wave_spherical_bessel_transform(sbt_descriptor_t* d,
         double* r, double* f, double* ks, int l) {
 
-	double complex* vals = wave_spherical_bessel_transform(d, r, f, ks, l);
-	double* res = (double*) malloc(2 * d->N * sizeof(double));
-	for (int i = 0; i < d->N; i++) {
-		res[2*i] = creal(vals[i]);
-		res[2*i+1] = cimag(vals[i]);
-	}
-	free(vals);
-	return res;
+	double* vals = wave_spherical_bessel_transform(d, r, f, ks, l);
+	return vals;
 }
 
 int fft_check(char* wavecar, double* kpt_weights, int* fftg) {

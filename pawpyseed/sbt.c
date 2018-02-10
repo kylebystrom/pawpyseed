@@ -20,11 +20,11 @@ Talman, J. Computer Physics Communications 2009, 180, 332 –338.
 The code is distributed under the Standard CPC license.
 */
 
-sbt_desciptor_t* spherical_bessel_transform_setup(double encut, double enbuf, int lmax, int N,
+sbt_descriptor_t* spherical_bessel_transform_setup(double encut, double enbuf, int lmax, int N,
 	double* r, double* ks) {
 
 	setbuf(stdout, NULL);
-	sbt_desciptor_t* descriptor = (sbt_desciptor_t*) malloc(sizeof(sbt_desciptor_t));
+	sbt_descriptor_t* descriptor = (sbt_descriptor_t*) malloc(sizeof(sbt_descriptor_t));
 
 	if (lmax == 0) lmax = 1;
 	double complex** mult_table = (double complex**) malloc((lmax+1) * sizeof(double complex*));
@@ -76,7 +76,7 @@ sbt_desciptor_t* spherical_bessel_transform_setup(double encut, double enbuf, in
 	return descriptor;
 }
 
-double* wave_spherical_bessel_transform(sbt_desciptor_t* d,
+double* wave_spherical_bessel_transform(sbt_descriptor_t* d,
 	double* r, double* f, double* ks, int l) {
 
 	double kmin = d->kmin;

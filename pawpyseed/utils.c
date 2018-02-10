@@ -397,7 +397,7 @@ double sph_bessel(double k, double r, int l) {
 }
 
 double complex rayexp(double* kpt, int* Gs, float complex* Cs, int l, int m,
-	int num_waves, double* grid, double* wave, double* spline, double* ionp) {
+	int num_waves, double complex* sum_terms, double* ionp) {
 
 	double complex result = 0;
 	double pvec[3] = {0,0,0};
@@ -415,12 +415,13 @@ double complex rayexp(double* kpt, int* Gs, float complex* Cs, int l, int m,
 
 double complex* rayexp_terms(double* kpt, int* Gs, int num_waves,
 	int l, int wave_gridsize, double* grid,
-	double* wave, double* spline, double* reclattice) {
+	double* wave, double** spline, double* reclattice) {
 
 	double complex ylmdir = 0;
 	double k = 0;
 	double complex* terms = (double complex*) malloc((2*l+1) * num_waves * sizeof(double complex));
 
+	double overlap = 0;
 	double pvec[3] = {0,0,0};
 	double phat[2] = {0,0};
 	for (int w = 0; w < num_waves; w++) {
@@ -430,9 +431,11 @@ double complex* rayexp_terms(double* kpt, int* Gs, int num_waves,
 		frac_to_cartesian(pvec, reclattice);
 		k = mag(pvec);
 		direction(pvec, phat);
-		ylmdir = conj(Ylm(l, m, phat[0], phat[1]));
 		overlap = wave_interpolate(k, wave_gridsize, grid, wave, spline);
-		terms[(2*l+1)*w+l+m] = ylmdir * overlap;
+		for (int m = -l; m <= l; m++) {
+			ylmdir = conj(Ylm(l, m, phat[0], phat[1]));
+			terms[(2*l+1)*w+l+m] = ylmdir * overlap;
+		}
 	}
 	return terms;
 }
@@ -447,7 +450,7 @@ void generate_rayleigh_expansion_terms(pswf_t* wf, ppot_t* pps, int num_elems) {
 			for (int j = 0; j < pp.num_projs; j++) {
 				double complex* terms = rayexp_terms(kpt->k, kpt->Gs, kpt->num_waves,
 					pp.funcs[j].l, pp.wave_gridsize, pp.wave_grid,
-					pp.funcs[j].aewave, pp.funcs[j].pswave, wf->reclattice);
+					pp.funcs[j].diffwave, pp.funcs[j].diffwave_spline, wf->reclattice);
 				kpt->expansion[i][j].terms = terms;
 				kpt->expansion[i][j].l = pp.funcs[j].l;
 			}

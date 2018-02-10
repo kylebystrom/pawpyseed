@@ -97,7 +97,7 @@ class Pseudopotential:
 		corechgstr, kenstr = corechgstr.split("kinetic energy-density", 1)
 		kenstr, pspotstr = kenstr.split("pspotential", 1)
 		pspotstr, pscorechgstr = pspotstr.split("core charge-density (pseudized)", 1)
-		self.grid = self.make_nums(gridstr+' 0')
+		self.grid = self.make_nums(gridstr)
 		self.aepotential = self.make_nums(aepotstr)
 		self.aecorecharge = self.make_nums(corechgstr)
 		self.kinetic = self.make_nums(kenstr)
@@ -306,22 +306,13 @@ class Wavefunction:
 			N_RS_R, N_RS_S = [], []
 		projector_list, selfnums, selfcoords, basisnums, basiscoords = self.projector_list, self.selfnums, self.selfcoords, self.basisnums, self.basiscoords
 		"""
-		projector_list, selfnums, selfcoords, basisnums, basiscoords = self.make_c_projectors(basis)
-		
-		self.projector.setup_projections(self.pwf.wf_ptr, projector_list, len(self.cr.pps),
-			len(self.structure), numpy_to_cint(self.dim), numpy_to_cint(selfnums),
-			numpy_to_cdouble(selfcoords))
-		self.projector.setup_projections(basis.pwf.wf_ptr, projector_list, len(self.cr.pps),
-			len(basis.structure), numpy_to_cint(self.dim), numpy_to_cint(basisnums),
-			numpy_to_cdouble(basiscoords))
-		"""
 		ct = self.projector.compensation_terms(band_num, self.pwf.wf_ptr, basis.pwf.wf_ptr, projector_list, 
 			len(self.cr.pps), len(M_R), len(N_R), len(N_S), num_N_RS, numpy_to_cint(M_R), numpy_to_cint(M_S),
 			numpy_to_cint(N_R), numpy_to_cint(N_S), numpy_to_cint(N_RS_R), numpy_to_cint(N_RS_S),
 			numpy_to_cint(selfnums),
 			numpy_to_cdouble(selfcoords), numpy_to_cint(basisnums), numpy_to_cdouble(basiscoords),
 			numpy_to_cint(self.dim))
-		"""
+		
 		N_RS_R, N_RS_S = M_R, M_S
 		setup_projections(self.pwf.wf_ptr, projector_list, len(self.cr.pps)
 			len(self.structure), numpy_to_cint(self.dim), numpy_to_cint(selfnums),
@@ -329,13 +320,13 @@ class Wavefunction:
 		setup_projections(basis.pwf.wf_ptr, projector_list, len(basis.cr.pps)
 			len(basis.structure), numpy_to_cint(self.dim), numpy_to_cint(basisnums),
 			numpy_to_cdouble(basiscoords))
+		"""
 		ct = self.projector.compensation_terms(band_num, self.pwf.wf_ptr, basis.pwf.wf_ptr, projector_list, 
 			len(self.cr.pps), 0, len(M_R), len(M_S), len(M_S), numpy_to_cint([]), numpy_to_cint([]),
 			numpy_to_cint(M_R), numpy_to_cint(M_S), numpy_to_cint(N_RS_R), numpy_to_cint(N_RS_S),
 			numpy_to_cint(selfnums),
 			numpy_to_cdouble(selfcoords), numpy_to_cint(basisnums), numpy_to_cdouble(basiscoords),
 			numpy_to_cint(self.dim))
-		"""
 		ct = cdouble_to_numpy(ct, 2*nband*nwk*nspin)
 		occs = cdouble_to_numpy(self.projector.get_occs(basis.pwf.wf_ptr), nband*nwk*nspin)
 		c, v = 0, 0

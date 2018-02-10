@@ -90,6 +90,7 @@ typedef struct real_proj_site {
 typedef struct pseudopot {
 	int num_projs;
 	int total_projs;
+	int lmax;
 	funcset_t* funcs;
 	double rmax;
 	double* pspw_overlap_matrix;
@@ -169,11 +170,11 @@ void frac_from_index(int index, double* coord, int* fftg);
 double sph_bessel(double k, double r, int l);
 
 double complex rayexp(double* kpt, int* Gs, float complex* Cs, int l, int m,
-	int num_waves, double* grid, double* wave, double* spline, double* ionp);
+        int num_waves, double complex* sum_terms, double* ionp);
 
 double complex* rayexp_terms(double* kpt, int* Gs, int num_waves,
-	int l, int wave_gridsize, double* wave_grid,
-	double* aewave, double* pswave, double* reclattice);
+        int l, int wave_gridsize, double* grid,
+        double* wave, double** spline, double* reclattice);
 
 void generate_rayleigh_expansion_terms(pswf_t* wf, ppot_t* pps, int num_elems);
 

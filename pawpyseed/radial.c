@@ -20,7 +20,8 @@ double complex offsite_wave_overlap(double* coord1, double* r1, double* f1, doub
 	double r1max = r1[size1-1];
 	double r2max = r2[size2-1];
 	double dphi = PI / 30;
-	double THETA, PHI, R1, R2, costheta, dcostheta, sintheta, phi, F1, F2, integral = 0;
+	double THETA, PHI, R1, R2, costheta, dcostheta, sintheta, phi, integral = 0;
+	double complex F1, F2;
 
 	//loop over 1st coord
 	double dr = r1[0];
@@ -43,7 +44,7 @@ double complex offsite_wave_overlap(double* coord1, double* r1, double* f1, doub
 					if (R2 - fabs(temp[2]) == 0) PHI = 0;
 					else PHI = acos(temp[0] / pow(temp[0]*temp[0] + temp[1]*temp[1], 0.5));
 					if (temp[1] < 0) PHI = 2*PI - PHI;
-					F2 = wave_interpolate(R2, r2, f2, spline2) * Ylm(l2, m2, THETA, PHI);
+					F2 = wave_interpolate(R2, size2, r2, f2, spline2) * Ylm(l2, m2, THETA, PHI);
 					F1 = f1[rstep] * Ylm2(l1, m1, costheta, phi);
 					integral += conj(F1) * F2 * R1 / R2 * dr * dcostheta * dphi;
 				}
@@ -70,7 +71,7 @@ double complex offsite_wave_overlap(double* coord1, double* r1, double* f1, doub
 					if (R1 - fabs(temp[2]) == 0) PHI = 0;
 					else PHI = acos(temp[0] / pow(temp[0]*temp[0] + temp[1]*temp[1], 0.5));
 					if (temp[1] < 0) PHI = 2*PI - PHI;
-					F1 = wave_interpolate(R1, r1, f1, spline1) * Ylm(l1, m1, THETA, PHI);
+					F1 = wave_interpolate(R1, size1, r1, f1, spline1) * Ylm(l1, m1, THETA, PHI);
 					F2 = f2[rstep] * Ylm2(l2, m2, costheta, phi);
 					integral += conj(F1) * F2 * R2 / R1 * dr * dcostheta * dphi;
 				}
@@ -78,6 +79,5 @@ double complex offsite_wave_overlap(double* coord1, double* r1, double* f1, doub
 		}
 		if (rstep+1 != size2) dr = r2[rstep+1] - r2[rstep];
 	}
-
 	return integral;
 }

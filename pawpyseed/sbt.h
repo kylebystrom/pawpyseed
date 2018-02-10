@@ -18,12 +18,12 @@ typedef struct sbt_setup {
         double dt;
         double N;
         double complex** mult_table;
-} sbt_desciptor_t;
+} sbt_descriptor_t;
 
-sbt_desciptor_t* spherical_bessel_transform_setup(double encut, double enbuf, int lmax, int N,
+sbt_descriptor_t* spherical_bessel_transform_setup(double encut, double enbuf, int lmax, int N,
 	double* r, double* ks);
 
-double* wave_spherical_bessel_transform(sbt_desciptor_t* d,
+double* wave_spherical_bessel_transform(sbt_descriptor_t* d,
         double* r, double* f, double* ks, int l);
 
 #endif

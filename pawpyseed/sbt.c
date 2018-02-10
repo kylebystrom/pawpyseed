@@ -95,7 +95,7 @@ double* wave_spherical_bessel_transform(sbt_desciptor_t* d,
 	MKL_LONG length = N;
 	MKL_LONG status = 0;
 
-	double complex* vals = malloc(N * sizeof(double complex));
+	double* vals = malloc(N * sizeof(double complex));
 
 	status = DftiCreateDescriptor(&handle, DFTI_DOUBLE, DFTI_COMPLEX, dim, length);
 	status = DftiCommitDescriptor(handle);

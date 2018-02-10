@@ -103,14 +103,12 @@ real_proj_site_t* projector_values(int num_sites, int* labels, double* coords,
 		sites[i].elem = labels[i];
 		sites[i].num_projs = pps[labels[i]].num_projs;
 		sites[i].rmax = pps[labels[i]].rmax;
-		sites[i].total_projs = 0;
+		sites[i].total_projs = pps[labels[i]].total_projs;
 		sites[i].num_indices = 0;
 		sites[i].coord = malloc(3 * sizeof(double));
 		sites[i].coord[0] = coords[3*i+0];
 		sites[i].coord[1] = coords[3*i+1];
 		sites[i].coord[2] = coords[3*i+2];
-		for (int j = 0; j < sites[i].num_projs; j++)
-			sites[i].total_projs += 2 * pps[labels[i]].funcs[j].l + 1;
 		sites[i].indices = calloc(pps[labels[i]].num_cart_gridpts, sizeof(int));
 		sites[i].projs = (real_proj_t*) malloc(sites[i].total_projs * sizeof(real_proj_t));
 		int p = 0;
@@ -325,11 +323,6 @@ void setup_projections(pswf_t* wf, ppot_t* pps, int num_elems,
 	for (int p = 0; p < num_elems; p++) {
 		make_pwave_overlap_matrices(pps+p);
 		add_num_cart_gridpts(pps+p, wf->lattice, fftg);
-		double* ks = (double*) malloc(pps[p].wave_gridsize * sizeof(double));
-		sbt_desciptor_t* d = spherical_bessel_transform_setup(520, 1000, 2, pps[p].wave_gridsize, pps[p].wave_grid);
-		for (int i = 0; i < pps[p].num_projs; i++)
-			wave_spherical_bessel_transform(d, pps[p].wave_grid, pps[p].funcs[i].aewave, ks, pps[p].funcs[i].l);
-		free(ks);
 	}
 	int NUM_KPTS = wf->nwk * wf->nspin;
 	int NUM_BANDS = wf->nband;
@@ -370,7 +363,7 @@ double complex** overlap_setup(pswf_t* wf_R, pswf_t* wf_S, ppot_t* pps,
 					l2 = pp2.funcs[k].l;
 					for (int m2 = -l2; m2 <= l2; m2++) {
 						overlaps[i][tj*pp2.total_projs+tk] =
-						offsite_wave_overlap(coord1, pp1.wave_grid, pp1.funcs[j].diffwave,
+							offsite_wave_overlap(coord1, pp1.wave_grid, pp1.funcs[j].diffwave,
 							pp1.funcs[j].diffwave_spline, pp1.wave_gridsize,
 							coord2, pp2.wave_grid, pp2.funcs[k].diffwave,
 							pp2.funcs[k].diffwave_spline, pp2.wave_gridsize,
@@ -457,7 +450,7 @@ double* compensation_terms(int BAND_NUM, pswf_t* wf_proj, pswf_t* wf_ref, ppot_t
 					temp += rayexp(wf_proj->kpts[w%NUM_KPTS]->k, wf_proj->kpts[w%NUM_KPTS]->Gs,
 						wf_proj->kpts[w%NUM_KPTS]->bands[w/NUM_KPTS]->Cs, pp.funcs[i].l, m,
 						wf_proj->kpts[w%NUM_KPTS]->num_waves,
-						wf_ref->kpts[w%NUM_KPTS]->expansion[ref_labels[N_R[s]]][i].terms,
+						pp.kwave_grid, pp.funcs[i].kwave, pp.kwave_spline,
 						ref_coords + N_R[s]*3) * conj(pron.overlaps[count]) * inv_sqrt_vol;
 					count++;
 				}
@@ -465,7 +458,7 @@ double* compensation_terms(int BAND_NUM, pswf_t* wf_proj, pswf_t* wf_ref, ppot_t
 		}
 		overlap[2*w] += creal(temp);
 		overlap[2*w+1]+= cimag(temp);
-		//printf("temp 2 %lf %lf\n", creal(temp), cimag(temp));
+		printf("temp 2 %lf %lf\n", creal(temp), cimag(temp));
 
 		temp = 0 + 0 * I;
 		for (int s = 0; s < num_N_S; s++) {
@@ -486,7 +479,7 @@ double* compensation_terms(int BAND_NUM, pswf_t* wf_proj, pswf_t* wf_ref, ppot_t
 		}
 		overlap[2*w] += creal(temp);
 		overlap[2*w+1]+= cimag(temp);
-		//printf("temp 3 %lf %lf\n", creal(temp), cimag(temp));
+		printf("temp 3 %lf %lf\n", creal(temp), cimag(temp));
 
 		temp = 0 + 0 * I;
 		t = 0;
@@ -506,7 +499,7 @@ double* compensation_terms(int BAND_NUM, pswf_t* wf_proj, pswf_t* wf_ref, ppot_t
 		}
 		overlap[2*w] += creal(temp);
 		overlap[2*w+1]+= cimag(temp);
-		//printf("temp 4 %lf %lf\n", creal(temp), cimag(temp));
+		printf("temp 4 %lf %lf\n", creal(temp), cimag(temp));
 	}
 
 	mkl_free_buffers();

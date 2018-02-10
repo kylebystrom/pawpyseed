@@ -16,6 +16,7 @@ PAWC = CDLL(os.path.join(MODULE_DIR, "pawpy.so"))
 PAWC.read_wavefunctions.restype = POINTER(None)
 PAWC.get_projector_list.restype = POINTER(None)
 PAWC.read_wavefunctions.restype = POINTER(None)
+PAWC.overlap_setup.restype = POINTER(None)
 PAWC.compensation_terms.restype = POINTER(c_double)
 PAWC.get_occs.restype = POINTER(c_double)
 PAWC.get_nband.restype = c_int

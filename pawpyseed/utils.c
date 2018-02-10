@@ -397,7 +397,7 @@ double sph_bessel(double k, double r, int l) {
 }
 
 double complex rayexp(double* kpt, int* Gs, float complex* Cs, int l, int m,
-	int num_waves, double complex* sum_terms, double* ionp) {
+	int num_waves, double* grid, double* wave, double* spline, double* ionp) {
 
 	double complex result = 0;
 	double pvec[3] = {0,0,0};
@@ -410,14 +410,13 @@ double complex rayexp(double* kpt, int* Gs, float complex* Cs, int l, int m,
 		result += phase * Cs[w] * sum_terms[(2*l+1)*w+l+m];
 	}
 
-	return result;
+	return result * 4 * PI * cpow(I, l);
 }
 
 double complex* rayexp_terms(double* kpt, int* Gs, int num_waves,
-	int l, int wave_gridsize, double* wave_grid,
-	double* aewave, double* pswave, double* reclattice) {
+	int l, int wave_gridsize, double* grid,
+	double* wave, double* spline, double* reclattice) {
 
-	double complex phase = 4 * PI * cpow(I, l);
 	double complex ylmdir = 0;
 	double k = 0;
 	double complex* terms = (double complex*) malloc((2*l+1) * num_waves * sizeof(double complex));
@@ -431,24 +430,9 @@ double complex* rayexp_terms(double* kpt, int* Gs, int num_waves,
 		frac_to_cartesian(pvec, reclattice);
 		k = mag(pvec);
 		direction(pvec, phat);
-		for (int m = -l; m <= l; m++) {
-			ylmdir = conj(Ylm(l, m, phat[0], phat[1]));
-			double overlap = 0;
-			double dr = wave_grid[0];
-			double r = wave_grid[0];
-			for (int i = 0; i < wave_gridsize - 1; i++) {
-				r = wave_grid[i];
-				dr = wave_grid[i+1] - wave_grid[i];
-				overlap += r * sph_bessel(k, r, l) * (aewave[i]-pswave[i]) * dr/2;
-			}
-			for (int i = 1; i < wave_gridsize; i++) {
-				r = wave_grid[i];
-				dr = wave_grid[i] - wave_grid[i-1];
-				overlap += r * sph_bessel(k, r, l) * (aewave[i]-pswave[i]) * dr/2; 
-			}
-			terms[(2*l+1)*w+l+m] = ylmdir * overlap * phase;
-		}
-
+		ylmdir = conj(Ylm(l, m, phat[0], phat[1]));
+		overlap = wave_interpolate(k, wave_gridsize, grid, wave, spline);
+		terms[(2*l+1)*w+l+m] = ylmdir * overlap;
 	}
 	return terms;
 }

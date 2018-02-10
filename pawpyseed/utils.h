@@ -20,6 +20,7 @@ typedef struct band {
 	double complex energy;
 	float complex* Cs;
 	projection_t* projections;
+	projection_t* wave_projections;
 } band_t;
 
 typedef struct rayleigh_terms {
@@ -168,7 +169,7 @@ void frac_from_index(int index, double* coord, int* fftg);
 double sph_bessel(double k, double r, int l);
 
 double complex rayexp(double* kpt, int* Gs, float complex* Cs, int l, int m,
-	int num_waves, double complex* sum_terms, double* ionp);
+	int num_waves, double* grid, double* wave, double* spline, double* ionp);
 
 double complex* rayexp_terms(double* kpt, int* Gs, int num_waves,
 	int l, int wave_gridsize, double* wave_grid,

@@ -384,7 +384,7 @@ double* compensation_terms(int BAND_NUM, pswf_t* wf_proj, pswf_t* wf_ref, ppot_t
 	int num_elems, int num_M, int num_N_R, int num_N_S, int num_N_RS,
 	int* M_R, int* M_S, int* N_R, int* N_S, int* N_RS_R, int* N_RS_S,
 	int* proj_labels, double* proj_coords, int* ref_labels, double* ref_coords,
-	int* fft_grid) {
+	int* fft_grid, double complex** N_RS_overlaps) {
 
 	printf("fftg %d\n", fft_grid[0]);
 	printf("fftg %d\n", fft_grid[1]);
@@ -407,8 +407,6 @@ double* compensation_terms(int BAND_NUM, pswf_t* wf_proj, pswf_t* wf_ref, ppot_t
   0,0,0,0,  .697731914902E-01};
 
 	int l1 = 0, l2 = 0;
-	double complex** N_RS_overlaps = overlap_setup(wf_ref, wf_proj, pps, ref_labels, proj_labels,
-		ref_coords, proj_coords, N_RS_R, N_RS_S, num_N_RS);
 	double inv_sqrt_vol = pow(determinant(wf_ref->lattice), -0.5);
 
 	#pragma omp parallel for

@@ -285,11 +285,18 @@ class Wavefunction:
 		self.projector.setup_projections(basis.pwf.wf_ptr, projector_list, len(self.cr.pps),
 			len(basis.structure), numpy_to_cint(self.dim), numpy_to_cint(basisnums),
 			numpy_to_cdouble(basiscoords))
-		self.projector_list = projector_list
-		self.selfnums = selfnums
-		self.selfcoords = selfcoords
-		self.basiscoords = basiscoords
-		self.basisnums = basisnums
+		self.projection_data = [projector_list, selfnums, selfcoords, basis_nums, basiscoords]
+		M_R, M_S, N_R, N_S, N_RS = self.make_site_lists(basis)
+		num_N_RS, N_RS = len(N_RS), np.array(N_RS).flatten()
+		if N_RS:
+			N_RS_R, N_RS_S = zip(*N_RS)
+		else:
+			N_RS_R, N_RS_S = [], []
+		self.site_cat = [M_R, M_S, N_R, N_S, N_RS_R, N_RS_S]
+		self.offsite = self.projector.overlap_setup(basis.pwf.wf_ptr, self.pwf.wf_ptr, projector_list,
+			numpy_to_cint(basisnums), numpy_to_cint(selfnums),
+			numpy_to_cdouble(basiscoords), numpy_to_cdouble(selfcoords),
+			numpy_to_cint(N_RS_R), numpy_to_cint(N_RS_S), len(N_RS_R));
 
 	def single_band_projection(self, band_num, basis):
 		res = self.projector.pseudoprojection(basis.pwf.wf_ptr, self.pwf.wf_ptr, band_num)
@@ -298,13 +305,8 @@ class Wavefunction:
 		nspin = self.projector.get_nspin(basis.pwf.wf_ptr)
 		print("datsa", nband, nwk, nspin)
 		res = cdouble_to_numpy(res, 2*nband*nwk*nspin)
-		M_R, M_S, N_R, N_S, N_RS = self.make_site_lists(basis)
-		num_N_RS, N_RS = len(N_RS), np.array(N_RS).flatten()
-		if N_RS:
-			N_RS_R, N_RS_S = zip(*N_RS)
-		else:
-			N_RS_R, N_RS_S = [], []
-		projector_list, selfnums, selfcoords, basisnums, basiscoords = self.projector_list, self.selfnums, self.selfcoords, self.basisnums, self.basiscoords
+		projector_list, selfnums, selfcoords, basisnums, basiscoords = self.projection_data
+		M_R, M_S, N_R, N_S, N_RS_R, N_RS_S = self.site_cat
 		"""
 		ct = self.projector.compensation_terms(band_num, self.pwf.wf_ptr, basis.pwf.wf_ptr, projector_list, 
 			len(self.cr.pps), len(M_R), len(N_R), len(N_S), num_N_RS, numpy_to_cint(M_R), numpy_to_cint(M_S),
@@ -324,9 +326,9 @@ class Wavefunction:
 		ct = self.projector.compensation_terms(band_num, self.pwf.wf_ptr, basis.pwf.wf_ptr, projector_list, 
 			len(self.cr.pps), 0, len(M_R), len(M_S), len(M_S), numpy_to_cint([]), numpy_to_cint([]),
 			numpy_to_cint(M_R), numpy_to_cint(M_S), numpy_to_cint(N_RS_R), numpy_to_cint(N_RS_S),
-			numpy_to_cint(selfnums),
-			numpy_to_cdouble(selfcoords), numpy_to_cint(basisnums), numpy_to_cdouble(basiscoords),
-			numpy_to_cint(self.dim))
+			numpy_to_cint(selfnums), numpy_to_cdouble(selfcoords),
+			numpy_to_cint(basisnums), numpy_to_cdouble(basiscoords),
+			numpy_to_cint(self.dim), self.offsite)
 		ct = cdouble_to_numpy(ct, 2*nband*nwk*nspin)
 		occs = cdouble_to_numpy(self.projector.get_occs(basis.pwf.wf_ptr), nband*nwk*nspin)
 		c, v = 0, 0

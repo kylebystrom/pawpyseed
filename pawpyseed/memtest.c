@@ -141,13 +141,14 @@ void test_compensation_terms() {
 	pswf_t* wf_ref = read_wavefunctions("WAVECAR", kws);
 	pswf_t* wf_proj = read_wavefunctions("WAVECAR", kws);
 
+	double complex** overlaps = overlap_setup(wf_ref, wf_proj, pps, selfnums, selfnums, selfcoords, selfcoords, M, M, 4);
 	printf("terms\n");
 	setup_projections(wf_proj, pps, num_els, 4, fftg, selfnums, selfcoords);
 	setup_projections(wf_ref, pps, num_els, 4, fftg, selfnums, selfcoords);
 	double* terms = compensation_terms(0, wf_proj, wf_ref, pps, num_els,
-		4, 0, 0, 0, M, M, N_S, N_S, N_S, N_S, selfnums, selfcoords, selfnums, selfcoords, fftg);
+		4, 0, 0, 0, M, M, N_S, N_S, N_S, N_S, selfnums, selfcoords, selfnums, selfcoords, fftg, overlaps);
 	double* terms2 = compensation_terms(0, wf_proj, wf_ref, pps, num_els,
-		0, 4, 4, 4, N_S, N_S, M, M, M, M, selfnums, selfcoords, selfnums, selfcoords, fftg);
+		0, 4, 4, 4, N_S, N_S, M, M, M, M, selfnums, selfcoords, selfnums, selfcoords, fftg, overlaps);
 
 	free_ppot_list(pps, 1);
 	free(ls);

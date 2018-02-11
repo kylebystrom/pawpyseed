@@ -16,7 +16,7 @@ PAWC = CDLL(os.path.join(MODULE_DIR, "pawpy.so"))
 PAWC.read_wavefunctions.restype = POINTER(None)
 PAWC.get_projector_list.restype = POINTER(None)
 PAWC.read_wavefunctions.restype = POINTER(None)
-PAWC.overlap_setup.restype = POINTER(None)
+PAWC.overlap_setup.restype = None
 PAWC.compensation_terms.restype = POINTER(c_double)
 PAWC.get_occs.restype = POINTER(c_double)
 PAWC.get_nband.restype = c_int
@@ -106,8 +106,8 @@ class Pseudopotential:
 
 		for pwave in partial_waves:
 			lst = pwave.split("ae wavefunction", 1)
-			self.pswaves.append(self.make_nums(lst[0]+' 0'))
-			self.aewaves.append(self.make_nums(lst[1]+' 0'))
+			self.pswaves.append(self.make_nums(lst[0]))
+			self.aewaves.append(self.make_nums(lst[1]))
 
 		projstrs = nonradial.split("Non local Part")
 		topstr, projstrs = projstrs[0], projstrs[1:]
@@ -285,7 +285,7 @@ class Wavefunction:
 		self.projector.setup_projections(basis.pwf.wf_ptr, projector_list, len(self.cr.pps),
 			len(basis.structure), numpy_to_cint(self.dim), numpy_to_cint(basisnums),
 			numpy_to_cdouble(basiscoords))
-		self.projection_data = [projector_list, selfnums, selfcoords, basis_nums, basiscoords]
+		self.projection_data = [projector_list, selfnums, selfcoords, basisnums, basiscoords]
 		M_R, M_S, N_R, N_S, N_RS = self.make_site_lists(basis)
 		num_N_RS, N_RS = len(N_RS), np.array(N_RS).flatten()
 		if N_RS:
@@ -293,10 +293,11 @@ class Wavefunction:
 		else:
 			N_RS_R, N_RS_S = [], []
 		self.site_cat = [M_R, M_S, N_R, N_S, N_RS_R, N_RS_S]
-		self.offsite = self.projector.overlap_setup(basis.pwf.wf_ptr, self.pwf.wf_ptr, projector_list,
+		self.projector.overlap_setup(basis.pwf.wf_ptr, self.pwf.wf_ptr, projector_list,
 			numpy_to_cint(basisnums), numpy_to_cint(selfnums),
 			numpy_to_cdouble(basiscoords), numpy_to_cdouble(selfcoords),
-			numpy_to_cint(N_RS_R), numpy_to_cint(N_RS_S), len(N_RS_R));
+			numpy_to_cint(M_R), numpy_to_cint(M_S), len(M_R));
+			#numpy_to_cint(N_RS_R), numpy_to_cint(N_RS_S), len(N_RS_R));
 
 	def single_band_projection(self, band_num, basis):
 		res = self.projector.pseudoprojection(basis.pwf.wf_ptr, self.pwf.wf_ptr, band_num)
@@ -309,28 +310,21 @@ class Wavefunction:
 		M_R, M_S, N_R, N_S, N_RS_R, N_RS_S = self.site_cat
 		"""
 		ct = self.projector.compensation_terms(band_num, self.pwf.wf_ptr, basis.pwf.wf_ptr, projector_list, 
-			len(self.cr.pps), len(M_R), len(N_R), len(N_S), num_N_RS, numpy_to_cint(M_R), numpy_to_cint(M_S),
+			len(self.cr.pps), len(M_R), len(N_R), len(N_S), len(N_RS_R), numpy_to_cint(M_R), numpy_to_cint(M_S),
 			numpy_to_cint(N_R), numpy_to_cint(N_S), numpy_to_cint(N_RS_R), numpy_to_cint(N_RS_S),
-			numpy_to_cint(selfnums),
-			numpy_to_cdouble(selfcoords), numpy_to_cint(basisnums), numpy_to_cdouble(basiscoords),
-			numpy_to_cint(self.dim))
-		
-		N_RS_R, N_RS_S = M_R, M_S
-		setup_projections(self.pwf.wf_ptr, projector_list, len(self.cr.pps)
-			len(self.structure), numpy_to_cint(self.dim), numpy_to_cint(selfnums),
-			numpy_to_cdouble(selfcoords))
-		setup_projections(basis.pwf.wf_ptr, projector_list, len(basis.cr.pps)
-			len(basis.structure), numpy_to_cint(self.dim), numpy_to_cint(basisnums),
-			numpy_to_cdouble(basiscoords))
+			numpy_to_cint(selfnums), numpy_to_cdouble(selfcoords),
+			numpy_to_cint(basisnums), numpy_to_cdouble(basiscoords),
+			numpy_to_cint(self.dim), self.offsite)
 		"""
 		ct = self.projector.compensation_terms(band_num, self.pwf.wf_ptr, basis.pwf.wf_ptr, projector_list, 
 			len(self.cr.pps), 0, len(M_R), len(M_S), len(M_S), numpy_to_cint([]), numpy_to_cint([]),
 			numpy_to_cint(M_R), numpy_to_cint(M_S), numpy_to_cint(N_RS_R), numpy_to_cint(N_RS_S),
 			numpy_to_cint(selfnums), numpy_to_cdouble(selfcoords),
 			numpy_to_cint(basisnums), numpy_to_cdouble(basiscoords),
-			numpy_to_cint(self.dim), self.offsite)
+			numpy_to_cint(self.dim))
 		ct = cdouble_to_numpy(ct, 2*nband*nwk*nspin)
 		occs = cdouble_to_numpy(self.projector.get_occs(basis.pwf.wf_ptr), nband*nwk*nspin)
+		
 		c, v = 0, 0
 		for i in range(nband*nwk*nspin):
 			temp = (ct[2*i] + res[2*i]) + 1j * (ct[2*i+1] + res[2*i+1])

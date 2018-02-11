@@ -21,7 +21,7 @@ void make_pwave_overlap_matrices(ppot_t* pp_ptr);
 void setup_projections(pswf_t* wf, ppot_t* pps, int num_elems,
 	int num_sites, int* fftg, int* labels, double* coords);
 
-double complex** overlap_setup(pswf_t* wf_R, pswf_t* wf_S, ppot_t* pps,
+void overlap_setup(pswf_t* wf_R, pswf_t* wf_S, ppot_t* pps,
 	int* labels_R, int* labels_S, double* coords_R, double* coords_S,
 	int* N_RS_R, int* N_RS_S, int num_N_RS);
 
@@ -29,7 +29,7 @@ double* compensation_terms(int BAND_NUM, pswf_t* wf_proj, pswf_t* wf_ref, ppot_t
 	int num_elems, int num_M, int num_N_R, int num_N_S, int num_N_RS,
 	int* M_R, int* M_S, int* N_R, int* N_S, int* N_RS_R, int* N_RS_S,
 	int* proj_labels, double* proj_coords, int* ref_labels, double* ref_coords,
-	int* fft_grid, double complex** N_RS_overlaps);
+	int* fft_grid);
 
 #endif
 

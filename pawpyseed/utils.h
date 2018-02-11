@@ -47,6 +47,7 @@ typedef struct pswf {
 	int nwk;
 	double* lattice;
 	double* reclattice;
+	double complex** overlaps;
 } pswf_t;
 
 typedef struct proj_ae_ps {

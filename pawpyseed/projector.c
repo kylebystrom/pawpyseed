@@ -339,7 +339,7 @@ void setup_projections(pswf_t* wf, ppot_t* pps, int num_elems,
 	generate_rayleigh_expansion_terms(wf, pps, num_elems);
 }
 
-double complex** overlap_setup(pswf_t* wf_R, pswf_t* wf_S, ppot_t* pps,
+void overlap_setup(pswf_t* wf_R, pswf_t* wf_S, ppot_t* pps,
 	int* labels_R, int* labels_S, double* coords_R, double* coords_S,
 	int* N_RS_R, int* N_RS_S, int num_N_RS) {
 
@@ -377,14 +377,15 @@ double complex** overlap_setup(pswf_t* wf_R, pswf_t* wf_S, ppot_t* pps,
 			tj++;
 		}
 	}
-	return overlaps;
+	printf("%p %p %p %p\n", overlaps[0], overlaps[1], overlaps[2], overlaps[3]);
+	wf_S->overlaps = overlaps;
 }
 
 double* compensation_terms(int BAND_NUM, pswf_t* wf_proj, pswf_t* wf_ref, ppot_t* pps,
 	int num_elems, int num_M, int num_N_R, int num_N_S, int num_N_RS,
 	int* M_R, int* M_S, int* N_R, int* N_S, int* N_RS_R, int* N_RS_S,
 	int* proj_labels, double* proj_coords, int* ref_labels, double* ref_coords,
-	int* fft_grid, double complex** N_RS_overlaps) {
+	int* fft_grid) {
 
 	printf("fftg %d\n", fft_grid[0]);
 	printf("fftg %d\n", fft_grid[1]);
@@ -405,6 +406,8 @@ double* compensation_terms(int BAND_NUM, pswf_t* wf_proj, pswf_t* wf_ref, ppot_t
 0,0,  -.407149241649E-01,  -.490280055892E-02,  0,
   0,0,-.490280055892E-02  ,-.955532870297E-03,  0,
   0,0,0,0,  .697731914902E-01};
+
+	double complex** N_RS_overlaps = wf_proj->overlaps;
 
 	int l1 = 0, l2 = 0;
 	double inv_sqrt_vol = pow(determinant(wf_ref->lattice), -0.5);
@@ -481,7 +484,8 @@ double* compensation_terms(int BAND_NUM, pswf_t* wf_proj, pswf_t* wf_ref, ppot_t
 		overlap[2*w+1]+= cimag(temp);
 		printf("temp 3 %lf %lf\n", creal(temp), cimag(temp));
 
-		temp = 0 + 0 * I;
+		printf("yoyo %p %lf %lf\n", N_RS_overlaps[0], 0.0,0.0);//creal(N_RS_overlaps[0][0]), cimag(N_RS_overlaps[0][0]));
+		/*temp = 0 + 0 * I;
 		t = 0;
 		for (int s = 0; s < num_N_RS; s++) {
 			ppot_t pp = pps[ref_labels[N_RS_R[s]]];
@@ -490,7 +494,6 @@ double* compensation_terms(int BAND_NUM, pswf_t* wf_proj, pswf_t* wf_ref, ppot_t
 			projection_t ppron = wf_proj->kpts[w%NUM_KPTS]->bands[w/NUM_KPTS]->projections[site_num];
 			for (int i = 0; i < pron.total_projs; i++) {
 				for (int j = 0; j < ppron.total_projs; j++) {
-					//NOTE: CURRENTLY ONLY WORKS ON IDENTICAL STRUCTURES
 					temp += conj(pron.overlaps[j])
 						* (N_RS_overlaps[s][i*ppron.total_projs+j])
 						* ppron.overlaps[i];
@@ -499,7 +502,7 @@ double* compensation_terms(int BAND_NUM, pswf_t* wf_proj, pswf_t* wf_ref, ppot_t
 		}
 		overlap[2*w] += creal(temp);
 		overlap[2*w+1]+= cimag(temp);
-		printf("temp 4 %lf %lf\n", creal(temp), cimag(temp));
+		printf("temp 4 %lf %lf\n", creal(temp), cimag(temp));*/
 	}
 
 	mkl_free_buffers();

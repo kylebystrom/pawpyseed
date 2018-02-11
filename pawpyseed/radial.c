@@ -33,7 +33,7 @@ double complex offsite_wave_overlap(double* coord1, double* r1, double* f1, doub
 			costheta = costhetas[thetastep];
 			dcostheta = dcosthetas[thetastep];
 			sintheta = pow(1 - pow(costheta, 2), 0.5);
-			for (int phistep = 0; phistep < 60; phistep++) {
+			for (int phistep = 0; phistep < 1; phistep++) {
 				phi = phistep * dphi;
 				temp[0] = R1 * sintheta * cos(phi) - dcoord[0];
 				temp[1] = R1 * sintheta * sin(phi) - dcoord[1];
@@ -60,7 +60,7 @@ double complex offsite_wave_overlap(double* coord1, double* r1, double* f1, doub
 			costheta = costhetas[thetastep];
 			dcostheta = dcosthetas[thetastep];
 			sintheta = pow(1 - pow(costheta, 2), 0.5);
-			for (int phistep = 0; phistep < 60; phistep++) {
+			for (int phistep = 0; phistep < 1; phistep++) {
 				phi = phistep * dphi;
 				temp[0] = R2 * sintheta * cos(phi) + dcoord[0];
 				temp[1] = R2 * sintheta * sin(phi) + dcoord[1];

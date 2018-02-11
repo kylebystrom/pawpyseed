@@ -268,6 +268,7 @@ double proj_interpolate(double r, double rmax, double* x, double* proj, double**
 }
 
 double wave_interpolate(double r, int size, double* x, double* f, double** wave_spline) {
+	if (r < x[0]) return f[0];
 	int ind = min((int) (log(r/x[0]) / log(x[1]/x[0])), size-2);
 	double rem = r - x[ind];
 	return f[ind] + rem * (wave_spline[0][ind] + 
@@ -401,7 +402,7 @@ double complex rayexp(double* kpt, int* Gs, float complex* Cs, int l, int m,
 
 	double complex result = 0;
 	double pvec[3] = {0,0,0};
-	double phase = 0;
+	double complex phase = 0;
 	for (int w = 0; w < num_waves; w++) {
 		pvec[0] = kpt[0] + Gs[3*w+0];
 		pvec[1] = kpt[1] + Gs[3*w+1];

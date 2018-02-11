@@ -371,6 +371,11 @@ void overlap_setup(pswf_t* wf_R, pswf_t* wf_S, ppot_t* pps,
 							pp2.funcs[k].diffwave_spline, pp2.wave_gridsize,
 							wf_R->lattice, l1, m1, l2, m2);
 						tk++;
+						if (l1 == l2 && m1 == m2)
+							printf("testing overlaps  %d %d %lf %lf %lf\n", l1, m1,
+								pp1.diff_overlap_matrix[pp1.num_projs*i+j],
+								creal(overlaps[i][tj*pp2.total_projs+tk-1]),
+								cimag(overlaps[i][tj*pp2.total_projs+tk-1]));
 					}
 				}
 			}

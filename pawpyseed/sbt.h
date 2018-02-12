@@ -16,14 +16,15 @@ typedef struct sbt_setup {
         double rhomin;
         double drho; //drho == dkappa
         double dt;
-        double N;
+        int N;
         double complex** mult_table;
+        double* ks;
+        double* rs;
 } sbt_descriptor_t;
 
 sbt_descriptor_t* spherical_bessel_transform_setup(double encut, double enbuf, int lmax, int N,
 	double* r, double* ks);
 
-double* wave_spherical_bessel_transform(sbt_descriptor_t* d,
-        double* r, double* f, double* ks, int l);
+double* wave_spherical_bessel_transform(sbt_descriptor_t* d, double* f, int l);
 
 #endif

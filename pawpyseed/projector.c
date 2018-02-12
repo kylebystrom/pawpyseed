@@ -73,11 +73,10 @@ ppot_t* get_projector_list(int num_els, int* labels, int* ls, double* proj_grids
 			funcs[k].pswave_spline = spline_coeff(pps[i].wave_grid, funcs[k].pswave, pps[i].wave_gridsize);
 			funcs[k].diffwave_spline = spline_coeff(pps[i].wave_grid, funcs[k].diffwave, pps[i].wave_gridsize);
 		}
-		sbt_descriptor_t* d = spherical_bessel_transform_setup(520, 520, pps[i].lmax,
+		sbt_descriptor_t* d = spherical_bessel_transform_setup(520, 0, pps[i].lmax,
 			pps[i].wave_gridsize, pps[i].wave_grid, pps[i].kwave_grid);
 		for (int k = 0; k < pps[i].num_projs; k++) {
-			funcs[k].kwave = wave_spherical_bessel_transform(d, pps[i].wave_grid,
-				funcs[k].diffwave, pps[i].kwave_grid, funcs[k].l);
+			funcs[k].kwave = wave_spherical_bessel_transform(d, funcs[k].diffwave, funcs[k].l);
 			funcs[k].kwave_spline = spline_coeff(pps[i].kwave_grid, funcs[k].kwave, pps[i].wave_gridsize);
 		}
 		for (int l = 0; l <= pps[i].lmax; l++) {

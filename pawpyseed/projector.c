@@ -73,7 +73,7 @@ ppot_t* get_projector_list(int num_els, int* labels, int* ls, double* proj_grids
 			funcs[k].pswave_spline = spline_coeff(pps[i].wave_grid, funcs[k].pswave, pps[i].wave_gridsize);
 			funcs[k].diffwave_spline = spline_coeff(pps[i].wave_grid, funcs[k].diffwave, pps[i].wave_gridsize);
 		}
-		sbt_descriptor_t* d = spherical_bessel_transform_setup(520, 520*4, pps[i].lmax,
+		sbt_descriptor_t* d = spherical_bessel_transform_setup(520, 520, pps[i].lmax,
 			pps[i].wave_gridsize, pps[i].wave_grid, pps[i].kwave_grid);
 		for (int k = 0; k < pps[i].num_projs; k++) {
 			funcs[k].kwave = wave_spherical_bessel_transform(d, pps[i].wave_grid,
@@ -373,7 +373,7 @@ void overlap_setup(pswf_t* wf_R, pswf_t* wf_S, ppot_t* pps,
 						tk++;
 						if (l1 == l2 && m1 == m2)
 							printf("testing overlaps  %d %d %lf %lf %lf\n", l1, m1,
-								pp1.diff_overlap_matrix[pp1.num_projs*i+j],
+								pp1.diff_overlap_matrix[pp1.num_projs*j+k],
 								creal(overlaps[i][tj*pp2.total_projs+tk-1]),
 								cimag(overlaps[i][tj*pp2.total_projs+tk-1]));
 					}
@@ -458,8 +458,8 @@ double* compensation_terms(int BAND_NUM, pswf_t* wf_proj, pswf_t* wf_ref, ppot_t
 					temp += rayexp(wf_proj->kpts[w%NUM_KPTS]->k, wf_proj->kpts[w%NUM_KPTS]->Gs,
 						wf_proj->kpts[w%NUM_KPTS]->bands[w/NUM_KPTS]->Cs, pp.funcs[i].l, m,
 						wf_proj->kpts[w%NUM_KPTS]->num_waves,
-						wf_ref->kpts[w%NUM_KPTS]->expansion[ref_labels[N_R[s]]][i].terms,
-						ref_coords + N_R[s]*3) * conj(pron.overlaps[count]) * inv_sqrt_vol;
+						wf_ref->kpts[w%NUM_KPTS]->expansion[ref_labels[site_num]][i].terms,
+						ref_coords + site_num*3) * conj(pron.overlaps[count]) * inv_sqrt_vol;
 					count++;
 				}
 			}
@@ -479,8 +479,8 @@ double* compensation_terms(int BAND_NUM, pswf_t* wf_proj, pswf_t* wf_ref, ppot_t
 					temp += conj(rayexp(wf_ref->kpts[w%NUM_KPTS]->k, wf_ref->kpts[w%NUM_KPTS]->Gs,
 						wf_ref->kpts[w%NUM_KPTS]->bands[w/NUM_KPTS]->Cs, pp.funcs[i].l, m,
 						wf_ref->kpts[w%NUM_KPTS]->num_waves,
-						wf_proj->kpts[w%NUM_KPTS]->expansion[ref_labels[N_S[s]]][i].terms,
-						proj_coords + N_S[s]*3)) * pron.overlaps[count] * inv_sqrt_vol;
+						wf_proj->kpts[w%NUM_KPTS]->expansion[ref_labels[site_num]][i].terms,
+						proj_coords + site_num*3)) * pron.overlaps[count] * inv_sqrt_vol;
 					count++;
 				}
 			}
@@ -489,8 +489,7 @@ double* compensation_terms(int BAND_NUM, pswf_t* wf_proj, pswf_t* wf_ref, ppot_t
 		overlap[2*w+1]+= cimag(temp);
 		printf("temp 3 %lf %lf\n", creal(temp), cimag(temp));
 
-		printf("yoyo %p %lf %lf\n", N_RS_overlaps[0], 0.0,0.0);//creal(N_RS_overlaps[0][0]), cimag(N_RS_overlaps[0][0]));
-		/*temp = 0 + 0 * I;
+		temp = 0 + 0 * I;
 		t = 0;
 		for (int s = 0; s < num_N_RS; s++) {
 			ppot_t pp = pps[ref_labels[N_RS_R[s]]];
@@ -507,7 +506,7 @@ double* compensation_terms(int BAND_NUM, pswf_t* wf_proj, pswf_t* wf_ref, ppot_t
 		}
 		overlap[2*w] += creal(temp);
 		overlap[2*w+1]+= cimag(temp);
-		printf("temp 4 %lf %lf\n", creal(temp), cimag(temp));*/
+		printf("temp 4 %lf %lf\n", creal(temp), cimag(temp));
 	}
 
 	mkl_free_buffers();

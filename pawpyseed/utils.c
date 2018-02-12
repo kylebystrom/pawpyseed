@@ -244,7 +244,7 @@ double complex Ylm(int l, int m, double theta, double phi) {
 	else if (m < 0) multiplier = pow(2.0, 0.5) * cos(-m*phi);
 	else multiplier = pow(-1,m) * pow(2.0, 0.5) * sin(m*phi);
 	return pow((2*l+1)/(4*PI)*fac(l-m)/fac(l+m), 0.5) *
-		legendre(l, m, cos(theta))*multiplier;// cexp(I*m*phi);
+		legendre(l, m, cos(theta))* cexp(I*m*phi);
 }
 
 double complex Ylm2(int l, int m, double costheta, double phi) {
@@ -255,7 +255,7 @@ double complex Ylm2(int l, int m, double costheta, double phi) {
         else if (m < 0) multiplier = pow(2.0, 0.5) * cos(-m*phi);
         else multiplier = pow(-1,m) * pow(2.0, 0.5) * sin(m*phi);
 	return pow((2*l+1)/(4*PI)*fac(l-m)/fac(l+m), 0.5) *
-		legendre(l, m, costheta) *multiplier;//* cexp(I*m*phi);
+		legendre(l, m, costheta) * cexp(I*m*phi);
 }
 
 double proj_interpolate(double r, double rmax, double* x, double* proj, double** proj_spline) {
@@ -450,8 +450,8 @@ void generate_rayleigh_expansion_terms(pswf_t* wf, ppot_t* pps, int num_elems) {
 			kpt->expansion[i] = (rayleigh_set_t*) malloc(pp.num_projs * sizeof(rayleigh_set_t));
 			for (int j = 0; j < pp.num_projs; j++) {
 				double complex* terms = rayexp_terms(kpt->k, kpt->Gs, kpt->num_waves,
-					pp.funcs[j].l, pp.wave_gridsize, pp.wave_grid,
-					pp.funcs[j].diffwave, pp.funcs[j].diffwave_spline, wf->reclattice);
+					pp.funcs[j].l, pp.wave_gridsize, pp.kwave_grid,
+					pp.funcs[j].kwave, pp.funcs[j].kwave_spline, wf->reclattice);
 				kpt->expansion[i][j].terms = terms;
 				kpt->expansion[i][j].l = pp.funcs[j].l;
 			}

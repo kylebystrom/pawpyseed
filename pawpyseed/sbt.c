@@ -20,8 +20,7 @@ Talman, J. Computer Physics Communications 2009, 180, 332 –338.
 The code is distributed under the Standard CPC license.
 */
 
-sbt_descriptor_t* spherical_bessel_transform_setup(double encut, double enbuf, int lmax, int N,
-	double* r, double* ks) {
+sbt_descriptor_t* spherical_bessel_transform_setup(double encut, double enbuf, int lmax, int N, double* r, double* ks) {
 
 	setbuf(stdout, NULL);
 	sbt_descriptor_t* descriptor = (sbt_descriptor_t*) malloc(sizeof(sbt_descriptor_t));
@@ -34,14 +33,13 @@ sbt_descriptor_t* spherical_bessel_transform_setup(double encut, double enbuf, i
 	double rmin = r[0];
 	double kmin = pow((encut+enbuf) * c, 0.5) * exp(-(N-1) * drho);
 	double kappamin = log(kmin);
-	for (int p = 0; p < N; p++) {
-		ks[p] = kmin * exp(p * drho);
-	}
+	for (int i = 0; i < N; i++)
+		ks[i] = kmin * exp(i*drho);
 	mult_table[0] = (double complex*) calloc(N, sizeof(double complex));
 	mult_table[1] = (double complex*) calloc(N, sizeof(double complex));
 	for (int i = 2; i <= lmax; i++)
 		mult_table[i] = (double complex*) calloc(N, sizeof(double complex));
-	double t=0, rad=0, phi=0, phi1=0, phi2=0, phi3=0;
+	double t=0.0, rad=0.0, phi=0.0, phi1=0.0, phi2=0.0, phi3=0.0;
 	for (int i = 0; i < N; i++) {
 		t = i * dt;
 		rad = pow(10.5*10.5+t*t, 0.5);
@@ -61,7 +59,7 @@ sbt_descriptor_t* spherical_bessel_transform_setup(double encut, double enbuf, i
 		mult_table[1][i] = cexp(2 * I * phi) * mult_table[0][i];
 		for (int l = 1; l < lmax; l++) {
 			phi = -atan(2*t/(2*l+1));
-			mult_table[l+1][i] = exp(2 * I * phi) * mult_table[l-1][i];
+			mult_table[l+1][i] = cexp(2 * I * phi) * mult_table[l-1][i];
 		}
 	}
 
@@ -95,7 +93,7 @@ double* wave_spherical_bessel_transform(sbt_descriptor_t* d,
 	MKL_LONG length = N;
 	MKL_LONG status = 0;
 
-	double* vals = malloc(N * sizeof(double complex));
+	double* vals = malloc(N * sizeof(double));
 
 	status = DftiCreateDescriptor(&handle, DFTI_DOUBLE, DFTI_COMPLEX, dim, length);
 	status = DftiCommitDescriptor(handle);
@@ -105,11 +103,14 @@ double* wave_spherical_bessel_transform(sbt_descriptor_t* d,
 		x[m].real = pow(r[m], 0.5) * f[m]; // f is multiplied by r
 		x[m].imag = 0;
 	}
+	double rp=0.0, ip=0.0;
 	status = DftiComputeBackward(handle, x);
 	printf("status %ld\n", status);
 	for (int n = 0; n < N; n++) {
-		x[n].real = x[n].real * creal(M[l][n]) - x[n].imag * cimag(M[l][n]);
-		x[n].imag = x[n].imag * creal(M[l][n]) + x[n].real * cimag(M[l][n]);
+		rp = x[n].real * creal(M[l][n]) - x[n].imag * cimag(M[l][n]);
+		ip = x[n].imag * creal(M[l][n]) + x[n].real * cimag(M[l][n]);
+		x[n].real = rp;// * cos(phase) - ip * sin(phase);
+		x[n].imag = ip;// * cos(phase) + rp * sin(phase);
 		if (n >= N/2) {
 			x[n].real = 0;
 			x[n].imag = 0;
@@ -117,7 +118,9 @@ double* wave_spherical_bessel_transform(sbt_descriptor_t* d,
 	}
 	status = DftiComputeBackward(handle, x);
 	printf("status %ld\n", status);
+	double kp = 0;
 	for (int p = 0; p < N; p++) {
+		kp = kmin * exp(p * drho);
 		vals[p] = x[p].real;
 		vals[p] *= 2 / pow(ks[p], 1.5);
 	}

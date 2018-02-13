@@ -392,9 +392,10 @@ double sph_bessel(double k, double r, int l) {
 		return (3 / (x*x) -1) * sin(x) / x - 3 * cos(x) / (x*x);
 	else if (l == 3)
 		return (15 / (x*x*x) - 6 / x) * sin(x) / x - (15 / (x*x) -1) * cos(x) / x;
-	else
+	else {
 		printf("ERROR: sph_bessel l too high");
 		return 0;
+	}
 }
 
 double complex rayexp(double* kpt, int* Gs, float complex* Cs, int l, int m,
@@ -425,16 +426,21 @@ double complex* rayexp_terms(double* kpt, int* Gs, int num_waves,
 	double overlap = 0;
 	double pvec[3] = {0,0,0};
 	double phat[2] = {0,0};
+	if (l == 0) printf("KPOINT %lf %lf %lf\n", kpt[0], kpt[1], kpt[2]);
 	for (int w = 0; w < num_waves; w++) {
 		pvec[0] = kpt[0] + Gs[3*w+0];
 		pvec[1] = kpt[1] + Gs[3*w+1];
 		pvec[2] = kpt[2] + Gs[3*w+2];
 		frac_to_cartesian(pvec, reclattice);
+		if (l == 0) printf("PVECART %lf %lf %lf\n", pvec[0], pvec[1], pvec[2]);
 		k = mag(pvec);
 		direction(pvec, phat);
+		printf("DIRECTION %lf %lf\n", phat[0], phat[1]);
 		overlap = wave_interpolate(k, wave_gridsize, grid, wave, spline);
 		for (int m = -l; m <= l; m++) {
 			ylmdir = conj(Ylm(l, m, phat[0], phat[1]));
+			//if (k < 0.1 && l == 0) overlap = -0.1693;
+			//else if (k < 0.1) overlap = 0;
 			terms[(2*l+1)*w+l+m] = ylmdir * overlap;
 		}
 	}

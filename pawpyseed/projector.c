@@ -344,6 +344,50 @@ void overlap_setup(pswf_t* wf_R, pswf_t* wf_S, ppot_t* pps,
 
 	double complex** overlaps = (double complex**) malloc(num_N_RS * sizeof(double complex*));
 
+	int NUM_KPTS = wf->nwk * wf->nspin;
+	int NUM_BANDS = wf->nband;
+	for (int w = 0; w < NUM_BANDS * NUM_KPTS; w++) {
+		projection_t* wps = (projection_t*) malloc(num_N_R * sizeof(projection_t));
+		for (int m = 0; m < num_N_R; i++) {
+			int s = N_R[m];
+			ppot_t pp = pps[labels_R[s]];
+			wps[m]->overlaps = (double complex*) malloc(pp.total_projs * sizeof(double complex));
+			int t = 0;
+			for (int i = 0; i < pp.total_projs; i++) {
+				for (int m = -pp.funcs[i].l; m <= pp.funcs[i].l; m++) {
+					wps[m].overlaps[i] = rayexp(wf_proj->kpts[w%NUM_KPTS]->k, wf_proj->kpts[w%NUM_KPTS]->Gs,
+						wf_proj->kpts[w%NUM_KPTS]->bands[w/NUM_KPTS]->Cs, pp.funcs[i].l, m,
+						wf_proj->kpts[w%NUM_KPTS]->num_waves,
+						wf_ref->kpts[w%NUM_KPTS]->expansion[labels_R[s]][i].terms,
+						coords_R + s*3) * inv_sqrt_vol;
+					t++;
+				}
+			}
+		}
+		wf_proj->kpts[w%NUM_KPTS]->bands[w/NUM_KPTS]->wave_projections = wps;
+	}
+
+	for (int w = 0; w < NUM_BANDS * NUM_KPTS; w++) {
+		projection_t* wps = (projection_t*) malloc(num_N_S * sizeof(projection_t));
+		for (int m = 0; m < num_N_S; i++) {
+			int s = N_S[m];
+			ppot_t pp = pps[labels_S[s]];
+			wps[m]->overlaps = (double complex*) malloc(pp.total_projs * sizeof(double complex));
+			int t = 0;
+			for (int i = 0; i < pp.total_projs; i++) {
+				for (int m = -pp.funcs[i].l; m <= pp.funcs[i].l; m++) {
+					wps[m].overlaps[i] = rayexp(wf_ref->kpts[w%NUM_KPTS]->k, wf_ref->kpts[w%NUM_KPTS]->Gs,
+						wf_ref->kpts[w%NUM_KPTS]->bands[w/NUM_KPTS]->Cs, pp.funcs[i].l, m,
+						wf_ref->kpts[w%NUM_KPTS]->num_waves,
+						wf_proj->kpts[w%NUM_KPTS]->expansion[labels_S[s]][i].terms,
+						coords_S + s*3) * inv_sqrt_vol;
+					t++;
+				}
+			}
+		}
+		wf_ref->kpts[w%NUM_KPTS]->bands[w/NUM_KPTS]->wave_projections = wps;
+	}
+
 	int l1, l2;
 	for (int i = 0; i < num_N_RS; i++) {
 		int s1 = N_RS_R[i];
@@ -449,18 +493,11 @@ double* compensation_terms(int BAND_NUM, pswf_t* wf_proj, pswf_t* wf_ref, ppot_t
 		temp = 0 + 0 * I;
 		for (int s = 0; s < num_N_R; s++) {
 			int site_num = N_R[s];
-			int count = 0;
 			projection_t pron = wf_ref->kpts[w%NUM_KPTS]->bands[w/NUM_KPTS]->projections[site_num];
+			projection_t ppron = wf_proj->kpts[w%NUM_KPTS]->bands[BAND_NUM]->wave_projections[s];
 			ppot_t pp = pps[ref_labels[N_R[s]]];
-			for (int i = 0; i < pp.num_projs; i++) {
-				for (int m = -pp.funcs[i].l; m <= pp.funcs[i].l; m++) {
-					temp += rayexp(wf_proj->kpts[w%NUM_KPTS]->k, wf_proj->kpts[w%NUM_KPTS]->Gs,
-						wf_proj->kpts[w%NUM_KPTS]->bands[w/NUM_KPTS]->Cs, pp.funcs[i].l, m,
-						wf_proj->kpts[w%NUM_KPTS]->num_waves,
-						wf_ref->kpts[w%NUM_KPTS]->expansion[ref_labels[site_num]][i].terms,
-						ref_coords + site_num*3) * conj(pron.overlaps[count]) * inv_sqrt_vol;
-					count++;
-				}
+			for (int i = 0; i < pp.total_projs; i++) {
+				temp += ppron.overlaps[i] * conj(pron.overlaps[i]) * inv_sqrt_vol;
 			}
 		}
 		overlap[2*w] += creal(temp);
@@ -471,17 +508,10 @@ double* compensation_terms(int BAND_NUM, pswf_t* wf_proj, pswf_t* wf_ref, ppot_t
 		for (int s = 0; s < num_N_S; s++) {
 			ppot_t pp = pps[ref_labels[N_S[s]]];
 			int site_num = N_S[s];
-			int count = 0;
-			projection_t pron = wf_proj->kpts[w%NUM_KPTS]->bands[w/NUM_KPTS]->projections[site_num];
-			for (int i = 0; i < pp.num_projs; i++) {
-				for (int m = -pp.funcs[i].l; m <= pp.funcs[i].l; m++) {
-					temp += conj(rayexp(wf_ref->kpts[w%NUM_KPTS]->k, wf_ref->kpts[w%NUM_KPTS]->Gs,
-						wf_ref->kpts[w%NUM_KPTS]->bands[w/NUM_KPTS]->Cs, pp.funcs[i].l, m,
-						wf_ref->kpts[w%NUM_KPTS]->num_waves,
-						wf_proj->kpts[w%NUM_KPTS]->expansion[ref_labels[site_num]][i].terms,
-						proj_coords + site_num*3)) * pron.overlaps[count] * inv_sqrt_vol;
-					count++;
-				}
+			projection_t pron = wf_ref->kpts[w%NUM_KPTS]->bands[w/NUM_KPTS]->wave_projections[s];
+			projection_t ppron = wf_proj->kpts[w%NUM_KPTS]->bands[BAND_NUM]->projections[site_num];
+			for (int i = 0; i < pp.total_projs; i++) {
+				temp += conj(pron.overlaps[i]) * ppron.overlaps[i] * inv_sqrt_vol;
 			}
 		}
 		overlap[2*w] += creal(temp);

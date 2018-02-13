@@ -31,5 +31,7 @@ double* compensation_terms(int BAND_NUM, pswf_t* wf_proj, pswf_t* wf_ref, ppot_t
 	int* proj_labels, double* proj_coords, int* ref_labels, double* ref_coords,
 	int* fft_grid);
 
+double* besselt(double* r, double* k, double* f, double encut, int N, int l);
+
 #endif
 

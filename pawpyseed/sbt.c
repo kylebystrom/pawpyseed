@@ -35,14 +35,16 @@ sbt_descriptor_t* spherical_bessel_transform_setup(double encut, double enbuf, i
 	double rhomin = log(r[0]);
 	double dt = 2 * PI / N / drho;
 	double rmin = r[0];
-	double kmin = pow((encut+enbuf) * c, 0.5) * exp(-(N-1) * drho);
+	double kmin = pow((encut+enbuf) * c, 0.5) * exp(-(N/2-1) * drho);
 	double kappamin = log(kmin);
-	for (int i = 0; i < N; i++)
+	for (int i = 0; i < N; i++) {
 		ks[i] = kmin * exp(i*drho);
 		rs[i] = rmin * exp((i-N/2)*drho);
+	}
 	for (int i = 0; i < N/2; i++) {
 		inpks[i] = ks[i];
 	}
+	rhomin = log(rs[0]);
 	mult_table[0] = (double complex*) calloc(N, sizeof(double complex));
 	mult_table[1] = (double complex*) calloc(N, sizeof(double complex));
 	for (int i = 2; i <= lmax; i++)
@@ -138,7 +140,7 @@ double* wave_spherical_bessel_transform(sbt_descriptor_t* d, double* f, int l) {
 	status = DftiComputeBackward(handle, x);
 	printf("status %ld\n", status);
 	double kp = 0;
-	for (int p = 0; p < N/2; p++) {
+	for (int p = 0; p < N / 2; p++) {
 		kp = kmin * exp(p * drho);
 		vals[p] = x[p].real;
 		vals[p] *= 2 / pow(ks[p], 1.5);

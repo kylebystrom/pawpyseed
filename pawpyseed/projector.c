@@ -77,6 +77,7 @@ ppot_t* get_projector_list(int num_els, int* labels, int* ls, double* proj_grids
 			pps[i].wave_gridsize, pps[i].wave_grid, pps[i].kwave_grid);
 		for (int k = 0; k < pps[i].num_projs; k++) {
 			funcs[k].kwave = wave_spherical_bessel_transform(d, funcs[k].diffwave, funcs[k].l);
+			//funcs[k].kwave = besselt(pps[i].wave_grid, pps[i].kwave_grid, funcs[k].diffwave, 520.0, pps[i].wave_gridsize, funcs[k].l);
 			funcs[k].kwave_spline = spline_coeff(pps[i].kwave_grid, funcs[k].kwave, pps[i].wave_gridsize);
 		}
 		for (int l = 0; l <= pps[i].lmax; l++) {
@@ -87,6 +88,25 @@ ppot_t* get_projector_list(int num_els, int* labels, int* ls, double* proj_grids
 		pps[i].funcs = funcs;
 	}
 	return pps;
+}
+
+double* besselt(double* r, double* k, double* f, double encut, int N, int l) {
+	
+	double kmax = pow(encut*c, 0.5);
+	double drho = log(r[1]/r[0]);
+	double kmin = kmax * exp((1-N)*drho);
+	double* g = (double*) malloc(N*sizeof(double));
+	for (int i = 0; i < N; i++) {
+		double dr = r[0];
+		g[i] = 0;
+		k[i] = kmin * exp(i*drho);
+		for (int j = 0; j < N; j++) {
+			g[i] += f[j] * r[j] * sph_bessel(k[i], r[j], l) * dr; 
+			if (j != N-1) dr = r[j+1]-r[j];
+		}
+	}
+	return g;
+
 }
 
 real_proj_site_t* projector_values(int num_sites, int* labels, double* coords,
@@ -454,12 +474,14 @@ double* compensation_terms(int BAND_NUM, pswf_t* wf_proj, pswf_t* wf_ref, ppot_t
 			ppot_t pp = pps[ref_labels[N_R[s]]];
 			for (int i = 0; i < pp.num_projs; i++) {
 				for (int m = -pp.funcs[i].l; m <= pp.funcs[i].l; m++) {
-					temp += rayexp(wf_proj->kpts[w%NUM_KPTS]->k, wf_proj->kpts[w%NUM_KPTS]->Gs,
-						wf_proj->kpts[w%NUM_KPTS]->bands[w/NUM_KPTS]->Cs, pp.funcs[i].l, m,
+					double complex check= rayexp(wf_proj->kpts[w%NUM_KPTS]->k, wf_proj->kpts[w%NUM_KPTS]->Gs,
+						wf_proj->kpts[w%NUM_KPTS]->bands[BAND_NUM]->Cs, pp.funcs[i].l, m,
 						wf_proj->kpts[w%NUM_KPTS]->num_waves,
 						wf_ref->kpts[w%NUM_KPTS]->expansion[ref_labels[site_num]][i].terms,
 						ref_coords + site_num*3) * conj(pron.overlaps[count]) * inv_sqrt_vol;
 					count++;
+					temp += check;
+                                        printf("SEEVAL %lf %lf\n", creal(check), cimag(check));
 				}
 			}
 		}
@@ -472,14 +494,16 @@ double* compensation_terms(int BAND_NUM, pswf_t* wf_proj, pswf_t* wf_ref, ppot_t
 			ppot_t pp = pps[ref_labels[N_S[s]]];
 			int site_num = N_S[s];
 			int count = 0;
-			projection_t pron = wf_proj->kpts[w%NUM_KPTS]->bands[w/NUM_KPTS]->projections[site_num];
+			projection_t pron = wf_proj->kpts[w%NUM_KPTS]->bands[BAND_NUM]->projections[site_num];
 			for (int i = 0; i < pp.num_projs; i++) {
 				for (int m = -pp.funcs[i].l; m <= pp.funcs[i].l; m++) {
-					temp += conj(rayexp(wf_ref->kpts[w%NUM_KPTS]->k, wf_ref->kpts[w%NUM_KPTS]->Gs,
+					double complex check = conj(rayexp(wf_ref->kpts[w%NUM_KPTS]->k, wf_ref->kpts[w%NUM_KPTS]->Gs,
 						wf_ref->kpts[w%NUM_KPTS]->bands[w/NUM_KPTS]->Cs, pp.funcs[i].l, m,
 						wf_ref->kpts[w%NUM_KPTS]->num_waves,
 						wf_proj->kpts[w%NUM_KPTS]->expansion[ref_labels[site_num]][i].terms,
 						proj_coords + site_num*3)) * pron.overlaps[count] * inv_sqrt_vol;
+					temp += check;
+					printf("SEEVAL %lf %lf\n", creal(check), cimag(check));
 					count++;
 				}
 			}
@@ -494,7 +518,7 @@ double* compensation_terms(int BAND_NUM, pswf_t* wf_proj, pswf_t* wf_ref, ppot_t
 			ppot_t pp = pps[ref_labels[N_RS_R[s]]];
 			int site_num = N_RS_R[s];
 			projection_t pron = wf_ref->kpts[w%NUM_KPTS]->bands[w/NUM_KPTS]->projections[site_num];
-			projection_t ppron = wf_proj->kpts[w%NUM_KPTS]->bands[w/NUM_KPTS]->projections[site_num];
+			projection_t ppron = wf_proj->kpts[w%NUM_KPTS]->bands[BAND_NUM]->projections[site_num];
 			for (int i = 0; i < pron.total_projs; i++) {
 				for (int j = 0; j < ppron.total_projs; j++) {
 					temp += conj(pron.overlaps[j])

@@ -411,6 +411,8 @@ void overlap_setup(pswf_t* wf_R, pswf_t* wf_S, ppot_t* pps,
 	}
 
 	int l1, l2;
+	double dummy[3] = {0};
+	double R = 0;
 	for (int i = 0; i < num_N_RS; i++) {
 		int s1 = N_RS_R[i];
 		int s2 = N_RS_S[i];
@@ -419,6 +421,7 @@ void overlap_setup(pswf_t* wf_R, pswf_t* wf_S, ppot_t* pps,
 		overlaps[i] = calloc(pp1.total_projs * pp2.total_projs, sizeof(double complex));
 		double* coord1 = coords_R + 3 * s1;
 		double* coord2 = coords_S + 3 * s2;
+		min_cart_path(coord1, coord2, dummy, &R);
 		printf("herewego %lf %lf %lf\nherewego%lf %lf %lf\n", coord1[0], coord1[1], coord1[2], coord2[0], coord2[1], coord2[2]);
 		int tj = 0;
 		for (int j = 0; j < pp1.num_projs; j++) {
@@ -428,13 +431,17 @@ void overlap_setup(pswf_t* wf_R, pswf_t* wf_S, ppot_t* pps,
 				for (int k = 0; k < pp2.num_projs; k++) {
 					l2 = pp2.funcs[k].l;
 					for (int m2 = -l2; m2 <= l2; m2++) {
-						overlaps[i][tj*pp2.total_projs+tk] =
-							offsite_wave_overlap(coord1, pp1.wave_grid,
-							pp1.funcs[j].diffwave,
-							pp1.funcs[j].diffwave_spline, pp1.wave_gridsize,
-							coord2, pp2.wave_grid, pp2.funcs[k].diffwave,
-							pp2.funcs[k].diffwave_spline, pp2.wave_gridsize,
-							wf_R->lattice, l1, m1, l2, m2);
+						if (R > 0.001) {
+							overlaps[i][tj*pp2.total_projs+tk] =
+								offsite_wave_overlap(coord1, pp1.wave_grid,
+								pp1.funcs[j].diffwave,
+								pp1.funcs[j].diffwave_spline, pp1.wave_gridsize,
+								coord2, pp2.wave_grid, pp2.funcs[k].diffwave,
+								pp2.funcs[k].diffwave_spline, pp2.wave_gridsize,
+								wf_R->lattice, l1, m1, l2, m2);
+						} else if (l1 == l2 && m1 == m2) {
+							overlaps[i][tj*pp2.total_projs+tk] = pp2.diff_overlap_matrix[j*pp2.num_projs+k];
+						}
 						tk++;
 					}
 				}

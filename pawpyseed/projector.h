@@ -22,8 +22,8 @@ void setup_projections(pswf_t* wf, ppot_t* pps, int num_elems,
 	int num_sites, int* fftg, int* labels, double* coords);
 
 void overlap_setup(pswf_t* wf_R, pswf_t* wf_S, ppot_t* pps,
-	int* labels_R, int* labels_S, double* coords_R, double* coords_S,
-	int* N_RS_R, int* N_RS_S, int num_N_RS);
+        int* labels_R, int* labels_S, double* coords_R, double* coords_S,
+        int* N_R, int* N_S, int* N_RS_R, int* N_RS_S, int num_N_R, int num_N_S, int num_N_RS);
 
 double* compensation_terms(int BAND_NUM, pswf_t* wf_proj, pswf_t* wf_ref, ppot_t* pps,
 	int num_elems, int num_M, int num_N_R, int num_N_S, int num_N_RS,

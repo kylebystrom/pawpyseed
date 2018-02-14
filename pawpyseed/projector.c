@@ -421,7 +421,7 @@ void overlap_setup(pswf_t* wf_R, pswf_t* wf_S, ppot_t* pps,
 		overlaps[i] = calloc(pp1.total_projs * pp2.total_projs, sizeof(double complex));
 		double* coord1 = coords_R + 3 * s1;
 		double* coord2 = coords_S + 3 * s2;
-		min_cart_path(coord1, coord2, dummy, &R);
+		min_cart_path(coord1, coord2, wf_R->lattice, dummy, &R);
 		printf("herewego %lf %lf %lf\nherewego%lf %lf %lf\n", coord1[0], coord1[1], coord1[2], coord2[0], coord2[1], coord2[2]);
 		int tj = 0;
 		for (int j = 0; j < pp1.num_projs; j++) {
@@ -486,18 +486,25 @@ double* compensation_terms(int BAND_NUM, pswf_t* wf_proj, pswf_t* wf_ref, ppot_t
 
 	#pragma omp parallel for
 	for (int w = 0; w < NUM_BANDS * NUM_KPTS; w++) {
+		projection_t pro = wf_ref->kpts[w%NUM_KPTS]->bands[w/NUM_KPTS]->projections[0];
+		projection_t ppro = wf_proj->kpts[w%NUM_KPTS]->bands[BAND_NUM]->projections[0];
+                printf("CHECKVAL1 %lf %lf %lf %lf\n", creal(pro.overlaps[0]), cimag(pro.overlaps[0]),
+                        creal(ppro.overlaps[0]), cimag(ppro.overlaps[0]));
 		double complex temp = 0 + 0 * I;
 		int t = 0;
 		for (int s = 0; s < num_M; s++) {
+			//REMEMBER THAT M_R[s] and M_S[s] ARE NOT ALWAYS THE SAME!!!
+			//FIX THIS!!! please :)
 			ppot_t pp = pps[ref_labels[M_R[s]]];
 			int site_num = M_R[s];
-			//printf("site num %d\n", site_num);
-			//printf("kpt band %d %d", w%NUM_KPTS, w/NUM_KPTS);
 			kpoint_t* tmpk = wf_ref->kpts[w%NUM_KPTS];
 			band_t* tmpb = tmpk->bands[w/NUM_KPTS];
 			projection_t* tmpp = tmpb->projections;
 			projection_t pron = tmpp[site_num];
 			projection_t ppron = wf_proj->kpts[w%NUM_KPTS]->bands[BAND_NUM]->projections[site_num];
+			printf("CHECKVAL1 %lf %lf %lf %lf\n", creal(pron.overlaps[0]), cimag(pron.overlaps[0]),
+                                creal(ppron.overlaps[0]), cimag(ppron.overlaps[0]));
+
 			for (int i = 0; i < pron.total_projs; i++) {
 				for (int j = 0; j < ppron.total_projs; j++) {
 					if (pron.ls[i] == ppron.ls[j]  && pron.ms[i] == ppron.ms[j]) {
@@ -544,20 +551,37 @@ double* compensation_terms(int BAND_NUM, pswf_t* wf_proj, pswf_t* wf_ref, ppot_t
 
 		temp = 0 + 0 * I;
 		for (int s = 0; s < num_N_RS; s++) {
+			//REMEMBER TO ADD A PHASE DIFFERENCE FOR OFFSITE TERMS SINCE THEY AREN'T
+			//ALWAYS ON TOP OF EACH OTHER
 			ppot_t pp = pps[ref_labels[N_RS_R[s]]];
 			int site_num1 = N_RS_R[s];
 			int site_num2 = N_RS_S[s];
 			projection_t pron = wf_ref->kpts[w%NUM_KPTS]->bands[w/NUM_KPTS]->projections[site_num1];
 			projection_t ppron = wf_proj->kpts[w%NUM_KPTS]->bands[BAND_NUM]->projections[site_num2];
+			printf("CHECKVAL2 %lf %lf %lf %lf\n", creal(pron.overlaps[0]), cimag(pron.overlaps[0]),
+				creal(ppron.overlaps[0]), cimag(ppron.overlaps[0]));
 			for (int i = 0; i < pron.total_projs; i++) {
 				for (int j = 0; j < ppron.total_projs; j++) {
 					double complex check = conj(pron.overlaps[j])
 						* (N_RS_overlaps[s][i*ppron.total_projs+j])
 						* ppron.overlaps[i];
-					//printf("CROSSCHECK %d %d %d %lf %lf %lf %lf\n", s, i, j, creal(N_RS_overlaps[s][i*13+j]), cimag(N_RS_overlaps[s][i*13+j]), creal(check), cimag(check));
+					printf("CROSSCHECK %d %d %d %lf %lf %lf %lf\n", s, site_num1, site_num2, creal(N_RS_overlaps[s][i*13+j]), cimag(N_RS_overlaps[s][i*13+j]), creal(check), cimag(check));
 					temp += check;
 				}
 			}
+			/*
+			for (int i = 0; i < pron.total_projs; i++) {
+                                for (int j = 0; j < ppron.total_projs; j++) {
+                                        if (pron.ls[i] == ppron.ls[j]  && pron.ms[i] == ppron.ms[j]) {
+                                                temp += conj(pron.overlaps[j])
+                                                        * (pp.diff_overlap_matrix[pp.num_projs*pron.ns[i]+ppron.ns[j]])
+                                                        * (pp.aepw_overlap_matrix[pp.num_projs*i+j]
+                                                        - pp.pspw_overlap_matrix[pp.num_projs*i+j])
+                                                        * ppron.overlaps[i];
+                                        }
+                                }
+                        }
+			*/
 		}
 		overlap[2*w] += creal(temp);
 		overlap[2*w+1]+= cimag(temp);

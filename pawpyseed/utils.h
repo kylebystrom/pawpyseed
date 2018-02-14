@@ -20,6 +20,7 @@ typedef struct band {
 	double complex energy;
 	float complex* Cs;
 	projection_t* projections;
+	projection_t* wave_projections;
 } band_t;
 
 typedef struct rayleigh_terms {
@@ -46,6 +47,7 @@ typedef struct pswf {
 	int nwk;
 	double* lattice;
 	double* reclattice;
+	double complex** overlaps;
 } pswf_t;
 
 typedef struct proj_ae_ps {
@@ -58,6 +60,8 @@ typedef struct proj_ae_ps {
 	double** pswave_spline;
 	double* diffwave;
 	double** diffwave_spline;
+	double* kwave;
+	double** kwave_spline;
 } funcset_t;
 
 typedef struct projgrid {
@@ -87,6 +91,7 @@ typedef struct real_proj_site {
 typedef struct pseudopot {
 	int num_projs;
 	int total_projs;
+	int lmax;
 	funcset_t* funcs;
 	double rmax;
 	double* pspw_overlap_matrix;
@@ -96,6 +101,7 @@ typedef struct pseudopot {
 	int wave_gridsize;
 	int num_cart_gridpts;
 	double* wave_grid;
+	double* kwave_grid;
 	double* proj_grid;
 } ppot_t;
 
@@ -153,7 +159,7 @@ double complex Ylm2(int l, int m, double costheta, double phi);
 
 double proj_interpolate(double r, double rmax, double* x, double* proj, double** proj_spline);
 
-double wave_interpolate(double r, double* x, double* f, double** wave_spline);
+double wave_interpolate(double r, int size, double* x, double* f, double** wave_spline);
 
 double complex proj_value(funcset_t funcs, double* x, int m, double rmax,
 	double* ion_pos, double* pos, double* lattice);
@@ -165,11 +171,11 @@ void frac_from_index(int index, double* coord, int* fftg);
 double sph_bessel(double k, double r, int l);
 
 double complex rayexp(double* kpt, int* Gs, float complex* Cs, int l, int m,
-	int num_waves, double complex* sum_terms, double* ionp);
+        int num_waves, double complex* sum_terms, double* ionp);
 
 double complex* rayexp_terms(double* kpt, int* Gs, int num_waves,
-	int l, int wave_gridsize, double* wave_grid,
-	double* aewave, double* pswave, double* reclattice);
+        int l, int wave_gridsize, double* grid,
+        double* wave, double** spline, double* reclattice);
 
 void generate_rayleigh_expansion_terms(pswf_t* wf, ppot_t* pps, int num_elems);
 

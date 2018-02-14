@@ -65,39 +65,6 @@ Equation \ref{eq:finp} is derived in Appendix A.
 
 \section{Implementation}
 
-\subsection{Projection of Pseudowavefunctions onto Partial Waves}
-
-\begin{equation}
-e^{i\mathbf{k} \cdot \mathbf{r}} = 4\pi \sum_{l=0}^{\infty}\sum_{m=-l}^{l}
-i^l j_l(kr)Y_l^{m*}(\mathbf{\hat{k}})Y_l^m(\mathbf{\hat{r}})
-\label{eq:pwexp}
-\end{equation}
-$\mathbf{r_A} = \mathbf{r} - \mathbf{R_A}$, $\phi_i(\mathbf{r})=R_i(r)Y_l^m(\mathbf{\hat{r}})$,
-$\widetilde{\phi}_i(\mathbf{r})=\widetilde{R}_i(r)Y_l^m(\mathbf{\hat{r}})$,
-$\mathbf{k'}=\mathbf{k}+\mathbf{G}$\\
-$$\widetilde{\psi}_{n\mathbf{k}}=\frac{1}{\sqrt{V}}\sum_{\mathbf{G}}
-C_{n\mathbf{k}\mathbf{G}}e^{i\mathbf{k'}\cdot \mathbf{r}}$$
-$$\widetilde{\psi}_{n\mathbf{k}}=\frac{4\pi}{\sqrt{V}}\sum_{\mathbf{G}}
-C_{n\mathbf{k}\mathbf{G}}\sum_{l=0}^{\infty}\sum_{m=-l}^{l}
-i^l j_l(k'r_A)Y_l^{m*}(\mathbf{\hat{k'}})Y_l^m(\mathbf{\hat{r}_A})$$
-$$\phi_i(\mathbf{r})\widetilde{\psi}_{n\mathbf{k}}=\frac{4\pi}{\sqrt{V}}\sum_{\mathbf{G}}
-C_{n\mathbf{k}\mathbf{G}}\sum_{l'=0}^{\infty}\sum_{m'=-l'}^{l'}
-i^{l'} j_{l'}(k'r_A)Y_{l'}^{m'*}(\mathbf{\hat{k'}})Y_{l'}^{m'}(\mathbf{\hat{r}_A})
-Y_l^{m*}(\mathbf{\hat{r}}_A)R_i(r_A)$$
-$$\braket{\phi_i(\mathbf{r})|\widetilde{\psi}_{n\mathbf{k}}}=
-\frac{4\pi i^l}{\sqrt{V}}\sum_{\mathbf{G}} C_{n\mathbf{k}\mathbf{G}}
-Y_l^{m*}(\mathbf{\hat{k'}})\int_0^{\infty}drr^2R_i(r_A)j_l(k'r_A)$$
-$$\braket{\phi_i-\widetilde{\phi}_i|\widetilde{\psi}_{n\mathbf{k}}}=
-\frac{4\pi i^l}{\sqrt{V}}\sum_{\mathbf{G}} C_{n\mathbf{k}\mathbf{G}}
-Y_l^{m*}(\mathbf{\hat{k'}})\int_0^{\infty}drr^2(R_i(r_A)-\widetilde{R}_i(r_A))j_l(k'r_A)$$
-
-After the projection is decomposed into a summation over integrals of spherical
-Bessel functions, it can be calculated via spherical Bessel transform. This code
-uses the fast spherical Bessel transform method NumSBT developed by Talman.\cite{TALMAN}
-It runs in $O(NlnN)$ time and works on a logarithmic grid, making it convenient for use with
-the POTCAR representations of the partial waves. The resulting logarithmic k-space
-grid can be used to calculate the values of the relevant integrals via interpolation.
-
 \section*{Appendix A: Derivation of Overlap Operators from PAW Formalism}
 The starting point for this derivation is the transformation operator that
 is performed on the pseudowavefunction to obtain the all electron wavefunction
@@ -238,59 +205,6 @@ $$
 which is Equation \ref{eq:finp}.
 
 \section*{Appendix B: Comprehensive POTCAR Guide}
-The PAWpySeed module makes use of the POTCAR files provided with the VASP source code, which
-contain the projector functions, partial waves, pseudopotentials, and core charge densities
-for each element. The format of the POTCAR file is not intuitive to non-developers, so this
-appendix seeks to comprehensively document the format of the VASP POTCAR files.
-
-\subsection*{Overview}
-A single POTCAR contains the data for one element; a POTCAR file to a multi-element system
-is made by simply concatenating elemental POTCAR files. Each PAW POTCAR file follows
-the following format.
-
-\begin{enumerate}
-	\item
-	Settings
-	\item
-	adsf
-	\item
-	\textbf{Non local Part}: This section contains the \emph{non local projector functions}.
-	The first line after "Non local Part" gives the $l$ quantum number of the projector,
-	the number of projectors for that $l$ quantum number, and the radius of the real
-	space projector region.
-	\begin{enumerate}
-		\item
-		\textbf{Reciprocal Space Part}: The reciprocal space projection operator.
-		\item
-		\textbf{Real Space Part}: The real space projection operator values on a radial
-		grid. The radius at a given index $I$ is $RMAX*I/NDATA$, where RMAX and NDATA
-		are given in the settings section. Since $I$ is 0-indexed, the true maximal
-		radius of the projector is actually $RMAX*(NDATA-1)/NDATA$. Unlike the
-		\emph{partial wave} values (see \textbf{pseudo wavefunction},
-		the projector values are not mulitplied by $r$.
-		$$p(\mathbf{r})=realspacepart(index)Y_l^m(\hat{\mathbf{r}})$$
-	\end{enumerate}
-	\item
-	PAW Radial Sets
-	\begin{enumerate}
-		\item
-		Augmentation charges
-		\item
-		Occupancies
-		\item
-		\textbf{grid}: The exponential grid on which calculations related
-		to the \emph{partial waves} are performed.
-		\item
-		\textbf{pseudo wavefunction}: A pseudo \emph{partial wave} on the provided
-		radial grid, multiplied by $r$ for easy radial integration. I.e.
-		$$\phi(\mathbf{r}(index))=\frac{pseudowavefunction(index)}{r(index)}Y_l^m(\hat{\mathbf{r}})$$
-		Listed in the same order as the projector functions.
-		\item
-		\textbf{ae wavefunction}: Same pseudo wavefunction, but for the all electron \emph{partial wave}.
-	\end{enumerate}
-\end{enumerate}
-
-\subsection*{}
 
 \printbibliography
 

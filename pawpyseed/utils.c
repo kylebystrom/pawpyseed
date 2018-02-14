@@ -244,7 +244,7 @@ double complex Ylm(int l, int m, double theta, double phi) {
 	else if (m < 0) multiplier = pow(2.0, 0.5) * cos(-m*phi);
 	else multiplier = pow(-1,m) * pow(2.0, 0.5) * sin(m*phi);
 	return pow((2*l+1)/(4*PI)*fac(l-m)/fac(l+m), 0.5) *
-		legendre(l, m, cos(theta))*multiplier;// cexp(I*m*phi);
+		legendre(l, m, cos(theta))* cexp(I*m*phi);
 }
 
 double complex Ylm2(int l, int m, double costheta, double phi) {
@@ -255,7 +255,7 @@ double complex Ylm2(int l, int m, double costheta, double phi) {
         else if (m < 0) multiplier = pow(2.0, 0.5) * cos(-m*phi);
         else multiplier = pow(-1,m) * pow(2.0, 0.5) * sin(m*phi);
 	return pow((2*l+1)/(4*PI)*fac(l-m)/fac(l+m), 0.5) *
-		legendre(l, m, costheta) *multiplier;//* cexp(I*m*phi);
+		legendre(l, m, costheta) * cexp(I*m*phi);
 }
 
 double proj_interpolate(double r, double rmax, double* x, double* proj, double** proj_spline) {
@@ -267,8 +267,9 @@ double proj_interpolate(double r, double rmax, double* x, double* proj, double**
 	return radval;
 }
 
-double wave_interpolate(double r, double* x, double* f, double** wave_spline) {
-	int ind = (int) (log(r/x[0]) / log(x[1] / x[0]));
+double wave_interpolate(double r, int size, double* x, double* f, double** wave_spline) {
+	if (r < x[0]) return f[0];
+	int ind = min((int) (log(r/x[0]) / log(x[1]/x[0])), size-2);
 	double rem = r - x[ind];
 	return f[ind] + rem * (wave_spline[0][ind] + 
 				rem * (wave_spline[1][ind] +
@@ -391,9 +392,10 @@ double sph_bessel(double k, double r, int l) {
 		return (3 / (x*x) -1) * sin(x) / x - 3 * cos(x) / (x*x);
 	else if (l == 3)
 		return (15 / (x*x*x) - 6 / x) * sin(x) / x - (15 / (x*x) -1) * cos(x) / x;
-	else
+	else {
 		printf("ERROR: sph_bessel l too high");
 		return 0;
+	}
 }
 
 double complex rayexp(double* kpt, int* Gs, float complex* Cs, int l, int m,
@@ -401,54 +403,45 @@ double complex rayexp(double* kpt, int* Gs, float complex* Cs, int l, int m,
 
 	double complex result = 0;
 	double pvec[3] = {0,0,0};
-	double phase = 0;
+	double complex phase = 0;
 	for (int w = 0; w < num_waves; w++) {
-		pvec[0] = kpt[0] + Gs[3*w+0];
-		pvec[1] = kpt[1] + Gs[3*w+1];
-		pvec[2] = kpt[2] + Gs[3*w+2];
+		pvec[0] = Gs[3*w+0];
+		pvec[1] = Gs[3*w+1];
+		pvec[2] = Gs[3*w+2];
 		phase = cexp(2*PI*I*dot(ionp, pvec));
 		result += phase * Cs[w] * sum_terms[(2*l+1)*w+l+m];
 	}
-
-	return result;
+	printf ("ISSUE? %lf %lf\n", creal(cpow(I,l)), cimag(cpow(I,l)));
+	return result * 4 * PI * cpow(I, l);
 }
 
 double complex* rayexp_terms(double* kpt, int* Gs, int num_waves,
-	int l, int wave_gridsize, double* wave_grid,
-	double* aewave, double* pswave, double* reclattice) {
+	int l, int wave_gridsize, double* grid,
+	double* wave, double** spline, double* reclattice) {
 
-	double complex phase = 4 * PI * cpow(I, l);
 	double complex ylmdir = 0;
 	double k = 0;
 	double complex* terms = (double complex*) malloc((2*l+1) * num_waves * sizeof(double complex));
 
+	double overlap = 0;
 	double pvec[3] = {0,0,0};
 	double phat[2] = {0,0};
+	if (l == 0) printf("KPOINT %lf %lf %lf\n", kpt[0], kpt[1], kpt[2]);
 	for (int w = 0; w < num_waves; w++) {
 		pvec[0] = kpt[0] + Gs[3*w+0];
 		pvec[1] = kpt[1] + Gs[3*w+1];
 		pvec[2] = kpt[2] + Gs[3*w+2];
 		frac_to_cartesian(pvec, reclattice);
+		//if (l == 0) printf("PVECART %lf %lf %lf\n", pvec[0], pvec[1], pvec[2]);
 		k = mag(pvec);
 		direction(pvec, phat);
+		overlap = wave_interpolate(k, wave_gridsize, grid, wave, spline);
 		for (int m = -l; m <= l; m++) {
 			ylmdir = conj(Ylm(l, m, phat[0], phat[1]));
-			double overlap = 0;
-			double dr = wave_grid[0];
-			double r = wave_grid[0];
-			for (int i = 0; i < wave_gridsize - 1; i++) {
-				r = wave_grid[i];
-				dr = wave_grid[i+1] - wave_grid[i];
-				overlap += r * sph_bessel(k, r, l) * (aewave[i]-pswave[i]) * dr/2;
-			}
-			for (int i = 1; i < wave_gridsize; i++) {
-				r = wave_grid[i];
-				dr = wave_grid[i] - wave_grid[i-1];
-				overlap += r * sph_bessel(k, r, l) * (aewave[i]-pswave[i]) * dr/2; 
-			}
-			terms[(2*l+1)*w+l+m] = ylmdir * overlap * phase;
+			//if (k < 0.1 && l == 0) overlap = -0.1693;
+			//else if (k < 0.1) overlap = 0;
+			terms[(2*l+1)*w+l+m] = ylmdir * overlap;
 		}
-
 	}
 	return terms;
 }
@@ -462,8 +455,8 @@ void generate_rayleigh_expansion_terms(pswf_t* wf, ppot_t* pps, int num_elems) {
 			kpt->expansion[i] = (rayleigh_set_t*) malloc(pp.num_projs * sizeof(rayleigh_set_t));
 			for (int j = 0; j < pp.num_projs; j++) {
 				double complex* terms = rayexp_terms(kpt->k, kpt->Gs, kpt->num_waves,
-					pp.funcs[j].l, pp.wave_gridsize, pp.wave_grid,
-					pp.funcs[j].aewave, pp.funcs[j].pswave, wf->reclattice);
+					pp.funcs[j].l, pp.wave_gridsize, pp.kwave_grid,
+					pp.funcs[j].kwave, pp.funcs[j].kwave_spline, wf->reclattice);
 				kpt->expansion[i][j].terms = terms;
 				kpt->expansion[i][j].l = pp.funcs[j].l;
 			}

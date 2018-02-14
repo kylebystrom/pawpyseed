@@ -11,12 +11,13 @@
 #include "fft.h"
 #include "quadrature.h"
 #include "radial.h"
+#include "sbt.h"
 
 #define c 0.262465831
 #define PI 3.14159265358979323846
 
 ppot_t* get_projector_list(int num_els, int* labels, int* ls, double* proj_grids, double* wave_grids,
-	double* projectors, double* aewaves, double* pswaves, double* rmaxs) {
+	double* projectors, double* aewaves, double* pswaves, char** rmaxs) {
 	
 	ppot_t* pps = (ppot_t*) malloc(num_els * sizeof(ppot_t));
 	int wt = 0;
@@ -26,12 +27,14 @@ ppot_t* get_projector_list(int num_els, int* labels, int* ls, double* proj_grids
 	int l_num = 0;
 	for (int i = 0; i < num_els; i++) {
 		pps[i].num_projs = labels[4*i+1];
-		pps[i].rmax = 2.10244619055465565;//rmaxs[i];
+		sscanf(rmaxs[i], "%lf", &(pps[i].rmax));
 		pps[i].proj_gridsize = labels[4*i+2];
 		pps[i].wave_gridsize = labels[4*i+3];
 		printf("vals %d %d %d\n", pps[i].num_projs, pps[i].proj_gridsize, pps[i].wave_gridsize);
 		pps[i].total_projs = 0;
 		pps[i].wave_grid = (double*) malloc((pps[i].wave_gridsize)*sizeof(double));
+		pps[i].kwave_grid = (double*) malloc((pps[i].wave_gridsize)*sizeof(double));
+		pps[i].lmax = 0;
 		pps[i].pspw_overlap_matrix = NULL;
 		pps[i].aepw_overlap_matrix = NULL;
 		pps[i].diff_overlap_matrix = NULL;
@@ -51,6 +54,8 @@ ppot_t* get_projector_list(int num_els, int* labels, int* ls, double* proj_grids
 			funcs[k].pswave = (double*) malloc(sizeof(double)*pps[i].wave_gridsize);
 			funcs[k].diffwave = (double*) malloc(sizeof(double)*pps[i].wave_gridsize);
 			funcs[k].l = ls[l_num];
+			if (funcs[k].l > pps[i].lmax)
+				pps[i].lmax = funcs[k].l;
 			pps[i].total_projs += 2 * ls[l_num] + 1;
 			l_num++;
 			for (int j = 0; j < pps[i].wave_gridsize; j++) {
@@ -68,10 +73,41 @@ ppot_t* get_projector_list(int num_els, int* labels, int* ls, double* proj_grids
 			funcs[k].pswave_spline = spline_coeff(pps[i].wave_grid, funcs[k].pswave, pps[i].wave_gridsize);
 			funcs[k].diffwave_spline = spline_coeff(pps[i].wave_grid, funcs[k].diffwave, pps[i].wave_gridsize);
 		}
+		sbt_descriptor_t* d = spherical_bessel_transform_setup(520.0, 5000.0, pps[i].lmax,
+			pps[i].wave_gridsize, pps[i].wave_grid, pps[i].kwave_grid);
+		for (int k = 0; k < pps[i].num_projs; k++) {
+			funcs[k].kwave = wave_spherical_bessel_transform(d, funcs[k].diffwave, funcs[k].l);
+			//funcs[k].kwave = besselt(pps[i].wave_grid, pps[i].kwave_grid, funcs[k].diffwave, 520.0, pps[i].wave_gridsize, funcs[k].l);
+			funcs[k].kwave_spline = spline_coeff(pps[i].kwave_grid, funcs[k].kwave, pps[i].wave_gridsize);
+			printf("KVAL %lf\n", wave_interpolate(0.7, 387, pps[i].kwave_grid, funcs[k].kwave, funcs[k].kwave_spline));
+		}
+		for (int l = 0; l <= pps[i].lmax; l++) {
+			free(d->mult_table[l]);
+		}
+		free(d->mult_table);
+		free(d);
 		pps[i].funcs = funcs;
-		printf("hoobledooble %d\n", pps[i].total_projs);
 	}
 	return pps;
+}
+
+double* besselt(double* r, double* k, double* f, double encut, int N, int l) {
+	
+	double kmax = pow(encut*c, 0.5);
+	double drho = log(r[1]/r[0]);
+	double kmin = kmax * exp((1-N)*drho);
+	double* g = (double*) malloc(N*sizeof(double));
+	for (int i = 0; i < N; i++) {
+		double dr = r[0];
+		g[i] = 0;
+		k[i] = kmin * exp(i*drho);
+		for (int j = 0; j < N; j++) {
+			g[i] += f[j] * r[j] * sph_bessel(k[i], r[j], l) * dr; 
+			if (j != N-1) dr = r[j+1]-r[j];
+		}
+	}
+	return g;
+
 }
 
 real_proj_site_t* projector_values(int num_sites, int* labels, double* coords,
@@ -87,14 +123,12 @@ real_proj_site_t* projector_values(int num_sites, int* labels, double* coords,
 		sites[i].elem = labels[i];
 		sites[i].num_projs = pps[labels[i]].num_projs;
 		sites[i].rmax = pps[labels[i]].rmax;
-		sites[i].total_projs = 0;
+		sites[i].total_projs = pps[labels[i]].total_projs;
 		sites[i].num_indices = 0;
 		sites[i].coord = malloc(3 * sizeof(double));
 		sites[i].coord[0] = coords[3*i+0];
 		sites[i].coord[1] = coords[3*i+1];
 		sites[i].coord[2] = coords[3*i+2];
-		for (int j = 0; j < sites[i].num_projs; j++)
-			sites[i].total_projs += 2 * pps[labels[i]].funcs[j].l + 1;
 		sites[i].indices = calloc(pps[labels[i]].num_cart_gridpts, sizeof(int));
 		sites[i].projs = (real_proj_t*) malloc(sites[i].total_projs * sizeof(real_proj_t));
 		int p = 0;
@@ -321,15 +355,60 @@ void setup_projections(pswf_t* wf, ppot_t* pps, int num_elems,
 		onto_projector(kpt, band_num, sites, num_sites, labels,
 			wf->G_bounds, wf->lattice, wf->reclattice, pps, fftg);
 	}
-	free_real_proj_site_list(sites, num_sites);
+	free_real_proj_site_list(sites, num_sites);	
 	generate_rayleigh_expansion_terms(wf, pps, num_elems);
 }
 
-double complex** overlap_setup(pswf_t* wf_R, pswf_t* wf_S, ppot_t* pps,
+void overlap_setup(pswf_t* wf_R, pswf_t* wf_S, ppot_t* pps,
 	int* labels_R, int* labels_S, double* coords_R, double* coords_S,
-	int* N_RS_R, int* N_RS_S, int num_N_RS) {
+	int* N_R, int* N_S, int* N_RS_R, int* N_RS_S, int num_N_R, int num_N_S, int num_N_RS) {
 
 	double complex** overlaps = (double complex**) malloc(num_N_RS * sizeof(double complex*));
+
+	int NUM_KPTS = wf_R->nwk * wf_R->nspin;
+	int NUM_BANDS = wf_R->nband;
+	double inv_sqrt_vol = pow(determinant(wf_R->lattice), -0.5);
+	for (int w = 0; w < NUM_BANDS * NUM_KPTS; w++) {
+		projection_t* wps = (projection_t*) malloc(num_N_R * sizeof(projection_t));
+		for (int n = 0; n < num_N_R; n++) {
+			int s = N_R[n];
+			ppot_t pp = pps[labels_R[s]];
+			wps[n].overlaps = (double complex*) malloc(pp.total_projs * sizeof(double complex));
+			int t = 0;
+			for (int i = 0; i < pp.num_projs; i++) {
+				for (int m = -pp.funcs[i].l; m <= pp.funcs[i].l; m++) {
+					wps[n].overlaps[t] = rayexp(wf_S->kpts[w%NUM_KPTS]->k, wf_S->kpts[w%NUM_KPTS]->Gs,
+						wf_S->kpts[w%NUM_KPTS]->bands[w/NUM_KPTS]->Cs, pp.funcs[i].l, m,
+						wf_S->kpts[w%NUM_KPTS]->num_waves,
+						wf_R->kpts[w%NUM_KPTS]->expansion[labels_R[s]][i].terms,
+						coords_R + s*3) * inv_sqrt_vol;
+					t++;
+				}
+			}
+		}
+		wf_S->kpts[w%NUM_KPTS]->bands[w/NUM_KPTS]->wave_projections = wps;
+	}
+
+	for (int w = 0; w < NUM_BANDS * NUM_KPTS; w++) {
+		projection_t* wps = (projection_t*) malloc(num_N_S * sizeof(projection_t));
+		for (int n = 0; n < num_N_S; n++) {
+			int s = N_S[n];
+			ppot_t pp = pps[labels_S[s]];
+			wps[n].overlaps = (double complex*) malloc(pp.total_projs * sizeof(double complex));
+			int t = 0;
+			for (int i = 0; i < pp.num_projs; i++) {
+				for (int m = -pp.funcs[i].l; m <= pp.funcs[i].l; m++) {
+					wps[n].overlaps[t] = rayexp(wf_R->kpts[w%NUM_KPTS]->k, wf_R->kpts[w%NUM_KPTS]->Gs,
+						wf_R->kpts[w%NUM_KPTS]->bands[w/NUM_KPTS]->Cs, pp.funcs[i].l, m,
+						wf_R->kpts[w%NUM_KPTS]->num_waves,
+						wf_S->kpts[w%NUM_KPTS]->expansion[labels_S[s]][i].terms,
+						coords_S + s*3) * inv_sqrt_vol;
+					t++;
+				}
+			}
+		}
+		wf_R->kpts[w%NUM_KPTS]->bands[w/NUM_KPTS]->wave_projections = wps;
+	}
 
 	int l1, l2;
 	for (int i = 0; i < num_N_RS; i++) {
@@ -340,16 +419,18 @@ double complex** overlap_setup(pswf_t* wf_R, pswf_t* wf_S, ppot_t* pps,
 		overlaps[i] = calloc(pp1.total_projs * pp2.total_projs, sizeof(double complex));
 		double* coord1 = coords_R + 3 * s1;
 		double* coord2 = coords_S + 3 * s2;
+		printf("herewego %lf %lf %lf\nherewego%lf %lf %lf\n", coord1[0], coord1[1], coord1[2], coord2[0], coord2[1], coord2[2]);
 		int tj = 0;
 		for (int j = 0; j < pp1.num_projs; j++) {
 			l1 = pp1.funcs[j].l;
 			for (int m1 = -l1; m1 <= l1; m1++) {
+				int tk = 0;
 				for (int k = 0; k < pp2.num_projs; k++) {
-					int tk = 0;
 					l2 = pp2.funcs[k].l;
 					for (int m2 = -l2; m2 <= l2; m2++) {
 						overlaps[i][tj*pp2.total_projs+tk] =
-						offsite_wave_overlap(coord1, pp1.wave_grid, pp1.funcs[j].diffwave,
+							offsite_wave_overlap(coord1, pp1.wave_grid,
+							pp1.funcs[j].diffwave,
 							pp1.funcs[j].diffwave_spline, pp1.wave_gridsize,
 							coord2, pp2.wave_grid, pp2.funcs[k].diffwave,
 							pp2.funcs[k].diffwave_spline, pp2.wave_gridsize,
@@ -357,11 +438,12 @@ double complex** overlap_setup(pswf_t* wf_R, pswf_t* wf_S, ppot_t* pps,
 						tk++;
 					}
 				}
+				tj++;
 			}
-			tj++;
 		}
 	}
-	return overlaps;
+	printf("%p %p %p %p\n", overlaps[0], overlaps[1], overlaps[2], overlaps[3]);
+	wf_S->overlaps = overlaps;
 }
 
 double* compensation_terms(int BAND_NUM, pswf_t* wf_proj, pswf_t* wf_ref, ppot_t* pps,
@@ -390,9 +472,10 @@ double* compensation_terms(int BAND_NUM, pswf_t* wf_proj, pswf_t* wf_ref, ppot_t
   0,0,-.490280055892E-02  ,-.955532870297E-03,  0,
   0,0,0,0,  .697731914902E-01};
 
+	double complex** N_RS_overlaps = wf_proj->overlaps;
+
 	int l1 = 0, l2 = 0;
-	double complex** N_RS_overlaps = overlap_setup(wf_ref, wf_proj, pps, ref_labels, proj_labels,
-		ref_coords, proj_coords, N_RS_R, N_RS_S, num_N_RS);
+	double inv_sqrt_vol = pow(determinant(wf_ref->lattice), -0.5);
 
 	#pragma omp parallel for
 	for (int w = 0; w < NUM_BANDS * NUM_KPTS; w++) {
@@ -427,64 +510,51 @@ double* compensation_terms(int BAND_NUM, pswf_t* wf_proj, pswf_t* wf_ref, ppot_t
 		temp = 0 + 0 * I;
 		for (int s = 0; s < num_N_R; s++) {
 			int site_num = N_R[s];
-			int count = 0;
 			projection_t pron = wf_ref->kpts[w%NUM_KPTS]->bands[w/NUM_KPTS]->projections[site_num];
+			projection_t ppron = wf_proj->kpts[w%NUM_KPTS]->bands[BAND_NUM]->wave_projections[s];
 			ppot_t pp = pps[ref_labels[N_R[s]]];
-			for (int i = 0; i < pp.num_projs; i++) {
-				for (int m = -pp.funcs[i].l; m <= pp.funcs[i].l; m++) {
-					temp += rayexp(wf_proj->kpts[w%NUM_KPTS]->k, wf_proj->kpts[w%NUM_KPTS]->Gs,
-						wf_proj->kpts[w%NUM_KPTS]->bands[w/NUM_KPTS]->Cs, pp.funcs[i].l, m,
-						wf_proj->kpts[w%NUM_KPTS]->num_waves,
-						wf_ref->kpts[w%NUM_KPTS]->expansion[ref_labels[N_R[s]]][i].terms,
-						ref_coords + N_R[s]*3) * conj(pron.overlaps[count]);
-					count++;
-				}
+			for (int i = 0; i < pp.total_projs; i++) {
+				temp += ppron.overlaps[i] * conj(pron.overlaps[i]);
 			}
 		}
 		overlap[2*w] += creal(temp);
 		overlap[2*w+1]+= cimag(temp);
-		//printf("temp 2 %lf %lf\n", creal(temp), cimag(temp));
+		printf("temp 2 %lf %lf\n", creal(temp), cimag(temp));
 
 		temp = 0 + 0 * I;
 		for (int s = 0; s < num_N_S; s++) {
 			ppot_t pp = pps[ref_labels[N_S[s]]];
 			int site_num = N_S[s];
-			int count = 0;
-			projection_t pron = wf_proj->kpts[w%NUM_KPTS]->bands[w/NUM_KPTS]->projections[site_num];
-			for (int i = 0; i < pp.num_projs; i++) {
-				for (int m = -pp.funcs[i].l; m <= pp.funcs[i].l; m++) {
-					temp += conj(rayexp(wf_ref->kpts[w%NUM_KPTS]->k, wf_ref->kpts[w%NUM_KPTS]->Gs,
-						wf_ref->kpts[w%NUM_KPTS]->bands[w/NUM_KPTS]->Cs, pp.funcs[i].l, m,
-						wf_ref->kpts[w%NUM_KPTS]->num_waves,
-						wf_proj->kpts[w%NUM_KPTS]->expansion[ref_labels[N_S[s]]][i].terms,
-						proj_coords + N_S[s]*3)) * pron.overlaps[count];
-					count++;
-				}
+			projection_t pron = wf_ref->kpts[w%NUM_KPTS]->bands[w/NUM_KPTS]->wave_projections[s];
+			projection_t ppron = wf_proj->kpts[w%NUM_KPTS]->bands[BAND_NUM]->projections[site_num];
+			for (int i = 0; i < pp.total_projs; i++) {
+				temp += conj(pron.overlaps[i]) * ppron.overlaps[i];
 			}
 		}
 		overlap[2*w] += creal(temp);
 		overlap[2*w+1]+= cimag(temp);
-		//printf("temp 3 %lf %lf\n", creal(temp), cimag(temp));
+		printf("temp 3 %lf %lf\n", creal(temp), cimag(temp));
 
 		temp = 0 + 0 * I;
-		t = 0;
 		for (int s = 0; s < num_N_RS; s++) {
 			ppot_t pp = pps[ref_labels[N_RS_R[s]]];
-			int site_num = N_RS_R[s];
-			projection_t pron = wf_ref->kpts[w%NUM_KPTS]->bands[w/NUM_KPTS]->projections[site_num];
-			projection_t ppron = wf_proj->kpts[w%NUM_KPTS]->bands[w/NUM_KPTS]->projections[site_num];
+			int site_num1 = N_RS_R[s];
+			int site_num2 = N_RS_S[s];
+			projection_t pron = wf_ref->kpts[w%NUM_KPTS]->bands[w/NUM_KPTS]->projections[site_num1];
+			projection_t ppron = wf_proj->kpts[w%NUM_KPTS]->bands[BAND_NUM]->projections[site_num2];
 			for (int i = 0; i < pron.total_projs; i++) {
 				for (int j = 0; j < ppron.total_projs; j++) {
-					//NOTE: CURRENTLY ONLY WORKS ON IDENTICAL STRUCTURES
-					temp += conj(pron.overlaps[j])
+					double complex check = conj(pron.overlaps[j])
 						* (N_RS_overlaps[s][i*ppron.total_projs+j])
 						* ppron.overlaps[i];
+					//printf("CROSSCHECK %d %d %d %lf %lf %lf %lf\n", s, i, j, creal(N_RS_overlaps[s][i*13+j]), cimag(N_RS_overlaps[s][i*13+j]), creal(check), cimag(check));
+					temp += check;
 				}
 			}
 		}
 		overlap[2*w] += creal(temp);
 		overlap[2*w+1]+= cimag(temp);
-		//printf("temp 4 %lf %lf\n", creal(temp), cimag(temp));
+		printf("temp 4 %lf %lf\n", creal(temp), cimag(temp));
 	}
 
 	mkl_free_buffers();

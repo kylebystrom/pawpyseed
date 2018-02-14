@@ -2,7 +2,8 @@
 
 projector:
 	rm -f $(PWD)/pawpy.so
-	icc -shared -o pawpy.so projector.c fft.c quadrature.c reader.c utils.c radial.c tests.c \
+	icc -shared -o pawpy.so pseudoprojector.c projector.c fft.c quadrature.c \
+		reader.c utils.c radial.c tests.c sbt.c \
 		-std=c11 -L${MKLROOT}/lib/intel64 -lmkl_rt -fopenmp \
 		-lpthread -ldl -I${MKLROOT}/include -lm -O3 -fPIC -Wall
 
@@ -20,5 +21,5 @@ test:
 
 memtest:
 	rm -f $(PWD)/memtest
-	icc -o memtest memtest.c projector.c fft.c quadrature.c reader.c tests.c utils.c radial.c -mkl=sequential -L${MKLROOT}/lib/intel64 -lmkl_rt -lpthread -ldl -I${MKLROOT}/include -lm -std=c99 -O0 -fPIC -Wall -g
+	icc -o memtest memtest.c pseudoprojector.c projector.c fft.c quadrature.c reader.c tests.c utils.c radial.c sbt.c -mkl=sequential -L${MKLROOT}/lib/intel64 -lmkl_rt -lpthread -ldl -I${MKLROOT}/include -lm -std=c99 -O0 -fPIC -Wall -g
 

@@ -8,6 +8,8 @@
 #include "radial.h"
 
 #define PI 3.14159265358979323846
+#define NUM_THETA 19
+#define NUM_PHI 40
 
 double complex offsite_wave_overlap(double* coord1, double* r1, double* f1, double** spline1, int size1,
 	double* coord2, double* r2, double* f2, double** spline2, int size2,
@@ -19,21 +21,23 @@ double complex offsite_wave_overlap(double* coord1, double* r1, double* f1, doub
 	min_cart_path(coord2, coord1, lattice, dcoord, &R);
 	double r1max = r1[size1-1];
 	double r2max = r2[size2-1];
-	double dphi = PI / 30;
+	double dphi = 2 * PI / NUM_PHI;
 	double THETA, PHI, R1, R2, costheta, dcostheta, sintheta, phi, integral = 0;
 	double complex F1, F2;
 
 	//loop over 1st coord
-	double dr = r1[0];
-	double* costhetas = QUADRATURE_POINTS[26];
-	double* dcosthetas = QUADRATURE_WEIGHTS[26];
-	for (int rstep = 0; rstep < size1; rstep++) {
-		R1 = r1[rstep];
-		for (int thetastep = 0; thetastep < 29; thetastep++) {
+	double dr = 0;
+	double* costhetas = QUADRATURE_POINTS[NUM_THETA-3];
+	double* dcosthetas = QUADRATURE_WEIGHTS[NUM_THETA-3];
+
+	for (int rstep = 0; rstep < size1-1; rstep++) {
+		dr = r1[rstep+1] - r1[rstep];
+		R1 = r1[rstep] + dr/2;
+		for (int thetastep = 0; thetastep < NUM_THETA; thetastep++) {
 			costheta = costhetas[thetastep];
 			dcostheta = dcosthetas[thetastep];
 			sintheta = pow(1 - pow(costheta, 2), 0.5);
-			for (int phistep = 0; phistep < 60; phistep++) {
+			for (int phistep = 0; phistep < NUM_PHI; phistep++) {
 				phi = phistep * dphi;
 				temp[0] = R1 * sintheta * cos(phi) - dcoord[0];
 				temp[1] = R1 * sintheta * sin(phi) - dcoord[1];
@@ -45,22 +49,21 @@ double complex offsite_wave_overlap(double* coord1, double* r1, double* f1, doub
 					else PHI = acos(temp[0] / pow(temp[0]*temp[0] + temp[1]*temp[1], 0.5));
 					if (temp[1] < 0) PHI = 2*PI - PHI;
 					F2 = wave_interpolate(R2, size2, r2, f2, spline2) * Ylm(l2, m2, THETA, PHI);
-					F1 = f1[rstep] * Ylm2(l1, m1, costheta, phi);
+					F1 = (f1[rstep] + f1[rstep+1]) / 2 * Ylm2(l1, m1, costheta, phi);
 					integral += F1 * conj(F2) * R1 / R2 * dr * dcostheta * dphi;
 				}
 			}
 		}
-		if (rstep+1 != size1) dr = r1[rstep+1] - r1[rstep];
 	}
 
-	dr = r2[0];
-	for (int rstep = 0; rstep < size2; rstep++) {
-		R2 = r2[rstep];
-		for (int thetastep = 0; thetastep < 29; thetastep++) {
+	for (int rstep = 0; rstep < size2-1; rstep++) {
+		dr = r2[rstep+1] - r2[rstep];
+		R2 = r2[rstep] + dr/2;
+		for (int thetastep = 0; thetastep < NUM_THETA; thetastep++) {
 			costheta = costhetas[thetastep];
 			dcostheta = dcosthetas[thetastep];
 			sintheta = pow(1 - pow(costheta, 2), 0.5);
-			for (int phistep = 0; phistep < 60; phistep++) {
+			for (int phistep = 0; phistep < NUM_PHI; phistep++) {
 				phi = phistep * dphi;
 				temp[0] = R2 * sintheta * cos(phi) + dcoord[0];
 				temp[1] = R2 * sintheta * sin(phi) + dcoord[1];
@@ -72,12 +75,11 @@ double complex offsite_wave_overlap(double* coord1, double* r1, double* f1, doub
 					else PHI = acos(temp[0] / pow(temp[0]*temp[0] + temp[1]*temp[1], 0.5));
 					if (temp[1] < 0) PHI = 2*PI - PHI;
 					F1 = wave_interpolate(R1, size1, r1, f1, spline1) * Ylm(l1, m1, THETA, PHI);
-					F2 = f2[rstep] * Ylm2(l2, m2, costheta, phi);
+					F2 = (f2[rstep] + f2[rstep]) / 2 * Ylm2(l2, m2, costheta, phi);
 					integral += F1 * conj(F2) * R2 / R1 * dr * dcostheta * dphi;
 				}
 			}
 		}
-		if (rstep+1 != size2) dr = r2[rstep+1] - r2[rstep];
 	}
 	return integral;
 }

@@ -1,8 +1,14 @@
+"""
+Base class containing Python classes for parsing files
+and storing and analyzing wavefunction data.
+"""
+
 from pymatgen.io.vasp.inputs import Potcar, Poscar
 from pymatgen.io.vasp.outputs import Vasprun
 from pymatgen.core.structure import Structure
 import numpy as np
 from ctypes import *
+from utils import *
 import os
 import numpy as np
 import json
@@ -27,55 +33,13 @@ PAWC.free_ptr.restype = None
 PAWC.free_ppot_list.restype = None
 PAWC.free_pswf.restype = None
 
-def cdouble_to_numpy(arr, length):
-	arr = cast(arr, POINTER(c_double))
-	newarr = np.zeros(length)
-	for i in range(length):
-		newarr[i] = arr[i]
-	PAWC.free_ptr(arr)
-	return newarr
-
-def cfloat_to_numpy(arr, length):
-	arr = cast(arr, POINTER(c_float))
-	newarr = np.zeros(length)
-	for i in range(length):
-		newarr[i] = arr[i]
-	PAWC.free_ptr(arr)
-	return newarr
-
-def cfloat_to_numpy(arr, length):
-	arr = cast(arr, POINTER(c_int))
-	newarr = np.zeros(length)
-	for i in range(length):
-		newarr[i] = arr[i]
-	PAWC.free_ptr(arr)
-	return newarr
-
-def numpy_to_cdouble(arr):
-	newarr = (c_double * len(arr))()
-	for i in range(len(arr)):
-		newarr[i] = arr[i]
-	return newarr
-
-def numpy_to_cfloat(arr):
-	newarr = (c_float * len(arr))()
-	for i in range(len(arr)):
-		newarr[i] = arr[i]
-	return newarr
-
-def numpy_to_cint(arr):
-	newarr = (c_int * len(arr))()
-	for i in range(len(arr)):
-		newarr[i] = int(arr[i])
-	return newarr
-
-def el(site):
-	return site.specie.symbol
-
 class Pseudopotential:
 	"""
 	Contains important attributes from a VASP pseudopotential files. POTCAR
 	"settings" can be read from the pymatgen POTCAR object
+
+	Attributes:
+		rmaxstr: Maximum radius of the projection operators
 	"""
 
 	def __init__(self, data, rmax):
@@ -103,6 +67,10 @@ class Pseudopotential:
 		self.kinetic = self.make_nums(kenstr)
 		self.pspotential = self.make_nums(pspotstr)
 		self.pscorecharge = self.make_nums(pscorechgstr)
+
+		augstr, uccstr = auguccstr.split('uccopancies in atom', 1)
+		head, augstr = augstr.split('augmentation charges (non sperical)', 1)
+		self.augs = make_nums(augstr)
 
 		for pwave in partial_waves:
 			lst = pwave.split("ae wavefunction", 1)
@@ -296,8 +264,8 @@ class Wavefunction:
 		self.projector.overlap_setup(basis.pwf.wf_ptr, self.pwf.wf_ptr, projector_list,
 			numpy_to_cint(basisnums), numpy_to_cint(selfnums),
 			numpy_to_cdouble(basiscoords), numpy_to_cdouble(selfcoords),
-			numpy_to_cint(M_R), numpy_to_cint(M_S), len(M_R));
-			#numpy_to_cint(N_RS_R), numpy_to_cint(N_RS_S), len(N_RS_R));
+			#numpy_to_cint(M_R), numpy_to_cint(M_S), len(M_R));
+			numpy_to_cint(N_RS_R), numpy_to_cint(N_RS_S), len(N_RS_R));
 
 	def single_band_projection(self, band_num, basis):
 		res = self.projector.pseudoprojection(basis.pwf.wf_ptr, self.pwf.wf_ptr, band_num)
@@ -308,7 +276,7 @@ class Wavefunction:
 		res = cdouble_to_numpy(res, 2*nband*nwk*nspin)
 		projector_list, selfnums, selfcoords, basisnums, basiscoords = self.projection_data
 		M_R, M_S, N_R, N_S, N_RS_R, N_RS_S = self.site_cat
-		"""
+		
 		ct = self.projector.compensation_terms(band_num, self.pwf.wf_ptr, basis.pwf.wf_ptr, projector_list, 
 			len(self.cr.pps), len(M_R), len(N_R), len(N_S), len(N_RS_R), numpy_to_cint(M_R), numpy_to_cint(M_S),
 			numpy_to_cint(N_R), numpy_to_cint(N_S), numpy_to_cint(N_RS_R), numpy_to_cint(N_RS_S),
@@ -322,6 +290,7 @@ class Wavefunction:
 			numpy_to_cint(selfnums), numpy_to_cdouble(selfcoords),
 			numpy_to_cint(basisnums), numpy_to_cdouble(basiscoords),
 			numpy_to_cint(self.dim))
+		"""
 		ct = cdouble_to_numpy(ct, 2*nband*nwk*nspin)
 		occs = cdouble_to_numpy(self.projector.get_occs(basis.pwf.wf_ptr), nband*nwk*nspin)
 		
@@ -386,6 +355,7 @@ class Wavefunction:
 		pswaves = np.array([], np.float64)
 		wgrids = np.array([], np.float64)
 		pgrids = np.array([], np.float64)
+		augs = np.array([], np.float64)
 		rmaxstrs = (c_char_p * len(pps))()
 		num_els = 0
 
@@ -396,6 +366,7 @@ class Wavefunction:
 			ls = np.append(ls, pp.ls)
 			wgrids = np.append(wgrids, pp.grid)
 			pgrids = np.append(pgrids, pp.projgrid)
+			augs = np.append(augs, pp.augs)
 			num_els += 1
 			for i in range(len(pp.ls)):
 				proj = pp.realprojs[i]
@@ -404,7 +375,6 @@ class Wavefunction:
 				projectors = np.append(projectors, proj)
 				aewaves = np.append(aewaves, aepw)
 				pswaves = np.append(pswaves, pspw)
-		print ("rmax", self.cr.pps['Ga'].rmax * 0.529177)
 
 		projector_list = self.projector.get_projector_list(num_els, numpy_to_cint(clabels),
 			numpy_to_cint(ls), numpy_to_cdouble(pgrids), numpy_to_cdouble(wgrids),

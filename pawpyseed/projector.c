@@ -418,6 +418,7 @@ void overlap_setup(pswf_t* wf_R, pswf_t* wf_S, ppot_t* pps,
 		int s2 = N_RS_S[i];
 		ppot_t pp1 = pps[labels_R[s1]];
 		ppot_t pp2 = pps[labels_S[s2]];
+		// CALCULATE THE DIFF COORD HERE, PASS TO offsite_wave_overlap AND SAVE IT FOR USE IN compensation_terms
 		overlaps[i] = calloc(pp1.total_projs * pp2.total_projs, sizeof(double complex));
 		double* coord1 = coords_R + 3 * s1;
 		double* coord2 = coords_S + 3 * s2;
@@ -431,7 +432,7 @@ void overlap_setup(pswf_t* wf_R, pswf_t* wf_S, ppot_t* pps,
 				for (int k = 0; k < pp2.num_projs; k++) {
 					l2 = pp2.funcs[k].l;
 					for (int m2 = -l2; m2 <= l2; m2++) {
-						if (R > 0.001) {
+						if (1) {//R > 0.001) {
 							overlaps[i][tj*pp2.total_projs+tk] =
 								offsite_wave_overlap(coord1, pp1.wave_grid,
 								pp1.funcs[j].diffwave,
@@ -493,15 +494,14 @@ double* compensation_terms(int BAND_NUM, pswf_t* wf_proj, pswf_t* wf_ref, ppot_t
 		double complex temp = 0 + 0 * I;
 		int t = 0;
 		for (int s = 0; s < num_M; s++) {
-			//REMEMBER THAT M_R[s] and M_S[s] ARE NOT ALWAYS THE SAME!!!
-			//FIX THIS!!! please :)
 			ppot_t pp = pps[ref_labels[M_R[s]]];
-			int site_num = M_R[s];
+			int s1 = M_R[s];
+			int s2 = M_S[s];
 			kpoint_t* tmpk = wf_ref->kpts[w%NUM_KPTS];
 			band_t* tmpb = tmpk->bands[w/NUM_KPTS];
 			projection_t* tmpp = tmpb->projections;
-			projection_t pron = tmpp[site_num];
-			projection_t ppron = wf_proj->kpts[w%NUM_KPTS]->bands[BAND_NUM]->projections[site_num];
+			projection_t pron = tmpp[s1];
+			projection_t ppron = wf_proj->kpts[w%NUM_KPTS]->bands[BAND_NUM]->projections[s2];
 			printf("CHECKVAL1 %lf %lf %lf %lf\n", creal(pron.overlaps[0]), cimag(pron.overlaps[0]),
                                 creal(ppron.overlaps[0]), cimag(ppron.overlaps[0]));
 
@@ -509,9 +509,9 @@ double* compensation_terms(int BAND_NUM, pswf_t* wf_proj, pswf_t* wf_ref, ppot_t
 				for (int j = 0; j < ppron.total_projs; j++) {
 					if (pron.ls[i] == ppron.ls[j]  && pron.ms[i] == ppron.ms[j]) {
 						temp += conj(pron.overlaps[j])
-							* (mymat[pron.num_projs*pron.ns[i]+ppron.ns[j]])
-							//* (pp.aepw_overlap_matrix[pp.num_projs*i+j]
-							//- pp.pspw_overlap_matrix[pp.num_projs*i+j])
+							//* (mymat[pron.num_projs*pron.ns[i]+ppron.ns[j]])
+							* (pp.aepw_overlap_matrix[pp.num_projs*i+j]
+							- pp.pspw_overlap_matrix[pp.num_projs*i+j])
 							* ppron.overlaps[i];
 					}
 				}
@@ -558,30 +558,17 @@ double* compensation_terms(int BAND_NUM, pswf_t* wf_proj, pswf_t* wf_ref, ppot_t
 			int site_num2 = N_RS_S[s];
 			projection_t pron = wf_ref->kpts[w%NUM_KPTS]->bands[w/NUM_KPTS]->projections[site_num1];
 			projection_t ppron = wf_proj->kpts[w%NUM_KPTS]->bands[BAND_NUM]->projections[site_num2];
-			printf("CHECKVAL2 %lf %lf %lf %lf\n", creal(pron.overlaps[0]), cimag(pron.overlaps[0]),
-				creal(ppron.overlaps[0]), cimag(ppron.overlaps[0]));
+			//printf("CHECKVAL2 %lf %lf %lf %lf\n", creal(pron.overlaps[0]), cimag(pron.overlaps[0]),
+			//	creal(ppron.overlaps[0]), cimag(ppron.overlaps[0]));
 			for (int i = 0; i < pron.total_projs; i++) {
 				for (int j = 0; j < ppron.total_projs; j++) {
 					double complex check = conj(pron.overlaps[j])
 						* (N_RS_overlaps[s][i*ppron.total_projs+j])
 						* ppron.overlaps[i];
-					printf("CROSSCHECK %d %d %d %lf %lf %lf %lf\n", s, site_num1, site_num2, creal(N_RS_overlaps[s][i*13+j]), cimag(N_RS_overlaps[s][i*13+j]), creal(check), cimag(check));
+					//printf("CROSSCHECK %d %d %d %lf %lf %lf %lf\n", s, site_num1, site_num2, creal(N_RS_overlaps[s][i*13+j]), cimag(N_RS_overlaps[s][i*13+j]), creal(check), cimag(check));
 					temp += check;
 				}
 			}
-			/*
-			for (int i = 0; i < pron.total_projs; i++) {
-                                for (int j = 0; j < ppron.total_projs; j++) {
-                                        if (pron.ls[i] == ppron.ls[j]  && pron.ms[i] == ppron.ms[j]) {
-                                                temp += conj(pron.overlaps[j])
-                                                        * (pp.diff_overlap_matrix[pp.num_projs*pron.ns[i]+ppron.ns[j]])
-                                                        * (pp.aepw_overlap_matrix[pp.num_projs*i+j]
-                                                        - pp.pspw_overlap_matrix[pp.num_projs*i+j])
-                                                        * ppron.overlaps[i];
-                                        }
-                                }
-                        }
-			*/
 		}
 		overlap[2*w] += creal(temp);
 		overlap[2*w+1]+= cimag(temp);

@@ -28,7 +28,7 @@ typedef struct band {
 	projection_t* wave_projections; ///< length==number of sites in structure
 } band_t;
 
-typedef struct rayleigh_terms {
+typedef struct rayleigh_set {
 	int l;
 	double complex* terms;
 } rayleigh_set_t;
@@ -52,10 +52,11 @@ typedef struct pswf {
 	int nwk;
 	double* lattice;
 	double* reclattice;
+	int num_aug_overlap_sites;
 	double complex** overlaps;
 } pswf_t;
 
-typedef struct proj_ae_ps {
+typedef struct funcset {
 	int l;
 	double* proj;
 	double** proj_spline;
@@ -93,7 +94,7 @@ typedef struct real_proj_site {
 	real_proj_t* projs;
 } real_proj_site_t;
 
-typedef struct pseudopot {
+typedef struct ppot {
 	int num_projs;
 	int total_projs;
 	int lmax;

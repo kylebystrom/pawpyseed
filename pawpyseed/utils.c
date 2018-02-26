@@ -464,6 +464,12 @@ void generate_rayleigh_expansion_terms(pswf_t* wf, ppot_t* pps, int num_elems) {
 	}
 }
 
+void CHECK_ALLOCATION(void* ptr) {
+	if (ptr == NULL) {
+		ALLOCATION_FAILED();
+	}
+}
+
 void ALLOCATION_FAILED() {
 	printf("ALLOCATION FAILED\n");
 	exit(-1);

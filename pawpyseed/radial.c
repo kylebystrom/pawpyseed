@@ -8,17 +8,14 @@
 #include "radial.h"
 
 #define PI 3.14159265358979323846
-#define NUM_THETA 19
-#define NUM_PHI 40
+#define NUM_THETA 13
+#define NUM_PHI 30
 
-double complex offsite_wave_overlap(double* coord1, double* r1, double* f1, double** spline1, int size1,
-	double* coord2, double* r2, double* f2, double** spline2, int size2,
+double complex offsite_wave_overlap(double* dcoord, double* r1, double* f1, double** spline1, int size1,
+	double* r2, double* f2, double** spline2, int size2,
 	double* lattice, int l1, int m1, int l2, int m2) {
 
-	double dcoord[3] = {0,0,0};
 	double temp[3] = {0,0,0};
-	double R = 0;
-	min_cart_path(coord2, coord1, lattice, dcoord, &R);
 	double r1max = r1[size1-1];
 	double r2max = r2[size2-1];
 	double dphi = 2 * PI / NUM_PHI;

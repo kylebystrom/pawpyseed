@@ -447,6 +447,7 @@ double complex* rayexp_terms(double* kpt, int* Gs, int num_waves,
 }
 
 void generate_rayleigh_expansion_terms(pswf_t* wf, ppot_t* pps, int num_elems) {
+	#pragma omp parallel for
 	for (int k_num = 0; k_num < wf->nwk * wf->nspin; k_num++) {
 		kpoint_t* kpt = wf->kpts[k_num];
 		kpt->expansion = (rayleigh_set_t**) malloc(num_elems * sizeof(rayleigh_set_t*));

@@ -271,6 +271,26 @@ class Wavefunction:
 			numpy_to_cint(N_RS_R), numpy_to_cint(N_RS_S), len(N_R), len(N_S), len(N_RS_R));
 
 	def single_band_projection(self, band_num, basis):
+		"""
+		Computes the overlap operator of a single band in self onto each of the
+		bands in a different wavefunction in the same lattice with the same
+		plane-wave basis.
+
+		Arguments:
+			band_num (int): The index (0-indexed) of the band to be projected onto
+				the bands in basis
+			basis (Wavefunction): A Wavefunction object, with the same lattice and
+				plane-wave basis (i.e. same energy cutoff and k-point mesh)
+				as self, onto which band band_num of self is projected.
+
+		Returns:
+			proj (np.array of np.float64): Projection of band band_num onto each
+				band of basis, sorted by kpoint and spin as follows:
+				projection(b,k,s) = proj[b*(nk*ns) + s*nk + k], where
+				b is the band index, k is the kpoint index, s is the spin index
+				nk is the number of kpoints, and ns is the number of spins
+		"""
+
 		res = self.projector.pseudoprojection(basis.pwf.wf_ptr, self.pwf.wf_ptr, band_num)
 		nband = self.projector.get_nband(basis.pwf.wf_ptr)
 		nwk = self.projector.get_nwk(basis.pwf.wf_ptr)

@@ -241,8 +241,8 @@ class Wavefunction:
 			numpy_to_cdouble(basiscoords))
 		self.projection_data = [projector_list, selfnums, selfcoords, basisnums, basiscoords]
 		M_R, M_S, N_R, N_S, N_RS = self.make_site_lists(basis)
-		num_N_RS, N_RS = len(N_RS), np.array(N_RS).flatten()
-		if N_RS:
+		num_N_RS = len(N_RS)
+		if num_N_RS > 0:
 			N_RS_R, N_RS_S = zip(*N_RS)
 		else:
 			N_RS_R, N_RS_S = [], []
@@ -251,11 +251,9 @@ class Wavefunction:
 			numpy_to_cint(basisnums), numpy_to_cint(selfnums),
 			numpy_to_cdouble(basiscoords), numpy_to_cdouble(selfcoords),
 			numpy_to_cint(N_R), numpy_to_cint(N_S),
-			#numpy_to_cint(M_R), numpy_to_cint(M_S),
-			#numpy_to_cint(M_R), numpy_to_cint(M_S), len(M_R), len(M_R), len(M_R));
-			#numpy_to_cint(N_RS_R), numpy_to_cint(N_RS_S), len(N_RS_R));
-			#numpy_to_cint(M_R), numpy_to_cint(M_S), len(M_R));
 			numpy_to_cint(N_RS_R), numpy_to_cint(N_RS_S), len(N_R), len(N_S), len(N_RS_R));
+			#numpy_to_cint(M_R), numpy_to_cint(M_S),
+                        #numpy_to_cint(M_R), numpy_to_cint(M_S), len(M_R), len(M_R), len(M_R));
 
 	def single_band_projection(self, band_num, basis):
 		res = self.projector.pseudoprojection(c_void_p(basis.pwf.wf_ptr), c_void_p(self.pwf.wf_ptr), band_num)
@@ -396,16 +394,16 @@ class Wavefunction:
 			self.projector.free_ppot_list(c_void_p(self.projector_list), len(self.cr.pps))
 
 if __name__ == '__main__':
-	posb = Poscar.from_file("CONTCAR").structure
-	posd = Poscar.from_file("CONTCAR").structure
-	pot = Potcar.from_file("POTCAR")
-	pwf1 = PseudoWavefunction("WAVECAR", "vasprun.xml")
-	pwf2 = PseudoWavefunction("WAVECAR", "vasprun.xml")
+	posb = Poscar.from_file("bulk/CONTCAR").structure
+	posd = Poscar.from_file("charge_0/CONTCAR").structure
+	pot = Potcar.from_file("bulk/POTCAR")
+	pwf1 = PseudoWavefunction("bulk/WAVECAR", "bulk/vasprun.xml")
+	pwf2 = PseudoWavefunction("charge_0/WAVECAR", "charge_0/vasprun.xml")
 
 	wf1 = Wavefunction(posb, pwf1, CoreRegion(pot), (120,120,120))
 	wf2 = Wavefunction(posd, pwf2, CoreRegion(pot), (120,120,120))
 	wf2.setup_projection(wf1)
-	for i in range(0,1):
+	for i in range(253,254):
 		wf2.single_band_projection(i, wf1)
 
 	wf1.free_all()

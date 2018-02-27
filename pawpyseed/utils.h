@@ -1,37 +1,61 @@
+/** \file
+Contains several sets of general purpose utilities:
+
+1) structs used by pawpyseed
+as well as utility functions for freeing allocated memory
+being used by those structs.
+
+2) General vector math (i.e. dot and cross product,
+determinant, etc.)
+
+3) Other necessary functionality, such
+as spline interpolation, spherical harmonics, and
+plane-wave/radial function overlap, that is used
+in multiple locations throughout the code.
+*/
+
 #ifndef UTILS_H
 #define UTILS_H
 #include <complex.h>
 #include <math.h>
 
+/**
+One set of augmentation region functions, i.e.
+p_i, phi_i, and phit_i (projector, all electron
+partial wave, and partial wave), as well
+as the difference of the partial waves, the difference
+expanded in spherical Bessel functions, and spline
+coefficients for each grid.
+*/
 typedef struct funcset {
-        int l;
-        double* proj;
-        double** proj_spline;
-        double* aewave;
-        double** aewave_spline;
-        double* pswave;
-        double** pswave_spline;
-        double* diffwave;
-        double** diffwave_spline;
-        double* kwave;
-        double** kwave_spline;
+        int l; ///< l quantum number
+        double* proj; ///< projector function
+        double** proj_spline; ///< projector function spline
+        double* aewave; ///< all electron partial wave
+        double** aewave_spline; ///< ae partial wave spline coefficients
+        double* pswave; ///< pseudo partial wave
+        double** pswave_spline; ///< ps partial wave spline coefficients
+        double* diffwave; ///< aewave-pswave
+        double** diffwave_spline; ///< spline coefficients for diffwave
+        double* kwave; ///< Expansion of diffwave in spherical Bessel functions
+        double** kwave_spline; ///< spline coefficients for kwave
 } funcset_t;
 
 typedef struct ppot {
-        int num_projs;
-        int total_projs;
-        int lmax;
-        funcset_t* funcs;
-        double rmax;
-        double* pspw_overlap_matrix;
-        double* aepw_overlap_matrix;
-        double* diff_overlap_matrix;
-        int proj_gridsize;
-        int wave_gridsize;
-        int num_cart_gridpts;
-        double* wave_grid;
-        double* kwave_grid;
-        double* proj_grid;
+        int num_projs; ///< number of radial projector functions
+        int total_projs; ///< number of projector functions
+        int lmax; ///< maximum l-value of any projector
+        funcset_t* funcs; ///< funcset for each projector, see funcset
+        double rmax; //.< maximum radius of the projector functions
+        double* pspw_overlap_matrix; ///< overlap matrix for pseudo partial waves
+        double* aepw_overlap_matrix; ///< overlap matrix for all electron partial waves
+        double* diff_overlap_matrix; ///< overlap matrix of difference between all electron and partial waves
+        int proj_gridsize; ///< number of points on projector radial grid
+        int wave_gridsize; ///< number of points on partial wave radial grid
+        int num_cart_gridpts; ///< number of real space grid points that can fit in the projector sphere
+        double* wave_grid; ///< real radial grid for partial waves
+        double* kwave_grid; ///< reciprocal radial grid for partial waves
+        double* proj_grid; ///< real radial grid for projector functions
 } ppot_t;
 
 typedef struct projection {

@@ -391,6 +391,10 @@ class Wavefunction:
 		pass
 
 	def free_all(self):
+		"""
+		Frees all of the C structures associated with the Wavefunction object.
+		After being called, this object is not usable.
+		"""
 		self.projector.free_pswf(c_void_p(self.pwf.wf_ptr))
 		if self.projector_list != None:
 			self.projector.free_ppot_list(c_void_p(self.projector_list), len(self.cr.pps))
@@ -410,12 +414,3 @@ if __name__ == '__main__':
 
 	wf1.free_all()
 	wf2.free_all()
-
-#For each structure
-#numerical element label for each site
-#Fractional coordinates of sites
-#grid for each element
-#Labels (element, l, ndata, length) for each projector-partial set for each element
-#projector functions for each label above for each element
-#AE partial waves for each label above for each element
-#PS partial waves for each label above for each element

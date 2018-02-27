@@ -16,23 +16,6 @@ import json
 import sys
 sys.stdout.flush()
 
-MODULE_DIR = os.path.dirname(os.path.abspath(__file__))
-PAWC = CDLL(os.path.join(MODULE_DIR, "pawpy.so"))
-
-PAWC.read_wavefunctions.restype = POINTER(None)
-PAWC.get_projector_list.restype = POINTER(None)
-PAWC.read_wavefunctions.restype = POINTER(None)
-PAWC.overlap_setup.restype = None
-PAWC.compensation_terms.restype = POINTER(c_double)
-PAWC.get_occs.restype = POINTER(c_double)
-PAWC.get_nband.restype = c_int
-PAWC.get_nwk.restype = c_int
-PAWC.get_nspin.restype = c_int
-
-PAWC.free_ptr.restype = None
-PAWC.free_ppot_list.restype = None
-PAWC.free_pswf.restype = None
-
 class Pseudopotential:
 	"""
 	Contains important attributes from a VASP pseudopotential files. POTCAR
@@ -70,7 +53,7 @@ class Pseudopotential:
 
 		augstr, uccstr = auguccstr.split('uccopancies in atom', 1)
 		head, augstr = augstr.split('augmentation charges (non sperical)', 1)
-		self.augs = make_nums(augstr)
+		self.augs = self.make_nums(augstr)
 
 		for pwave in partial_waves:
 			lst = pwave.split("ae wavefunction", 1)
@@ -148,7 +131,7 @@ class PseudoWavefunction:
 
 	def pseudoprojection(self, band_num, basis):
 		res = (c_double * len(weights))()
-		return PAWC.vc_pseudoprojection(basis.wf_ptr, self.wf_ptr, band_num, res)
+		return PAWC.vc_pseudoprojection(c_void_p(basis.wf_ptr), c_void_p(self.wf_ptr), band_num, res)
 		return cdouble_to_numpy(res)
 
 class Wavefunction:
@@ -247,10 +230,13 @@ class Wavefunction:
 
 	def setup_projection(self, basis):
 		projector_list, selfnums, selfcoords, basisnums, basiscoords = self.make_c_projectors(basis)
-		self.projector.setup_projections(self.pwf.wf_ptr, projector_list, len(self.cr.pps),
+		print(selfnums, selfcoords, basisnums, basiscoords)
+		print(hex(projector_list), hex(self.pwf.wf_ptr))
+		sys.stdout.flush()
+		self.projector.setup_projections(c_void_p(self.pwf.wf_ptr), c_void_p(projector_list), len(self.cr.pps),
 			len(self.structure), numpy_to_cint(self.dim), numpy_to_cint(selfnums),
 			numpy_to_cdouble(selfcoords))
-		self.projector.setup_projections(basis.pwf.wf_ptr, projector_list, len(self.cr.pps),
+		self.projector.setup_projections(c_void_p(basis.pwf.wf_ptr), c_void_p(projector_list), len(self.cr.pps),
 			len(basis.structure), numpy_to_cint(self.dim), numpy_to_cint(basisnums),
 			numpy_to_cdouble(basiscoords))
 		self.projection_data = [projector_list, selfnums, selfcoords, basisnums, basiscoords]
@@ -261,53 +247,35 @@ class Wavefunction:
 		else:
 			N_RS_R, N_RS_S = [], []
 		self.site_cat = [M_R, M_S, N_R, N_S, N_RS_R, N_RS_S]
-		self.projector.overlap_setup(basis.pwf.wf_ptr, self.pwf.wf_ptr, projector_list,
+		self.projector.overlap_setup(c_void_p(basis.pwf.wf_ptr), c_void_p(self.pwf.wf_ptr), c_void_p(projector_list),
 			numpy_to_cint(basisnums), numpy_to_cint(selfnums),
 			numpy_to_cdouble(basiscoords), numpy_to_cdouble(selfcoords),
 			numpy_to_cint(N_R), numpy_to_cint(N_S),
+			#numpy_to_cint(M_R), numpy_to_cint(M_S),
 			#numpy_to_cint(M_R), numpy_to_cint(M_S), len(M_R), len(M_R), len(M_R));
 			#numpy_to_cint(N_RS_R), numpy_to_cint(N_RS_S), len(N_RS_R));
 			#numpy_to_cint(M_R), numpy_to_cint(M_S), len(M_R));
 			numpy_to_cint(N_RS_R), numpy_to_cint(N_RS_S), len(N_R), len(N_S), len(N_RS_R));
 
 	def single_band_projection(self, band_num, basis):
-		"""
-		Computes the overlap operator of a single band in self onto each of the
-		bands in a different wavefunction in the same lattice with the same
-		plane-wave basis.
-
-		Arguments:
-			band_num (int): The index (0-indexed) of the band to be projected onto
-				the bands in basis
-			basis (Wavefunction): A Wavefunction object, with the same lattice and
-				plane-wave basis (i.e. same energy cutoff and k-point mesh)
-				as self, onto which band band_num of self is projected.
-
-		Returns:
-			proj (np.array of np.float64): Projection of band band_num onto each
-				band of basis, sorted by kpoint and spin as follows:
-				projection(b,k,s) = proj[b*(nk*ns) + s*nk + k], where
-				b is the band index, k is the kpoint index, s is the spin index
-				nk is the number of kpoints, and ns is the number of spins
-		"""
-
-		res = self.projector.pseudoprojection(basis.pwf.wf_ptr, self.pwf.wf_ptr, band_num)
-		nband = self.projector.get_nband(basis.pwf.wf_ptr)
-		nwk = self.projector.get_nwk(basis.pwf.wf_ptr)
-		nspin = self.projector.get_nspin(basis.pwf.wf_ptr)
-		print("datsa", nband, nwk, nspin)
+		res = self.projector.pseudoprojection(c_void_p(basis.pwf.wf_ptr), c_void_p(self.pwf.wf_ptr), band_num)
+		nband = self.projector.get_nband(c_void_p(basis.pwf.wf_ptr))
+		nwk = self.projector.get_nwk(c_void_p(basis.pwf.wf_ptr))
+		nspin = self.projector.get_nspin(c_void_p(basis.pwf.wf_ptr))
 		res = cdouble_to_numpy(res, 2*nband*nwk*nspin)
+		print("datsa", nband, nwk, nspin)
+		sys.stdout.flush()
 		projector_list, selfnums, selfcoords, basisnums, basiscoords = self.projection_data
 		M_R, M_S, N_R, N_S, N_RS_R, N_RS_S = self.site_cat
 		
-		ct = self.projector.compensation_terms(band_num, self.pwf.wf_ptr, basis.pwf.wf_ptr, projector_list, 
+		ct = self.projector.compensation_terms(band_num, c_void_p(self.pwf.wf_ptr), c_void_p(basis.pwf.wf_ptr), c_void_p(projector_list), 
 			len(self.cr.pps), len(M_R), len(N_R), len(N_S), len(N_RS_R), numpy_to_cint(M_R), numpy_to_cint(M_S),
 			numpy_to_cint(N_R), numpy_to_cint(N_S), numpy_to_cint(N_RS_R), numpy_to_cint(N_RS_S),
 			numpy_to_cint(selfnums), numpy_to_cdouble(selfcoords),
 			numpy_to_cint(basisnums), numpy_to_cdouble(basiscoords),
 			numpy_to_cint(self.dim))
 		"""
-		ct = self.projector.compensation_terms(band_num, self.pwf.wf_ptr, basis.pwf.wf_ptr, projector_list, 
+		ct = self.projector.compensation_terms(band_num, c_void_p(self.pwf.wf_ptr), c_void_p(basis.pwf.wf_ptr), c_void_p(projector_list), 
 			len(self.cr.pps), 0, len(M_R), len(M_S), len(M_S), numpy_to_cint([]), numpy_to_cint([]),
 			numpy_to_cint(M_R), numpy_to_cint(M_S), numpy_to_cint(M_R), numpy_to_cint(M_S),
 			numpy_to_cint(selfnums), numpy_to_cdouble(selfcoords),
@@ -315,7 +283,7 @@ class Wavefunction:
 			numpy_to_cint(self.dim))
 		"""
 		ct = cdouble_to_numpy(ct, 2*nband*nwk*nspin)
-		occs = cdouble_to_numpy(self.projector.get_occs(basis.pwf.wf_ptr), nband*nwk*nspin)
+		occs = cdouble_to_numpy(self.projector.get_occs(c_void_p(basis.pwf.wf_ptr)), nband*nwk*nspin)
 		
 		c, v = 0, 0
 		for i in range(nband*nwk*nspin):
@@ -423,9 +391,9 @@ class Wavefunction:
 		pass
 
 	def free_all(self):
-		self.projector.free_pswf(self.pwf.wf_ptr)
+		self.projector.free_pswf(c_void_p(self.pwf.wf_ptr))
 		if self.projector_list != None:
-			self.projector.free_ppot_list(self.projector_list, len(self.cr.pps))
+			self.projector.free_ppot_list(c_void_p(self.projector_list), len(self.cr.pps))
 
 if __name__ == '__main__':
 	posb = Poscar.from_file("CONTCAR").structure
@@ -434,8 +402,8 @@ if __name__ == '__main__':
 	pwf1 = PseudoWavefunction("WAVECAR", "vasprun.xml")
 	pwf2 = PseudoWavefunction("WAVECAR", "vasprun.xml")
 
-	wf1 = Wavefunction(posb, pwf1, CoreRegion(pot), (30,30,30))
-	wf2 = Wavefunction(posd, pwf2, CoreRegion(pot), (30,30,30))
+	wf1 = Wavefunction(posb, pwf1, CoreRegion(pot), (120,120,120))
+	wf2 = Wavefunction(posd, pwf2, CoreRegion(pot), (120,120,120))
 	wf2.setup_projection(wf1)
 	for i in range(0,1):
 		wf2.single_band_projection(i, wf1)

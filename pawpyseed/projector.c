@@ -18,7 +18,8 @@
 
 ppot_t* get_projector_list(int num_els, int* labels, int* ls, double* proj_grids, double* wave_grids,
 	double* projectors, double* aewaves, double* pswaves, char** rmaxs) {
-	
+
+	setbuf(stdout,NULL);	
 	ppot_t* pps = (ppot_t*) malloc(num_els * sizeof(ppot_t));
 	CHECK_ALLOCATION(pps);
 	int wt = 0;
@@ -99,6 +100,8 @@ ppot_t* get_projector_list(int num_els, int* labels, int* ls, double* proj_grids
 		pps[i].funcs = funcs;
 		make_pwave_overlap_matrices(pps+i);
 	}
+	mkl_free_buffers();
+	printf("finished making projector list\n");
 	return pps;
 }
 
@@ -365,14 +368,20 @@ void make_pwave_overlap_matrices(ppot_t* pp_ptr) {
 void setup_projections(pswf_t* wf, ppot_t* pps, int num_elems,
 		int num_sites, int* fftg, int* labels, double* coords) {
 
+	printf("ptrvals %p %p\n", wf, pps);
+	wf->num_elems = num_elems;
+	wf->pps = pps;
+	printf("started setup_proj\n");
 	#pragma omp parallel for 
 	for (int p = 0; p < num_elems; p++) {
 		add_num_cart_gridpts(pps+p, wf->lattice, fftg);
 	}
 	int NUM_KPTS = wf->nwk * wf->nspin;
 	int NUM_BANDS = wf->nband;
+	printf("calculating projector_values\n");
 	real_proj_site_t* sites = projector_values(num_sites, labels, coords,
 		wf->lattice, wf->reclattice, pps, fftg);
+	printf("onto_projector calcs\n");
 	#pragma omp parallel for 
 	for (int w = 0; w < NUM_BANDS * NUM_KPTS; w++) {
 		kpoint_t* kpt = wf->kpts[w % NUM_KPTS];
@@ -484,11 +493,12 @@ void overlap_setup(pswf_t* wf_R, pswf_t* wf_S, ppot_t* pps,
 	//printf("%p %p %p %p\n", overlaps[0], overlaps[1], overlaps[2], overlaps[3]);
 	wf_S->overlaps = overlaps;
 	wf_S->num_aug_overlap_sites = num_N_RS;
-	free(dcoords);
+	wf_R->num_aug_overlap_sites = num_N_RS;
+	printf("finished overlap setup\n");
 }
 
 double* compensation_terms(int BAND_NUM, pswf_t* wf_proj, pswf_t* wf_ref, ppot_t* pps,
-	int num_elems, int num_M, int m, int num_N_S, int num_N_RS,
+	int num_elems, int num_M, int num_N_R, int num_N_S, int num_N_RS,
 	int* M_R, int* M_S, int* N_R, int* N_S, int* N_RS_R, int* N_RS_S,
 	int* proj_labels, double* proj_coords, int* ref_labels, double* ref_coords,
 	int* fft_grid) {
@@ -520,6 +530,7 @@ double* compensation_terms(int BAND_NUM, pswf_t* wf_proj, pswf_t* wf_ref, ppot_t
 
 	int l1 = 0, l2 = 0;
 	double inv_sqrt_vol = pow(determinant(wf_ref->lattice), -0.5);
+	int ni = 0, nj = 0;
 
 	#pragma omp parallel for
 	for (int w = 0; w < NUM_BANDS * NUM_KPTS; w++) {
@@ -544,10 +555,12 @@ double* compensation_terms(int BAND_NUM, pswf_t* wf_proj, pswf_t* wf_ref, ppot_t
 			for (int i = 0; i < pron.total_projs; i++) {
 				for (int j = 0; j < ppron.total_projs; j++) {
 					if (pron.ls[i] == ppron.ls[j]  && pron.ms[i] == ppron.ms[j]) {
+						nj = pron.ns[j];
+						ni = ppron.ns[i];
 						temp += conj(pron.overlaps[j])
-							//* (mymat[pron.num_projs*pron.ns[i]+ppron.ns[j]])
-							* (pp.aepw_overlap_matrix[pp.num_projs*i+j]
-							- pp.pspw_overlap_matrix[pp.num_projs*i+j])
+							//* (mymat[pron.num_projs*ni+nj])
+							* (pp.aepw_overlap_matrix[pp.num_projs*ni+nj]
+							- pp.pspw_overlap_matrix[pp.num_projs*ni+nj])
 							* ppron.overlaps[i];
 					}
 				}

@@ -3,6 +3,37 @@
 #include <complex.h>
 #include <math.h>
 
+typedef struct funcset {
+        int l;
+        double* proj;
+        double** proj_spline;
+        double* aewave;
+        double** aewave_spline;
+        double* pswave;
+        double** pswave_spline;
+        double* diffwave;
+        double** diffwave_spline;
+        double* kwave;
+        double** kwave_spline;
+} funcset_t;
+
+typedef struct ppot {
+        int num_projs;
+        int total_projs;
+        int lmax;
+        funcset_t* funcs;
+        double rmax;
+        double* pspw_overlap_matrix;
+        double* aepw_overlap_matrix;
+        double* diff_overlap_matrix;
+        int proj_gridsize;
+        int wave_gridsize;
+        int num_cart_gridpts;
+        double* wave_grid;
+        double* kwave_grid;
+        double* proj_grid;
+} ppot_t;
+
 typedef struct projection {
 	int num_projs; ///< number of radial projector functions
 	int total_projs; ///< number of projector functions
@@ -45,6 +76,8 @@ typedef struct kpoint {
 } kpoint_t;
 
 typedef struct pswf {
+	int num_elems;
+	ppot_t* pps;
 	int* G_bounds;
 	kpoint_t** kpts;
 	int nspin;
@@ -55,20 +88,6 @@ typedef struct pswf {
 	int num_aug_overlap_sites;
 	double complex** overlaps;
 } pswf_t;
-
-typedef struct funcset {
-	int l;
-	double* proj;
-	double** proj_spline;
-	double* aewave;
-	double** aewave_spline;
-	double* pswave;
-	double** pswave_spline;
-	double* diffwave;
-	double** diffwave_spline;
-	double* kwave;
-	double** kwave_spline;
-} funcset_t;
 
 typedef struct projgrid {
 	double complex* values;
@@ -93,23 +112,6 @@ typedef struct real_proj_site {
 	int* indices;
 	real_proj_t* projs;
 } real_proj_site_t;
-
-typedef struct ppot {
-	int num_projs;
-	int total_projs;
-	int lmax;
-	funcset_t* funcs;
-	double rmax;
-	double* pspw_overlap_matrix;
-	double* aepw_overlap_matrix;
-	double* diff_overlap_matrix;
-	int proj_gridsize;
-	int wave_gridsize;
-	int num_cart_gridpts;
-	double* wave_grid;
-	double* kwave_grid;
-	double* proj_grid;
-} ppot_t;
 
 /**
 Minimum of a and b
@@ -158,7 +160,7 @@ void min_cart_path(double* coord, double* center, double* lattice, double* path,
 
 double complex trilinear_interpolate(double complex* c, double* frac, int* fftg);
 
-void free_kpoint(kpoint_t* kpt);
+void free_kpoint(kpoint_t* kpt, int num_elems, ppot_t* pps);
 
 void free_ppot(ppot_t* pp);
 

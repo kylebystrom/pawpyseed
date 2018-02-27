@@ -1,6 +1,26 @@
 import numpy as np
 from ctypes import *
 
+import os
+
+MODULE_DIR = os.path.dirname(os.path.abspath(__file__))
+PAWC = CDLL(os.path.join(MODULE_DIR, "pawpy.so"))
+
+PAWC.read_wavefunctions.restype = POINTER(None)
+PAWC.get_projector_list.restype = POINTER(None)
+PAWC.read_wavefunctions.restype = POINTER(None)
+PAWC.overlap_setup.restype = None
+PAWC.pseudoprojection.restype = POINTER(c_double)
+PAWC.compensation_terms.restype = POINTER(c_double)
+PAWC.get_occs.restype = POINTER(c_double)
+PAWC.get_nband.restype = c_int
+PAWC.get_nwk.restype = c_int
+PAWC.get_nspin.restype = c_int
+
+PAWC.free_ptr.restype = None
+PAWC.free_ppot_list.restype = None
+PAWC.free_pswf.restype = None
+
 def cdouble_to_numpy(arr, length):
 	"""
 	Convert a pointer to length doubles

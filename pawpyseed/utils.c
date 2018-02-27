@@ -117,12 +117,21 @@ void cartesian_to_frac(double* coord, double* reclattice) {
 	coord[2] = temp[2] / 2 / PI;
 }
 
-void free_kpoint(kpoint_t* kpt) {
+void free_rayleigh_set_list(rayleigh_set_t* sets, int num_projs) {
+	for (int i = 0; i < num_projs; i++)
+		free(sets[i].terms);
+	free(sets);
+}
+
+void free_kpoint(kpoint_t* kpt, int num_elems, ppot_t* pps) {
 	for (int b = 0; b < kpt->num_bands; b++) {
 		band_t* curr_band = kpt->bands[b];
 		free(curr_band->Cs);
 		free(curr_band);
 	}
+	for (int i = 0; i < num_elems; i++)
+		free_rayleigh_set_list(kpt->expansion[i], pps[i].num_projs);
+	free(kpt->expansion);
 	free(kpt->Gs);
 	free(kpt->bands);
 	free(kpt->k);
@@ -164,10 +173,12 @@ void free_real_proj(real_proj_t* proj) {
 
 void free_pswf(pswf_t* wf) {
 	for (int i = 0; i < wf->nwk * wf->nspin; i++)
-		free_kpoint(wf->kpts[i]);
-	for (int i = 0; i < wf->num_aug_overlap_sites; i++)
-		free(wf->overlaps[i]);
-	free(wf->overlaps);
+		free_kpoint(wf->kpts[i], wf->num_elems, wf->pps);
+	if (wf->overlaps != NULL) {
+		for (int i = 0; i < wf->num_aug_overlap_sites; i++)
+			free(wf->overlaps[i]);
+		free(wf->overlaps);
+	}
 	free(wf->kpts);
 	free(wf->G_bounds);
 	free(wf->lattice);

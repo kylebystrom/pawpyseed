@@ -31,6 +31,9 @@ sbt_descriptor_t* spherical_bessel_transform_setup(double encut, double enbuf, i
 	double* ks = (double*) malloc(N * sizeof(double));
 	double* rs = (double*) malloc(N * sizeof(double));
 	double complex** mult_table = (double complex**) malloc((lmax+1) * sizeof(double complex*));
+	CHECK_ALLOCATION(ks);
+	CHECK_ALLOCATION(rs);
+	CHECK_ALLOCATION(mult_table);
 	double drho = log(r[1] / r[0]);
 	double rhomin = log(r[0]);
 	double dt = 2 * PI / N / drho;
@@ -49,6 +52,8 @@ sbt_descriptor_t* spherical_bessel_transform_setup(double encut, double enbuf, i
 	mult_table[1] = (double complex*) calloc(N, sizeof(double complex));
 	for (int i = 2; i <= lmax; i++)
 		mult_table[i] = (double complex*) calloc(N, sizeof(double complex));
+	for (int i = 0; i <= lmax; i++)
+		CHECK_ALLOCATION(mult_table[i]);
 	double t=0.0, rad=0.0, phi=0.0, phi1=0.0, phi2=0.0, phi3=0.0;
 	for (int i = 0; i < N; i++) {
 		t = i * dt;
@@ -99,6 +104,7 @@ double* wave_spherical_bessel_transform(sbt_descriptor_t* d, double* f, int l) {
 	double* ks = d->ks;
 	double* r = d->rs;
 	double* fs = (double*) malloc(N*sizeof(double));
+	CHECK_ALLOCATION(fs);
 	double C = f[0] / pow(r[N/2], l+1);
 	for (int i = 0; i < N/2; i++) {
 		fs[i] = C * pow(r[i], l+1);
@@ -145,5 +151,8 @@ double* wave_spherical_bessel_transform(sbt_descriptor_t* d, double* f, int l) {
 		vals[p] = x[p].real;
 		vals[p] *= 2 / pow(ks[p], 1.5);
 	}
+
+	mkl_free(x);
+	free(fs);
 	return vals;
 }

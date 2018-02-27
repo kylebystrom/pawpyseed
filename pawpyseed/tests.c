@@ -21,7 +21,7 @@ double Ylmi(int l, int m, double theta, double phi) { return cimag(Ylm(l, m, the
 double* real_wave_spherical_bessel_transform(sbt_descriptor_t* d,
         double* r, double* f, double* ks, int l) {
 
-	double* vals = wave_spherical_bessel_transform(d, r, f, ks, l);
+	double* vals = wave_spherical_bessel_transform(d, f, l);
 	return vals;
 }
 

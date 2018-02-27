@@ -117,15 +117,21 @@ void cartesian_to_frac(double* coord, double* reclattice) {
 	coord[2] = temp[2] / 2 / PI;
 }
 
-void free_kpoint(kpoint_t* kpt) {
+void free_rayleigh_set_list(rayleigh_set_t* sets, int num_projs) {
+	for (int i = 0; i < num_projs; i++)
+		free(sets[i].terms);
+	free(sets);
+}
+
+void free_kpoint(kpoint_t* kpt, int num_elems, ppot_t* pps) {
 	for (int b = 0; b < kpt->num_bands; b++) {
 		band_t* curr_band = kpt->bands[b];
 		free(curr_band->Cs);
-		//free(curr_band->Gs);
-		//free(curr_band->C_grid);
 		free(curr_band);
 	}
-	//printf("ya");
+	for (int i = 0; i < num_elems; i++)
+		free_rayleigh_set_list(kpt->expansion[i], pps[i].num_projs);
+	free(kpt->expansion);
 	free(kpt->Gs);
 	free(kpt->bands);
 	free(kpt->k);
@@ -137,22 +143,42 @@ void free_ppot(ppot_t* pp) {
 		free(pp->funcs[i].proj);
 		free(pp->funcs[i].pswave);
 		free(pp->funcs[i].aewave);
+		free(pp->funcs[i].diffwave);
+		free(pp->funcs[i].kwave);
+		for (int j = 0; j < 3; j++) {
+			free(pp->funcs[i].proj_spline[j]);
+			free(pp->funcs[i].aewave_spline[j]);
+			free(pp->funcs[i].pswave_spline[j]);
+			free(pp->funcs[i].diffwave_spline[j]);
+			free(pp->funcs[i].kwave_spline[j]);
+		}
+		free(pp->funcs[i].proj_spline);
+		free(pp->funcs[i].aewave_spline);
+		free(pp->funcs[i].pswave_spline);
+		free(pp->funcs[i].diffwave_spline);
+		free(pp->funcs[i].kwave_spline);
 	}
 	free(pp->funcs);
 	free(pp->wave_grid);
 	free(pp->proj_grid);
-	if (pp->pspw_overlap_matrix != NULL) free(pp->pspw_overlap_matrix);
-	if (pp->aepw_overlap_matrix != NULL) free(pp->aepw_overlap_matrix);
-	if (pp->diff_overlap_matrix != NULL) free(pp->diff_overlap_matrix);
+	free(pp->pspw_overlap_matrix);
+	free(pp->aepw_overlap_matrix);
+	free(pp->diff_overlap_matrix);
 }
 
 void free_real_proj(real_proj_t* proj) {
+	free(proj->paths);
 	free(proj->values);
 }
 
 void free_pswf(pswf_t* wf) {
 	for (int i = 0; i < wf->nwk * wf->nspin; i++)
-		free_kpoint(wf->kpts[i]);
+		free_kpoint(wf->kpts[i], wf->num_elems, wf->pps);
+	if (wf->overlaps != NULL) {
+		for (int i = 0; i < wf->num_aug_overlap_sites; i++)
+			free(wf->overlaps[i]);
+		free(wf->overlaps);
+	}
 	free(wf->kpts);
 	free(wf->G_bounds);
 	free(wf->lattice);
@@ -166,6 +192,7 @@ void free_real_proj_site(real_proj_site_t* site) {
 	}
 	free(site->projs);
 	free(site->indices);
+	free(site->coord);
 }
 
 void free_ptr(void* ptr) {
@@ -196,6 +223,7 @@ int min(int a, int b) {
 double* get_occs(pswf_t* wf) {
 	kpoint_t** kpts = wf->kpts;
 	double* occs = (double*) malloc(wf->nwk*wf->nband*wf->nspin*sizeof(double));
+	CHECK_ALLOCATION(occs);
 	int NUM_KPTS = wf->nwk * wf->nspin;
 	for (int kpt_num = 0; kpt_num < NUM_KPTS; kpt_num++) {
 		for (int band_num = 0; band_num < wf->nband; band_num++) {
@@ -316,9 +344,13 @@ double complex onto_partial_wave(double* pvec, double* reclattice, double comple
 //adapted from VASP source code
 double** spline_coeff(double* x, double* y, int N) {
 	double** coeff = (double**) malloc(3 * sizeof(double*));
+	CHECK_ALLOCATION(coeff);
 	coeff[0] = (double*) malloc(N * sizeof(double));
 	coeff[1] = (double*) malloc(N * sizeof(double));
 	coeff[2] = (double*) malloc(N * sizeof(double));
+	CHECK_ALLOCATION(coeff[0]);
+	CHECK_ALLOCATION(coeff[1]);
+	CHECK_ALLOCATION(coeff[2]);
 
 	printf("pl %d\n", N);
 	double d1p1 = (y[1] - y[0]) / (x[1] - x[0]);
@@ -411,7 +443,6 @@ double complex rayexp(double* kpt, int* Gs, float complex* Cs, int l, int m,
 		phase = cexp(2*PI*I*dot(ionp, pvec));
 		result += phase * Cs[w] * sum_terms[(2*l+1)*w+l+m];
 	}
-	printf ("ISSUE? %lf %lf\n", creal(cpow(I,l)), cimag(cpow(I,l)));
 	return result * 4 * PI * cpow(I, l);
 }
 
@@ -422,6 +453,7 @@ double complex* rayexp_terms(double* kpt, int* Gs, int num_waves,
 	double complex ylmdir = 0;
 	double k = 0;
 	double complex* terms = (double complex*) malloc((2*l+1) * num_waves * sizeof(double complex));
+	CHECK_ALLOCATION(terms);
 
 	double overlap = 0;
 	double pvec[3] = {0,0,0};
@@ -447,12 +479,15 @@ double complex* rayexp_terms(double* kpt, int* Gs, int num_waves,
 }
 
 void generate_rayleigh_expansion_terms(pswf_t* wf, ppot_t* pps, int num_elems) {
+	#pragma omp parallel for
 	for (int k_num = 0; k_num < wf->nwk * wf->nspin; k_num++) {
 		kpoint_t* kpt = wf->kpts[k_num];
 		kpt->expansion = (rayleigh_set_t**) malloc(num_elems * sizeof(rayleigh_set_t*));
+		CHECK_ALLOCATION(kpt->expansion);
 		for (int i = 0; i < num_elems; i++) {
 			ppot_t pp = pps[i];
 			kpt->expansion[i] = (rayleigh_set_t*) malloc(pp.num_projs * sizeof(rayleigh_set_t));
+			CHECK_ALLOCATION(kpt->expansion[i]);
 			for (int j = 0; j < pp.num_projs; j++) {
 				double complex* terms = rayexp_terms(kpt->k, kpt->Gs, kpt->num_waves,
 					pp.funcs[j].l, pp.wave_gridsize, pp.kwave_grid,
@@ -461,6 +496,12 @@ void generate_rayleigh_expansion_terms(pswf_t* wf, ppot_t* pps, int num_elems) {
 				kpt->expansion[i][j].l = pp.funcs[j].l;
 			}
 		}
+	}
+}
+
+void CHECK_ALLOCATION(void* ptr) {
+	if (ptr == NULL) {
+		ALLOCATION_FAILED();
 	}
 }
 

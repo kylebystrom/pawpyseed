@@ -181,7 +181,7 @@ real_proj_site_t* projector_values(int num_sites, int* labels, double* coords,
 							sites[p].projs[n].values[sites[p].num_indices] = proj_value(pps[labels[p]].funcs[sites[p].projs[n].func_num],
 								pps[labels[p]].proj_grid,
 								sites[p].projs[n].m, sites[p].rmax, coords+3*p, frac, lattice);
-						if (p == 0) printf("coordandval %lf %lf %lf %d %d\n", r, creal(sites[p].projs[n].values[sites[p].num_indices])*pow(vol,0.5), cimag(sites[p].projs[n].values[sites[p].num_indices])*pow(vol, 0.5), sites[p].num_indices,n);
+						//if (p == 0) printf("coordandval %lf %lf %lf %d %d\n", r, creal(sites[p].projs[n].values[sites[p].num_indices])*pow(vol,0.5), cimag(sites[p].projs[n].values[sites[p].num_indices])*pow(vol, 0.5), sites[p].num_indices,n);
 						}
 						sites[p].num_indices++;
 					}
@@ -400,9 +400,11 @@ void overlap_setup(pswf_t* wf_R, pswf_t* wf_S, ppot_t* pps,
 	double complex** overlaps = (double complex**) malloc(num_N_RS * sizeof(double complex*));
 	CHECK_ALLOCATION(overlaps);
 
+	printf("STARTING OVERLAP_SETUP\n");
 	int NUM_KPTS = wf_R->nwk * wf_R->nspin;
 	int NUM_BANDS = wf_R->nband;
 	double inv_sqrt_vol = pow(determinant(wf_R->lattice), -0.5);
+	#pragma omp parallel for
 	for (int w = 0; w < NUM_BANDS * NUM_KPTS; w++) {
 		projection_t* wps = (projection_t*) malloc(num_N_R * sizeof(projection_t));
 		CHECK_ALLOCATION(wps);
@@ -425,7 +427,8 @@ void overlap_setup(pswf_t* wf_R, pswf_t* wf_S, ppot_t* pps,
 		}
 		wf_S->kpts[w%NUM_KPTS]->bands[w/NUM_KPTS]->wave_projections = wps;
 	}
-
+	printf("ONE THIRD DONE\n");
+	#pragma omp parallel for
 	for (int w = 0; w < NUM_BANDS * NUM_KPTS; w++) {
 		projection_t* wps = (projection_t*) malloc(num_N_S * sizeof(projection_t));
 		for (int n = 0; n < num_N_S; n++) {
@@ -446,14 +449,17 @@ void overlap_setup(pswf_t* wf_R, pswf_t* wf_S, ppot_t* pps,
 		}
 		wf_R->kpts[w%NUM_KPTS]->bands[w/NUM_KPTS]->wave_projections = wps;
 	}
-
-	int l1, l2;
+	printf("TWO THIRDS DONE\n");
+	
 	double* dcoords = malloc(3 * num_N_RS * sizeof(double));
 	CHECK_ALLOCATION(dcoords);
-	double R = 0;
+	#pragma omp parallel for
 	for (int i = 0; i < num_N_RS; i++) {
+		double R = 0;
+		int l1, l2;
 		int s1 = N_RS_R[i];
 		int s2 = N_RS_S[i];
+		printf("%d %d\n", N_RS_R[i], N_RS_S[i]);
 		ppot_t pp1 = pps[labels_R[s1]];
 		ppot_t pp2 = pps[labels_S[s2]];
 		// CALCULATE THE DIFF COORD HERE, PASS TO offsite_wave_overlap AND SAVE IT FOR USE IN compensation_terms
@@ -482,6 +488,7 @@ void overlap_setup(pswf_t* wf_R, pswf_t* wf_S, ppot_t* pps,
 						} else if (l1 == l2 && m1 == m2) {
 							overlaps[i][tj*pp2.total_projs+tk] = pp2.diff_overlap_matrix[j*pp2.num_projs+k];
 						}
+						//printf("%d %d %d %d\n", N_RS_R[i], N_RS_S[i], tj, tk);
 						tk++;
 					}
 				}
@@ -527,17 +534,16 @@ double* compensation_terms(int BAND_NUM, pswf_t* wf_proj, pswf_t* wf_ref, ppot_t
 	//	printf("test mymat %lf %lf\n", mymat[i], pps[0].aepw_overlap_matrix[i]-pps[0].pspw_overlap_matrix[i]);
 
 	double complex** N_RS_overlaps = wf_proj->overlaps;
-
-	int l1 = 0, l2 = 0;
 	double inv_sqrt_vol = pow(determinant(wf_ref->lattice), -0.5);
-	int ni = 0, nj = 0;
 
 	#pragma omp parallel for
 	for (int w = 0; w < NUM_BANDS * NUM_KPTS; w++) {
+		int ni = 0, nj = 0;
+		int l1 = 0, l2 = 0;
 		projection_t pro = wf_ref->kpts[w%NUM_KPTS]->bands[w/NUM_KPTS]->projections[0];
 		projection_t ppro = wf_proj->kpts[w%NUM_KPTS]->bands[BAND_NUM]->projections[0];
-                printf("CHECKVAL1 %lf %lf %lf %lf\n", creal(pro.overlaps[0]), cimag(pro.overlaps[0]),
-                        creal(ppro.overlaps[0]), cimag(ppro.overlaps[0]));
+                //printf("CHECKVAL1 %lf %lf %lf %lf\n", creal(pro.overlaps[0]), cimag(pro.overlaps[0]),
+                //        creal(ppro.overlaps[0]), cimag(ppro.overlaps[0]));
 		double complex temp = 0 + 0 * I;
 		int t = 0;
 		for (int s = 0; s < num_M; s++) {

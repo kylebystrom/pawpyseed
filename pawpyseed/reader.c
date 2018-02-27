@@ -234,6 +234,8 @@ pswf_t* read_wavefunctions(char* filename, double* kpt_weights) {
 	free(kptr);
 	free(cptr);
 
+	wf->overlaps = NULL;
+
 	return wf;
 }
 

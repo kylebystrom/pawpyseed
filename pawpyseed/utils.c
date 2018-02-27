@@ -443,7 +443,6 @@ double complex rayexp(double* kpt, int* Gs, float complex* Cs, int l, int m,
 		phase = cexp(2*PI*I*dot(ionp, pvec));
 		result += phase * Cs[w] * sum_terms[(2*l+1)*w+l+m];
 	}
-	printf ("ISSUE? %lf %lf\n", creal(cpow(I,l)), cimag(cpow(I,l)));
 	return result * 4 * PI * cpow(I, l);
 }
 

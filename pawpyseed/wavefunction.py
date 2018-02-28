@@ -21,8 +21,29 @@ class Pseudopotential:
 	Contains important attributes from a VASP pseudopotential files. POTCAR
 	"settings" can be read from the pymatgen POTCAR object
 
+	Note: for the following attributes, 'index' refers to an energy
+	quantum number epsilon and angular momentum quantum number l,
+	which define one set consisting of a projector function, all electron
+	partial waves, and pseudo partial waves.
+
 	Attributes:
-		rmaxstr: Maximum radius of the projection operators
+		rmaxstr (str): Maximum radius of the projection operators, as string
+			of double precision float
+		grid (np.array): radial grid on which partial waves are defined
+		aepotential (np.array): All electron potential defined radially on grid
+		aecorecharge (np.array): All electron core charge defined radially
+			on grid (i.e. charge due to core, and not valence, electrons)
+		kinetic (np.array): Core kinetic energy density, defined raidally on grid
+		pspotential (np.array): pseudopotential defined on grid
+		pscorecharge (np.array): pseudo core charge defined on grid
+		ls (list): l quantum number for each index
+		pswaves (list of np.array): pseudo partial waves for each index
+		aewaves (list of np.array): all electron partial waves for each index
+		projgrid (np.array): radial grid on which projector functions are defined
+		recipprojs (list of np.array): reciprocal space projection operators
+			for each index
+		realprojs (list of np.array): real space projection operators
+			for each index
 	"""
 
 	def __init__(self, data, rmax):
@@ -103,6 +124,10 @@ class Pseudopotential:
 class CoreRegion:
 	"""
 	List of Pseudopotential objects to describe the core region of a structure.
+
+	Attributes:
+		pps (dict of Pseudopotential): keys are element symbols,
+			values are Pseudopotential objects
 	"""
 
 	def __init__(self, potcar):
@@ -116,6 +141,12 @@ class PseudoWavefunction:
 	Class for storing pseudowavefunction from WAVECAR file. Most important attribute
 	is wf_ptr, a C pointer used in the C portion of the program for storing
 	plane wave coefficients
+
+	Attributes:
+		kpts (np.array): nx3 array of fractional kpoint vectors,
+			where n is the number of kpoints
+		kws (np.array): weight of each kpoint
+		wf_ptr (ctypes POINTER): c pointer to pswf_t object
 	"""
 
 	def __init__(self, filename="WAVECAR", vr="vasprun.xml"):
@@ -130,6 +161,16 @@ class PseudoWavefunction:
 		self.wf_ptr = PAWC.read_wavefunctions(filename.encode('utf-8'), byref(kws))
 
 	def pseudoprojection(self, band_num, basis):
+		"""
+		Computes <psibt_n1k|psit_n2k> for all n1 and k
+		and a given n2, where psibt are basis structures
+		pseudowavefunctions and psit are self pseudowavefunctions
+
+		Arguments:
+			band_num (int): n2 (see description)
+			basis (Pseudowavefunction): pseudowavefunctions onto whose bands
+				the band of self is projected
+		"""
 		res = (c_double * len(weights))()
 		return PAWC.vc_pseudoprojection(c_void_p(basis.wf_ptr), c_void_p(self.wf_ptr), band_num, res)
 		return cdouble_to_numpy(res)
@@ -221,14 +262,17 @@ class Wavefunction:
 					N_RS.append((i,j))
 		return M_R, M_S, N_R, N_S, N_RS
 
-
-	def full_projection(self, basis):
-		#self.make_site_lists(basis)
-		res = (c_double * 2)()
-		#self.projector.full_pseudoprojection(basis, self.pwf, res)
-		return np.array((res[0], res[1]))
-
 	def setup_projection(self, basis):
+		"""
+		Evaluates projectors <p_i|psi>, as well
+		as <(phi-phit)|psi> and <(phi_i-phit_i)|(phi_j-phit_j)>,
+		when needed
+
+		Arguments:
+			basis (Wavefunction): wavefunction onto which bands of self
+			will be projected.
+		"""
+
 		projector_list, selfnums, selfcoords, basisnums, basiscoords = self.make_c_projectors(basis)
 		print(selfnums, selfcoords, basisnums, basiscoords)
 		print(hex(projector_list), hex(self.pwf.wf_ptr))
@@ -256,6 +300,23 @@ class Wavefunction:
                         #numpy_to_cint(M_R), numpy_to_cint(M_S), len(M_R), len(M_R), len(M_R));
 
 	def single_band_projection(self, band_num, basis):
+		"""
+		All electron projection of the band_num band of self
+		onto all the bands of basis. Returned as a numpy array,
+		with the overlap operator matrix elements ordered as follows:
+		loop over band
+			loop over spin
+				loop over kpoint
+
+		Arguments:
+			band_num (int): band which is projected onto basis
+			basis (Wavefunction): basis Wavefunction object
+
+		Returns:
+			res (np.array): overlap operator expectation values
+				as described above
+		"""
+
 		res = self.projector.pseudoprojection(c_void_p(basis.pwf.wf_ptr), c_void_p(self.pwf.wf_ptr), band_num)
 		nband = self.projector.get_nband(c_void_p(basis.pwf.wf_ptr))
 		nwk = self.projector.get_nwk(c_void_p(basis.pwf.wf_ptr))
@@ -281,29 +342,8 @@ class Wavefunction:
 			numpy_to_cint(self.dim))
 		"""
 		ct = cdouble_to_numpy(ct, 2*nband*nwk*nspin)
-		occs = cdouble_to_numpy(self.projector.get_occs(c_void_p(basis.pwf.wf_ptr)), nband*nwk*nspin)
-		
-		c, v = 0, 0
-		for i in range(nband*nwk*nspin):
-			temp = (ct[2*i] + res[2*i]) + 1j * (ct[2*i+1] + res[2*i+1])
-			#temp = (ct[2*i]) + 1j * (ct[2*i+1])
-			if occs[i] > 0.5:
-				v += np.absolute(temp) ** 2 * self.pwf.kws[i%nwk] / nspin
-			else:
-				c += np.absolute(temp) ** 2 * self.pwf.kws[i%nwk] / nspin
-		#print (res.shape, res)
-		#print (ct.shape, ct)
-		print ('c, v', c, v)
-		self.projector_list = projector_list
-		check = res + ct
-		fin = np.zeros(nband*nwk*nspin)
-		for i in range(nband*nwk*nspin):
-			fin[i] = (check[2*i]**2 +check[2*i+1]**2)
-		print(res.tolist())
-		print(ct.tolist())
-		print (check.tolist())
-		print (fin.tolist())
-		#print (self.pwf.kpts)
+		res += ct
+		return res[::2] + 1j * res[1::2]
 
 	def make_c_projectors(self, basis=None):
 		"""
@@ -385,8 +425,67 @@ class Wavefunction:
 			return projector_list, selfnums, selfcoords, basisnums, basiscoords
 		return projector_list, selfnums, selfcoords
 
-	def proportion_conduction(self, band_num, bulk):
-		pass
+	def proportion_conduction(self, band_num, bulk, psuedo = False):
+		"""
+		Calculates the proportion of band band_num in self
+		that projects onto the valence states and conduction
+		states of bulk. Designed for analysis of point defect
+		wavefunctions.
+
+		Arguments:
+			band_num (int): number of defect band in self
+			bulk (Wavefunction): wavefunction of bulk crystal
+				with the same lattice and basis set as self
+
+		Returns:
+			v, c (int, int): The valence (v) and conduction (c)
+				proportion of band band_num
+		"""
+
+		nband = self.projector.get_nband(c_void_p(basis.pwf.wf_ptr))
+		nwk = self.projector.get_nwk(c_void_p(basis.pwf.wf_ptr))
+		nspin = self.projector.get_nspin(c_void_p(basis.pwf.wf_ptr))
+		occs = cdouble_to_numpy(self.projector.get_occs(c_void_p(bulk.pwf.wf_ptr)), nband*nwk*nspin)
+		if pseudo:
+			res = self.pwf.pseudoprojection(band_num, bulk.pwf)
+		else:
+			res = self.single_band_projection(band_num, bulk)
+
+		c, v = 0, 0
+		for i in range(res.shape[0]):
+			if occs[i] > 0.5:
+				v += np.absolute(res[i]) ** 2 * self.pwf.kws[i%nwk] / nspin
+			else:
+				c += np.absolute(res[i]) ** 2 * self.pwf.kws[i%nwk] / nspin
+		if pseudo:
+			v /= v+c
+			c /= v+c
+		return v, c
+
+	def defect_band_analysis(self, bulk, bound = 0.03):
+		"""
+		Identifies a set of 'interesting' bands in a defect structure
+		to analyze by choosing any band that is more than bound conduction
+		and more than bound valence in the pseudoprojection scheme,
+		and then fully analyzing these bands using single_band_projection
+		"""
+		nband = self.projector.get_nband(c_void_p(basis.pwf.wf_ptr))
+		nwk = self.projector.get_nwk(c_void_p(basis.pwf.wf_ptr))
+		nspin = self.projector.get_nspin(c_void_p(basis.pwf.wf_ptr))
+		totst = set()
+
+		for b in range(nband):
+			v, c = self.proportion_conduction(b, bulk, pseudo = True)
+			if v > bound and c > bound:
+				totest.add(b)
+				totest.add(b-1)
+				totest.add(b+1)
+
+		results = {}
+		for b in totest:
+			results[b] = self.proportion_conduction(b, bulk, pseudo = False)
+
+		return results
 
 	def free_all(self):
 		"""

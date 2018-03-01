@@ -555,8 +555,8 @@ double* compensation_terms(int BAND_NUM, pswf_t* wf_proj, pswf_t* wf_ref, ppot_t
 			projection_t* tmpp = tmpb->projections;
 			projection_t pron = tmpp[s1];
 			projection_t ppron = wf_proj->kpts[w%NUM_KPTS]->bands[BAND_NUM]->projections[s2];
-			printf("CHECKVAL1 %lf %lf %lf %lf\n", creal(pron.overlaps[0]), cimag(pron.overlaps[0]),
-                                creal(ppron.overlaps[0]), cimag(ppron.overlaps[0]));
+			//printf("CHECKVAL1 %lf %lf %lf %lf\n", creal(pron.overlaps[0]), cimag(pron.overlaps[0]),
+            //                    creal(ppron.overlaps[0]), cimag(ppron.overlaps[0]));
 
 			for (int i = 0; i < pron.total_projs; i++) {
 				for (int j = 0; j < ppron.total_projs; j++) {
@@ -574,7 +574,7 @@ double* compensation_terms(int BAND_NUM, pswf_t* wf_proj, pswf_t* wf_ref, ppot_t
 		}
 		overlap[2*w] = creal(temp);
 		overlap[2*w+1]= cimag(temp);
-		printf("temp 1 %lf %lf\n", creal(temp), cimag(temp));
+		//printf("temp 1 %lf %lf\n", creal(temp), cimag(temp));
 
 		temp = 0 + 0 * I;
 		for (int s = 0; s < num_N_R; s++) {
@@ -588,7 +588,7 @@ double* compensation_terms(int BAND_NUM, pswf_t* wf_proj, pswf_t* wf_ref, ppot_t
 		}
 		overlap[2*w] += creal(temp);
 		overlap[2*w+1]+= cimag(temp);
-		printf("temp 2 %lf %lf\n", creal(temp), cimag(temp));
+		//printf("temp 2 %lf %lf\n", creal(temp), cimag(temp));
 
 		temp = 0 + 0 * I;
 		for (int s = 0; s < num_N_S; s++) {
@@ -602,7 +602,7 @@ double* compensation_terms(int BAND_NUM, pswf_t* wf_proj, pswf_t* wf_ref, ppot_t
 		}
 		overlap[2*w] += creal(temp);
 		overlap[2*w+1]+= cimag(temp);
-		printf("temp 3 %lf %lf\n", creal(temp), cimag(temp));
+		//printf("temp 3 %lf %lf\n", creal(temp), cimag(temp));
 
 		temp = 0 + 0 * I;
 		for (int s = 0; s < num_N_RS; s++) {
@@ -627,7 +627,7 @@ double* compensation_terms(int BAND_NUM, pswf_t* wf_proj, pswf_t* wf_ref, ppot_t
 		}
 		overlap[2*w] += creal(temp);
 		overlap[2*w+1]+= cimag(temp);
-		printf("temp 4 %lf %lf\n", creal(temp), cimag(temp));
+		//printf("temp 4 %lf %lf\n", creal(temp), cimag(temp));
 	}
 
 	mkl_free_buffers();

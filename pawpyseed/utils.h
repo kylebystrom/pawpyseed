@@ -110,6 +110,7 @@ typedef struct pswf {
 	double* lattice;
 	double* reclattice;
 	int num_aug_overlap_sites;
+	double* dcoords;
 	double complex** overlaps;
 } pswf_t;
 

@@ -160,7 +160,7 @@ class PseudoWavefunction:
 		self.kpts = vr.actual_kpoints
 		self.wf_ptr = PAWC.read_wavefunctions(filename.encode('utf-8'), byref(kws))
 
-	def pseudoprojection(self, band_num, basis):
+	def pseudoprojection(self, band_num, basis, spin = -1):
 		"""
 		Computes <psibt_n1k|psit_n2k> for all n1 and k
 		and a given n2, where psibt are basis structures
@@ -175,7 +175,7 @@ class PseudoWavefunction:
 		nwk = PAWC.get_nwk(c_void_p(self.wf_ptr))
 		nspin = PAWC.get_nspin(c_void_p(self.wf_ptr))
 
-		res = PAWC.pseudoprojection(c_void_p(basis.wf_ptr), c_void_p(self.wf_ptr), band_num)
+		res = PAWC.pseudoprojection(c_void_p(basis.wf_ptr), c_void_p(self.wf_ptr), band_num, spin)
 		return cdouble_to_numpy(res, 2*nband*nwk*nspin)
 
 class Wavefunction:
@@ -302,7 +302,7 @@ class Wavefunction:
 			#numpy_to_cint(M_R), numpy_to_cint(M_S),
                         #numpy_to_cint(M_R), numpy_to_cint(M_S), len(M_R), len(M_R), len(M_R));
 
-	def single_band_projection(self, band_num, basis):
+	def single_band_projection(self, band_num, basis, spin=0):
 		"""
 		All electron projection of the band_num band of self
 		onto all the bands of basis. Returned as a numpy array,
@@ -428,7 +428,7 @@ class Wavefunction:
 			return projector_list, selfnums, selfcoords, basisnums, basiscoords
 		return projector_list, selfnums, selfcoords
 
-	def proportion_conduction(self, band_num, bulk, pseudo = False):
+	def proportion_conduction(self, band_num, bulk, pseudo = False, spinpol = False):
 		"""
 		Calculates the proportion of band band_num in self
 		that projects onto the valence states and conduction
@@ -449,23 +449,35 @@ class Wavefunction:
 		nwk = self.projector.get_nwk(c_void_p(bulk.pwf.wf_ptr))
 		nspin = self.projector.get_nspin(c_void_p(bulk.pwf.wf_ptr))
 		occs = cdouble_to_numpy(self.projector.get_occs(c_void_p(bulk.pwf.wf_ptr)), nband*nwk*nspin)
-		if pseudo:
-			res = self.pwf.pseudoprojection(band_num, bulk.pwf)
-		else:
-			res = self.single_band_projection(band_num, bulk)
 
-		c, v = 0, 0
-		for i in range(nband*nwk*nspin):
-			if occs[i] > 0.5:
-				v += np.absolute(res[i]) ** 2 * self.pwf.kws[i%nwk] / nspin
-			else:
-				c += np.absolute(res[i]) ** 2 * self.pwf.kws[i%nwk] / nspin
+		if pseudo:
+			res = self.pwf.pseudoprojection(band_num, bulk.pwf, spin)
+		else:
+			res = self.single_band_projection(band_num, bulk, spin)
+
+		if spinpol:
+			c, v = np.zeros(nspin), np.zeros(nspin)
+			for b in range(nband):
+				for s in range(nspin):
+					for k in range(nwk):
+						i = b*nspin*nwk + s*nwk + k
+						if occs[i] > 0.5:
+							v += np.absolute(res[i]) ** 2 * self.pwf.kws[i%nwk] / nspin
+						else:
+							c += np.absolute(res[i]) ** 2 * self.pwf.kws[i%nwk] / nspin
+		else:
+			c, v = 0, 0
+			for i in range(nband*nwk*nspin):
+				if occs[i] > 0.5:
+					v += np.absolute(res[i]) ** 2 * self.pwf.kws[i%nwk] / nspin
+				else:
+					c += np.absolute(res[i]) ** 2 * self.pwf.kws[i%nwk] / nspin
 		if pseudo:
 			v /= v+c
 			c /= v+c
 		return v, c
 
-	def defect_band_analysis(self, bulk, bound = 0.05):
+	def defect_band_analysis(self, bulk, bound = 0.05, spinpol = False):
 		"""
 		Identifies a set of 'interesting' bands in a defect structure
 		to analyze by choosing any band that is more than bound conduction
@@ -479,7 +491,8 @@ class Wavefunction:
 
 		for b in range(nband):
 			v, c = self.proportion_conduction(b, bulk, pseudo = True)
-			if v > bound and c > bound:
+			if spinpol and np.mean(v) > bound and np.mean(c) > bound
+			elif v > bound and c > bound:
 				totest.add(b)
 				totest.add(b-1)
 				totest.add(b+1)
@@ -510,7 +523,7 @@ if __name__ == '__main__':
 	wf1 = Wavefunction(posb, pwf1, CoreRegion(pot), (120,120,120))
 	wf2 = Wavefunction(posd, pwf2, CoreRegion(pot), (120,120,120))
 	wf2.setup_projection(wf1)
-	print(wf2.defect_band_analysis(wf1))
+	print(wf2.defect_band_analysis(wf1), spinpol = True)
 	#for i in range(253,254):
 	#	wf2.single_band_projection(i, wf1)
 

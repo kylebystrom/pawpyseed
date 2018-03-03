@@ -293,6 +293,8 @@ waves, in reciprocal space.
 */
 void generate_rayleigh_expansion_terms(pswf_t* wf, ppot_t* pps, int num_elems);
 
+void copy_rayleigh_expansion_terms(pswf_t* wf, ppopt_t* pps, int num_elems, pswf_t* wf_R);
+
 /**
 Called after a malloc or calloc call to check that
 the allocation was successful.

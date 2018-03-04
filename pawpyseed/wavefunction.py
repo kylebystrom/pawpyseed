@@ -280,12 +280,14 @@ class Wavefunction:
 		print(selfnums, selfcoords, basisnums, basiscoords)
 		print(hex(projector_list), hex(self.pwf.wf_ptr))
 		sys.stdout.flush()
-		self.projector.setup_projections(c_void_p(self.pwf.wf_ptr), c_void_p(projector_list), len(self.cr.pps),
-			len(self.structure), numpy_to_cint(self.dim), numpy_to_cint(selfnums),
-			numpy_to_cdouble(selfcoords))
-		self.projector.setup_projections(c_void_p(basis.pwf.wf_ptr), c_void_p(projector_list), len(self.cr.pps),
+		self.projector.setup_projections_copy_rayleigh(c_void_p(basis.pwf.wf_ptr),
+			c_void_p(projector_list), len(self.cr.pps),
 			len(basis.structure), numpy_to_cint(self.dim), numpy_to_cint(basisnums),
 			numpy_to_cdouble(basiscoords))
+		self.projector.setup_projections(c_void_p(self.pwf.wf_ptr), c_void_p(basis.pwf.wf_ptr),
+			c_void_p(projector_list), len(self.cr.pps),
+			len(self.structure), numpy_to_cint(self.dim), numpy_to_cint(selfnums),
+			numpy_to_cdouble(selfcoords))
 		self.projection_data = [projector_list, selfnums, selfcoords, basisnums, basiscoords]
 		M_R, M_S, N_R, N_S, N_RS = self.make_site_lists(basis)
 		num_N_RS = len(N_RS)

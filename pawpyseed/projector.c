@@ -393,6 +393,34 @@ void setup_projections(pswf_t* wf, ppot_t* pps, int num_elems,
 	generate_rayleigh_expansion_terms(wf, pps, num_elems);
 }
 
+void setup_projections_copy_rayleigh(pswf_t* wf, pswf_t* wf_R, ppot_t* pps, int num_elems,
+		int num_sites, int* fftg, int* labels, double* coords) {
+
+	printf("ptrvals %p %p\n", wf, pps);
+	wf->num_elems = num_elems;
+	wf->pps = pps;
+	printf("started setup_proj\n");
+	#pragma omp parallel for 
+	for (int p = 0; p < num_elems; p++) {
+		add_num_cart_gridpts(pps+p, wf->lattice, fftg);
+	}
+	int NUM_KPTS = wf->nwk * wf->nspin;
+	int NUM_BANDS = wf->nband;
+	printf("calculating projector_values\n");
+	real_proj_site_t* sites = projector_values(num_sites, labels, coords,
+		wf->lattice, wf->reclattice, pps, fftg);
+	printf("onto_projector calcs\n");
+	#pragma omp parallel for 
+	for (int w = 0; w < NUM_BANDS * NUM_KPTS; w++) {
+		kpoint_t* kpt = wf->kpts[w % NUM_KPTS];
+		int band_num = w / NUM_KPTS;
+		onto_projector(kpt, band_num, sites, num_sites, labels,
+			wf->G_bounds, wf->lattice, wf->reclattice, pps, fftg);
+	}
+	free_real_proj_site_list(sites, num_sites);	
+	copy_rayleigh_expansion_terms(wf, pps, num_elems, wf_R);
+}
+
 void overlap_setup(pswf_t* wf_R, pswf_t* wf_S, ppot_t* pps,
 	int* labels_R, int* labels_S, double* coords_R, double* coords_S,
 	int* N_R, int* N_S, int* N_RS_R, int* N_RS_S, int num_N_R, int num_N_S, int num_N_RS) {

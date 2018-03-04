@@ -61,6 +61,14 @@ void setup_projections(pswf_t* wf, ppot_t* pps, int num_elems,
 	int num_sites, int* fftg, int* labels, double* coords);
 
 /**
+Same as setup_projections, but copies the partial wave expansion terms
+from a pswf_t objected pointed to by wf_R which has the same
+basis set as wf
+*/
+void setup_projections_copy_rayleigh(pswf_t* wf, pswf_t* wf_R, ppot_t* pps, int num_elems,
+		int num_sites, int* fftg, int* labels, double* coords)
+
+/**
 Calculates three overlap terms for when bands have different
 structures:
 <(phi1_i-phit1_i)|psit2_n2k>

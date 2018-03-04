@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <complex.h>
 #include <math.h>
 #include <omp.h>
@@ -480,7 +481,7 @@ double complex* rayexp_terms(double* kpt, int* Gs, int num_waves,
 
 void generate_rayleigh_expansion_terms(pswf_t* wf, ppot_t* pps, int num_elems) {
 	#pragma omp parallel for
-	for (int k_num = 0; k_num < wf->nwk * wf->nspin; k_num++) {
+	for (int k_num = 0; k_num < wf->nwk; k_num++) {
 		kpoint_t* kpt = wf->kpts[k_num];
 		kpt->expansion = (rayleigh_set_t**) malloc(num_elems * sizeof(rayleigh_set_t*));
 		CHECK_ALLOCATION(kpt->expansion);
@@ -498,12 +499,13 @@ void generate_rayleigh_expansion_terms(pswf_t* wf, ppot_t* pps, int num_elems) {
 		}
 		for (int spin_num = 1; spin_num < wf->nspin; spin_num++) {
 			kpoint_t* kpt2 = wf->kpts[k_num + wf->nwk * spin_num];
+			kpt2->expansion = (rayleigh_set_t**) malloc(num_elems * sizeof(rayleigh_set_t*));
 			for (int i = 0; i < num_elems; i++) {
 				ppot_t pp = pps[i];
 				kpt2->expansion[i] = (rayleigh_set_t*) malloc(pp.num_projs * sizeof(rayleigh_set_t));
 				CHECK_ALLOCATION(kpt->expansion[i]);
 				for (int j = 0; j < pp.num_projs; j++) {
-					int num_bytes = kpt->num_waves * (2*l+1) * sizeof(double complex);
+					int num_bytes = kpt->num_waves * (2*pp.funcs[j].l+1) * sizeof(double complex);
 					double complex* terms = (double complex*) malloc(num_bytes);
 					memcpy(terms, kpt->expansion[i][j].terms, num_bytes);
 					kpt2->expansion[i][j].terms = terms;
@@ -514,7 +516,7 @@ void generate_rayleigh_expansion_terms(pswf_t* wf, ppot_t* pps, int num_elems) {
 	}
 }
 
-void copy_rayleigh_expansion_terms(pswf_t* wf, ppopt_t* pps, int num_elems, pswf_t* wf_R) {
+void copy_rayleigh_expansion_terms(pswf_t* wf, ppot_t* pps, int num_elems, pswf_t* wf_R) {
 	#pragma omp parallel for 
 	for (int k_num = 0; k_num < wf->nwk * wf->nspin; k_num++) {
 		kpoint_t* kpt = wf->kpts[k_num];
@@ -526,7 +528,7 @@ void copy_rayleigh_expansion_terms(pswf_t* wf, ppopt_t* pps, int num_elems, pswf
 			kpt->expansion[i] = (rayleigh_set_t*) malloc(pp.num_projs * sizeof(rayleigh_set_t));
 			CHECK_ALLOCATION(kpt->expansion[i]);
 			for (int j = 0; j < pp.num_projs; j++) {
-				int num_bytes = kpt->num_waves * (2*l+1) * sizeof(double complex);
+				int num_bytes = kpt->num_waves * (2*pp.funcs[j].l+1) * sizeof(double complex);
 				double complex* terms = (double complex*) malloc(num_bytes);
 				memcpy(terms, kpt_R->expansion[i][j].terms, num_bytes);
 				kpt->expansion[i][j].terms = terms;

@@ -160,7 +160,7 @@ class PseudoWavefunction:
 		self.kpts = vr.actual_kpoints
 		self.wf_ptr = PAWC.read_wavefunctions(filename.encode('utf-8'), byref(kws))
 
-	def pseudoprojection(self, band_num, basis, spin = -1):
+	def pseudoprojection(self, band_num, basis):
 		"""
 		Computes <psibt_n1k|psit_n2k> for all n1 and k
 		and a given n2, where psibt are basis structures
@@ -175,7 +175,7 @@ class PseudoWavefunction:
 		nwk = PAWC.get_nwk(c_void_p(self.wf_ptr))
 		nspin = PAWC.get_nspin(c_void_p(self.wf_ptr))
 
-		res = PAWC.pseudoprojection(c_void_p(basis.wf_ptr), c_void_p(self.wf_ptr), band_num, spin)
+		res = PAWC.pseudoprojection(c_void_p(basis.wf_ptr), c_void_p(self.wf_ptr), band_num)
 		return cdouble_to_numpy(res, 2*nband*nwk*nspin)
 
 class Wavefunction:
@@ -302,7 +302,7 @@ class Wavefunction:
 			#numpy_to_cint(M_R), numpy_to_cint(M_S),
                         #numpy_to_cint(M_R), numpy_to_cint(M_S), len(M_R), len(M_R), len(M_R));
 
-	def single_band_projection(self, band_num, basis, spin=0):
+	def single_band_projection(self, band_num, basis):
 		"""
 		All electron projection of the band_num band of self
 		onto all the bands of basis. Returned as a numpy array,
@@ -451,9 +451,9 @@ class Wavefunction:
 		occs = cdouble_to_numpy(self.projector.get_occs(c_void_p(bulk.pwf.wf_ptr)), nband*nwk*nspin)
 
 		if pseudo:
-			res = self.pwf.pseudoprojection(band_num, bulk.pwf, spin)
+			res = self.pwf.pseudoprojection(band_num, bulk.pwf)
 		else:
-			res = self.single_band_projection(band_num, bulk, spin)
+			res = self.single_band_projection(band_num, bulk)
 
 		if spinpol:
 			c, v = np.zeros(nspin), np.zeros(nspin)
@@ -490,9 +490,8 @@ class Wavefunction:
 		totest = set()
 
 		for b in range(nband):
-			v, c = self.proportion_conduction(b, bulk, pseudo = True)
-			if spinpol and np.mean(v) > bound and np.mean(c) > bound
-			elif v > bound and c > bound:
+			v, c = self.proportion_conduction(b, bulk, pseudo = True, spinpol = False)
+			if v > bound and c > bound:
 				totest.add(b)
 				totest.add(b-1)
 				totest.add(b+1)
@@ -500,7 +499,7 @@ class Wavefunction:
 
 		results = {}
 		for b in totest:
-			results[b] = self.proportion_conduction(b, bulk, pseudo = False)
+			results[b] = self.proportion_conduction(b, bulk, pseudo = False, spinpol = spinpol)
 
 		return results
 
@@ -523,7 +522,7 @@ if __name__ == '__main__':
 	wf1 = Wavefunction(posb, pwf1, CoreRegion(pot), (120,120,120))
 	wf2 = Wavefunction(posd, pwf2, CoreRegion(pot), (120,120,120))
 	wf2.setup_projection(wf1)
-	print(wf2.defect_band_analysis(wf1), spinpol = True)
+	print(wf2.defect_band_analysis(wf1, spinpol = True))
 	#for i in range(253,254):
 	#	wf2.single_band_projection(i, wf1)
 

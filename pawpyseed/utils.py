@@ -21,6 +21,19 @@ PAWC.free_ptr.restype = None
 PAWC.free_ppot_list.restype = None
 PAWC.free_pswf.restype = None
 
+class PAWpyError(Exception):
+
+	def __init__(self, msg):
+		self.msg = msg
+
+def check_spin(spin, nspin):
+	if spin >= 0:
+		if spin >= nspin:
+			raise PAWpyError('spin must be less than nspin. spin is %d, nspin is %d' % (spin, nspin))
+		else:
+			return 1
+	return nspin
+
 def cdouble_to_numpy(arr, length):
 	"""
 	Convert a pointer to length doubles

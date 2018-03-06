@@ -19,6 +19,23 @@
 
 \newcommand{\ind}{lm\epsilon}
 
+\title{PAWpySeed: A parallelized Python/C package for analyzing
+DFT wavefunctions in the PAW formalism}
+\author{Kyle Bystrom\\
+        kylebystrom@berkeley.edu\\
+		UC Berkeley Department of Materials Science and Engineering}
+\date{\today}
+\maketitle
+\abstract{A parallelized Python and C package has been developed
+to perform analysis of density functional theory (DFT) wavefunctions in the
+projector augmented wave (PAW) formalism. The primary function of this code
+is to calculate the overlap operator of two single-particle Kohn-Sham states
+from different periodic structures with the same lattice, which is made nontrivial
+by the depency of PAW augmentation regions on the basis of the structure.
+The code is potentially useful for the analysis of point defect levels in
+solids because it can determine the composition of defect levels in the basis
+of the single-particle states of the bulk system.}
+
 \section{Theory}
 
 \subsection{Projector Augmented Wave (PAW) Method}
@@ -40,22 +57,22 @@ the wavefunction of a defect level in a periodic crystal onto the eigenfunctions
 bulk crystal might yield information about how the defect level is constructed. For example,
 the defect state might project primarily onto the conduction band, characterizing it
 as a weakly perturbed host state. Such an understanding of defect levels could help select
-corrections to perform on the defect system.\ref{eq:1}
+corrections to perform on the defect system.\cite{lany}
 \begin{equation}
 \centering
 \begin{split}
-\braket{\psi_{Rn_1\mathbf{k}}|\psi_{Sn_2\mathbf{k}}}=\widetilde{O}+O_M+O_R+O_S+O_N\\
-O_M=\sum_{a\in M_{RS}}\sum_{l,m}\sum_{\epsilon_1}\sum_{\epsilon_2}
+\braket{\psi_{Rn_1\mathbf{k}}|\psi_{Sn_2\mathbf{k}}} & =\widetilde{O}+O_M+O_R+O_S+O_N\\
+O_M & =\sum_{a\in M_{RS}}\sum_{l,m}\sum_{\epsilon_1}\sum_{\epsilon_2}
 \braket{\widetilde{\psi}_{Rn_1\mathbf{k}}|\widetilde{p}_{a\ind _1}}
 (\braket{\phi_{a\ind _1}|{\phi_{a\ind _2}}}
 -\bra{\widetilde{\phi}_{a\ind _1}}\ket{\widetilde{\phi}_{a\ind _2}})
 \braket{\widetilde{p}_{a\ind _2}|\widetilde{\psi}_{Sn_2\mathbf{k}}}\\
-O_R=\sum_{i\in N_R}\braket{\widetilde{\psi}_{Rn_1\mathbf{k}}|\widetilde{p}_i}
+O_R & =\sum_{i\in N_R}\braket{\widetilde{\psi}_{Rn_1\mathbf{k}}|\widetilde{p}_i}
 (\bra{\phi_i}-\bra{\widetilde{\phi}_i})
 \ket{\widetilde{\psi}_{Sn_2\mathbf{k}}}\\
-O_S=\sum_{j\in N_S}\bra{\widetilde{\psi}_{Rn_1\mathbf{k}}}(\ket{\phi_j}-\ket{\widetilde{\phi}_j})
+O_S & =\sum_{j\in N_S}\bra{\widetilde{\psi}_{Rn_1\mathbf{k}}}(\ket{\phi_j}-\ket{\widetilde{\phi}_j})
 \braket{\widetilde{p}_j|\widetilde{\psi}_{Sn_2\mathbf{k}}}\\
-O_N=\sum_{i,j\in N_{RS}}\braket{\widetilde{\psi}_{Rn_1\mathbf{k}}|
+O_N & =\sum_{i,j\in N_{RS}}\braket{\widetilde{\psi}_{Rn_1\mathbf{k}}|
 \widetilde{p}_i}(\bra{\phi_i}-\bra{\widetilde{\phi}_i})
 (\ket{\phi_j}-\ket{\widetilde{\phi}_j})\braket{\widetilde{p}_j|\widetilde{\psi}_{Sn_2\mathbf{k}}}
 \end{split}
@@ -65,31 +82,103 @@ Equation \ref{eq:finp} is derived in Appendix A.
 
 \section{Implementation}
 
+\begin{table}
+\centering
+\begin{tabular}{|c|c|c|}
+\hline
+Computational Task & $\Theta$ & Frequency*\\
+\hline
+$\widetilde{O}$ & $BKSW$ & per band\\
+$O_M$ & $BKSNP$ & per band\\
+$O_R$ and $O_S$ & $BKSNP$ & per band\\
+$O_N$ & $BKSNP$ & per band\\
+$\braket{\widetilde{p}_i|\widetilde{\psi}_{n\mathbf{k}}}$ & $BKSF\mathrm{log}(F)$ & per structure\\
+$(\bra{\phi_i}-\bra{\widetilde{\phi}_i})
+\ket{\widetilde{\psi}_{n\mathbf{k}}}$ & $BKSNPW$ & per structure\\
+spherical Bessel transform partial waves & $NPG\mathrm{log}(G)$ & per structure pair\\
+project plane waves onto partial waves & $EPKW$ & per structure pair\\
+projections for overlapping aug spheres & $NPL$ & per structure pair\\
+\hline
+\end{tabular}
+
+\begin{tabular}{c|c}
+Symbol & Definition\\
+\hline
+B & number of bands\\
+E & number of elements\\
+F & size of FFT grid\\
+G & size of partial wave radial grid\\
+K & number of k-points\\
+L & size of Legendre-Gauss grid around ions\\
+N & number of sites**\\
+P & number of projector functions\\
+S & number of spin states\\
+W & number of plane waves\\
+\end{tabular}
+\caption{Runtime scaling functions for each component of the code and
+definitions for shorthand symbols to express runtime.
+*The frequency refers to how often the routine is called. "Per band"
+indicates that the routine runs once every time a band from one structure
+is projected onto all the bands of a basis structure. "Per structure"
+indicates that the routine is a "setup" routine that must be called once
+for each structure and corresponding band structure to do perform projections.
+"Per structure pair" is the same as "per structure" except that the routine
+is only run once for a pair of structures with the same lattice and plane-wave
+basis set, the bands of one such structure to be used as a basis set for the other.
+**Number of sites flexibly refers to the number of sites relevant to the calculation,
+which worst-case scales with the total number of sites in the structure. For example,
+calculating $O_M$ and $O_N$ only require the sites in sets $M$ and $N_RS$, respectively.}
+\label{tab:runtime}
+\end{table}
+
+The program is implemented as a Python package that interfaces with C functions through
+the Python ctypes package. Time consuming routines are performed in C and parallelized
+using openmp, meaning that the code will automatically parallelize on all the resources
+of a shared memory computing node. Detailed runtime scaling for each routine is
+provided in Table \ref{tab:runtime}. An explanation of how each term is calculated
+so as to maximize computational efficiency is summarized in the following subsections.
+
 \subsection{Projection of Pseudowavefunctions onto Partial Waves}
 
+The all electron partial waves fluctuate rapidly near the nucleus,
+so the pseudowavefunction cannot be projected onto the partial waves
+via a uniform Cartesian grid as is doen with the projector functions.
+However, A plane wave can be expanded as a sum of spherical
+Bessel functions via Rayleigh expansion.
 \begin{equation}
 e^{i\mathbf{k} \cdot \mathbf{r}} = 4\pi \sum_{l=0}^{\infty}\sum_{m=-l}^{l}
 i^l j_l(kr)Y_l^{m*}(\mathbf{\hat{k}})Y_l^m(\mathbf{\hat{r}})
 \label{eq:pwexp}
 \end{equation}
+Therefore, the overlap operator between a partial wave and plane wave can be evaluated as a summation
+of spherical Bessel function overlap integrals. The following definitions are
+used in this derivation:
+
 $\mathbf{r_A} = \mathbf{r} - \mathbf{R_A}$, $\phi_i(\mathbf{r})=R_i(r)Y_l^m(\mathbf{\hat{r}})$,
 $\widetilde{\phi}_i(\mathbf{r})=\widetilde{R}_i(r)Y_l^m(\mathbf{\hat{r}})$,
 $\mathbf{k'}=\mathbf{k}+\mathbf{G}$\\
-$$\widetilde{\psi}_{n\mathbf{k}}=\frac{1}{\sqrt{V}}\sum_{\mathbf{G}}
-C_{n\mathbf{k}\mathbf{G}}e^{i\mathbf{k'}\cdot \mathbf{r}}$$
-$$\widetilde{\psi}_{n\mathbf{k}}=\frac{4\pi}{\sqrt{V}}\sum_{\mathbf{G}}
+The derivation goes as follows, with the last line being that needed to 
+calculate $O_R$ and $O_S$:
+
+\begin{equation}
+\begin{split}
+\widetilde{\psi}_{n\mathbf{k}} & =\frac{1}{\sqrt{V}}\sum_{\mathbf{G}}
+C_{n\mathbf{k}\mathbf{G}}e^{i\mathbf{k'}\cdot \mathbf{r}}\\
+\widetilde{\psi}_{n\mathbf{k}} & =\frac{4\pi}{\sqrt{V}}\sum_{\mathbf{G}}
 C_{n\mathbf{k}\mathbf{G}}\sum_{l=0}^{\infty}\sum_{m=-l}^{l}
-i^l j_l(k'r_A)Y_l^{m*}(\mathbf{\hat{k'}})Y_l^m(\mathbf{\hat{r}_A})$$
-$$\phi_i(\mathbf{r})\widetilde{\psi}_{n\mathbf{k}}=\frac{4\pi}{\sqrt{V}}\sum_{\mathbf{G}}
+i^l j_l(k'r_A)Y_l^{m*}(\mathbf{\hat{k'}})Y_l^m(\mathbf{\hat{r}_A})\\
+\phi_i(\mathbf{r})\widetilde{\psi}_{n\mathbf{k}} & =\frac{4\pi}{\sqrt{V}}\sum_{\mathbf{G}}
 C_{n\mathbf{k}\mathbf{G}}\sum_{l'=0}^{\infty}\sum_{m'=-l'}^{l'}
 i^{l'} j_{l'}(k'r_A)Y_{l'}^{m'*}(\mathbf{\hat{k'}})Y_{l'}^{m'}(\mathbf{\hat{r}_A})
-Y_l^{m*}(\mathbf{\hat{r}}_A)R_i(r_A)$$
-$$\braket{\phi_i(\mathbf{r})|\widetilde{\psi}_{n\mathbf{k}}}=
+Y_l^{m*}(\mathbf{\hat{r}}_A)R_i(r_A)\\
+\braket{\phi_i(\mathbf{r})|\widetilde{\psi}_{n\mathbf{k}}} & =
 \frac{4\pi i^l}{\sqrt{V}}\sum_{\mathbf{G}} C_{n\mathbf{k}\mathbf{G}}
-Y_l^{m*}(\mathbf{\hat{k'}})\int_0^{\infty}drr^2R_i(r_A)j_l(k'r_A)$$
-$$\braket{\phi_i-\widetilde{\phi}_i|\widetilde{\psi}_{n\mathbf{k}}}=
+Y_l^{m*}(\mathbf{\hat{k'}})\int_0^{\infty}drr^2R_i(r_A)j_l(k'r_A)\\
+\braket{\phi_i-\widetilde{\phi}_i|\widetilde{\psi}_{n\mathbf{k}}} & =
 \frac{4\pi i^l}{\sqrt{V}}\sum_{\mathbf{G}} C_{n\mathbf{k}\mathbf{G}}
-Y_l^{m*}(\mathbf{\hat{k'}})\int_0^{\infty}drr^2(R_i(r_A)-\widetilde{R}_i(r_A))j_l(k'r_A)$$
+Y_l^{m*}(\mathbf{\hat{k'}})\int_0^{\infty}drr^2(R_i(r_A)-\widetilde{R}_i(r_A))j_l(k'r_A)
+\end{split}
+\end{equation}
 
 After the projection is decomposed into a summation over integrals of spherical
 Bessel functions, it can be calculated via spherical Bessel transform. This code
@@ -99,6 +188,18 @@ the POTCAR representations of the partial waves. The resulting logarithmic k-spa
 grid can be used to calculate the values of the relevant integrals via interpolation.
 
 \section*{Appendix A: Derivation of Overlap Operators from PAW Formalism}
+
+The following section derives an equation for the overlap operator between one
+Kohn-Sham single particle state of one structure R and one Kohn-Sham single
+particle state of another structure S, where R and S share a common lattice
+and the DFT wavefunctions are constructed with the same plane-wave PAW basis set.
+It should be noted this derivation might better be described as a manipulation
+of terms of the PAW pseudo-operator, because its main purpose is to present
+the overlap operator in a method convenient for computation rather than to derive
+an entirely new expression. The derivation also makes particular note of how
+the expression of the overlap operator relates to interfacing with the VASP code,
+though the expressions are applicable to any PAW code.
+
 The starting point for this derivation is the transformation operator that
 is performed on the pseudowavefunction to obtain the all electron wavefunction
 \begin{equation}
@@ -114,8 +215,8 @@ specify a spherical harmonic and index which uniquely specify partial wave at a 
 index. A summation over $i$ (or $j$, as below) represents a summation over $a$, $l$, $m$,
 and $\epsilon$. For further details on the PAW method, including the physical significance
 and construction of the partial waves and projector functions, see Blochl's original paper
-and Kresse and Joubert's paper relating ultrasoft pseudopotentials and PAW.\cite{blochl}
-The next step is to define and pseudo operator $\widetilde{A}$ for each operator $A$
+and Kresse and Joubert's paper relating ultrasoft pseudopotentials and PAW.\cite{blochl,kresse_joubert}
+The next step is to define a pseudo operator $\widetilde{A}$ for each operator $A$
 such that $\bra{\psi}A\ket{\psi}=\bra{\widetilde{\psi}}\widetilde{A}\ket{\widetilde{\psi}}$.
 Because $\ket{\psi}=T\ket{\widetilde{\psi}}$, one can write
 \begin{equation}
@@ -123,29 +224,37 @@ Because $\ket{\psi}=T\ket{\widetilde{\psi}}$, one can write
 \label{eq:op}
 \end{equation}
 One can then plug Equation \ref{eq:T} into Equation \ref{eq:op} to find
-$$\widetilde{A}=[1+\sum_i\ket{\widetilde{p}_i}(\bra{\phi_i}-\bra{\widetilde{\phi}_i})]
-A[1+\sum_j(\ket{\phi_j}-\ket{\widetilde{\phi}_j})
-\bra{\widetilde{p}_j}]$$
 \begin{equation}
-\widetilde{A}=A+\sum_i\ket{\widetilde{p}_i}(\bra{\phi_i}-\bra{\widetilde{\phi}_i})A
-+\sum_j A(\ket{\phi_j}-\ket{\widetilde{\phi}_j})\bra{\widetilde{p}_j}
-+\sum_i\sum_j\ket{\widetilde{p}_i}(\bra{\phi_i}-\bra{\widetilde{\phi}_i})A
+\begin{split}
+\widetilde{A} = & [1+\sum_i\ket{\widetilde{p}_i}(\bra{\phi_i}-\bra{\widetilde{\phi}_i})]
+A[1+\sum_j(\ket{\phi_j}-\ket{\widetilde{\phi}_j})
+\bra{\widetilde{p}_j}]\\
+\widetilde{A} = & A+\sum_i\ket{\widetilde{p}_i}(\bra{\phi_i}-\bra{\widetilde{\phi}_i})A
++\sum_j A(\ket{\phi_j}-\ket{\widetilde{\phi}_j})\bra{\widetilde{p}_j}\\
+& +\sum_i\sum_j\ket{\widetilde{p}_i}(\bra{\phi_i}-\bra{\widetilde{\phi}_i})A
 (\ket{\phi_j}-\ket{\widetilde{\phi}_j})\bra{\widetilde{p}_j}
+\end{split}
 \label{eq:res}
 \end{equation}
+
 Using the following relation,
-$$(\bra{\phi_i}-\bra{\widetilde{\phi}_i})A(\ket{\phi_j}-\ket{\widetilde{\phi}_j})
-=\bra{\phi_i}A\ket{\phi_j}-\bra{\widetilde{\phi}_i}A\ket{\phi_j}
--(\bra{\phi_i}-\bra{\widetilde{\phi}_i})A\ket{\widetilde{\phi}_j}$$
-$$=\bra{\phi_i}A\ket{\phi_j}-\bra{\widetilde{\phi}_i}A(\ket{\phi_j}-\ket{\widetilde{\phi_j}})
+\begin{equation}
+\begin{split}
+(\bra{\phi_i}-\bra{\widetilde{\phi}_i})A(\ket{\phi_j}-\ket{\widetilde{\phi}_j})
+& =\bra{\phi_i}A\ket{\phi_j}-\bra{\widetilde{\phi}_i}A\ket{\phi_j}
+-(\bra{\phi_i}-\bra{\widetilde{\phi}_i})A\ket{\widetilde{\phi}_j}\\
+& =\bra{\phi_i}A\ket{\phi_j}-\bra{\widetilde{\phi}_i}A(\ket{\phi_j}-\ket{\widetilde{\phi_j}})
 -(\bra{\phi_i}-\bra{\widetilde{\phi}_i})A\ket{\widetilde{\phi}_j}
--\bra{\widetilde{\phi_i}}A\ket{\widetilde{\phi_j}}$$
+-\bra{\widetilde{\phi_i}}A\ket{\widetilde{\phi_j}}
+\end{split}
+\end{equation}
+
 one can rearrange Equation \ref{eq:res} in the manner of Blochl\cite{blochl}:
 \begin{equation}
 \begin{split}
-\widetilde{A}=A+\sum_i\sum_j[\ket{\widetilde{p}_i}(\bra{\phi_i}A\ket{\phi_j}
+\widetilde{A}= & A+\sum_i\sum_j[\ket{\widetilde{p}_i}(\bra{\phi_i}A\ket{\phi_j}
 -\bra{\widetilde{\phi_i}}A\ket{\widetilde{\phi_j}})\bra{\widetilde{p}_j}] \\
-+\sum_i[(1-\sum_j\ket{\widetilde{p}_j}\bra{\widetilde{\phi}_j})A(\ket{\phi_i}-\ket{\widetilde{\phi_i}})
+& +\sum_i[(1-\sum_j\ket{\widetilde{p}_j}\bra{\widetilde{\phi}_j})A(\ket{\phi_i}-\ket{\widetilde{\phi_i}})
 \bra{\widetilde{p}_i}+\ket{\widetilde{p}_i}
 (\bra{\phi_i}-\bra{\widetilde{\phi}_i})A(1-\sum_j\ket{\widetilde{\phi}_j}\bra{\widetilde{p}_j})]
 \end{split}
@@ -171,17 +280,20 @@ allows the overlap between two bands
 in different structures $R$ and $S$ with the same lattice to be specified (note that the
 summation over $i$ is for structure $R$ and the summation over $j$ is for structure $S$):
 \begin{equation}
-\braket{\psi_{Rn_1\mathbf{k}}|\psi_{Sn_2\mathbf{k}}}=\widetilde{O}+O_1+O_2+O_3
+\begin{split}
+\braket{\psi_{Rn_1\mathbf{k}}|\psi_{Sn_2\mathbf{k}}} & =\widetilde{O}+O_1+O_2+O_3\\
+\widetilde{O} & =\braket{\widetilde{\psi}_{Rn_1\mathbf{k}}|\widetilde{\psi}_{Sn_2\mathbf{k}}}\\
+O_1 & =\sum_i\braket{\widetilde{\psi}_{Rn_1\mathbf{k}}|\widetilde{p}_i}(\bra{\phi_i}-\bra{\widetilde{\phi}_i})
+\ket{\widetilde{\psi}_{Sn_2\mathbf{k}}}\\
+O_2 & =\sum_j\bra{\widetilde{\psi}_{Rn_1\mathbf{k}}}(\ket{\phi_j}-\ket{\widetilde{\phi}_j})
+\braket{\widetilde{p}_j|\widetilde{\psi}_{Sn_2\mathbf{k}}}\\
+O_3 & =\sum_i\sum_j\braket{\widetilde{\psi}_{Rn_1\mathbf{k}}|
+\widetilde{p}_i}(\bra{\phi_i}-\bra{\widetilde{\phi}_i})
+(\ket{\phi_j}-\ket{\widetilde{\phi}_j})\braket{\widetilde{p}_j|\widetilde{\psi}_{Sn_2\mathbf{k}}}
+\end{split}
 \label{eq:ov1}
 \end{equation}
-$$\widetilde{O}=\braket{\widetilde{\psi}_{Rn_1\mathbf{k}}|\widetilde{\psi}_{Sn_2\mathbf{k}}}$$
-$$O_1=\sum_i\braket{\widetilde{\psi}_{Rn_1\mathbf{k}}|\widetilde{p}_i}(\bra{\phi_i}-\bra{\widetilde{\phi}_i})
-\ket{\widetilde{\psi}_{Sn_2\mathbf{k}}}$$
-$$O_2=\sum_j\bra{\widetilde{\psi}_{Rn_1\mathbf{k}}}(\ket{\phi_j}-\ket{\widetilde{\phi}_j})
-\braket{\widetilde{p}_j|\widetilde{\psi}_{Sn_2\mathbf{k}}}$$
-$$O_3=\sum_i\sum_j\braket{\widetilde{\psi}_{Rn_1\mathbf{k}}|
-\widetilde{p}_i}(\bra{\phi_i}-\bra{\widetilde{\phi}_i})
-(\ket{\phi_j}-\ket{\widetilde{\phi}_j})\braket{\widetilde{p}_j|\widetilde{\psi}_{Sn_2\mathbf{k}}}$$
+
 The pseudowavefunctions can be expanded as a summation of plane waves,
 $$\widetilde{\psi}_{n\mathbf{k}}(\mathbf{r})=\sqrt{\frac{\omega_{\mathbf{k}}}{V}}
 e^{i\mathbf{k}\cdot \mathbf{r}}\sum_{\mathbf{G}} C_{n\mathbf{k}\mathbf{G}}
@@ -190,6 +302,7 @@ so the overlap between two pseudowavefunctions per unit cell can be written as
 $$\widetilde{O}=\braket{\widetilde{\psi}_{n_1\mathbf{k}_1}|\widetilde{\psi}_{n_2\mathbf{k}_2}}
 =\delta_{\mathbf{k}_1,\mathbf{k}_2}
 \omega_{\mathbf{k}} \sum_{\mathbf{G}} C^*_{n_1\mathbf{k}_1\mathbf{G}}C_{n_2\mathbf{k}_2\mathbf{G}}$$
+
 In VASP, structures with the same energy, k-points, and lattice will have the same basis set,
 so this projection is performed simply by reading plane wave coefficients from the VASP WAVECAR file.
 
@@ -203,7 +316,7 @@ as the summation over on-site terms for the identical sites $a$ and $b$ in $O_1$
 $$O_{1a}+O_{2a}+O_{3a}=\sum_{l,m}\sum_{\epsilon_1}\sum_{\epsilon_2}
 \braket{\widetilde{\psi}_{Rn_1\mathbf{k}}|\widetilde{p}_{a\ind _1}}
 (\braket{\phi_{a\ind _1}|{\phi_{a\ind _2}}}
--\bra{\widetilde{\phi}_{a\ind _1}}\ket{\widetilde{\phi}_{a\ind _2}})
+-\braket{\widetilde{\phi}_{a\ind _1}|\widetilde{\phi}_{a\ind _2}})
 \braket{\widetilde{p}_{a\ind _2}|\widetilde{\psi}_{Sn_2\mathbf{k}}}$$
 which is the local operator solution derived by Blochl. All three terms must
 be evaluated in full for the other sites, but terms in $O_3$ where $i$ and $j$ correspond
@@ -218,7 +331,7 @@ $$
 O_M=\sum_{a\in M_{RS}}\sum_{l,m}\sum_{\epsilon_1}\sum_{\epsilon_2}
 \braket{\widetilde{\psi}_{Rn_1\mathbf{k}}|\widetilde{p}_{a\ind _1}}
 (\braket{\phi_{a\ind _1}|{\phi_{a\ind _2}}}
--\bra{\widetilde{\phi}_{a\ind _1}}\ket{\widetilde{\phi}_{a\ind _2}})
+-\braket{\widetilde{\phi}_{a\ind _1}|\widetilde{\phi}_{a\ind _2}})
 \braket{\widetilde{p}_{a\ind _2}|\widetilde{\psi}_{Sn_2\mathbf{k}}}
 $$
 $$

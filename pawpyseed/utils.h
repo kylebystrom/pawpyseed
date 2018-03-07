@@ -110,6 +110,7 @@ typedef struct pswf {
 	double* lattice;
 	double* reclattice;
 	int num_aug_overlap_sites;
+	double* dcoords;
 	double complex** overlaps;
 } pswf_t;
 
@@ -291,6 +292,8 @@ AE partial waves, phit_i are the PS partial waves, and k+G are the plane
 waves, in reciprocal space.
 */
 void generate_rayleigh_expansion_terms(pswf_t* wf, ppot_t* pps, int num_elems);
+
+void copy_rayleigh_expansion_terms(pswf_t* wf, ppot_t* pps, int num_elems, pswf_t* wf_R);
 
 /**
 Called after a malloc or calloc call to check that

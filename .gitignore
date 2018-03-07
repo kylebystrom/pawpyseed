@@ -1,0 +1,9 @@
+docs/latex/*
+docs/dox.config.*
+*.so
+*.o
+*.pdf
+*.log
+*.out
+*.xml
+*.aux

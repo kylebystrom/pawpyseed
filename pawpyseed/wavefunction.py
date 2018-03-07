@@ -479,7 +479,7 @@ class Wavefunction:
 			c /= v+c
 		return v, c
 
-	def defect_band_analysis(self, bulk, bound = 0.05, spinpol = False):
+	def defect_band_analysis(self, bulk, min_band=0, max_band=None, bound = 0.05, spinpol = False):
 		"""
 		Identifies a set of 'interesting' bands in a defect structure
 		to analyze by choosing any band that is more than bound conduction
@@ -489,14 +489,19 @@ class Wavefunction:
 		nband = self.projector.get_nband(c_void_p(bulk.pwf.wf_ptr))
 		nwk = self.projector.get_nwk(c_void_p(bulk.pwf.wf_ptr))
 		nspin = self.projector.get_nspin(c_void_p(bulk.pwf.wf_ptr))
-		totest = set()
+		#totest = set()
+		if max_band == None:
+			max_band = nband-1
 
+		"""
 		for b in range(nband):
 			v, c = self.proportion_conduction(b, bulk, pseudo = True, spinpol = False)
 			if v > bound and c > bound:
 				totest.add(b)
 				totest.add(b-1)
 				totest.add(b+1)
+		"""
+		totest = [i for i in range(min_band,max_band+1)]
 		print("NUM TO TEST", len(totest))
 
 		results = {}
@@ -514,19 +519,4 @@ class Wavefunction:
 		if self.projector_list != None:
 			self.projector.free_ppot_list(c_void_p(self.projector_list), len(self.cr.pps))
 
-if __name__ == '__main__':
-	posb = Poscar.from_file("bulk/CONTCAR").structure
-	posd = Poscar.from_file("charge_0/CONTCAR").structure
-	pot = Potcar.from_file("bulk/POTCAR")
-	pwf1 = PseudoWavefunction("bulk/WAVECAR", "bulk/vasprun.xml")
-	pwf2 = PseudoWavefunction("charge_0/WAVECAR", "charge_0/vasprun.xml")
 
-	wf1 = Wavefunction(posb, pwf1, CoreRegion(pot), (120,120,120))
-	wf2 = Wavefunction(posd, pwf2, CoreRegion(pot), (120,120,120))
-	wf2.setup_projection(wf1)
-	print(wf2.defect_band_analysis(wf1, spinpol = True))
-	#for i in range(253,254):
-	#	wf2.single_band_projection(i, wf1)
-
-	wf1.free_all()
-	wf2.free_all()

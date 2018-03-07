@@ -1,4 +1,4 @@
-from distutils.core import setup
+from distutils.core import setup, Extension
 
 cargs = ['-std=c11', '-lmkl_rt', '-fopenmp', '-lpthread', '-ldl', '-lm', '-O3', '-fPIC', '-Wall']
 

@@ -330,25 +330,20 @@ void make_pwave_overlap_matrices(ppot_t* pp_ptr) {
 				double* ps2 = pp.funcs[j].pswave;
 				double* ae1 = pp.funcs[i].aewave;
 				double* ae2 = pp.funcs[j].aewave;
-				double dr = pp.wave_grid[0];
-				double r = pp.wave_grid[0];
-				//printf("grid check %d %lf %lf %lf\n", i, pp.wave_grid[5], ae1[5], ps1[5]);
-				for (int k = 0; k < pp.wave_gridsize - 1; k++) {
-					r = pp.wave_grid[k];
-					dr = pp.wave_grid[k+1] - pp.wave_grid[k];
-					psov[pp.num_projs*i+j] += ps1[k] * ps2[k] * dr/2;
-					aeov[pp.num_projs*i+j] += ae1[k] * ae2[k] * dr/2;
-					diov[pp.num_projs*i+j] += (ae1[k]-ps1[k]) * (ae2[k]-ps2[k]) * dr/2;
-					//if (i == 0 && j == 0) printf("check grid %lf %lf %lf", r, dr, 
+				double* psprod = (double*) malloc(pp.wave_gridsize*sizeof(double));
+				double* aeprod = (double*) malloc(pp.wave_gridsize*sizeof(double));
+				double* diprod = (double*) malloc(pp.wave_gridsize*sizeof(double));
+				for (int k = 0; k < pp.wave_gridsize; k++) {
+					psprod[k] = ps1[k] * ps2[k];
+					aeprod[k] = ae1[k] * ae2[k];
+					diprod[k] = (ae1[k]-ps1[k]) * (ae2[k]-ps2[k]);
 				}
-				for (int k = 1; k < pp.wave_gridsize; k++) {
-					r = pp.wave_grid[k];
-					dr = pp.wave_grid[k] - pp.wave_grid[k-1];
-					psov[pp.num_projs*i+j] += ps1[k] * ps2[k] * dr/2;
-					aeov[pp.num_projs*i+j] += ae1[k] * ae2[k] * dr/2;
-					diov[pp.num_projs*i+j] += (ae1[k]-ps1[k]) * (ae2[k]-ps2[k]) * dr/2;
-					//if (i == 0 && j == 0) printf("check grid %lf %lf %lf", r, dr, 
-				}
+				double** psspline = spline_coeff(pp.wave_grid, psprod, pp.wave_gridsize);
+				double** aespline = spline_coeff(pp.wave_grid, aeprod, pp.wave_gridsize);
+				double** displine = spline_coeff(pp.wave_grid, diprod, pp.wave_gridsize);
+				psov[i*pp.num_projs+j] = spline_integral(pp.wave_grid, psprod, psspline, pp.wave_gridsize);
+				aeov[i*pp.num_projs+j] = spline_integral(pp.wave_grid, aeprod, aespline, pp.wave_gridsize);
+				diov[i*pp.num_projs+j] = spline_integral(pp.wave_grid, diprod, displine, pp.wave_gridsize);
 			}
 		}
 	}

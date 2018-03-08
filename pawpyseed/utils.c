@@ -394,6 +394,22 @@ double** spline_coeff(double* x, double* y, int N) {
 	return coeff;
 }
 
+double spline_integral(double* x, double* a, double** s, int size) {
+	double* b = s[0];
+	double* c = s[1];
+	double* d = s[2];
+	double dx = 0;
+	double integral = 0;
+
+	for (int i = 0; i < size - 1; i++) {
+		dx = x[i+1] - x[i];
+		integral += dx * (a[i] + dx * (b[i]/2 + dx * (c[i]/3 + d[i]*dx/4)));
+	}
+
+	return integral;
+
+}
+
 void frac_from_index(int index, double* coord, int* fftg) {
 	int t1 = index / (fftg[1] * fftg[2]);
 	int t2 = index % (fftg[1] * fftg[2]);

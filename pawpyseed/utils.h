@@ -266,6 +266,14 @@ Phys. Rev. B, 47:558, 1993.
 */
 double** spline_coeff(double* x, double* y, int N);
 
+/**
+Find the integral of a discretely defined function that is
+fitted with spline coefficients at each point. x is the independent
+variable grid, a is the function values, s is the spline, and size is the
+number of points on the grid.
+*/
+double spline_integral(double* x, double* a, double** s, int size);
+
 void frac_from_index(int index, double* coord, int* fftg);
 
 double sph_bessel(double k, double r, int l);

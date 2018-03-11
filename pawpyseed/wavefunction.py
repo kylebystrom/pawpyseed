@@ -8,7 +8,7 @@ from pymatgen.io.vasp.outputs import Vasprun
 from pymatgen.core.structure import Structure
 import numpy as np
 from ctypes import *
-from utils import *
+from pawpyseed.utils import *
 import os
 import numpy as np
 import json

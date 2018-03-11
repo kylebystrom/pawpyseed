@@ -100,6 +100,7 @@ class Pseudopotential:
 			nonlocalvals, projs = lst[0], lst[1:]
 			self.rmaxstr = c_char_p()
 			self.rmaxstr.value = nonlocalvals.split()[2].encode('utf-8')
+			self.rmax = make_nums(nonlocalvals.split()[2])[0]
 			nonlocalvals = self.make_nums(nonlocalvals)
 			l = nonlocalvals[0]
 			count = nonlocalvals[1]
@@ -113,13 +114,13 @@ class Pseudopotential:
 		settingstr, projgridstr = settingstr.split("STEP   =")
 		self.ndata = int(settingstr.split()[-1])
 		projgridstr = projgridstr.split("END")[0]
-		self.projgrid = self.make_nums(projgridstr)
+		#self.projgrid = self.make_nums(projgridstr)
 		self.step = (self.projgrid[0], self.projgrid[1])
 
 		self.projgrid = np.linspace(0,rmax/1.88973,self.ndata,False,dtype=np.float64)
 
 	def make_nums(self, numstring):
-		return np.array([float(num) for num in numstring.split()])
+		return np.fromstring(numstring, dtype = np.float64, sep = ' ')
 
 class CoreRegion:
 	"""
@@ -394,12 +395,14 @@ class Wavefunction:
 		pgrids = np.array([], np.float64)
 		augs = np.array([], np.float64)
 		rmaxstrs = (c_char_p * len(pps))()
+		rmaxs = np.array([], np.float64)
 		num_els = 0
 
 		for num in pps:
 			pp = pps[num]
 			clabels = np.append(clabels, [num, len(pp.ls), pp.ndata, len(pp.grid)])
 			rmaxstrs[num_els] = pp.rmaxstr
+			rmaxs[num_els] = pp.rmax
 			ls = np.append(ls, pp.ls)
 			wgrids = np.append(wgrids, pp.grid)
 			pgrids = np.append(pgrids, pp.projgrid)
@@ -416,7 +419,7 @@ class Wavefunction:
 		projector_list = self.projector.get_projector_list(num_els, numpy_to_cint(clabels),
 			numpy_to_cint(ls), numpy_to_cdouble(pgrids), numpy_to_cdouble(wgrids),
 			numpy_to_cdouble(projectors), numpy_to_cdouble(aewaves), numpy_to_cdouble(pswaves),
-			rmaxstrs)
+			numpy_to_cdouble(rmaxs))
 		selfnums = np.array([labels[el(s)] for s in self.structure], dtype=np.int32)
 		basisnums = np.array([labels[el(s)] for s in basis.structure], dtype=np.int32)
 		selfcoords = np.array([], np.float64)

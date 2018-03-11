@@ -17,7 +17,7 @@
 #define PI 3.14159265358979323846
 
 ppot_t* get_projector_list(int num_els, int* labels, int* ls, double* proj_grids, double* wave_grids,
-	double* projectors, double* aewaves, double* pswaves, char** rmaxs) {
+	double* projectors, double* aewaves, double* pswaves, double* rmaxs) {
 
 	setbuf(stdout,NULL);	
 	ppot_t* pps = (ppot_t*) malloc(num_els * sizeof(ppot_t));
@@ -29,7 +29,8 @@ ppot_t* get_projector_list(int num_els, int* labels, int* ls, double* proj_grids
 	int l_num = 0;
 	for (int i = 0; i < num_els; i++) {
 		pps[i].num_projs = labels[4*i+1];
-		sscanf(rmaxs[i], "%lf", &(pps[i].rmax));
+		pps[i].rmax = rmaxs[i];
+		//sscanf(rmaxs[i], "%lf", &(pps[i].rmax));
 		pps[i].proj_gridsize = labels[4*i+2];
 		pps[i].wave_gridsize = labels[4*i+3];
 		printf("vals %d %d %d\n", pps[i].num_projs, pps[i].proj_gridsize, pps[i].wave_gridsize);

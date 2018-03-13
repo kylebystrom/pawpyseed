@@ -4,11 +4,18 @@
 #include <math.h>
 #include <omp.h>
 #include <time.h>
-#include <mkl.h>
-#include <mkl_types.h>
 #include "utils.h"
 #include "projector.h"
+#ifdef FFT_H
+#include <mkl.h>
+#include <mkl_types.h>
 #include "fft.h"
+#define fft_complex16 MKL_Complex16
+#else
+#include <gsl/gsl_complex_fft.h>
+#include "gsl_fft.h"
+#define fft_complex16 double
+#endif
 #include "quadrature.h"
 #include "radial.h"
 #include "sbt.h"
@@ -197,7 +204,7 @@ real_proj_site_t* projector_values(int num_sites, int* labels, double* coords,
 	return sites;
 }
 
-void onto_projector_helper(band_t* band, MKL_Complex16* x, real_proj_site_t* sites,
+void onto_projector_helper(band_t* band, fft_complex* x, real_proj_site_t* sites,
 	int num_sites, int* labels, double* lattice, double* reclattice, double* kpt, ppot_t* pps, int* fftg) {
 
 	double dv = determinant(lattice) / fftg[0] / fftg[1] / fftg[2];
@@ -239,11 +246,9 @@ void onto_projector_helper(band_t* band, MKL_Complex16* x, real_proj_site_t* sit
 			for (int i = 0; i < num_indices; i++) {
 				index = indices[i];
 				kdotr = dot(kpt_cart, sites[s].projs[p].paths+i*3);
-				total += conj(values[i]) * (x[index].real + I*x[index].imag)
-							* dv * cexp(I * kdotr);
+				total += fft_mult(index, x, conj(values[i]) * dv * cexp(I * kdotr));
 			}
 			projections[s].overlaps[p] = total;
-			//printf("site %d, proj %d %lf %lf\n", s,p,creal(total),cimag(total));
 		}
 	}
 }
@@ -256,7 +261,7 @@ void onto_projector(kpoint_t* kpt, int band_num, real_proj_site_t* sites, int nu
 	float complex* Cs = kpt->bands[band_num]->Cs;
 	int num_waves = kpt->num_waves;
 	
-	MKL_Complex16* x = (MKL_Complex16*) mkl_calloc(fftg[0]*fftg[1]*fftg[2], sizeof(MKL_Complex16), 64);
+	fft_complex* x = (fft_complex*) mkl_calloc(fftg[0]*fftg[1]*fftg[2], sizeof(fft_complex), 64);
 	CHECK_ALLOCATION(x);
 	//printf("integrating params %e %e %e %e %e\n", dv, inv_sqrt_vol, kmins[0], kmins[1], kmins[2]);
 	//printf("determinant %lf\n", determinant(lattice));

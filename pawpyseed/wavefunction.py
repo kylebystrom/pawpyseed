@@ -100,7 +100,7 @@ class Pseudopotential:
 			nonlocalvals, projs = lst[0], lst[1:]
 			self.rmaxstr = c_char_p()
 			self.rmaxstr.value = nonlocalvals.split()[2].encode('utf-8')
-			self.rmax = make_nums(nonlocalvals.split()[2])[0]
+			self.rmax = self.make_nums(nonlocalvals.split()[2])[0]
 			nonlocalvals = self.make_nums(nonlocalvals)
 			l = nonlocalvals[0]
 			count = nonlocalvals[1]
@@ -114,7 +114,7 @@ class Pseudopotential:
 		settingstr, projgridstr = settingstr.split("STEP   =")
 		self.ndata = int(settingstr.split()[-1])
 		projgridstr = projgridstr.split("END")[0]
-		#self.projgrid = self.make_nums(projgridstr)
+		self.projgrid = self.make_nums(projgridstr)
 		self.step = (self.projgrid[0], self.projgrid[1])
 
 		self.projgrid = np.linspace(0,rmax/1.88973,self.ndata,False,dtype=np.float64)
@@ -402,7 +402,7 @@ class Wavefunction:
 			pp = pps[num]
 			clabels = np.append(clabels, [num, len(pp.ls), pp.ndata, len(pp.grid)])
 			rmaxstrs[num_els] = pp.rmaxstr
-			rmaxs[num_els] = pp.rmax
+			rmaxs = np.append(rmaxs, pp.rmax)
 			ls = np.append(ls, pp.ls)
 			wgrids = np.append(wgrids, pp.grid)
 			pgrids = np.append(pgrids, pp.projgrid)

@@ -3,15 +3,13 @@
 #include <mkl.h>
 #include <mkl_types.h>
 
+#define fft_complex MKL_Complex16
+
 void trilinear_interpolate_values(MKL_Complex16* x, double* frac, int* fftg, double complex* values);
 
-MKL_Complex16* fft_calloc(int num_items, int item_size) {
-	return (MKL_Complex16*) mkl_calloc(num_items, item_size, 64);
-}
+MKL_Complex16* fft_calloc(int num_items, int item_size);
 
-double complex* fft_mult(int i, MKL_Complex16* x, double complex y) {
-	return (x[i].real + I * x[i].imag) * y;
-}
+double complex fft_mult(int i, MKL_Complex16* x, double complex y);
 
 void fft3d(MKL_Complex16* x, int* G_bounds, double* lattice,
 	double* kpt, int* Gs, float complex* Cs, int num_waves, int* fftg);

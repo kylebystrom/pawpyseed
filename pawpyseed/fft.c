@@ -10,6 +10,7 @@
 #include "fft.h"
 
 #define PI 3.14159265359
+#define fft_complex MKL_Complex16
 
 void trilinear_interpolate_values(MKL_Complex16* x, double* frac, int* fftg, double complex* values) {
 	//values: c000, c001, c010, c011, c100, c101, c110, c111
@@ -83,3 +84,12 @@ void fft3d(MKL_Complex16* x, int* G_bounds, double* lattice,
 	DftiFreeDescriptor(&handle);
 	//printf("total %lf\n",total);
 }
+
+MKL_Complex16* fft_calloc(int num_items, int item_size) {
+        return (MKL_Complex16*) mkl_calloc(num_items, item_size, 64);
+}
+
+double complex fft_mult(int i, MKL_Complex16* x, double complex y) {
+        return (x[i].real + I * x[i].imag) * y;
+}
+

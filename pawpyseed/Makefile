@@ -9,10 +9,10 @@ ICC_OBJ = utils.o radial.o sbt.o reader.o quadrature.o fft.o pseudoprojector.o p
 GCC_LIBS = 
 GCC_INCS = 
 
-projector: $(ICC_SRC)
+pawpy: $(ICC_SRC)
 	rm -f $(PWD)/pawpy.so
-	icc -shared -c $@ $^ $(ICC_FLAGS) $(ICC_INCS) $(ICC_LIBS)
-	icc -shared -o pawpy.so *.o $(ICC_FLAGS) $(ICC_INCS) $(ICC_LIBS)
+	icc -shared -c $^ $(ICC_FLAGS) $(ICC_INCS) $(ICC_LIBS)
+	icc -shared -o $@ *.o $(ICC_FLAGS) $(ICC_INCS) $(ICC_LIBS)
 
 projector_gcc:
 	rm -f $(PWD)/pawpy.so

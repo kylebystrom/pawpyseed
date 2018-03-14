@@ -8,18 +8,17 @@ ICC_OBJ = utils.o radial.o sbt.o reader.o quadrature.o fft.o pseudoprojector.o p
 
 GCC_LIBS = 
 GCC_INCS = 
+GCC_FLAGS = -std=c11 -fopenmp -lpthread -ldl -lm -O3 -fPIC -Wall
 
 pawpy: $(ICC_SRC)
 	rm -f $(PWD)/pawpy.so
 	icc -shared -c $^ $(ICC_FLAGS) $(ICC_INCS) $(ICC_LIBS)
 	icc -shared -o $@ *.o $(ICC_FLAGS) $(ICC_INCS) $(ICC_LIBS)
 
-projector_gcc:
-	rm -f $(PWD)/pawpy.so
-	gcc -shared -o pawpy.so pseudoprojector.c projector.c gsl_fft.c quadrature.c \
-		reader.c utils.c radial.c tests.c sbt.c \
-		-std=c11 -fopenmp \
-		-lpthread -ldl -lm -O3 -fPIC -Wall
+pawpy_gcc: $(ICC_SRC)
+	rm -f $(PWD)/pawpy_gcc.so
+	gcc -shared -c $^ $(GCC_FLAGS) $(GCC_INCS) $(GCC_LIBS)
+	gcc -shared -o $@ *.o $(GCC_FLAGS) $(GCC_INCS) $(GCC_LIBS)
 
 lite:
 	rm -f $(PWD)/pawpy.so

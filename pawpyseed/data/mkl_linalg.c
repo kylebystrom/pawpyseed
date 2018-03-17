@@ -7,7 +7,7 @@
 #include <mkl.h>
 #include <mkl_types.h>
 #include "utils.h"
-#include "fft.h"
+#include "linalg.h"
 
 #define PI 3.14159265359
 #define fft_complex MKL_Complex16

@@ -10,15 +10,19 @@ GCC_LIBS =
 GCC_INCS = 
 GCC_FLAGS = -std=c11 -fopenmp -lpthread -ldl -lm -O3 -fPIC -Wall
 
-pawpy: $(ICC_SRC)
+pawpy_icc: $(ICC_SRC)
 	rm -f $(PWD)/pawpy.so
+	cp mkl_linalg.h linalg.h
+	cp mkl_linalg.c linalg.c
 	icc -shared -c $^ $(ICC_FLAGS) $(ICC_INCS) $(ICC_LIBS)
-	icc -shared -o $@ *.o $(ICC_FLAGS) $(ICC_INCS) $(ICC_LIBS)
+	icc -shared -o pawpy.so *.o $(ICC_FLAGS) $(ICC_INCS) $(ICC_LIBS)
 
 pawpy_gcc: $(ICC_SRC)
 	rm -f $(PWD)/pawpy_gcc.so
+	cp gsl_linalg.h linalg.h
+	cp gsl_linalg.c linalg.c
 	gcc -shared -c $^ $(GCC_FLAGS) $(GCC_INCS) $(GCC_LIBS)
-	gcc -shared -o $@ *.o $(GCC_FLAGS) $(GCC_INCS) $(GCC_LIBS)
+	gcc -shared -o pawpy.so *.o $(GCC_FLAGS) $(GCC_INCS) $(GCC_LIBS)
 
 lite:
 	rm -f $(PWD)/pawpy.so

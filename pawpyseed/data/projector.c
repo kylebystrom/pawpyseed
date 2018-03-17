@@ -6,12 +6,9 @@
 #include <time.h>
 #include "utils.h"
 #include "projector.h"
-#include "fft.h"
-//#else
-//#include <gsl/gsl_complex_fft.h>
-//#include "gsl_fft.h"
-//#define fft_complex16 double
-//#endif
+#include <mkl.h>
+#include <mkl_types.h>
+#include "linalg.h"
 #include "quadrature.h"
 #include "radial.h"
 #include "sbt.h"

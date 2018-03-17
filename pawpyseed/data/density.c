@@ -8,7 +8,7 @@
 #include <mkl_types.h>
 #include "utils.h"
 #include "projector.h"
-#include "fft.h"
+#include "linalg.h"
 #include "quadrature.h"
 
 #define PI 3.14159265359

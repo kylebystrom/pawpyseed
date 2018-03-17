@@ -6,13 +6,7 @@ VASP for the onto_projector and projector_values evaluation.
 
 #ifndef PROJECTOR_H
 #define PROJECTOR_H
-#include "fft.h"
-//#include <mkl.h>
-//#include <mkl_types.h>
-//#define fft_complex16 MKL_Complex16
-//#else
-//#include <gsl/gsl_complex_fft.h>
-//#define fft_complex16 double
+#include "linalg.h"
 
 /**
 Returns a point to a list of ppot_t objects, one for each element in a POTCAR

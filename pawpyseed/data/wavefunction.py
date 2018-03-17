@@ -4,7 +4,7 @@ and storing and analyzing wavefunction data.
 """
 
 from pymatgen.io.vasp.inputs import Potcar, Poscar
-from pymatgen.io.vasp.outputs import Vasprun
+from pymatgen.io.vasp.outputs import Vasprun, Outcar
 from pymatgen.core.structure import Structure
 import numpy as np
 from ctypes import *
@@ -193,7 +193,7 @@ class Wavefunction:
 		projector: ctypes object for interfacing with C code
 	"""
 
-	def __init__(self, struct, pwf, cr, dim):
+	def __init__(self, struct, pwf, cr, outcar):
 		"""
 		Arguments:
 			struct (pymatgen.core.Structure): structure that the wavefunction describes
@@ -207,10 +207,11 @@ class Wavefunction:
 		self.pwf = pwf
 		self.cr = cr
 		self.projector = PAWC
-		self.dim = np.array(dim);
+		self.dim = outcar.ngf;
 		self.projector_list = None
 
-	def from_files(self, struct="CONTCAR", pwf="WAVECAR", cr="POTCAR", vr="vasprun.xml"):
+	@staticmethod
+	def from_files(self, struct="CONTCAR", pwf="WAVECAR", cr="POTCAR", vr="vasprun.xml", outcar="OUTCAR"):
 		"""
 		Construct a Wavefunction object from file paths.
 		Arguments:
@@ -220,7 +221,21 @@ class Wavefunction:
 		Returns:
 			Wavefunction object
 		"""
-		return Wavefunction(Poscar.from_file(struct), PseudoWavefunction(pwf, vr), Potcar.from_file(cr))
+		return Wavefunction(Poscar.from_file(struct),
+			PseudoWavefunction(pwf, vr),
+			CoreRegion(Potcar.from_file(cr)),
+			Outcar(outcar))
+
+	@staticmethod
+	def from_directory(path):
+		"""
+		Assumes VASP output has the default filenames and is located
+		in the directory specificed by path.
+		"""
+		filepaths = []
+		for d in ["CONTCAR", "WAVECAR", "POTCAR", "vasprun.xml", "OUTCAR"]:
+			filepaths.append(os.path.join(path, d))
+		return Wavefunction.from_files(*filepaths)
 
 	def make_site_lists(self, basis):
 		"""
@@ -521,5 +536,4 @@ class Wavefunction:
 		self.projector.free_pswf(c_void_p(self.pwf.wf_ptr))
 		if self.projector_list != None:
 			self.projector.free_ppot_list(c_void_p(self.projector_list), len(self.cr.pps))
-
 

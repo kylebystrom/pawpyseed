@@ -9,13 +9,7 @@
 #ifdef FFT_H
 #include <mkl.h>
 #include <mkl_types.h>
-#include "fft.h"
-#define fft_complex16 MKL_Complex16
-#else
-#include <gsl/gsl_complex_fft.h>
-#include "gsl_fft.h"
-#define fft_complex16 double
-#endif
+#include "linalg.h"
 #include "quadrature.h"
 #include "radial.h"
 #include "sbt.h"

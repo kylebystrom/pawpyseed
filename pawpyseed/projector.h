@@ -6,14 +6,13 @@ VASP for the onto_projector and projector_values evaluation.
 
 #ifndef PROJECTOR_H
 #define PROJECTOR_H
-#ifdef FFT_H
-#include <mkl.h>
-#include <mkl_types.h>
-#define fft_complex16 MKL_Complex16
-#else
-#include <gsl/gsl_complex_fft.h>
-#define fft_complex16 double
-#endif
+#include "fft.h"
+//#include <mkl.h>
+//#include <mkl_types.h>
+//#define fft_complex16 MKL_Complex16
+//#else
+//#include <gsl/gsl_complex_fft.h>
+//#define fft_complex16 double
 
 /**
 Returns a point to a list of ppot_t objects, one for each element in a POTCAR
@@ -36,7 +35,7 @@ Helper function for onto_projector, which performs the FFT of the wavefunction
 into real space and calculates from <p_i|psit_nk> from the grid points found
 in projector_values.
 */
-void onto_projector_helper(band_t* band, MKL_Complex16* x, real_proj_site_t* sites,
+void onto_projector_helper(band_t* band, fft_complex* x, real_proj_site_t* sites,
 	int num_sites, int* labels, double* lattice, double* reclattice, double* kpt, ppot_t* pps, int* fftg);
 
 /**

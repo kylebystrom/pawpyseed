@@ -5,7 +5,7 @@
 #include "tests.h"
 #include "reader.h"
 #include "utils.h"
-#include "fft.h"
+#include "linalg.h"
 #include "projector.h"
 #include "sbt.h"
 #include <mkl.h>

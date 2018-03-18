@@ -1,3 +1,5 @@
+# coding: utf-8
+
 """
 Base class containing Python classes for parsing files
 and storing and analyzing wavefunction data.
@@ -8,7 +10,7 @@ from pymatgen.io.vasp.outputs import Vasprun, Outcar
 from pymatgen.core.structure import Structure
 import numpy as np
 from ctypes import *
-from pawpyseed.utils import *
+from pawpyseed.data.utils import *
 import os
 import numpy as np
 import json
@@ -200,6 +202,7 @@ class Wavefunction:
 			pwf (PseudoWavefunction): Pseudowavefunction componenet
 			cr (CoreRegion): Contains the pseudopotentials, with projectors and
 				partials waves, for the structure
+			outcar (pymatgen.io.vasp.outputs.Outcar): Outcar object for reading ngf
 		Returns:
 			Wavefunction object
 		"""
@@ -207,11 +210,12 @@ class Wavefunction:
 		self.pwf = pwf
 		self.cr = cr
 		self.projector = PAWC
-		self.dim = outcar.ngf;
+		self.dim = outcar.ngf
+		self.dim = np.array(self.dim).astype(np.int32) / 2
 		self.projector_list = None
 
 	@staticmethod
-	def from_files(self, struct="CONTCAR", pwf="WAVECAR", cr="POTCAR", vr="vasprun.xml", outcar="OUTCAR"):
+	def from_files(struct="CONTCAR", pwf="WAVECAR", cr="POTCAR", vr="vasprun.xml", outcar="OUTCAR"):
 		"""
 		Construct a Wavefunction object from file paths.
 		Arguments:
@@ -221,7 +225,7 @@ class Wavefunction:
 		Returns:
 			Wavefunction object
 		"""
-		return Wavefunction(Poscar.from_file(struct),
+		return Wavefunction(Poscar.from_file(struct).structure,
 			PseudoWavefunction(pwf, vr),
 			CoreRegion(Potcar.from_file(cr)),
 			Outcar(outcar))
@@ -234,7 +238,7 @@ class Wavefunction:
 		"""
 		filepaths = []
 		for d in ["CONTCAR", "WAVECAR", "POTCAR", "vasprun.xml", "OUTCAR"]:
-			filepaths.append(os.path.join(path, d))
+			filepaths.append(str(os.path.join(path, d)))
 		return Wavefunction.from_files(*filepaths)
 
 	def make_site_lists(self, basis):

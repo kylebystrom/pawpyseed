@@ -296,7 +296,10 @@ class Wavefunction:
 			will be projected.
 		"""
 
-		projector_list, selfnums, selfcoords, basisnums, basiscoords = self.make_c_projectors(basis)
+		if not basis.projection_data:
+			basis.projection_data = self.make_c_projectors(basis)
+		projector_list, selfnums, selfcoords, basisnums, basiscoords = basis.projection_data
+
 		print(selfnums, selfcoords, basisnums, basiscoords)
 		print(hex(projector_list), hex(self.pwf.wf_ptr))
 		sys.stdout.flush()
@@ -308,7 +311,6 @@ class Wavefunction:
 			c_void_p(projector_list), len(self.cr.pps),
 			len(self.structure), numpy_to_cint(self.dim), numpy_to_cint(selfnums),
 			numpy_to_cdouble(selfcoords))
-		self.projection_data = [projector_list, selfnums, selfcoords, basisnums, basiscoords]
 		M_R, M_S, N_R, N_S, N_RS = self.make_site_lists(basis)
 		num_N_RS = len(N_RS)
 		if num_N_RS > 0:
@@ -349,7 +351,7 @@ class Wavefunction:
 		res = cdouble_to_numpy(res, 2*nband*nwk*nspin)
 		print("datsa", nband, nwk, nspin)
 		sys.stdout.flush()
-		projector_list, selfnums, selfcoords, basisnums, basiscoords = self.projection_data
+		projector_list, selfnums, selfcoords, basisnums, basiscoords = basis.projection_data
 		M_R, M_S, N_R, N_S, N_RS_R, N_RS_S = self.site_cat
 		
 		ct = self.projector.compensation_terms(band_num, c_void_p(self.pwf.wf_ptr), c_void_p(basis.pwf.wf_ptr), c_void_p(projector_list), 
@@ -369,6 +371,73 @@ class Wavefunction:
 		ct = cdouble_to_numpy(ct, 2*nband*nwk*nspin)
 		res += ct
 		return res[::2] + 1j * res[1::2]
+
+	def get_c_projectors_from_pps(self, pps):
+
+		clabels = np.array([], np.int32)
+		ls = np.array([], np.int32)
+		projectors = np.array([], np.float64)
+		aewaves = np.array([], np.float64)
+		pswaves = np.array([], np.float64)
+		wgrids = np.array([], np.float64)
+		pgrids = np.array([], np.float64)
+		augs = np.array([], np.float64)
+		rmaxstrs = (c_char_p * len(pps))()
+		rmaxs = np.array([], np.float64)
+		num_els = 0
+
+		for num in pps:
+			pp = pps[num]
+			clabels = np.append(clabels, [num, len(pp.ls), pp.ndata, len(pp.grid)])
+			rmaxstrs[num_els] = pp.rmaxstr
+			rmaxs = np.append(rmaxs, pp.rmax)
+			ls = np.append(ls, pp.ls)
+			wgrids = np.append(wgrids, pp.grid)
+			pgrids = np.append(pgrids, pp.projgrid)
+			augs = np.append(augs, pp.augs)
+			num_els += 1
+			for i in range(len(pp.ls)):
+				proj = pp.realprojs[i]
+				aepw = pp.aewaves[i]
+				pspw = pp.pswaves[i]
+				projectors = np.append(projectors, proj)
+				aewaves = np.append(aewaves, aepw)
+				pswaves = np.append(pswaves, pspw)
+
+		return self.projector.get_projector_list(num_els, numpy_to_cint(clabels),
+			numpy_to_cint(ls), numpy_to_cdouble(pgrids), numpy_to_cdouble(wgrids),
+			numpy_to_cdouble(projectors), numpy_to_cdouble(aewaves), numpy_to_cdouble(pswaves),
+			numpy_to_cdouble(rmaxs))
+
+	@staticmethod
+	def setup_multiple_projections(basis, wf_list):
+
+		pps = {}
+		labels = {}
+		label = 0
+		for wf in [basis] + wf_list:
+			for e in wf.cr.pps:
+				if not e in labels:
+					pps[label] = wf.cr.pps[e]
+					labels[e] = label
+					label = label + 1
+
+		projector_list = self.get_c_projectors_from_pps(pps)
+
+		for wf in wf_list:
+
+			selfnums = np.array([labels[el(s)] for s in wf.structure], dtype=np.int32)
+			basisnums = np.array([labels[el(s)] for s in basis.structure], dtype=np.int32)
+			selfcoords = np.array([], np.float64)
+			basiscoords = np.array([], np.float64)
+
+			for s in wf.structure:
+				selfcoords = np.append(selfcoords, s.frac_coords)
+			for s in basis.structure:
+				basiscoords = np.append(basiscoords, s.frac_coords)
+			basis.projection_data = [projector_list, selfnums, selfcoords, basisnums, basiscoords]
+
+			wf.setup_projection(basis)
 
 	def make_c_projectors(self, basis=None):
 		"""
@@ -405,40 +474,9 @@ class Wavefunction:
 					pps[label] = basis.cr.pps[e]
 					labels[e] = label
 					label += 1
-		clabels = np.array([], np.int32)
-		ls = np.array([], np.int32)
-		projectors = np.array([], np.float64)
-		aewaves = np.array([], np.float64)
-		pswaves = np.array([], np.float64)
-		wgrids = np.array([], np.float64)
-		pgrids = np.array([], np.float64)
-		augs = np.array([], np.float64)
-		rmaxstrs = (c_char_p * len(pps))()
-		rmaxs = np.array([], np.float64)
-		num_els = 0
+		
+		projector_list = self.get_c_projectors_from_pps(pps)
 
-		for num in pps:
-			pp = pps[num]
-			clabels = np.append(clabels, [num, len(pp.ls), pp.ndata, len(pp.grid)])
-			rmaxstrs[num_els] = pp.rmaxstr
-			rmaxs = np.append(rmaxs, pp.rmax)
-			ls = np.append(ls, pp.ls)
-			wgrids = np.append(wgrids, pp.grid)
-			pgrids = np.append(pgrids, pp.projgrid)
-			augs = np.append(augs, pp.augs)
-			num_els += 1
-			for i in range(len(pp.ls)):
-				proj = pp.realprojs[i]
-				aepw = pp.aewaves[i]
-				pspw = pp.pswaves[i]
-				projectors = np.append(projectors, proj)
-				aewaves = np.append(aewaves, aepw)
-				pswaves = np.append(pswaves, pspw)
-
-		projector_list = self.projector.get_projector_list(num_els, numpy_to_cint(clabels),
-			numpy_to_cint(ls), numpy_to_cdouble(pgrids), numpy_to_cdouble(wgrids),
-			numpy_to_cdouble(projectors), numpy_to_cdouble(aewaves), numpy_to_cdouble(pswaves),
-			numpy_to_cdouble(rmaxs))
 		selfnums = np.array([labels[el(s)] for s in self.structure], dtype=np.int32)
 		basisnums = np.array([labels[el(s)] for s in basis.structure], dtype=np.int32)
 		selfcoords = np.array([], np.float64)

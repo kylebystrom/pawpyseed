@@ -285,7 +285,7 @@ class Wavefunction:
 					N_RS.append((i,j))
 		return M_R, M_S, N_R, N_S, N_RS
 
-	def setup_projection(self, basis):
+	def setup_projection(self, basis, setup_basis=True):
 		"""
 		Evaluates projectors <p_i|psi>, as well
 		as <(phi-phit)|psi> and <(phi_i-phit_i)|(phi_j-phit_j)>,
@@ -296,17 +296,24 @@ class Wavefunction:
 			will be projected.
 		"""
 
-		if not basis.projection_data:
-			basis.projection_data = self.make_c_projectors(basis)
-		projector_list, selfnums, selfcoords, basisnums, basiscoords = basis.projection_data
+		#if not basis.projection_data:
+		#	basis.projection_data = self.make_c_projectors(basis)
+		#projector_list, selfnums, selfcoords, basisnums, basiscoords = basis.projection_data
+		projector_list = basis.projector_list
+		basisnums = basis.nums
+		basiscoords = basis.coords
+		selfnums = self.nums
+		selfcoords = self.coords
 
 		print(selfnums, selfcoords, basisnums, basiscoords)
 		print(hex(projector_list), hex(self.pwf.wf_ptr))
 		sys.stdout.flush()
-		self.projector.setup_projections(c_void_p(basis.pwf.wf_ptr),
-			c_void_p(projector_list), len(self.cr.pps),
-			len(basis.structure), numpy_to_cint(self.dim), numpy_to_cint(basisnums),
-			numpy_to_cdouble(basiscoords))
+		
+		if setup_basis:
+			self.projector.setup_projections(c_void_p(basis.pwf.wf_ptr),
+				c_void_p(projector_list), len(self.cr.pps),
+				len(basis.structure), numpy_to_cint(self.dim), numpy_to_cint(basisnums),
+				numpy_to_cdouble(basiscoords))
 		self.projector.setup_projections_copy_rayleigh(c_void_p(self.pwf.wf_ptr), c_void_p(basis.pwf.wf_ptr),
 			c_void_p(projector_list), len(self.cr.pps),
 			len(self.structure), numpy_to_cint(self.dim), numpy_to_cint(selfnums),
@@ -351,7 +358,13 @@ class Wavefunction:
 		res = cdouble_to_numpy(res, 2*nband*nwk*nspin)
 		print("datsa", nband, nwk, nspin)
 		sys.stdout.flush()
-		projector_list, selfnums, selfcoords, basisnums, basiscoords = basis.projection_data
+		#projector_list, selfnums, selfcoords, basisnums, basiscoords = basis.projection_data
+		projector_list = basis.projector_list
+		basisnums = basis.nums
+		basiscoords = basis.coords
+		selfnums = self.nums
+		selfcoords = self.coords
+
 		M_R, M_S, N_R, N_S, N_RS_R, N_RS_S = self.site_cat
 		
 		ct = self.projector.compensation_terms(band_num, c_void_p(self.pwf.wf_ptr), c_void_p(basis.pwf.wf_ptr), c_void_p(projector_list), 
@@ -422,22 +435,30 @@ class Wavefunction:
 					labels[e] = label
 					label = label + 1
 
-		projector_list = self.get_c_projectors_from_pps(pps)
+		basis.projector_list = basis.get_c_projectors_from_pps(pps)
+		basisnums = np.array([labels[el(s)] for s in basis.structure], dtype=np.int32)
+		basiscoords = np.array([], np.float64)
+		projector_list = basis.projector_list
+	
+		basis.projector.setup_projections(c_void_p(basis.pwf.wf_ptr),
+			c_void_p(projector_list), label,
+			len(basis.structure), numpy_to_cint(basis.dim), numpy_to_cint(basisnums),
+			numpy_to_cdouble(basiscoords))
 
 		for wf in wf_list:
 
 			selfnums = np.array([labels[el(s)] for s in wf.structure], dtype=np.int32)
-			basisnums = np.array([labels[el(s)] for s in basis.structure], dtype=np.int32)
 			selfcoords = np.array([], np.float64)
-			basiscoords = np.array([], np.float64)
 
 			for s in wf.structure:
 				selfcoords = np.append(selfcoords, s.frac_coords)
 			for s in basis.structure:
 				basiscoords = np.append(basiscoords, s.frac_coords)
-			basis.projection_data = [projector_list, selfnums, selfcoords, basisnums, basiscoords]
-
-			wf.setup_projection(basis)
+			basis.nums = basisnums
+			basis.coords = basiscoords
+			wf.nums = selfnums
+			wf.coords = selfcoords
+			
 
 	def make_c_projectors(self, basis=None):
 		"""

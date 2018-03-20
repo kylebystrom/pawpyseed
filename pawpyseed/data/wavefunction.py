@@ -485,6 +485,8 @@ class Wavefunction:
 					errcount += 1
 				else:
 					raise PAWpyError('Unable to setup wavefunction in directory %s' % wf_dir)
+
+		basis.free_all()
 			
 
 	def make_c_projectors(self, basis=None):

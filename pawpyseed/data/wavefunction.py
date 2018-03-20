@@ -423,13 +423,19 @@ class Wavefunction:
 			numpy_to_cdouble(rmaxs))
 
 	@staticmethod
-	def setup_multiple_projections(basis, wf_list):
+	def setup_multiple_projections(basis_dir, wf_dirs, ignore_errors = False):
+
+		basis = Wavefunction.from_directory(basis_dir)
+		crs = [basis.cr] + [Potcar.from_file(os.path.join(wf_dir, 'POTCAR')) \
+			for wf_dir in wf_dirs]
+
+			Poscar.from_file(struct).structure
 
 		pps = {}
 		labels = {}
 		label = 0
-		for wf in [basis] + wf_list:
-			for e in wf.cr.pps:
+		for cr in crs:
+			for e in cr.pps:
 				if not e in labels:
 					pps[label] = wf.cr.pps[e]
 					labels[e] = label
@@ -445,19 +451,40 @@ class Wavefunction:
 			len(basis.structure), numpy_to_cint(basis.dim), numpy_to_cint(basisnums),
 			numpy_to_cdouble(basiscoords))
 
-		for wf in wf_list:
+		for wf_dir, cr in zip(wf_dirs, crs[1:]):
 
-			selfnums = np.array([labels[el(s)] for s in wf.structure], dtype=np.int32)
-			selfcoords = np.array([], np.float64)
+			try:
+				files = {}
+				for f in ['CONTCAR', 'OUTCAR', 'vasprun.xml', 'WAVECAR']:
+					files[f] = os.path.join(wf_dir, f)
+				struct = Poscar.from_file(files['CONTCAR'])
+				pwf = PseudoWavefunction(files['WAVECAR'], files['vasprun.xml'])
+				outcar = Outcar(files['OUTCAR'])
 
-			for s in wf.structure:
-				selfcoords = np.append(selfcoords, s.frac_coords)
-			for s in basis.structure:
-				basiscoords = np.append(basiscoords, s.frac_coords)
-			basis.nums = basisnums
-			basis.coords = basiscoords
-			wf.nums = selfnums
-			wf.coords = selfcoords
+				wf = Wavefunction(struct, pwf, cr, outcar)
+
+				selfnums = np.array([labels[el(s)] for s in wf.structure], dtype=np.int32)
+				selfcoords = np.array([], np.float64)
+
+				for s in wf.structure:
+					selfcoords = np.append(selfcoords, s.frac_coords)
+				for s in basis.structure:
+					basiscoords = np.append(basiscoords, s.frac_coords)
+				basis.nums = basisnums
+				basis.coords = basiscoords
+				wf.nums = selfnums
+				wf.coords = selfcoords
+
+				wf.setup_projection(basis, False)
+
+				yield wf_dir, basis, wf
+
+				wf.free_all()
+			except:
+				if ignore_errors:
+					errcount += 1
+				else:
+					raise PAWpyError('Unable to setup wavefunction in directory %s' % wf_dir)
 			
 
 	def make_c_projectors(self, basis=None):

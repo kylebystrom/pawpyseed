@@ -18,13 +18,15 @@ setup(name='pawpyseed',
 	author='Kyle Bystrom',
 	author_email='kylebystrom@berkeley.edu',
 	packages=['pawpyseed', 'pawpyseed.data', 'pawpyseed.analysis'],
-	package_data={'pawpyseed': cfiles+hfiles+['Makefile', 'pawpy.so']},
-	scripts=['scripts/pawpy_example.py']
+	package_data={'pawpyseed.data': cfiles+hfiles+['Makefile', 'pawpy.so']},
+#	scripts=['scripts/pawpy_example.py']
 )
 
 if len(sys.argv) > 1 and sys.argv[1] == 'build':
 	currdir = os.getcwd()
-	os.chdir(os.path.join(currdir,'build/lib/pawpyseed/'))
+	os.chdir(os.path.join(currdir,'build/lib/pawpyseed/data'))
+	shutil.copyfile('mkl_linalg.c', 'linalg.c')
+	shutil.copyfile('mkl_linalg.h', 'linalg.h')
 	subprocess.call('make pawpy_icc'.split())
 	os.chdir(currdir)
 

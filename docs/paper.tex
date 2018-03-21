@@ -88,16 +88,17 @@ Equation \ref{eq:finp} is derived in Appendix A.
 \hline
 Computational Task & $\Theta$ & Frequency*\\
 \hline
-$\widetilde{O}$ & $BKSW$ & per band\\
-$O_M$ & $BKSNP$ & per band\\
-$O_R$ and $O_S$ & $BKSNP$ & per band\\
-$O_N$ & $BKSNP$ & per band\\
-$\braket{\widetilde{p}_i|\widetilde{\psi}_{n\mathbf{k}}}$ & $BKSF\mathrm{log}(F)$ & per structure\\
+$\widetilde{O}$ & $BKSW \sim n^2$ & per band\\
+$O_M$ & $BKSNP \sim n^2$ & per band\\
+$O_R$ and $O_S$ & $BKSNP \sim n^2$ & per band\\
+$O_N$ & $BKSNP \sim n^2$ & per band\\
+$\braket{\widetilde{p}_i|\widetilde{\psi}_{n\mathbf{k}}}$ & $BKSF\mathrm{log}(F)
+\sim n^2\mathrm{log}(n)$ & per structure\\
 $(\bra{\phi_i}-\bra{\widetilde{\phi}_i})
-\ket{\widetilde{\psi}_{n\mathbf{k}}}$ & $BKSNPW$ & per structure\\
-spherical Bessel transform partial waves & $NPG\mathrm{log}(G)$ & per structure pair\\
-project plane waves onto partial waves & $EPKW$ & per structure pair\\
-projections for overlapping aug spheres & $NPL$ & per structure pair\\
+\ket{\widetilde{\psi}_{n\mathbf{k}}}$ & $BKSNPW \sim n^3$ & per structure\\
+spherical Bessel transform partial waves & $NPG\mathrm{log}(G) \sim n$ & per structure pair\\
+project plane waves onto partial waves & $EPKW \sim n$ & per structure pair\\
+projections for overlapping aug spheres & $NPL \sim n$ & per structure pair\\
 \hline
 \end{tabular}
 
@@ -114,9 +115,11 @@ N & number of sites**\\
 P & number of projector functions\\
 S & number of spin states\\
 W & number of plane waves\\
+n & number of electrons (approximate scaling)
 \end{tabular}
 \caption{Runtime scaling functions for each component of the code and
-definitions for shorthand symbols to express runtime.
+definitions for shorthand symbols to express runtime. Approximate
+scales with the number of electrons are also shown.
 *The frequency refers to how often the routine is called. "Per band"
 indicates that the routine runs once every time a band from one structure
 is projected onto all the bands of a basis structure. "Per structure"
@@ -363,9 +366,10 @@ the following format.
 
 \begin{enumerate}
 	\item
-	Settings
+	\textbf{Settings}: The parameters used for the generation of the psuedopotentials,
+	as described thoroughly in VASP and pymatgen documentation.
 	\item
-	adsf
+	A bunch of stuff I still don't understand and which has no discernible grid.
 	\item
 	\textbf{Non local Part}: This section contains the \emph{non local projector functions}.
 	The first line after "Non local Part" gives the $l$ quantum number of the projector,
@@ -384,7 +388,7 @@ the following format.
 		$$p(\mathbf{r})=realspacepart(index)Y_l^m(\hat{\mathbf{r}})$$
 	\end{enumerate}
 	\item
-	PAW Radial Sets
+	\textbf{PAW Radial Sets}
 	\begin{enumerate}
 		\item
 		Augmentation charges

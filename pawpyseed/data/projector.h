@@ -6,14 +6,14 @@ VASP for the onto_projector and projector_values evaluation.
 
 #ifndef PROJECTOR_H
 #define PROJECTOR_H
-#include <mkl_types.h>
+#include "linalg.h"
 
 /**
 Returns a point to a list of ppot_t objects, one for each element in a POTCAR
 file. Called as a helper function by Wavefunction.make_c_projectors
 */
 ppot_t* get_projector_list(int num_els, int* labels, int* ls, double* proj_grids, double* wave_grids,
-	double* projectors, double* aewaves, double* pswaves, char** rmaxs);
+	double* projectors, double* aewaves, double* pswaves, double* rmaxs);
 
 /**
 Finds the coordinates on the FFT grid that fall within each projection sphere
@@ -29,7 +29,7 @@ Helper function for onto_projector, which performs the FFT of the wavefunction
 into real space and calculates from <p_i|psit_nk> from the grid points found
 in projector_values.
 */
-void onto_projector_helper(band_t* band, MKL_Complex16* x, real_proj_site_t* sites,
+void onto_projector_helper(band_t* band, fft_complex* x, real_proj_site_t* sites,
 	int num_sites, int* labels, double* lattice, double* reclattice, double* kpt, ppot_t* pps, int* fftg);
 
 /**

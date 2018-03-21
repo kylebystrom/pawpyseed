@@ -64,8 +64,12 @@ class Pseudopotential:
 		auguccstr, gridstr = gridstr.split("grid", 1)
 		gridstr, aepotstr = gridstr.split("aepotential", 1)
 		aepotstr, corechgstr = aepotstr.split("core charge-density", 1)
-		corechgstr, kenstr = corechgstr.split("kinetic energy-density", 1)
-		kenstr, pspotstr = kenstr.split("pspotential", 1)
+		try:
+			corechgstr, kenstr = corechgstr.split("kinetic energy-density", 1)
+			kenstr, pspotstr = kenstr.split("pspotential", 1)
+		except:
+			kenstr = "0 0"
+			corechgstr, pspotstr = corechgstr.split("pspotential", 1)
 		pspotstr, pscorechgstr = pspotstr.split("core charge-density (pseudized)", 1)
 		self.grid = self.make_nums(gridstr)
 		self.aepotential = self.make_nums(aepotstr)
@@ -87,8 +91,12 @@ class Pseudopotential:
 		topstr, projstrs = projstrs[0], projstrs[1:]
 		self.T = float(topstr[-22:-4])
 		topstr, atpschgstr = topstr[:-22].split("atomic pseudo charge-density", 1)
-		topstr, corechgstr = topstr.split("core charge-density (partial)", 1)
-		settingstr, localstr = topstr.split("local part", 1)
+		try:
+			topstr, corechgstr = topstr.split("core charge-density (partial)", 1)
+			settingstr, localstr = topstr.split("local part", 1)
+		except:
+			corechgstr = "0 0"
+			settingstr, localstr = topstr.split("local part", 1)
 		localstr, self.gradxc = localstr.split("gradient corrections used for XC", 1)
 		self.gradxc = int(self.gradxc)
 		self.localpart = self.make_nums(localstr)
@@ -305,17 +313,16 @@ class Wavefunction:
 		selfnums = self.nums
 		selfcoords = self.coords
 
-		print(selfnums, selfcoords, basisnums, basiscoords)
 		print(hex(projector_list), hex(self.pwf.wf_ptr))
 		sys.stdout.flush()
 		
 		if setup_basis:
 			self.projector.setup_projections(c_void_p(basis.pwf.wf_ptr),
-				c_void_p(projector_list), len(self.cr.pps),
+				c_void_p(projector_list), self.num_proj_els,
 				len(basis.structure), numpy_to_cint(self.dim), numpy_to_cint(basisnums),
 				numpy_to_cdouble(basiscoords))
 		self.projector.setup_projections_copy_rayleigh(c_void_p(self.pwf.wf_ptr), c_void_p(basis.pwf.wf_ptr),
-			c_void_p(projector_list), len(self.cr.pps),
+			c_void_p(projector_list), self.num_proj_els,
 			len(self.structure), numpy_to_cint(self.dim), numpy_to_cint(selfnums),
 			numpy_to_cdouble(selfcoords))
 		M_R, M_S, N_R, N_S, N_RS = self.make_site_lists(basis)
@@ -399,7 +406,8 @@ class Wavefunction:
 		rmaxs = np.array([], np.float64)
 		num_els = 0
 
-		for num in pps:
+		for num in sorted(pps.keys()):
+			print ("THIS IS THE NUM %d" % num)
 			pp = pps[num]
 			clabels = np.append(clabels, [num, len(pp.ls), pp.ndata, len(pp.grid)])
 			rmaxstrs[num_els] = pp.rmaxstr
@@ -417,6 +425,7 @@ class Wavefunction:
 				aewaves = np.append(aewaves, aepw)
 				pswaves = np.append(pswaves, pspw)
 
+		print (num_els, clabels, ls, pgrids, wgrids, rmaxs)
 		return self.projector.get_projector_list(num_els, numpy_to_cint(clabels),
 			numpy_to_cint(ls), numpy_to_cdouble(pgrids), numpy_to_cdouble(wgrids),
 			numpy_to_cdouble(projectors), numpy_to_cdouble(aewaves), numpy_to_cdouble(pswaves),
@@ -426,10 +435,8 @@ class Wavefunction:
 	def setup_multiple_projections(basis_dir, wf_dirs, ignore_errors = False):
 
 		basis = Wavefunction.from_directory(basis_dir)
-		crs = [basis.cr] + [Potcar.from_file(os.path.join(wf_dir, 'POTCAR')) \
+		crs = [basis.cr] + [CoreRegion(Potcar.from_file(os.path.join(wf_dir, 'POTCAR'))) \
 			for wf_dir in wf_dirs]
-
-			Poscar.from_file(struct).structure
 
 		pps = {}
 		labels = {}
@@ -437,15 +444,22 @@ class Wavefunction:
 		for cr in crs:
 			for e in cr.pps:
 				if not e in labels:
-					pps[label] = wf.cr.pps[e]
+					pps[label] = cr.pps[e]
 					labels[e] = label
 					label = label + 1
 
+		print (pps)
 		basis.projector_list = basis.get_c_projectors_from_pps(pps)
 		basisnums = np.array([labels[el(s)] for s in basis.structure], dtype=np.int32)
 		basiscoords = np.array([], np.float64)
+		for s in basis.structure:
+			basiscoords = np.append(basiscoords, s.frac_coords)
 		projector_list = basis.projector_list
-	
+		basis.nums = basisnums
+		basis.coords = basiscoords
+		basis.num_proj_els = len(pps)
+
+		sys.stdout.flush()	
 		basis.projector.setup_projections(c_void_p(basis.pwf.wf_ptr),
 			c_void_p(projector_list), label,
 			len(basis.structure), numpy_to_cint(basis.dim), numpy_to_cint(basisnums),
@@ -457,7 +471,7 @@ class Wavefunction:
 				files = {}
 				for f in ['CONTCAR', 'OUTCAR', 'vasprun.xml', 'WAVECAR']:
 					files[f] = os.path.join(wf_dir, f)
-				struct = Poscar.from_file(files['CONTCAR'])
+				struct = Poscar.from_file(files['CONTCAR']).structure
 				pwf = PseudoWavefunction(files['WAVECAR'], files['vasprun.xml'])
 				outcar = Outcar(files['OUTCAR'])
 
@@ -468,18 +482,17 @@ class Wavefunction:
 
 				for s in wf.structure:
 					selfcoords = np.append(selfcoords, s.frac_coords)
-				for s in basis.structure:
-					basiscoords = np.append(basiscoords, s.frac_coords)
-				basis.nums = basisnums
-				basis.coords = basiscoords
 				wf.nums = selfnums
 				wf.coords = selfcoords
+				wf.num_proj_els = len(pps)
 
 				wf.setup_projection(basis, False)
 
-				yield wf_dir, basis, wf
-
-				wf.free_all()
+				yield [wf_dir, basis, wf]
+				print ("DONE WITH A YIELD")
+				sys.stdout.flush()
+				#wf.free_all()
+				print ("FREED MEM")
 			except:
 				if ignore_errors:
 					errcount += 1
@@ -587,6 +600,9 @@ class Wavefunction:
 		if pseudo:
 			v /= v+c
 			c /= v+c
+		if spinpol:
+			v = v.tolist()
+			c = c.tolist()
 		return v, c
 
 	def defect_band_analysis(self, bulk, min_band=0, max_band=None, bound = 0.05, spinpol = False):

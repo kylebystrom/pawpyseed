@@ -165,9 +165,9 @@ real_proj_site_t* projector_values(int num_sites, int* labels, double* coords,
 		}
 	}
 
-	double path[3] = {0,0,0};
-	double r = 0;
 	for (int i = 0; i < fftg[0]; i++) {
+		double path[3] = {0,0,0};
+		double r = 0;
 		for (int j = 0; j < fftg[1]; j++) {
 			for (int k = 0; k  < fftg[2]; k++) {
 				double frac[3] = {(double)i/fftg[0], (double)j/fftg[1], (double)k/fftg[2]};

@@ -491,7 +491,7 @@ class Wavefunction:
 				yield [wf_dir, basis, wf]
 				print ("DONE WITH A YIELD")
 				sys.stdout.flush()
-				#wf.free_all()
+				wf.free_all()
 				print ("FREED MEM")
 			except:
 				if ignore_errors:

@@ -307,6 +307,8 @@ class Wavefunction:
 		#if not basis.projection_data:
 		#	basis.projection_data = self.make_c_projectors(basis)
 		#projector_list, selfnums, selfcoords, basisnums, basiscoords = basis.projection_data
+		if setup_basis:
+			basis.projector_list, self.nums, self.coords, basis.nums, basis.coords = self.make_c_projectors(basis)
 		projector_list = basis.projector_list
 		basisnums = basis.nums
 		basiscoords = basis.coords
@@ -545,6 +547,8 @@ class Wavefunction:
 		selfcoords = np.array([], np.float64)
 		basiscoords = np.array([], np.float64)
 
+		self.num_proj_els = len(pps)
+		basis.num_proj_els = len(pps)
 		for s in self.structure:
 			selfcoords = np.append(selfcoords, s.frac_coords)
 		if basis != None:

@@ -165,6 +165,49 @@ real_proj_site_t* projector_values(int num_sites, int* labels, double* coords,
 		}
 	}
 
+	#pragma omp parallel for
+	for (int p = 0; p < num_sites; p++) {
+		double res[3] = {0,0,0};
+		double testcoord[3] = {0,0,0};
+		vcross(res, lattice+3, lattice+6);
+		int grid1 = (int) (mag(res) * sites[p].rmax / vol * fftg[0]) + 1;
+		vcross(res, lattice+0, lattice+6);
+		int grid2 = (int) (mag(res) * sites[p].rmax / vol * fftg[1]) + 1;
+		vcross(res, lattice+0, lattice+3);
+		int grid3 = (int) (mag(res) * sites[p].rmax / vol * fftg[2]) + 1;
+		int center1 = (int) round(coords[3*p+0] * fftg[0]);
+		int center2 = (int) round(coords[3*p+1] * fftg[1]);
+		int center3 = (int) round(coords[3*p+2] * fftg[2]);
+		int ii=0, jj=0; kk=0;
+		for (int i = -grid1 + center1; i <= grid1 + center1; i++) {
+			for (int j = -grid2 + center2; j <= grid2 + center2; j++) {
+				for (int k = -grid3 + center3; k <= grid3 + center3; k++) {
+					testcoord[0] = (double) i / fftg[0] - coord[3*p+0];
+					testcoord[1] = (double) j / fftg[1] - coord[3*p+1];
+					testcoord[2] = (double) k / fftg[2] - coord[3*p+2];
+					frac_to_cartesian(testcoord, lattice);
+					if (mag(testcoord) < 0.99 * sites[p].rmax) {
+						ii = (i%fftg[0] + fftg[0]) % fftg[0];
+						jj = (j%fftg[1] + fftg[1]) % fftg[1];
+						kk = (k%fftg[2] + fftg[2]) % fftg[2];
+						sites[p].indices[sites[p].num_indices] = ii*fftg[1]*fftg[2] + jj*fftg[2] + kk;
+						for (int n = 0; n < sites[p].total_projs; n++) {
+							sites[p].projs[n].paths[3*sites[p].num_indices+0] = testcoord[0];
+							sites[p].projs[n].paths[3*sites[p].num_indices+1] = testcoord[1];
+							sites[p].projs[n].paths[3*sites[p].num_indices+2] = testcoord[2];
+							sites[p].projs[n].values[sites[p].num_indices] = proj_value(pps[labels[p]].funcs[sites[p].projs[n].func_num],
+								pps[labels[p]].proj_grid,
+								sites[p].projs[n].m, sites[p].rmax, coords+3*p, frac, lattice);
+						//if (p == 0) printf("coordandval %lf %lf %lf %d %d\n", r, creal(sites[p].projs[n].values[sites[p].num_indices])*pow(vol,0.5), cimag(sites[p].projs[n].values[sites[p].num_indices])*pow(vol, 0.5), sites[p].num_indices,n);
+						}
+						sites[p].num_indices++;
+					}
+				}
+			}
+		}
+	}
+
+	/*
 	for (int i = 0; i < fftg[0]; i++) {
 		double path[3] = {0,0,0};
 		double r = 0;
@@ -190,6 +233,7 @@ real_proj_site_t* projector_values(int num_sites, int* labels, double* coords,
 			}
 		}
 	}
+	*/
 	//for (int i = 0; i < num_sites; i++) {
 	//	printf("looking for nan %d %e\n", sites[0].num_indices, creal(sites[i].projs[0].values[0]));
 	//}

@@ -168,6 +168,7 @@ real_proj_site_t* projector_values(int num_sites, int* labels, double* coords,
 	#pragma omp parallel for
 	for (int p = 0; p < num_sites; p++) {
 		double res[3] = {0,0,0};
+		double frac[3] = {0,0,0};
 		double testcoord[3] = {0,0,0};
 		vcross(res, lattice+3, lattice+6);
 		int grid1 = (int) (mag(res) * sites[p].rmax / vol * fftg[0]) + 1;
@@ -178,18 +179,21 @@ real_proj_site_t* projector_values(int num_sites, int* labels, double* coords,
 		int center1 = (int) round(coords[3*p+0] * fftg[0]);
 		int center2 = (int) round(coords[3*p+1] * fftg[1]);
 		int center3 = (int) round(coords[3*p+2] * fftg[2]);
-		int ii=0, jj=0; kk=0;
+		int ii=0, jj=0, kk=0;
 		for (int i = -grid1 + center1; i <= grid1 + center1; i++) {
 			for (int j = -grid2 + center2; j <= grid2 + center2; j++) {
 				for (int k = -grid3 + center3; k <= grid3 + center3; k++) {
-					testcoord[0] = (double) i / fftg[0] - coord[3*p+0];
-					testcoord[1] = (double) j / fftg[1] - coord[3*p+1];
-					testcoord[2] = (double) k / fftg[2] - coord[3*p+2];
+					testcoord[0] = (double) i / fftg[0] - coords[3*p+0];
+					testcoord[1] = (double) j / fftg[1] - coords[3*p+1];
+					testcoord[2] = (double) k / fftg[2] - coords[3*p+2];
 					frac_to_cartesian(testcoord, lattice);
 					if (mag(testcoord) < 0.99 * sites[p].rmax) {
 						ii = (i%fftg[0] + fftg[0]) % fftg[0];
 						jj = (j%fftg[1] + fftg[1]) % fftg[1];
 						kk = (k%fftg[2] + fftg[2]) % fftg[2];
+						frac[0] = (double) ii / fftg[0];
+						frac[1] = (double) jj / fftg[1];
+						frac[2] = (double) kk / fftg[2];
 						sites[p].indices[sites[p].num_indices] = ii*fftg[1]*fftg[2] + jj*fftg[2] + kk;
 						for (int n = 0; n < sites[p].total_projs; n++) {
 							sites[p].projs[n].paths[3*sites[p].num_indices+0] = testcoord[0];

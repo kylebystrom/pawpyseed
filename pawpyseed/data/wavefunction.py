@@ -187,7 +187,8 @@ class PseudoWavefunction:
 		nspin = PAWC.get_nspin(c_void_p(self.wf_ptr))
 
 		res = PAWC.pseudoprojection(c_void_p(basis.wf_ptr), c_void_p(self.wf_ptr), band_num)
-		return cdouble_to_numpy(res, 2*nband*nwk*nspin)
+		res = cdouble_to_numpy(res, 2*nband*nwk*nspin)
+		return res[::2] + 1j * res[1::2]
 
 class Wavefunction:
 	"""
@@ -307,6 +308,8 @@ class Wavefunction:
 		#if not basis.projection_data:
 		#	basis.projection_data = self.make_c_projectors(basis)
 		#projector_list, selfnums, selfcoords, basisnums, basiscoords = basis.projection_data
+		if setup_basis:
+			basis.projector_list, self.nums, self.coords, basis.nums, basis.coords = self.make_c_projectors(basis)
 		projector_list = basis.projector_list
 		basisnums = basis.nums
 		basiscoords = basis.coords
@@ -545,6 +548,8 @@ class Wavefunction:
 		selfcoords = np.array([], np.float64)
 		basiscoords = np.array([], np.float64)
 
+		self.num_proj_els = len(pps)
+		basis.num_proj_els = len(pps)
 		for s in self.structure:
 			selfcoords = np.append(selfcoords, s.frac_coords)
 		if basis != None:
@@ -598,8 +603,9 @@ class Wavefunction:
 				else:
 					c += np.absolute(res[i]) ** 2 * self.pwf.kws[i%nwk] / nspin
 		if pseudo:
-			v /= v+c
-			c /= v+c
+			t = v+c
+			v /= t
+			c /= t
 		if spinpol:
 			v = v.tolist()
 			c = c.tolist()

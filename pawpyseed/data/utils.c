@@ -130,9 +130,11 @@ void free_kpoint(kpoint_t* kpt, int num_elems, ppot_t* pps) {
 		free(curr_band->Cs);
 		free(curr_band);
 	}
-	for (int i = 0; i < num_elems; i++)
-		free_rayleigh_set_list(kpt->expansion[i], pps[i].num_projs);
-	free(kpt->expansion);
+	if (kpt->expansion != NULL) {
+		for (int i = 0; i < num_elems; i++)
+			free_rayleigh_set_list(kpt->expansion[i], pps[i].num_projs);
+		free(kpt->expansion);
+	}
 	free(kpt->Gs);
 	free(kpt->bands);
 	free(kpt->k);

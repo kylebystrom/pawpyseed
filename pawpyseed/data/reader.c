@@ -129,6 +129,7 @@ pswf_t* read_wavefunctions(char* filename, double* kpt_weights) {
 	wf->nspin = nspin;
 	wf->nwk = nwk;
 	wf->nband = nband;
+	wf->overlaps = NULL;
 
 	kpoint_t** kpts = (kpoint_t**) malloc(nwk*nspin*sizeof(kpoint_t*));
 	if (kpts == NULL) {
@@ -147,6 +148,7 @@ pswf_t* read_wavefunctions(char* filename, double* kpt_weights) {
 		long irec = iwk * (long)(1 + nband);
 		FILE* pfp = fopen(filename, "rb");
 		kpoint_t* kpt = (kpoint_t*) malloc(sizeof(kpoint_t));
+		kpt->expansion = NULL;
 		kpt->num_bands = nband;
 		band_t** bands = (band_t**) malloc(nband*sizeof(band_t*));
 		kpt->bands = bands;

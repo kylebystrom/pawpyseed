@@ -187,7 +187,8 @@ class PseudoWavefunction:
 		nspin = PAWC.get_nspin(c_void_p(self.wf_ptr))
 
 		res = PAWC.pseudoprojection(c_void_p(basis.wf_ptr), c_void_p(self.wf_ptr), band_num)
-		return cdouble_to_numpy(res, 2*nband*nwk*nspin)
+		res = cdouble_to_numpy(res, 2*nband*nwk*nspin)
+		return res[::2] + 1j * res[1::2]
 
 class Wavefunction:
 	"""
@@ -602,8 +603,9 @@ class Wavefunction:
 				else:
 					c += np.absolute(res[i]) ** 2 * self.pwf.kws[i%nwk] / nspin
 		if pseudo:
-			v /= v+c
-			c /= v+c
+			t = v+c
+			v /= t
+			c /= t
 		if spinpol:
 			v = v.tolist()
 			c = c.tolist()

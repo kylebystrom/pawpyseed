@@ -396,6 +396,18 @@ class Wavefunction:
 		return res[::2] + 1j * res[1::2]
 
 	def get_c_projectors_from_pps(self, pps):
+		"""
+		Returns a point to a list of ppot_t objects in C,
+		to be used for high performance parts of the code
+
+		Args:
+			pps (dict of Pseudopotential objects): keys are integers,
+				values of Pseudopotential objects
+
+		Returns:
+			c_void_p object pointing to ppot_t list with each Pseudopotential,
+			ordered in the list by their numerical keys
+		"""
 
 		clabels = np.array([], np.int32)
 		ls = np.array([], np.int32)
@@ -436,6 +448,27 @@ class Wavefunction:
 
 	@staticmethod
 	def setup_multiple_projections(basis_dir, wf_dirs, ignore_errors = False):
+		"""
+		A convenient generator function for processing the Kohn-Sham wavefunctions
+		of multiple structures with respect to one structure used as the basis.
+		All C memory is freed after each yield for the wavefunctions to be analyzed,
+		and C memory associated with the basis wavefunction is freed when
+		the generator is called after all wavefunctions have been yielded.
+
+		Args:
+			basis_dir (str): path to the VASP output to be used as the basis structure
+			wf_dirs (list of str): paths to the VASP outputs to be analyzed
+			ignore_errors (bool, False): whether to ignore errors in setting up
+				Wavefunction objects by skipping over the directories for which
+				setup fails.
+
+		Returns:
+			list -- wf_dir, basis, wf
+			Each iteration of the generator function returns a directory name from
+			wf_dirs (wf_dir), the basis Wavefunction object (basis), and the Wavefunction
+			object associated with wf_dir (wf), fully setup to project bands of wf
+			onto bands of basis.
+		"""
 
 		basis = Wavefunction.from_directory(basis_dir)
 		crs = [basis.cr] + [CoreRegion(Potcar.from_file(os.path.join(wf_dir, 'POTCAR'))) \
@@ -492,10 +525,7 @@ class Wavefunction:
 				wf.setup_projection(basis, False)
 
 				yield [wf_dir, basis, wf]
-				print ("DONE WITH A YIELD")
-				sys.stdout.flush()
 				wf.free_all()
-				print ("FREED MEM")
 			except:
 				if ignore_errors:
 					errcount += 1

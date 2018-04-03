@@ -1,3 +1,7 @@
+/** \file
+Contains Legendre Gauss quadrature points and weights for various grid densities.
+*/
+
 #ifndef QUADRATURE_H
 #define QUADRATURE_H
 

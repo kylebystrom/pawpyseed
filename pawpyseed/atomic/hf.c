@@ -2,41 +2,6 @@
 #include <mkl.h>
 #include "condon_shortley.h"
 
-typedef radial_set {
-	int X; ///< number of radial functions;
-	double** Ps; ///< XxN
-	double** Pinvrs; ///< XxN
-} radial_set_t;
-
-typedef struct radial_set {
-	int l; ///< angular momentum quantum number
-	int v; ///< valence level
-	int X; ///< number of basis functions/wavefunction solutions per l
-	int* occs; ///< (X) number of electrons in a shell
-	double* h; ///< single particle hamiltonian (XxX)
-	double*** ee; ///< electron-electron repulsion terms 4x(XxX)x(XxX) 0 2 4 6
-	double* es; ///< (X)
-	double** Ps; ///< (L)x(XxX)
-	double*** yks; ///< (XxX)x(4)x(N) 0 2 4 6
-	double** bfs;
-	double* DM; ///< density matrix (XxX)
-	double E; ///< total energy
-} radial_set_t;
-
-typedef struct awf {
-	int Z; ///< atomic number/number of electrons
-	int L; ///< number of l quantums numbers, ie lmax+1
-	int X; ///< number of basis functions/wavefunction solutions per l
-	int XT; ///< L*X
-	int N; ///< grid size
-	double*** yks; ///< (XTxXT)x(7)x(N), k = 0 1 2 3 4 5 6, indexed by (l1*X+n1)*XT+(l2*X_n2),l2,k,rindex
-	double***** J; ///< (7)x(L)x(L)x(XxX)x(XxX) indexed by l1,l2,n1a*X+n1b,n2a*X+n2b <n1al1,n2al2||n1bl1,n2bl2>
-	double***** K; ///< (7)x(L)x(L)x(XxX)x(XxX) indexed by l1,l2,n1a*X+n1b,n2a*X+n2b <n1al1,n2al2||n2bl2,n1bl1>
-	radial_set_t* wfs; ///< L radial_set_t wavefunctions
-	double* r;
-	double E; ///< total energy
-} awf_t;
-
 double laguerre(double x, int n, int alpha) {
 	double l0 = 1;
 	if (n == 0) return l0;
@@ -49,7 +14,7 @@ double laguerre(double x, int n, int alpha) {
 	}
 }
 
-double hradial() {
+double hradial(int n, int l, double r) {
 	pow(4.0/n/n/n * fac(n-l-1)/fac(n+l), 0.5) * exp(-r/2/n) * pow(r/n, l), * laguerre(r, n-l-1, 2*l+1);
 }
 
@@ -69,6 +34,7 @@ void set_coul(double**** J_or_K, double num, int k, int X, int l1, int n1a, int 
 	J_or_K[k][l1][l2][n1a*X+n1b][n2a*X+n2b] =  num;
 }
 
+/*
 double* discrete_sp_hamiltonian(int Z, int l, int size, double* r) {
 	double* h = (double*) calloc(size * size * sizeof(double));
 
@@ -83,6 +49,7 @@ double* discrete_sp_hamiltonian(int Z, int l, int size, double* r) {
 		h[N*(i-1)+i] = h[N*i+i-1];
 	}
 }
+*/
 
 awf_t* construct_basis(int Z, int N, int maxN, int maxL, double* r) {
 	int X = maxN;
@@ -99,7 +66,7 @@ awf_t* construct_basis(int Z, int N, int maxN, int maxL, double* r) {
 		for (int n = 1; n <= maxN; n++) {
 			double* bf = (double*) malloc(N * sizeof(double*));
 			for (int j = 0; j < N; j++) {
-				bf[j] = r[j] * hradial(n, l, r[j]);
+				bf[j] = r[j] * hradial(n+l, l, r[j]);
 			}
 			bfs[n-1] = bf;
 			splines[n-1] = spline_coeff(r, bf, N);
@@ -242,6 +209,7 @@ awf_t* setup(int Z, int N, int maxN, int maxL, double* r, double** P0s) {
 	awf_t* wf = construct_basis(Z, N, maxN, maxL, r);
 	for (int l = 0; l < wf->L; l++) {
 		wf->wfs[l].Ps = P0s[l];
+		wf->wfs[l].DM = (double*) malloc(X*X * sizeof(double));
 	}
 	wf->Z = Z;
 	assign_occs(awf_t* wf);
@@ -250,9 +218,13 @@ awf_t* setup(int Z, int N, int maxN, int maxL, double* r, double** P0s) {
 
 void make_density_matrix(radial_set_t* wf) {
 	int X = wf->X;
-	wf->DM = (double*) malloc(X*X * sizeof(double));
 	for (int i = 0; i < X; i++) {
-		wf->DM[i*X+i] = wf->occs[i];
+		for (int j = 0; j < X; j++) {
+			if (i == j)
+				wf->DM[i*X+i] = wf->occs[i];
+			else
+				wf->DM[i*X+j] = 0;
+		}
 	}
 	double* temp = (double*) malloc(X*X * sizeof(double));
 
@@ -261,10 +233,27 @@ void make_density_matrix(radial_set_t* wf) {
 	free(temp);
 }
 
+void calc_energy(awf_t* wf) {
+	wf->E = 0;
+	double* temp = (double*) malloc(X*X * sizeof(double));
+	for (int l = 0; l < wf->L; l++) {
+		cblas_dgemm(CblasRowMajor, CblasNoTrans, CblasNoTrans, X, X, X, 1,
+			wf->wfs[l].DM, X, wf->wfs[l].h, X, 0, temp, X);
+		for (int i = 0; i < X; i++) {
+			wf->E += temp[i*X+i];
+			wf->E += wf->wfs[l].es[i] * wf->wfs[l].occs[i];
+		}
+	}
+	wf->E = wf->E * 0.5;
+}
+
 void solve(awf_t* wf, int maxsteps) {
 
 	int X = wf->X;
 	for (int step = 0; step < maxsteps; step++) {
+		for (int l = 0; l < wf->L; l++) {
+			make_density_matrix(&(wf->wfs[l]));
+		}
 		for (int l = 0; l < wf->L; l++) {
 
 			radial_set_t rwf = wf->wfs[l];
@@ -320,7 +309,10 @@ void solve(awf_t* wf, int maxsteps) {
 			free(rwf.Ps);
 			rwf.Ps = hamiltonian;
 		}
+		assign_occs(wf);
+		calc_energy(wf);
 	}
+	return wf->E;
 }
 
 double* yk(int k, int size, double* r, double* P1, double* P2) {
@@ -370,10 +362,7 @@ double* yk(int k, int size, double* r, double* P1, double* P2) {
 
 }
 
-double* sp_hamiltonian() {
-
-}
-
+/*
 void construct_hamiltonian(awf_t* wf, double* H) {
 	int N = wf->N;
 	int X = wf->X;
@@ -408,3 +397,4 @@ void construct_hamiltonian(awf_t* wf, double* H) {
 }
 
 integral += dx * (a[i] + dx * (b[i]/2 + dx * (c[i]/3 + d[i]*dx/4)));
+*/

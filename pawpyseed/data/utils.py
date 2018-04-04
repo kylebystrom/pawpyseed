@@ -1,3 +1,16 @@
+
+"""
+\file
+Main utilities file for the Python portion of the code.
+This files stores 1) the PAWC ctypes module, which
+contains all of the C functions used to read and analyze
+PAW wavefunctions, 2) converter functions than transfer
+data from numpy arrays to C pointers and vice versa,
+3) cfunc_call, which is used to conveniently call ctypes
+functions, and 4) a few other utilties employed mainly
+by the wavefunction classes.
+"""
+
 import numpy as np
 from ctypes import *
 
@@ -22,11 +35,20 @@ PAWC.free_ppot_list.restype = None
 PAWC.free_pswf.restype = None
 
 class PAWpyError(Exception):
-
+	"""
+	Class for handling errors that occur during execution
+	of Python functions in pawpyseed
+	"""
 	def __init__(self, msg):
 		self.msg = msg
 
 def check_spin(spin, nspin):
+	"""
+	Utility to check if the spin input parameter to single_band_projection
+	and similar functions is allowed given nspin of the wavefunction object
+	being analyzed. Returns a new value of spin if spin must be changed,
+	raises an error is spin is not allowed.
+	"""
 	if spin >= 0:
 		if spin >= nspin:
 			raise PAWpyError('spin must be less than nspin. spin is %d, nspin is %d' % (spin, nspin))

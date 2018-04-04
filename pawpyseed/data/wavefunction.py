@@ -1,6 +1,7 @@
 # coding: utf-8
 
 """
+\file
 Base class containing Python classes for parsing files
 and storing and analyzing wavefunction data.
 """
@@ -202,6 +203,9 @@ class Wavefunction:
 		cr (CoreRegion): Contains the pseudopotentials, with projectors and
 			partials waves, for the structure
 		projector: ctypes object for interfacing with C code
+		wf_ptr (C pointer): pointer to the pswf_t C object for this wavefunction
+		dim (np.ndarray, length 3): dimension of the FFT grid used by VASP
+			and therefore for FFTs in this code
 	"""
 
 	def __init__(self, struct, pwf, cr, outcar):

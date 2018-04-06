@@ -36,10 +36,6 @@ typedef struct awf {
 	double E; ///< total energy
 } awf_t;
 
-double laguerre(double x, int n, int alpha);
-
-double hradial(int n, int l, double r);
-
 double get_yk(double*** yks, int X, int XT, int l1, int n1, int l2, int n2, int k, int rindex);
 
 void set_yk(double*** yks, double* nums, int X, int XT, int l1, int n1, int l2, int n2, int k);
@@ -61,8 +57,6 @@ void make_density_matrix(radial_set_t* wf);
 void calc_energy(awf_t* wf);
 
 void solve(awf_t* wf, int maxsteps);
-
-double* yk(int k, int size, double* r, double* P1, double* P2);
 
 double get_E(awf_t* wf) {
 	return wf->E;

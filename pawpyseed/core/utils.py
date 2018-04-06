@@ -42,6 +42,30 @@ class PAWpyError(Exception):
 	def __init__(self, msg):
 		self.msg = msg
 
+def cfunc_call(func, *args):
+	"""
+	converts args to C types and passes them to the C
+	function func
+	"""
+	cargs = []
+	for arg in args:
+		if type(arg) == np.ndarray:
+			if arg.dtype == np.float64:
+				cargs.append(numpy_to_cdouble(arg))
+			elif arg.dtype == np.float32:
+				cargs.append(numpy_to_cfloat(arg))
+			elif arg.dtype == np.int32 or arg.dtype == int:
+				cargs.append(numpy_to_cint(arg))
+			else:
+				raise PAWpyError("cfunc_call: invalid array type %s" % repr(arg.dtype))
+		elif type(arg) == int:
+			cargs.append(arg)
+		elif type(arg) == float:
+			cargs.append(arg)
+		elif type(arg) == str:
+			cargs.append(arg.encode('utf-8'))
+	return None
+
 def check_spin(spin, nspin):
 	"""
 	Utility to check if the spin input parameter to single_band_projection

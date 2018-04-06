@@ -11,7 +11,7 @@ from pymatgen.io.vasp.outputs import Vasprun, Outcar
 from pymatgen.core.structure import Structure
 import numpy as np
 from ctypes import *
-from pawpyseed.data.utils import *
+from pawpyseed.core.utils import *
 import os
 import numpy as np
 import json
@@ -322,6 +322,7 @@ class Wavefunction:
 
 		print(hex(projector_list), hex(self.pwf.wf_ptr))
 		sys.stdout.flush()
+		print ("TYPETHING", basis.pwf.wf_ptr, type(basis.pwf.wf_ptr))
 		
 		if setup_basis:
 			self.projector.setup_projections(c_void_p(basis.pwf.wf_ptr),

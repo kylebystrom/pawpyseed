@@ -2,6 +2,11 @@
 #include <mkl.h>
 #include "condon_shortley.h"
 
+double legendre(int l, int m, double x) {
+	double l0 = 
+
+}
+
 double laguerre(double x, int n, int alpha) {
 	double l0 = 1;
 	if (n == 0) return l0;

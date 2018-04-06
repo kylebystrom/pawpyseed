@@ -2,7 +2,7 @@ import numpy as np
 from ctypes import *
 
 MODULE_DIR = os.path.dirname(os.path.abspath(__file__))
-HFC = CDLL(os.path.join(MODULE_DIR, "hf.so"))
+HFC = CDLL(os.path.join(MODULE_DIR, "hfc.so"))
 
 HFC.get_E.restype = c_double
 HFC.get_occs.restype = POINTER(c_double)

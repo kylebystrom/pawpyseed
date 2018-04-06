@@ -1,12 +1,6 @@
 #ifndef HF_H
 #define HF_H
 
-typedef radial_set {
-	int X; ///< number of radial functions;
-	double** Ps; ///< XxN
-	double** Pinvrs; ///< XxN
-} radial_set_t;
-
 typedef struct radial_set {
 	int l; ///< angular momentum quantum number
 	int v; ///< valence level
@@ -15,7 +9,7 @@ typedef struct radial_set {
 	double* h; ///< single particle hamiltonian (XxX)
 	double*** ee; ///< electron-electron repulsion terms 4x(XxX)x(XxX) 0 2 4 6
 	double* es; ///< (X)
-	double** Ps; ///< (L)x(XxX)
+	double* Ps; ///< (XxX)
 	double*** yks; ///< (XxX)x(4)x(N) 0 2 4 6
 	double** bfs;
 	double* DM; ///< density matrix (XxX)
@@ -40,9 +34,9 @@ double get_yk(double*** yks, int X, int XT, int l1, int n1, int l2, int n2, int 
 
 void set_yk(double*** yks, double* nums, int X, int XT, int l1, int n1, int l2, int n2, int k);
 
-double get_coul(double**** J_or_K, int k, int X, int l1, int n1a, int n1b, int l2, int n2a, int n2b);
+double get_coul(double***** J_or_K, int k, int X, int l1, int n1a, int n1b, int l2, int n2a, int n2b);
 
-void set_coul(double**** J_or_K, double num, int k, int X, int l1, int n1a, int n1b, int l2, int n2a, int n2b);
+void set_coul(double***** J_or_K, double num, int k, int X, int l1, int n1a, int n1b, int l2, int n2a, int n2b);
 
 awf_t* construct_basis(int Z, int N, int maxN, int maxL, double* r);
 

@@ -1,5 +1,9 @@
 #include <math.h>
+#include <complex.h>
 #include <mkl.h>
+#include <mkl_types.h>
+#include "hf.h"
+#include "../core/utils.h"
 #include "condon_shortley.h"
 
 double get_yk(double*** yks, int X, int XT, int l1, int n1, int l2, int n2, int k, int rindex) {
@@ -7,14 +11,14 @@ double get_yk(double*** yks, int X, int XT, int l1, int n1, int l2, int n2, int 
 }
 
 void set_yk(double*** yks, double* nums, int X, int XT, int l1, int n1, int l2, int n2, int k) {
-	yks[(l1*X+n1)*XT+(l2*X_n2)][k][rindex] = nums;
+	yks[(l1*X+n1)*XT+(l2*X+n2)][k] = nums;
 }
 
-double get_coul(double**** J_or_K, int k, int X, int l1, int n1a, int n1b, int l2, int n2a, int n2b) {
+double get_coul(double***** J_or_K, int k, int X, int l1, int n1a, int n1b, int l2, int n2a, int n2b) {
 	return J_or_K[k][l1][l2][n1a*X+n1b][n2a*X+n2b];
 }
 
-void set_coul(double**** J_or_K, double num, int k, int X, int l1, int n1a, int n1b, int l2, int n2a, int n2b) {
+void set_coul(double***** J_or_K, double num, int k, int X, int l1, int n1a, int n1b, int l2, int n2a, int n2b) {
 	J_or_K[k][l1][l2][n1a*X+n1b][n2a*X+n2b] =  num;
 }
 
@@ -88,11 +92,11 @@ awf_t* construct_basis(int Z, int N, int maxN, int maxL, double* r) {
 								}
 								double** splineJ = spline_coeff(r, integrandJ, N);
 								set_coul(J, spline_integral(r, integrandJ, splineJ, N),
-									k, X, XT, l1, n1a, n1b, l2, n2a, n2b);
+									k, X, l1, n1a, n1b, l2, n2a, n2b);
 								double** splineK = spline_coeff(r, integrandK, N);
 								set_coul(K, spline_integral(r, integrandK, splineK, N)
 									* pow((4*l1+2)*(4*l2+2), -0.5) * cg_coeff[k][l1][l2][l1][l2],
-									k, X, XT, l1, n1a, n1b, l2, n2a, n2b);
+									k, X, l1, n1a, n1b, l2, n2a, n2b);
 								free(splineJ[0]);
 								free(splineJ[1]);
 								free(splineJ[2]);
@@ -272,7 +276,7 @@ void solve(awf_t* wf, int maxsteps) {
 					}
 				}
 			}
-			LAPACKE_dsyevd(LAPACKE_ROW_MAJOR, 'V', 'U', X, hamiltonian, X, rwf.es);
+			LAPACKE_dsyevd(LAPACK_ROW_MAJOR, 'V', 'U', X, hamiltonian, X, rwf.es);
 			free(rwf.Ps);
 			rwf.Ps = hamiltonian;
 		}

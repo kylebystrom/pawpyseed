@@ -128,12 +128,12 @@ void free_kpoint(kpoint_t* kpt, int num_elems, ppot_t* pps) {
 	for (int b = 0; b < kpt->num_bands; b++) {
 		band_t* curr_band = kpt->bands[b];
 		free(curr_band->Cs);
-		if (curr_band->projections != NULL) {
-			free(curr_band->projections);
-		}
-		if (curr_band->wave_projections != NULL) {
-			free(curr_band->wave_projections);
-		}
+		//if (curr_band->projections != NULL) {
+		//	free(curr_band->projections);
+		//}
+		//if (curr_band->wave_projections != NULL) {
+		//	free(curr_band->wave_projections);
+		//}
 		free(curr_band);
 	}
 	if (kpt->expansion != NULL) {
@@ -254,6 +254,10 @@ int get_nspin(pswf_t* wf) {
 	return wf->nspin;
 }
 
+void set_num_sites(pswf_t* wf, int nsites) {
+	wf->num_sites = nsites;
+}
+
 double legendre(int l, int m, double x) {
 	double total = 0;
 	if (m < 0) return pow(-1.0, m) * fac(l+m) / fac(l-m) * legendre(l, -m, x);
@@ -324,7 +328,7 @@ double complex wave_value(funcset_t funcs, int size, double* x, int m,
 	double ps_radial_val = wave_interpolate(r, size, x, funcs.pswave, funcs.pswave_spline);
 	double radial_val = ae_radial_val - ps_radial_val;
 
-	if (r==0) reutrn Ylm(funcs.l, m, 0, 0) * radial_val;
+	if (r==0) return Ylm(funcs.l, m, 0, 0) * radial_val;
 	double theta = 0, phi = 0;
 	theta = acos(temp[2]/r);
 	if (r - fabs(temp[2]) == 0) phi = 0;

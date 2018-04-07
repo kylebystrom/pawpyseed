@@ -101,6 +101,7 @@ typedef struct kpoint {
 
 typedef struct pswf {
 	int num_elems;
+	int num_sites;
 	ppot_t* pps;
 	int* G_bounds;
 	kpoint_t** kpts;
@@ -219,6 +220,9 @@ int get_nwk(pswf_t* wf);
 /** Return the number of spins in the wavefunction. */
 int get_nspin(pswf_t* wf);
 
+/** Sets the numer of sites in the structure for the wavefunction. */
+void set_num_sites(pswf_t* wf, int nsites);
+
 /** Associated legendre polynomial P_lm(x) */
 double legendre(int l, int m, double x);
 
@@ -253,10 +257,17 @@ double wave_interpolate(double r, int size, double* x, double* f, double** wave_
 
 /**
 Return the value of funcs->proj, defined on linear radial grid x centered
-at 3D vector ion_pos, at position pos, giving the real space lattice.
+at 3D vector ion_pos, at position pos, given the real space lattice.
 */
 double complex proj_value(funcset_t funcs, double* x, int m, double rmax,
 	double* ion_pos, double* pos, double* lattice);
+
+/**
+Return the value of funcs->aewave-funcs->pswave, defined on logarithmic radial
+grid x center at 3D vector ion_pos, at position pos, given the real space lattice.
+*/
+double complex wave_value(funcset_t funcs, int size, double* x, int m,
+        double* ion_pos, double* pos, double* lattice);
 
 /**
 Set up spline coefficients for spline interpolation.

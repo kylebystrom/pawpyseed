@@ -80,7 +80,7 @@
 
 double* ae_chg_density(pswf_t* wf, ppot_t* pps, int* fftg, int* labels, double* coords) {
 
-	int gridsize = fft[0] * fftg[1] * fftg[2];
+	int gridsize = fftg[0] * fftg[1] * fftg[2];
 	double* P = mkl_calloc(gridsize, sizeof(double), 64);
 
 	for (int k = 0; k < wf->nwk * wf->nspin; k++) {
@@ -101,22 +101,27 @@ double complex* realspace_state(int BAND_NUM, int KPOINT_NUM, pswf_t* wf, ppot_t
 		int* labels, double* coords) {
 
 	double complex* x = mkl_calloc(fftg[0]*fftg[1]*fftg[2], sizeof(MKL_Complex16), 64);
-	fft3d(x, wf->G_bounds, wf->lattice, wf->kpts[KPOINT_NUM]->kpt,
-		wf->kpts[KPOINT_NUM]->Gs, wf->kpts[KPOINT_NUM]->bands[b]->Cs,
+	fft3d(x, wf->G_bounds, wf->lattice, wf->kpts[KPOINT_NUM]->k,
+		wf->kpts[KPOINT_NUM]->Gs, wf->kpts[KPOINT_NUM]->bands[BAND_NUM]->Cs,
 		wf->kpts[KPOINT_NUM]->bands[BAND_NUM]->num_waves, fftg);
 	double* lattice = wf->lattice;
+	double vol = determinant(lattice);
 
+	int num_sites = wf->num_sites;
 	#pragma omp parallel for
 	for (int p = 0; p < num_sites; p++) {
+		projection_t pros = wf->kpts[KPOINT_NUM]->bands[BAND_NUM]->projections[p];
+		ppot_t pp = pps[labels[p]];
+		double rmax = pp.wave_grid[pp.wave_gridsize-1];
 		double res[3] = {0,0,0};
 		double frac[3] = {0,0,0};
 		double testcoord[3] = {0,0,0};
 		vcross(res, lattice+3, lattice+6);
-		int grid1 = (int) (mag(res) * sites[p].rmax / vol * fftg[0]) + 1;
+		int grid1 = (int) (mag(res) * rmax / vol * fftg[0]) + 1;
 		vcross(res, lattice+0, lattice+6);
-		int grid2 = (int) (mag(res) * sites[p].rmax / vol * fftg[1]) + 1;
+		int grid2 = (int) (mag(res) * rmax / vol * fftg[1]) + 1;
 		vcross(res, lattice+0, lattice+3);
-		int grid3 = (int) (mag(res) * sites[p].rmax / vol * fftg[2]) + 1;
+		int grid3 = (int) (mag(res) * rmax / vol * fftg[2]) + 1;
 		int center1 = (int) round(coords[3*p+0] * fftg[0]);
 		int center2 = (int) round(coords[3*p+1] * fftg[1]);
 		int center3 = (int) round(coords[3*p+2] * fftg[2]);
@@ -128,24 +133,20 @@ double complex* realspace_state(int BAND_NUM, int KPOINT_NUM, pswf_t* wf, ppot_t
 					testcoord[1] = (double) j / fftg[1] - coords[3*p+1];
 					testcoord[2] = (double) k / fftg[2] - coords[3*p+2];
 					frac_to_cartesian(testcoord, lattice);
-					if (mag(testcoord) < 0.99 * sites[p].rmax) {
+					if (mag(testcoord) < rmax) {
 						ii = (i%fftg[0] + fftg[0]) % fftg[0];
 						jj = (j%fftg[1] + fftg[1]) % fftg[1];
 						kk = (k%fftg[2] + fftg[2]) % fftg[2];
 						frac[0] = (double) ii / fftg[0];
 						frac[1] = (double) jj / fftg[1];
 						frac[2] = (double) kk / fftg[2];
-						sites[p].indices[sites[p].num_indices] = ii*fftg[1]*fftg[2] + jj*fftg[2] + kk;
 						projection_t pros = wf->kpts[KPOINT_NUM]->bands[BAND_NUM]->projections[p];
 						for (int n = 0; n < pros.total_projs; n++) {
-							int maxind = pps[labels[p]].wave_gridsize;
-							double rmax = pps[labels[p]].wave_grid[maxind-1];
 							x[ii*fftg[1]*fftg[2] + jj*fftg[2] + kk] += wave_value(pps[labels[p]].funcs[pros.ns[n]],
-								pps[labels[p]].wave_grid,
-								pros.ms[n], pps[labels[p]].wave_gridsize, coords+3*p, frac, lattice)
+								pp.wave_gridsize, pps[labels[p]].wave_grid,
+								pros.ms[n], coords+3*p, frac, lattice)
 								* pros.overlaps[n];
 						}
-						sites[p].num_indices++;
 					}
 				}
 			}

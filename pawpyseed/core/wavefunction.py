@@ -164,12 +164,10 @@ class PseudoWavefunction:
 		if type(vr) == str:
 			vr = Vasprun(vr)
 		weights = vr.actual_kpoints_weights
-		kws = (c_double * len(weights))()
-		for i in range(len(weights)):
-			kws[i] = weights[i]
+		kws = numpy_to_cdouble(weights)
 		self.kws = weights
 		self.kpts = vr.actual_kpoints
-		self.wf_ptr = PAWC.read_wavefunctions(filename.encode('utf-8'), byref(kws))
+		self.wf_ptr = PAWC.read_wavefunctions(filename.encode('utf-8'), kws)
 
 	def pseudoprojection(self, band_num, basis):
 		"""
@@ -583,6 +581,7 @@ class Wavefunction:
 		
 		projector_list = self.get_c_projectors_from_pps(pps)
 
+		self.projector.set_num_sites(c_void_p(self.pswf.wf_ptr), len(self.structure))
 		selfnums = np.array([labels[el(s)] for s in self.structure], dtype=np.int32)
 		basisnums = np.array([labels[el(s)] for s in basis.structure], dtype=np.int32)
 		selfcoords = np.array([], np.float64)
@@ -686,13 +685,17 @@ class Wavefunction:
 		if not self.projector_list:
 			self.projector_list, self.nums, self.coords = self.make_c_projectors()
 
-	def get_state_realspace(self, b, k, s, dim=self.dim):
+	def get_state_realspace(self, b, k, s, dim=None):
+		if dim == None:
+			dim = self.dim
 		self.check_c_projectors()
 		return cfunc_call(realspace_state_ri, dim[0]*dim[1]*dim[2], b, k+s*self.nwk,
 			self.pwf.wf_ptr, self.projector_list,
 			dim, self.nums, self.coords)
 
-	def write_state_realspace(self, fileprefix = "", b, k, s, dim=self.dim, return_wf = False):
+	def write_state_realspace(self, b, k, s, fileprefix = "", dim=None, return_wf = False):
+		if dim == None:
+			dim = self.dim
 		self.check_c_projectors()
 		filename_base = "%sB%dK%dS%d" % (fileprefix, b, k, s)
 		filename1 = "%s_REAL"
@@ -708,7 +711,9 @@ class Wavefunction:
 				self.pwf.wf_ptr, self.projector_list,
 				dim, self.nums, self.coords)
 
-	def write_density_realspace(self, filename = "PYAECCAR", dim=self.dim, return_wf = False):
+	def write_density_realspace(self, filename = "PYAECCAR", dim=None, return_wf = False):
+		if dim == None:
+			dim = self.dim
 		self.check_c_projectors()
 		if return_wf:
 			return cfunc_call(write_density_return, dim[0]*dim[1]*dim[2], filename,

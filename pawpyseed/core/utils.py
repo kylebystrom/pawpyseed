@@ -19,10 +19,16 @@ import os
 MODULE_DIR = os.path.dirname(os.path.abspath(__file__))
 PAWC = CDLL(os.path.join(MODULE_DIR, "pawpy.so"))
 
-PAWC.read_wavefunctions.restype = POINTER(None)
-PAWC.get_projector_list.restype = POINTER(None)
-PAWC.read_wavefunctions.restype = POINTER(None)
+PAWC.read_wavefunctions.argtypes = (c_char_p, POINTER(c_double))
+PAWC.read_wavefunctions.restype = c_void_p
+
+PAWC.get_projector_list.argtypes = [c_int, POINTER(c_int), POINTER(c_int)] + [POINTER(c_double)]*6
+PAWC.get_projector_list.restype = c_void_p
+
+PAWC.overlap_setup.argtypes = [c_void_p, c_void_p, c_void_p, POINTER(c_int), POINTER(c_int),
+				POINTER(c_double), POINTER(c_double)] + 4*[POINTER(c_int)] + 3*[c_int]
 PAWC.overlap_setup.restype = None
+
 PAWC.pseudoprojection.restype = POINTER(c_double)
 PAWC.compensation_terms.restype = POINTER(c_double)
 PAWC.get_occs.restype = POINTER(c_double)
@@ -125,6 +131,7 @@ def numpy_to_cdouble(arr):
 	newarr = (c_double * len(arr))()
 	for i in range(len(arr)):
 		newarr[i] = arr[i]
+	newarr = cast(newarr, POINTER(c_double))
 	return newarr
 
 def numpy_to_cfloat(arr):
@@ -135,6 +142,7 @@ def numpy_to_cfloat(arr):
 	newarr = (c_float * len(arr))()
 	for i in range(len(arr)):
 		newarr[i] = arr[i]
+	newarr = cast(newarr, POINTER(c_float))
 	return newarr
 
 def numpy_to_cint(arr):
@@ -146,6 +154,7 @@ def numpy_to_cint(arr):
 	newarr = (c_int * len(arr))()
 	for i in range(len(arr)):
 		newarr[i] = int(arr[i])
+	newarr = cast(newarr, POINTER(c_int))
 	return newarr
 
 def el(site):

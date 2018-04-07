@@ -27,7 +27,8 @@ double complex fft_mult(int i, MKL_Complex16* x, double complex y);
 /**
 Uses the 3D fast fourier transform to calculate the wavefunction
 defined by plane-wave coefficients Cs in real space. These 
-values get stored in x.
+values get stored in x. The fast index is z (i.e. the third
+lattice direction) for storage and computation.
 */
 void fft3d(MKL_Complex16* x, int* G_bounds, double* lattice,
 	double* kpt, int* Gs, float complex* Cs, int num_waves, int* fftg);

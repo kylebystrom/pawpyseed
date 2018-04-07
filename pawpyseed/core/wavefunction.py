@@ -17,7 +17,6 @@ import numpy as np
 import json
 
 import sys
-sys.stdout.flush()
 
 class Pseudopotential:
 	"""
@@ -226,6 +225,12 @@ class Wavefunction:
 		self.dim = outcar.ngf
 		self.dim = np.array(self.dim).astype(np.int32) / 2
 		self.projector_list = None
+		self.nband = self.projector.get_nband(pwf.wf_ptr)
+		self.nwk = self.projector.get_nwk(pwf.wf_ptr)
+		self.nspin = self.projector.get_nspin(pwf.wf_ptr)
+		self.projector_list = None
+		self.nums = None
+		self.coords = None
 
 	@staticmethod
 	def from_files(struct="CONTCAR", pwf="WAVECAR", cr="POTCAR", vr="vasprun.xml", outcar="OUTCAR"):
@@ -676,6 +681,38 @@ class Wavefunction:
 			results[b] = self.proportion_conduction(b, bulk, pseudo = False, spinpol = spinpol)
 
 		return results
+
+	def check_c_projectors(self):
+		if not self.projector_list:
+			self.projector_list, self.nums, self.coords = self.make_c_projectors()
+
+	def get_state_realspace(self, b, k, s, dim=self.dim):
+		self.check_c_projectors()
+		return cfunc_call(realspace_state_ri, dim[0]*dim[1]*dim[2], b, k+s*self.nwk,
+			self.pwf.wf_ptr, self.projector_list,
+			dim, self.nums, self.coords)
+
+	def write_state_realspace(self, fileprefix = "", b, k, s, dim=self.dim, return_wf = False):
+		self.check_c_projectors()
+		filename_base = "%sB%dK%dS%d" % (fileprefix, b, k, s)
+		filename1 = "%s_REAL"
+		filename2 = "%s_IMAG"
+		if return_wf:
+			return cfunc_call(write_realspace_ri_return, dim[0]*dim[1]*dim[2], filename1, filename2,
+				b, k+s*self.nwk,
+				self.pwf.wf_ptr, self.projector_list,
+				dim, self.nums, self.coords)
+		else:
+			cfunc_call(write_realspace_ri_noreturn, dim[0]*dim[1]*dim[2], filename,
+				b, k+s*self.nwk,
+				self.pwf.wf_ptr, self.projector_list,
+				dim, self.nums, self.coords)
+
+	def write_density_realspace(self, filename = "PYAECCAR", dim=self.dim, return_wf = False):
+		self.check_c_projectors()
+		if return_wf:
+			return cfunc_call(write_density_return, dim[0]*dim[1]*dim[2], filename,
+				self.pwf.wf_ptr, self.projector_list, dim, self.nums, self.coords)
 
 	def free_all(self):
 		"""

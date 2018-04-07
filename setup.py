@@ -19,7 +19,7 @@ setup(name='pawpyseed',
 	author_email='kylebystrom@berkeley.edu',
 	packages=['pawpyseed', 'pawpyseed.core', 'pawpyseed.analysis'],
 	package_data={'pawpyseed.core': cfiles+hfiles+['Makefile', 'pawpy.so']},
-#	scripts=['scripts/pawpy_example.py']
+	scripts=['scripts/pawpy']
 )
 
 if len(sys.argv) > 1 and sys.argv[1] == 'build':

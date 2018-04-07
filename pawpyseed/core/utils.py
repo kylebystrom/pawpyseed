@@ -42,13 +42,15 @@ class PAWpyError(Exception):
 	def __init__(self, msg):
 		self.msg = msg
 
-def cfunc_call(func, *args):
+def cfunc_call(func, outsize = None, *args):
 	"""
 	converts args to C types and passes them to the C
 	function func
 	"""
 	cargs = []
 	for arg in args:
+		if type(arg) == list:
+			arg = np.array(arg)
 		if type(arg) == np.ndarray:
 			if arg.dtype == np.float64:
 				cargs.append(numpy_to_cdouble(arg))
@@ -64,7 +66,16 @@ def cfunc_call(func, *args):
 			cargs.append(arg)
 		elif type(arg) == str:
 			cargs.append(arg.encode('utf-8'))
-	return None
+	res = func(*cargs)
+	if outsize == None:
+		return res
+	if func.restype == POINTER(c_double):
+		return cdouble_to_numpy(res, outsize)
+	elif func.restype == POINTER(c_float):
+		return cfloat_to_numpy(res, outsize)
+	elif func.restype == POINTER(c_int):
+		return cint_to_numpy(res, outsize)
+	return res
 
 def check_spin(spin, nspin):
 	"""

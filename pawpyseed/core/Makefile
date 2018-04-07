@@ -4,8 +4,8 @@ ICC_LIBS = -L${MKLROOT}/lib/intel64
 ICC_INCS = -I${MKLROOT}/include
 ### -DMKL_Complex16="double complex" -DMKL_Complex8="float complex"
 ICC_FLAGS = -std=c11 -lmkl_rt -fopenmp -lpthread -ldl -lm -O3 -fPIC -Wall
-ICC_SRC = utils.c radial.c sbt.c reader.c quadrature.c linalg.c pseudoprojector.c projector.c tests.c
-ICC_OBJ = utils.o radial.o sbt.o reader.o quadrature.o linalg.o pseudoprojector.o projector.o tests.o
+ICC_SRC = utils.c radial.c sbt.c reader.c quadrature.c linalg.c density.c pseudoprojector.c projector.c tests.c
+ICC_OBJ = utils.o radial.o sbt.o reader.o quadrature.o linalg.o density.c pseudoprojector.o projector.o tests.o
 
 GCC_LIBS = 
 GCC_INCS = 

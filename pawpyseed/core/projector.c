@@ -412,6 +412,7 @@ void setup_projections_no_rayleigh(pswf_t* wf, ppot_t* pps, int num_elems,
 
 	printf("ptrvals %p %p\n", wf, pps);
 	wf->num_elems = num_elems;
+	wf->num_sites = num_sites;
 	wf->pps = pps;
 	printf("started setup_proj\n");
 	#pragma omp parallel for 

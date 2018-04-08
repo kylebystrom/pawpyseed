@@ -39,5 +39,5 @@ test:
 
 memtest:
 	rm -f $(PWD)/memtest
-	icc -o memtest memtest.c pseudoprojector.c projector.c fft.c quadrature.c reader.c tests.c utils.c radial.c sbt.c -mkl=sequential -L${MKLROOT}/lib/intel64 -lmkl_rt -lpthread -ldl -I${MKLROOT}/include -lm -std=c99 -O0 -fPIC -Wall -g
+	icc -o memtest memtest.c pseudoprojector.c projector.c linalg.c quadrature.c reader.c tests.c utils.c radial.c sbt.c -mkl=sequential -L${MKLROOT}/lib/intel64 -lmkl_rt -lpthread -ldl -I${MKLROOT}/include -lm -std=c99 -O0 -fPIC -Wall -g
 

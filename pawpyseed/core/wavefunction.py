@@ -223,10 +223,9 @@ class Wavefunction:
 		self.dim = outcar.ngf
 		self.dim = np.array(self.dim).astype(np.int32) / 2
 		self.projector_list = None
-		self.nband = self.projector.get_nband(pwf.wf_ptr)
-		self.nwk = self.projector.get_nwk(pwf.wf_ptr)
-		self.nspin = self.projector.get_nspin(pwf.wf_ptr)
-		self.projector_list = None
+		self.nband = self.projector.get_nband(c_void_p(pwf.wf_ptr))
+		self.nwk = self.projector.get_nwk(c_void_p(pwf.wf_ptr))
+		self.nspin = self.projector.get_nspin(c_void_p(pwf.wf_ptr))
 		self.nums = None
 		self.coords = None
 
@@ -581,7 +580,6 @@ class Wavefunction:
 		
 		projector_list = self.get_c_projectors_from_pps(pps)
 
-		self.projector.set_num_sites(c_void_p(self.pswf.wf_ptr), len(self.structure))
 		selfnums = np.array([labels[el(s)] for s in self.structure], dtype=np.int32)
 		basisnums = np.array([labels[el(s)] for s in basis.structure], dtype=np.int32)
 		selfcoords = np.array([], np.float64)

@@ -29,6 +29,22 @@ PAWC.overlap_setup.argtypes = [c_void_p, c_void_p, c_void_p, POINTER(c_int), POI
 				POINTER(c_double), POINTER(c_double)] + 4*[POINTER(c_int)] + 3*[c_int]
 PAWC.overlap_setup.restype = None
 
+PAWC.realspace_state_ri.argtypes = [c_int, c_int, c_void_p, c_void_p, POINTER(c_int), POINTER(c_int), POINTER(c_double)]
+PAWC.write_realspace_state_ri_return.argtypes = [c_char_p, c_char_p] + PAWC.realspace_state_ri.argtypes
+PAWC.write_realspace_state_ri_noreturn.argtypes = PAWC.write_realspace_state_ri_return.argtypes
+PAWC.realspace_state_ri.restype = POINTER(c_double)
+PAWC.write_realspace_state_ri_return.restype = POINTER(c_double)
+PAWC.write_realspace_state_ri_noreturn.restype = None
+
+PAWC.write_density_return.argtypes = [c_char_p, c_void_p, c_void_p, POINTER(c_int), POINTER(c_int), POINTER(c_double)]
+PAWC.write_density_noreturn.argtypes = PAWC.write_density_return.argtypes
+PAWC.write_density_return.restype = POINTER(c_double)
+PAWC.write_density_noreturn.restype = None
+
+PAWC.setup_projections_no_rayleigh.argtypes = [c_void_p, c_void_p, c_int, c_int, POINTER(c_int), POINTER(c_int), POINTER(c_double)]
+PAWC.setup_projections.argtypes = PAWC.setup_projections_no_rayleigh.argtypes
+PAWC.setup_projections_copy_rayleigh.argtypes = PAWC.setup_projections.argtypes + [c_void_p]
+
 PAWC.pseudoprojection.restype = POINTER(c_double)
 PAWC.compensation_terms.restype = POINTER(c_double)
 PAWC.get_occs.restype = POINTER(c_double)
@@ -48,7 +64,7 @@ class PAWpyError(Exception):
 	def __init__(self, msg):
 		self.msg = msg
 
-def cfunc_call(func, outsize = None, *args):
+def cfunc_call(func, outsize, *args):
 	"""
 	converts args to C types and passes them to the C
 	function func
@@ -88,7 +104,7 @@ def check_spin(spin, nspin):
 	Utility to check if the spin input parameter to single_band_projection
 	and similar functions is allowed given nspin of the wavefunction object
 	being analyzed. Returns a new value of spin if spin must be changed,
-	raises an error is spin is not allowed.
+	raises an error if spin is not allowed.
 	"""
 	if spin >= 0:
 		if spin >= nspin:

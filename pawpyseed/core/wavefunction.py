@@ -221,7 +221,7 @@ class Wavefunction:
 		self.cr = cr
 		self.projector = PAWC
 		self.dim = outcar.ngf
-		self.dim = np.array(self.dim).astype(np.int32) / 2
+		self.dim = np.array(self.dim).astype(np.int32) // 2
 		self.projector_list = None
 		self.nband = self.projector.get_nband(c_void_p(pwf.wf_ptr))
 		self.nwk = self.projector.get_nwk(c_void_p(pwf.wf_ptr))
@@ -581,12 +581,14 @@ class Wavefunction:
 		projector_list = self.get_c_projectors_from_pps(pps)
 
 		selfnums = np.array([labels[el(s)] for s in self.structure], dtype=np.int32)
-		basisnums = np.array([labels[el(s)] for s in basis.structure], dtype=np.int32)
 		selfcoords = np.array([], np.float64)
-		basiscoords = np.array([], np.float64)
+		if basis != None:
+			basisnums = np.array([labels[el(s)] for s in basis.structure], dtype=np.int32)
+			basiscoords = np.array([], np.float64)
 
 		self.num_proj_els = len(pps)
-		basis.num_proj_els = len(pps)
+		if basis != None:
+			basis.num_proj_els = len(pps)
 		for s in self.structure:
 			selfcoords = np.append(selfcoords, s.frac_coords)
 		if basis != None:
@@ -682,39 +684,44 @@ class Wavefunction:
 	def check_c_projectors(self):
 		if not self.projector_list:
 			self.projector_list, self.nums, self.coords = self.make_c_projectors()
+			cfunc_call(PAWC.setup_projections_no_rayleigh, None, self.pwf.wf_ptr, self.projector_list,
+					self.num_proj_els, len(self.structure), self.dim, self.nums, self.coords)
 
 	def get_state_realspace(self, b, k, s, dim=None):
-		if dim == None:
+		if type(dim) == type(None):
 			dim = self.dim
 		self.check_c_projectors()
-		return cfunc_call(realspace_state_ri, dim[0]*dim[1]*dim[2], b, k+s*self.nwk,
+		return cfunc_call(PAWC.realspace_state_ri, dim[0]*dim[1]*dim[2], b, k+s*self.nwk,
 			self.pwf.wf_ptr, self.projector_list,
 			dim, self.nums, self.coords)
 
 	def write_state_realspace(self, b, k, s, fileprefix = "", dim=None, return_wf = False):
-		if dim == None:
+		if type(dim) == type(None):
 			dim = self.dim
 		self.check_c_projectors()
 		filename_base = "%sB%dK%dS%d" % (fileprefix, b, k, s)
 		filename1 = "%s_REAL"
 		filename2 = "%s_IMAG"
 		if return_wf:
-			return cfunc_call(write_realspace_ri_return, dim[0]*dim[1]*dim[2], filename1, filename2,
+			return cfunc_call(PAWC.write_realspace_state_ri_return, dim[0]*dim[1]*dim[2], filename1, filename2,
 				b, k+s*self.nwk,
 				self.pwf.wf_ptr, self.projector_list,
 				dim, self.nums, self.coords)
 		else:
-			cfunc_call(write_realspace_ri_noreturn, dim[0]*dim[1]*dim[2], filename,
+			cfunc_call(PAWC.write_realspace_state_ri_noreturn, None, filename,
 				b, k+s*self.nwk,
 				self.pwf.wf_ptr, self.projector_list,
 				dim, self.nums, self.coords)
 
 	def write_density_realspace(self, filename = "PYAECCAR", dim=None, return_wf = False):
-		if dim == None:
+		if type(dim) == type(None):
 			dim = self.dim
 		self.check_c_projectors()
 		if return_wf:
-			return cfunc_call(write_density_return, dim[0]*dim[1]*dim[2], filename,
+			return cfunc_call(PAWC.write_density_return, dim[0]*dim[1]*dim[2], filename,
+				self.pwf.wf_ptr, self.projector_list, dim, self.nums, self.coords)
+		else:
+			cfunc_call(PAWC.write_density_noreturn, None, filename,
 				self.pwf.wf_ptr, self.projector_list, dim, self.nums, self.coords)
 
 	def free_all(self):

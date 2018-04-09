@@ -25,7 +25,7 @@ C code requires the Intel C compiler, `icc`, as well as the Intel
 Math Kernel Library. When the `build` command is run, an environment
 variable `MKLROOT` must be present and point to the Math Kernel Library.
 
-# Dependencies
+### Dependencies
 
 Python requirements:
 ```
@@ -51,7 +51,7 @@ matplotlib>=0.2.5
 
 ## Theory and Input
 
-# PAW
+### PAW
 
 The projector augmented wave (PAW) method is a technique
 used in plane wave density functional theory to simplify
@@ -71,7 +71,7 @@ derived from the true potential; and pseudo partial waves,
 which are derived from the full partial waves and
 pseudopotential.
 
-# Files
+### Files
 
 The projector functions and partial waves are unique
 to each element and stored in the POTCAR file
@@ -90,13 +90,13 @@ Such functionality can be useful for analyzing the composition
 of defect levels in solids, which is main application for which
 the code is currently focused.
 
-# Implementation
+### Implementation
 
 * Python Interface
 * Computationally intensive tasks in C
 * Parallelized with openmp
 
-# Current Functionality
+### Current Functionality
 
 * Read pseudowavefunctions
 * Read projectors and partial waves from VASP POTCAR
@@ -107,7 +107,7 @@ with the same lattice
 and conduction bands
 * Convenient pycdt interface
 
-# Future Functionality
+### Future Functionality
 
 * Localize orbitals with SCDM-k
 * Atomic Hartree Fock and GGA DFT

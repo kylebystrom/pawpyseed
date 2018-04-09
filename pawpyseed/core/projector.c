@@ -407,11 +407,12 @@ void make_pwave_overlap_matrices(ppot_t* pp_ptr) {
 	pp_ptr->diff_overlap_matrix = diov;
 }
 
-void setup_projections(pswf_t* wf, ppot_t* pps, int num_elems,
-		int num_sites, int* fftg, int* labels, double* coords) {
+void setup_projections_no_rayleigh(pswf_t* wf, ppot_t* pps, int num_elems,
+	int num_sites, int* fftg, int* labels, double* coords) {
 
 	printf("ptrvals %p %p\n", wf, pps);
 	wf->num_elems = num_elems;
+	wf->num_sites = num_sites;
 	wf->pps = pps;
 	printf("started setup_proj\n");
 	#pragma omp parallel for 
@@ -432,34 +433,21 @@ void setup_projections(pswf_t* wf, ppot_t* pps, int num_elems,
 			wf->G_bounds, wf->lattice, wf->reclattice, pps, fftg);
 	}
 	free_real_proj_site_list(sites, num_sites);	
+}
+
+void setup_projections(pswf_t* wf, ppot_t* pps, int num_elems,
+		int num_sites, int* fftg, int* labels, double* coords) {
+
+	setup_projections_no_rayleigh(wf, pps, num_elems,
+		num_sites, fftg, labels, coords);
 	generate_rayleigh_expansion_terms(wf, pps, num_elems);
 }
 
 void setup_projections_copy_rayleigh(pswf_t* wf, pswf_t* wf_R, ppot_t* pps, int num_elems,
 		int num_sites, int* fftg, int* labels, double* coords) {
 
-	printf("ptrvals %p %p\n", wf, pps);
-	wf->num_elems = num_elems;
-	wf->pps = pps;
-	printf("started setup_proj\n");
-	#pragma omp parallel for 
-	for (int p = 0; p < num_elems; p++) {
-		add_num_cart_gridpts(pps+p, wf->lattice, fftg);
-	}
-	int NUM_KPTS = wf->nwk * wf->nspin;
-	int NUM_BANDS = wf->nband;
-	printf("calculating projector_values\n");
-	real_proj_site_t* sites = projector_values(num_sites, labels, coords,
-		wf->lattice, wf->reclattice, pps, fftg);
-	printf("onto_projector calcs\n");
-	#pragma omp parallel for 
-	for (int w = 0; w < NUM_BANDS * NUM_KPTS; w++) {
-		kpoint_t* kpt = wf->kpts[w % NUM_KPTS];
-		int band_num = w / NUM_KPTS;
-		onto_projector(kpt, band_num, sites, num_sites, labels,
-			wf->G_bounds, wf->lattice, wf->reclattice, pps, fftg);
-	}
-	free_real_proj_site_list(sites, num_sites);	
+	setup_projections_no_rayleigh(wf, pps, num_elems,
+		num_sites, fftg, labels, coords);
 	copy_rayleigh_expansion_terms(wf, pps, num_elems, wf_R);
 }
 

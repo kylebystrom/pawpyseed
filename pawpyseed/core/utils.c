@@ -128,6 +128,12 @@ void free_kpoint(kpoint_t* kpt, int num_elems, ppot_t* pps) {
 	for (int b = 0; b < kpt->num_bands; b++) {
 		band_t* curr_band = kpt->bands[b];
 		free(curr_band->Cs);
+		//if (curr_band->projections != NULL) {
+		//	free(curr_band->projections);
+		//}
+		//if (curr_band->wave_projections != NULL) {
+		//	free(curr_band->wave_projections);
+		//}
 		free(curr_band);
 	}
 	if (kpt->expansion != NULL) {
@@ -248,6 +254,10 @@ int get_nspin(pswf_t* wf) {
 	return wf->nspin;
 }
 
+void set_num_sites(pswf_t* wf, int nsites) {
+	wf->num_sites = nsites;
+}
+
 double legendre(int l, int m, double x) {
 	double total = 0;
 	if (m < 0) return pow(-1.0, m) * fac(l+m) / fac(l-m) * legendre(l, -m, x);
@@ -305,6 +315,27 @@ double wave_interpolate(double r, int size, double* x, double* f, double** wave_
 	return f[ind] + rem * (wave_spline[0][ind] + 
 				rem * (wave_spline[1][ind] +
 				rem * wave_spline[2][ind]));
+}
+
+double complex wave_value(funcset_t funcs, int size, double* x, int m,
+	double* ion_pos, double* pos, double* lattice) {
+
+	double temp[3] = {0,0,0};
+	double r = 0;
+	min_cart_path(pos, ion_pos, lattice, temp, &r);
+
+	double ae_radial_val = wave_interpolate(r, size, x, funcs.aewave, funcs.aewave_spline);
+	double ps_radial_val = wave_interpolate(r, size, x, funcs.pswave, funcs.pswave_spline);
+	double radial_val = ae_radial_val - ps_radial_val;
+
+	if (r==0) return Ylm(funcs.l, m, 0, 0) * radial_val;
+	double theta = 0, phi = 0;
+	theta = acos(temp[2]/r);
+	if (r - fabs(temp[2]) == 0) phi = 0;
+	else phi = acos(temp[0] / pow(temp[0]*temp[0] + temp[1]*temp[1], 0.5));
+	if (temp[1] < 0) phi = 2*PI - phi;
+	double complex sph_val = Ylm(funcs.l, m, theta, phi);
+	return radial_val * sph_val;
 }
 
 double complex proj_value(funcset_t funcs, double* x, int m, double rmax,

@@ -174,6 +174,8 @@ pswf_t* read_wavefunctions(char* filename, double* kpt_weights) {
 			band->num_waves = nplane;
 			band->energy = kptr[4+i*3];
 			band->occ = kptr[6+i*3];
+			band->projections = NULL;
+			band->wave_projections = NULL;
 			kpt->bands[i] = band;
 		}
 

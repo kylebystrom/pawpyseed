@@ -1,6 +1,7 @@
 # coding: utf-8
 
 """
+\file
 Base class containing Python classes for parsing files
 and storing and analyzing wavefunction data.
 """
@@ -10,13 +11,12 @@ from pymatgen.io.vasp.outputs import Vasprun, Outcar
 from pymatgen.core.structure import Structure
 import numpy as np
 from ctypes import *
-from pawpyseed.data.utils import *
+from pawpyseed.core.utils import *
 import os
 import numpy as np
 import json
 
 import sys
-sys.stdout.flush()
 
 class Pseudopotential:
 	"""
@@ -164,12 +164,10 @@ class PseudoWavefunction:
 		if type(vr) == str:
 			vr = Vasprun(vr)
 		weights = vr.actual_kpoints_weights
-		kws = (c_double * len(weights))()
-		for i in range(len(weights)):
-			kws[i] = weights[i]
+		kws = numpy_to_cdouble(weights)
 		self.kws = weights
 		self.kpts = vr.actual_kpoints
-		self.wf_ptr = PAWC.read_wavefunctions(filename.encode('utf-8'), byref(kws))
+		self.wf_ptr = PAWC.read_wavefunctions(filename.encode('utf-8'), kws)
 
 	def pseudoprojection(self, band_num, basis):
 		"""
@@ -202,6 +200,9 @@ class Wavefunction:
 		cr (CoreRegion): Contains the pseudopotentials, with projectors and
 			partials waves, for the structure
 		projector: ctypes object for interfacing with C code
+		wf_ptr (C pointer): pointer to the pswf_t C object for this wavefunction
+		dim (np.ndarray, length 3): dimension of the FFT grid used by VASP
+			and therefore for FFTs in this code
 	"""
 
 	def __init__(self, struct, pwf, cr, outcar):
@@ -222,6 +223,11 @@ class Wavefunction:
 		self.dim = outcar.ngf
 		self.dim = np.array(self.dim).astype(np.int32) / 2
 		self.projector_list = None
+		self.nband = self.projector.get_nband(c_void_p(pwf.wf_ptr))
+		self.nwk = self.projector.get_nwk(c_void_p(pwf.wf_ptr))
+		self.nspin = self.projector.get_nspin(c_void_p(pwf.wf_ptr))
+		self.nums = None
+		self.coords = None
 
 	@staticmethod
 	def from_files(struct="CONTCAR", pwf="WAVECAR", cr="POTCAR", vr="vasprun.xml", outcar="OUTCAR"):
@@ -318,6 +324,7 @@ class Wavefunction:
 
 		print(hex(projector_list), hex(self.pwf.wf_ptr))
 		sys.stdout.flush()
+		print ("TYPETHING", basis.pwf.wf_ptr, type(basis.pwf.wf_ptr))
 		
 		if setup_basis:
 			self.projector.setup_projections(c_void_p(basis.pwf.wf_ptr),
@@ -396,6 +403,18 @@ class Wavefunction:
 		return res[::2] + 1j * res[1::2]
 
 	def get_c_projectors_from_pps(self, pps):
+		"""
+		Returns a point to a list of ppot_t objects in C,
+		to be used for high performance parts of the code
+
+		Args:
+			pps (dict of Pseudopotential objects): keys are integers,
+				values of Pseudopotential objects
+
+		Returns:
+			c_void_p object pointing to ppot_t list with each Pseudopotential,
+			ordered in the list by their numerical keys
+		"""
 
 		clabels = np.array([], np.int32)
 		ls = np.array([], np.int32)
@@ -436,6 +455,27 @@ class Wavefunction:
 
 	@staticmethod
 	def setup_multiple_projections(basis_dir, wf_dirs, ignore_errors = False):
+		"""
+		A convenient generator function for processing the Kohn-Sham wavefunctions
+		of multiple structures with respect to one structure used as the basis.
+		All C memory is freed after each yield for the wavefunctions to be analyzed,
+		and C memory associated with the basis wavefunction is freed when
+		the generator is called after all wavefunctions have been yielded.
+
+		Args:
+			basis_dir (str): path to the VASP output to be used as the basis structure
+			wf_dirs (list of str): paths to the VASP outputs to be analyzed
+			ignore_errors (bool, False): whether to ignore errors in setting up
+				Wavefunction objects by skipping over the directories for which
+				setup fails.
+
+		Returns:
+			list -- wf_dir, basis, wf
+			Each iteration of the generator function returns a directory name from
+			wf_dirs (wf_dir), the basis Wavefunction object (basis), and the Wavefunction
+			object associated with wf_dir (wf), fully setup to project bands of wf
+			onto bands of basis.
+		"""
 
 		basis = Wavefunction.from_directory(basis_dir)
 		crs = [basis.cr] + [CoreRegion(Potcar.from_file(os.path.join(wf_dir, 'POTCAR'))) \
@@ -492,10 +532,7 @@ class Wavefunction:
 				wf.setup_projection(basis, False)
 
 				yield [wf_dir, basis, wf]
-				print ("DONE WITH A YIELD")
-				sys.stdout.flush()
 				wf.free_all()
-				print ("FREED MEM")
 			except:
 				if ignore_errors:
 					errcount += 1
@@ -641,6 +678,44 @@ class Wavefunction:
 			results[b] = self.proportion_conduction(b, bulk, pseudo = False, spinpol = spinpol)
 
 		return results
+
+	def check_c_projectors(self):
+		if not self.projector_list:
+			self.projector_list, self.nums, self.coords = self.make_c_projectors()
+
+	def get_state_realspace(self, b, k, s, dim=None):
+		if dim == None:
+			dim = self.dim
+		self.check_c_projectors()
+		return cfunc_call(realspace_state_ri, dim[0]*dim[1]*dim[2], b, k+s*self.nwk,
+			self.pwf.wf_ptr, self.projector_list,
+			dim, self.nums, self.coords)
+
+	def write_state_realspace(self, b, k, s, fileprefix = "", dim=None, return_wf = False):
+		if dim == None:
+			dim = self.dim
+		self.check_c_projectors()
+		filename_base = "%sB%dK%dS%d" % (fileprefix, b, k, s)
+		filename1 = "%s_REAL"
+		filename2 = "%s_IMAG"
+		if return_wf:
+			return cfunc_call(write_realspace_ri_return, dim[0]*dim[1]*dim[2], filename1, filename2,
+				b, k+s*self.nwk,
+				self.pwf.wf_ptr, self.projector_list,
+				dim, self.nums, self.coords)
+		else:
+			cfunc_call(write_realspace_ri_noreturn, dim[0]*dim[1]*dim[2], filename,
+				b, k+s*self.nwk,
+				self.pwf.wf_ptr, self.projector_list,
+				dim, self.nums, self.coords)
+
+	def write_density_realspace(self, filename = "PYAECCAR", dim=None, return_wf = False):
+		if dim == None:
+			dim = self.dim
+		self.check_c_projectors()
+		if return_wf:
+			return cfunc_call(write_density_return, dim[0]*dim[1]*dim[2], filename,
+				self.pwf.wf_ptr, self.projector_list, dim, self.nums, self.coords)
 
 	def free_all(self):
 		"""

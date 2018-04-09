@@ -1,0 +1,36 @@
+#!/usr/bin/env python
+
+import argparse
+import os
+import logging
+
+__author__ = "Kyle Bystrom"
+__maintainer__ = "Kyle Bystrom"
+__email__ = "kylebystrom@berkeley.edu"
+
+
+def compile(args):
+	currdir = os.getcwd()
+	import pawpyseed.compiler as compiler
+	#os.path.dirname(os.path.abspath(__file__))
+	compiler.compile_core(args.comp, args.scilib)
+	compiler.compile_atomic(args.comp, args.scilib)
+
+def main():
+	parser = argparse.ArgumentParser(description="General analysis and compilation script for pawpyseed")
+
+	subparsers = parser.add_subparsers()
+
+	parser_compile = subparsers.add_parser("compile", help="Compile the C code for pawpyseed")
+	parser_compile.add_argument("-c", "--compiler", default="icc", type=str.lower, dest="comp",
+								help="compiler to use") #icc,gcc
+	parser_compile.add_argument("-sl", "--scilib", default="check", type=str.lower, dest="scilib",
+								helper="scientific library to which to link") #check,mkl,gsl,lite
+
+
+	parser_cdt = subparsers.add_parser("cdt", help="Run defect band composition analysis on a"
+										"pycdt-generated defect directory system")
+	parser_analyze = subparsers.add_parser("analyze", help="Perform analysis on pawpyseed-generated data")
+
+	args = parser.parse_args()
+	args.func(args)

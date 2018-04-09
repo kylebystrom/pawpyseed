@@ -580,7 +580,6 @@ class Wavefunction:
 		
 		projector_list = self.get_c_projectors_from_pps(pps)
 
-		self.projector.set_num_sites(c_void_p(self.pswf.wf_ptr), len(self.structure))
 		selfnums = np.array([labels[el(s)] for s in self.structure], dtype=np.int32)
 		basisnums = np.array([labels[el(s)] for s in basis.structure], dtype=np.int32)
 		selfcoords = np.array([], np.float64)

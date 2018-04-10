@@ -718,11 +718,22 @@ class Wavefunction:
 			dim = self.dim
 		self.check_c_projectors()
 		if return_wf:
-			return cfunc_call(PAWC.write_density_return, dim[0]*dim[1]*dim[2], filename,
+			res = cfunc_call(PAWC.write_density_return, dim[0]*dim[1]*dim[2], filename,
 				self.pwf.wf_ptr, self.projector_list, dim, self.nums, self.coords)
 		else:
 			cfunc_call(PAWC.write_density_noreturn, None, filename,
 				self.pwf.wf_ptr, self.projector_list, dim, self.nums, self.coords)
+			res = None
+		f = open(filename, 'r')
+		nums = f.read()
+		f.close()
+		f = open(filename, 'w')
+		dimstr = '%d %d %d\n' % (dim[0], dim[1], dim[2])
+		posstr = Poscar(self.structure).get_string() + '\n'
+		f.write(posstr + dimstr + nums)
+		f.close()
+		print ('wiped successfuly')
+		return res
 
 	def free_all(self):
 		"""

@@ -19,6 +19,7 @@
 	int NUM_BANDS = wf->nband;
 	int NUM_KPTS = wf->nwk;
 
+	int spin_mult = 2 / wf->nspin;
 	int t_projs = 0;
 	for (int i = 0; i < num_sites; i++) {
 		t_projs += pps[labels[i]].total_projs;
@@ -82,15 +83,17 @@ double* ae_chg_density(pswf_t* wf, ppot_t* pps, int* fftg, int* labels, double* 
 
 	int gridsize = fftg[0] * fftg[1] * fftg[2];
 	double* P = mkl_calloc(gridsize, sizeof(double), 64);
-
+	int spin_mult = 2 / wf->nspin;
 	for (int k = 0; k < wf->nwk * wf->nspin; k++) {
 		printf("KLOOP %d\n", k);
 		for (int b = 0; b < wf->nband; b++) {
-			double complex* x = realspace_state(b, k, wf, pps, fftg, labels, coords);
-			for (int i = 0; i < gridsize; i++) {
-				P[i] += creal(x[i] * conj(x[i]));
+			if (wf->kpts[k]->bands[b]->occ > 0.00000001) {
+				double complex* x = realspace_state(b, k, wf, pps, fftg, labels, coords);
+				for (int i = 0; i < gridsize; i++) {
+					P[i] += creal(x[i] * conj(x[i])) * wf->kpts[k]->weight * wf->kpts[k]->bands[b]->occ * spin_mult;
+				}
+				mkl_free(x);
 			}
-			mkl_free(x);
 		}
 	}
 	mkl_free_buffers();
@@ -177,14 +180,14 @@ double* realspace_state_ri(int BAND_NUM, int KPOINT_NUM, pswf_t* wf, ppot_t* pps
 	return rpip;
 }
 
-void write_volumetric(char* filename, double* x, int* fftg) {
+void write_volumetric(char* filename, double* x, int* fftg, double scale) {
 
 	FILE* fp = fopen(filename, "w");
 	int t = 1;
 	for (int k = 0; k < fftg[2]; k++) {
 		for (int j = 0; j < fftg[1]; j++) {
 			for (int i = 0; i < fftg[0]; i++) {
-				fprintf(fp, "%E   ", x[i*fftg[1]*fftg[2] + j*fftg[2] + k]);
+				fprintf(fp, "%E   ", x[i*fftg[1]*fftg[2] + j*fftg[2] + k] * scale);
 				if (t % 5 == 0) fprintf(fp, "\n");
 				t++;
 			}
@@ -198,8 +201,8 @@ double* write_realspace_state_ri_return(char* filename1, char* filename2, int BA
 	int* labels, double* coords) {
 
 	double* x = realspace_state_ri(BAND_NUM, KPOINT_NUM, wf, pps, fftg, labels, coords);
-	write_volumetric(filename1, x, fftg);
-	write_volumetric(filename2, x+fftg[0]*fftg[1]*fftg[2], fftg);
+	write_volumetric(filename1, x, fftg, 1);
+	write_volumetric(filename2, x+fftg[0]*fftg[1]*fftg[2], fftg, 1);
 
 	return x;
 }
@@ -208,7 +211,8 @@ double* write_density_return(char* filename, pswf_t* wf, ppot_t* pps,
 	int* fftg, int* labels, double* coords) {
 
 	double* x = ae_chg_density(wf, pps, fftg, labels, coords);
-	write_volumetric(filename, x, fftg);
+	double scale = determinant(wf->lattice);
+	write_volumetric(filename, x, fftg, scale);
 
 	return x;
 }

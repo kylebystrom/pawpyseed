@@ -9,7 +9,7 @@ double* ae_chg_density(pswf_t* wf, ppot_t* pps, int* fftg, int* labels, double* 
 double* realspace_state_ri(int BAND_NUM, int KPOINT_NUM, pswf_t* wf, ppot_t* pps, int* fftg,
 		int* labels, double* coords);
 
-void write_volumetric(char* filename, double* x, int* fftg);
+void write_volumetric(char* filename, double* x, int* fftg, double scale);
 
 double* write_realspace_state_ri_return(char* filename1, char* filename2, int BAND_NUM, int KPOINT_NUM,
 	pswf_t* wf, ppot_t* pps, int* fftg,

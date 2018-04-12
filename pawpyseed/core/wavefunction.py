@@ -12,11 +12,25 @@ from pymatgen.core.structure import Structure
 import numpy as np
 from ctypes import *
 from pawpyseed.core.utils import *
-import os
+import os, time
 import numpy as np
 import json
 
 import sys
+
+class Timer:
+	@staticmethod
+	def setup_time(t):
+		Timer.ALL_SETUP_TIME += t
+	@staticmethod
+	def overlap_time(t):
+		Timer.ALL_OVERLAP_TIME += t
+	@staticmethod
+	def augmentation_time(t):
+		Timer.ALL_AUGMENTATION_TIME += t
+	ALL_SETUP_TIME = 0
+	ALL_OVERLAP_TIME = 0
+	ALL_AUGMENTATION_TIME = 0
 
 class Pseudopotential:
 	"""
@@ -331,10 +345,14 @@ class Wavefunction:
 				c_void_p(projector_list), self.num_proj_els,
 				len(basis.structure), numpy_to_cint(self.dim), numpy_to_cint(basisnums),
 				numpy_to_cdouble(basiscoords))
+		start = time.monotonic()
 		self.projector.setup_projections_copy_rayleigh(c_void_p(self.pwf.wf_ptr), c_void_p(basis.pwf.wf_ptr),
 			c_void_p(projector_list), self.num_proj_els,
 			len(self.structure), numpy_to_cint(self.dim), numpy_to_cint(selfnums),
 			numpy_to_cdouble(selfcoords))
+		end = time.monotonic()
+		print('--------------\nran setup_projections in %f seconds\n---------------' % (end-start))
+		Timer.setup_time(end-start)
 		M_R, M_S, N_R, N_S, N_RS = self.make_site_lists(basis)
 		num_N_RS = len(N_RS)
 		if num_N_RS > 0:
@@ -342,6 +360,7 @@ class Wavefunction:
 		else:
 			N_RS_R, N_RS_S = [], []
 		self.site_cat = [M_R, M_S, N_R, N_S, N_RS_R, N_RS_S]
+		start = time.monotonic()
 		self.projector.overlap_setup(c_void_p(basis.pwf.wf_ptr), c_void_p(self.pwf.wf_ptr), c_void_p(projector_list),
 			numpy_to_cint(basisnums), numpy_to_cint(selfnums),
 			numpy_to_cdouble(basiscoords), numpy_to_cdouble(selfcoords),
@@ -349,6 +368,9 @@ class Wavefunction:
 			numpy_to_cint(N_RS_R), numpy_to_cint(N_RS_S), len(N_R), len(N_S), len(N_RS_R));
 			#numpy_to_cint(M_R), numpy_to_cint(M_S),
                         #numpy_to_cint(M_R), numpy_to_cint(M_S), len(M_R), len(M_R), len(M_R));
+		end = time.monotonic()
+		Timer.overlap_time(end-start)
+		print('-------------\nran overlap_setup in %f seconds\n---------------' % (end-start))
 
 	def single_band_projection(self, band_num, basis):
 		"""
@@ -384,12 +406,16 @@ class Wavefunction:
 
 		M_R, M_S, N_R, N_S, N_RS_R, N_RS_S = self.site_cat
 		
+		start = time.monotonic()
 		ct = self.projector.compensation_terms(band_num, c_void_p(self.pwf.wf_ptr), c_void_p(basis.pwf.wf_ptr), c_void_p(projector_list), 
 			len(self.cr.pps), len(M_R), len(N_R), len(N_S), len(N_RS_R), numpy_to_cint(M_R), numpy_to_cint(M_S),
 			numpy_to_cint(N_R), numpy_to_cint(N_S), numpy_to_cint(N_RS_R), numpy_to_cint(N_RS_S),
 			numpy_to_cint(selfnums), numpy_to_cdouble(selfcoords),
 			numpy_to_cint(basisnums), numpy_to_cdouble(basiscoords),
 			numpy_to_cint(self.dim))
+		end = time.monotonic()
+		Timer.augmentation_time(end-start)
+		print('---------\nran compensation_terms in %f seconds\n-----------' % (end-start))
 		"""
 		ct = self.projector.compensation_terms(band_num, c_void_p(self.pwf.wf_ptr), c_void_p(basis.pwf.wf_ptr), c_void_p(projector_list), 
 			len(self.cr.pps), 0, len(M_R), len(M_S), len(M_S), numpy_to_cint([]), numpy_to_cint([]),
@@ -700,15 +726,15 @@ class Wavefunction:
 			dim = self.dim
 		self.check_c_projectors()
 		filename_base = "%sB%dK%dS%d" % (fileprefix, b, k, s)
-		filename1 = "%s_REAL"
-		filename2 = "%s_IMAG"
+		filename1 = "%s_REAL" % filename_base
+		filename2 = "%s_IMAG" % filename_base
 		if return_wf:
-			return cfunc_call(PAWC.write_realspace_state_ri_return, dim[0]*dim[1]*dim[2], filename1, filename2,
+			return cfunc_call(PAWC.write_realspace_state_ri_return, 2*dim[0]*dim[1]*dim[2], filename1, filename2,
 				b, k+s*self.nwk,
 				self.pwf.wf_ptr, self.projector_list,
 				dim, self.nums, self.coords)
 		else:
-			cfunc_call(PAWC.write_realspace_state_ri_noreturn, None, filename,
+			cfunc_call(PAWC.write_realspace_state_ri_noreturn, None, filename1, filename2,
 				b, k+s*self.nwk,
 				self.pwf.wf_ptr, self.projector_list,
 				dim, self.nums, self.coords)

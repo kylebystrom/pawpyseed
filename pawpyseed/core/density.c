@@ -114,7 +114,7 @@ double complex* realspace_state(int BAND_NUM, int KPOINT_NUM, pswf_t* wf, ppot_t
 	double vol = determinant(lattice);
 
 	int num_sites = wf->num_sites;
-	//#pragma omp parallel for
+	#pragma omp parallel for
 	for (int p = 0; p < num_sites; p++) {
 		projection_t pros = wf->kpts[KPOINT_NUM]->bands[BAND_NUM]->projections[p];
 		printf("READ PROJECTIONS\n");
@@ -170,7 +170,7 @@ double* realspace_state_ri(int BAND_NUM, int KPOINT_NUM, pswf_t* wf, ppot_t* pps
 
 	int gridsize = fftg[0]*fftg[1]*fftg[2];
 
-	double* rpip = (double*) malloc(2*gridsize);
+	double* rpip = (double*) malloc(2*gridsize * sizeof(double));
 
 	for (int i = 0; i < gridsize; i++) {
 		rpip[i] = creal(x[i]);
@@ -221,9 +221,10 @@ void write_realspace_state_ri_noreturn(char* filename1, char* filename2, int BAN
 	pswf_t* wf, ppot_t* pps, int* fftg,
 	int* labels, double* coords) {
 
-	mkl_free(write_realspace_state_ri_return(filename1, filename2,
+	double* x = write_realspace_state_ri_return(filename1, filename2,
 		BAND_NUM, KPOINT_NUM, wf, pps, fftg,
-		labels, coords));
+		labels, coords);
+	mkl_free(x);
 }
 
 void write_density_noreturn(char* filename, pswf_t* wf, ppot_t* pps,

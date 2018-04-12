@@ -43,7 +43,7 @@ PAWC.write_density_noreturn.restype = None
 
 PAWC.setup_projections_no_rayleigh.argtypes = [c_void_p, c_void_p, c_int, c_int, POINTER(c_int), POINTER(c_int), POINTER(c_double)]
 PAWC.setup_projections.argtypes = PAWC.setup_projections_no_rayleigh.argtypes
-PAWC.setup_projections_copy_rayleigh.argtypes = PAWC.setup_projections.argtypes + [c_void_p]
+PAWC.setup_projections_copy_rayleigh.argtypes = [c_void_p] + PAWC.setup_projections.argtypes
 
 PAWC.pseudoprojection.restype = POINTER(c_double)
 PAWC.compensation_terms.restype = POINTER(c_double)

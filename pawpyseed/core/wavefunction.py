@@ -686,7 +686,6 @@ class Wavefunction:
 		nband = self.projector.get_nband(c_void_p(bulk.pwf.wf_ptr))
 		nwk = self.projector.get_nwk(c_void_p(bulk.pwf.wf_ptr))
 		nspin = self.projector.get_nspin(c_void_p(bulk.pwf.wf_ptr))
-		occs = 
 		#totest = set()
 		occs = cdouble_to_numpy(self.projector.get_occs(c_void_p(bulk.pwf.wf_ptr)), nband*nwk*nspin)
 		vbm = 0

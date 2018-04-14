@@ -45,10 +45,10 @@ double* project_realspace_state(int BAND_NUM, int numtoproj, pswf_t* wf, pswf_t*
 
 	double complex overlap = 0;
 	for (int k = 0; k < nwk * nspin; k++) {
-		double complex* state = realspace_state(BAND_NUM, k, wf, pps, fft, labels, coords);
+		double complex* state = realspace_state(BAND_NUM, k, wf, pps, fftg, labels, coords);
 		for (int b = 0; b < nband; b++) {
-			double complex* state_R = realspace_state(b, k, wf_R, pps, fft, labels_R, coords_R);
-			overlap = zdotc(gridsize, state_R, 1, state, 1);
+			double complex* state_R = realspace_state(b, k, wf_R, pps, fftg, labels_R, coords_R);
+			overlap = cblas_zdotc_sub(gridsize, state_R, 1, state, 1);
 			projs[b*nwk*nspin + k] = creal(overlap);
 			projs[nband*nwk*nspin + b*nwk*nspin + k] = cimag(overlap);
 			mkl_free(state_R);

@@ -6,6 +6,9 @@ double complex* realspace_state(int BAND_NUM, int KPOINT_NUM, pswf_t* wf, ppot_t
 
 double* ae_chg_density(pswf_t* wf, ppot_t* pps, int* fftg, int* labels, double* coords);
 
+double* project_realspace_state(int BAND_NUM, int numtoproj, pswf_t* wf, pswf_t* wf_R, ppot_t* pps, int* fftg,
+	int* labels, double* coords, int* labels_R, double* coords_R);
+
 double* realspace_state_ri(int BAND_NUM, int KPOINT_NUM, pswf_t* wf, ppot_t* pps, int* fftg,
 		int* labels, double* coords);
 

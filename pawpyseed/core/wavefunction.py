@@ -676,7 +676,7 @@ class Wavefunction:
 			c = c.tolist()
 		return v, c
 
-	def defect_band_analysis(self, bulk, min_band=0, max_band=None, bound = 0.05, spinpol = False):
+	def defect_band_analysis(self, bulk, num_below_ef=20, num_above_ef=20, spinpol = False):
 		"""
 		Identifies a set of 'interesting' bands in a defect structure
 		to analyze by choosing any band that is more than bound conduction
@@ -686,10 +686,16 @@ class Wavefunction:
 		nband = self.projector.get_nband(c_void_p(bulk.pwf.wf_ptr))
 		nwk = self.projector.get_nwk(c_void_p(bulk.pwf.wf_ptr))
 		nspin = self.projector.get_nspin(c_void_p(bulk.pwf.wf_ptr))
+		occs = 
 		#totest = set()
-		if max_band == None:
-			max_band = nband-1
-
+		occs = cdouble_to_numpy(self.projector.get_occs(c_void_p(bulk.pwf.wf_ptr)), nband*nwk*nspin)
+		vbm = 0
+		for i in range(nband):
+			if occs[i*nwk*nspin] > 0.5:
+				vbm = i
+		min_band, max_band = vbm - num_below_ef, vbm + num_above_ef
+		if min_band < 0 or max_band >= nband:
+			raise PAWpyError("The min or max band is too large/small with min_band=%d, max_band=%d, nband=%d" % (min_band, max_band, nband))
 		"""
 		for b in range(nband):
 			v, c = self.proportion_conduction(b, bulk, pseudo = True, spinpol = False)

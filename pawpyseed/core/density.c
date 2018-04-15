@@ -70,6 +70,20 @@ double complex* realspace_state(int BAND_NUM, int KPOINT_NUM, pswf_t* wf, ppot_t
 	printf("FINISH FT\n");
 	double* lattice = wf->lattice;
 	double vol = determinant(lattice);
+	#pragma omp parallel for
+	for (int i = 0; i < fftg[0]; i++) {
+		double frac[3] = {0,0,0};
+		double kdotr = 0;
+		for (int j = 0; j < fftg[1]; j++) {
+			for (int k = 0; k < fftg[2]; k++) {
+				frac[0] = (double) i / fftg[0];
+				frac[1] = (double) j / fftg[1];
+				frac[2] = (double) k / fftg[2];
+				kdotr = dot(wf->k, frac);
+				x[i*fftg[1]*fftg[2] + j*fftg[1] + k] *= cexp(2*PI*I*kdotr);
+			}
+		}
+	}
 
 	int num_sites = wf->num_sites;
 	#pragma omp parallel for

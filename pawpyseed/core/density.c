@@ -42,13 +42,15 @@ double* project_realspace_state(int BAND_NUM, int numtoproj, pswf_t* wf, pswf_t*
 	int nspin = wf->nspin;
 	int gridsize = fftg[0]*fftg[1]*fftg[2];
 	double* projs = (double*) malloc(2*nband*nwk*nspin*sizeof(double));
+	double vol = determinant(wf->lattice);
 
 	double complex overlap = 0;
 	for (int k = 0; k < nwk * nspin; k++) {
 		double complex* state = realspace_state(BAND_NUM, k, wf, pps, fftg, labels, coords);
 		for (int b = 0; b < nband; b++) {
 			double complex* state_R = realspace_state(b, k, wf_R, pps, fftg, labels_R, coords_R);
-			overlap = cblas_zdotc_sub(gridsize, state_R, 1, state, 1);
+			cblas_zdotc_sub(gridsize, state_R, 1, state, 1, &overlap);
+			overlap *= vol / gridsize;
 			projs[b*nwk*nspin + k] = creal(overlap);
 			projs[nband*nwk*nspin + b*nwk*nspin + k] = cimag(overlap);
 			mkl_free(state_R);
@@ -121,8 +123,8 @@ double complex* realspace_state(int BAND_NUM, int KPOINT_NUM, pswf_t* wf, ppot_t
 						frac[2] = (double) kk / fftg[2];
 						projection_t pros = wf->kpts[KPOINT_NUM]->bands[BAND_NUM]->projections[p];
 						for (int n = 0; n < pros.total_projs; n++) {
-							x[ii*fftg[1]*fftg[2] + jj*fftg[2] + kk] += wave_value(pps[labels[p]].funcs[pros.ns[n]],
-								pp.wave_gridsize, pps[labels[p]].wave_grid,
+							x[ii*fftg[1]*fftg[2] + jj*fftg[2] + kk] += wave_value(pp.funcs[pros.ns[n]],
+								pp.wave_gridsize, pp.wave_grid,
 								pros.ms[n], coords+3*p, frac, lattice)
 								* pros.overlaps[n];
 						}

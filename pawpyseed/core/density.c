@@ -93,9 +93,6 @@ double complex* realspace_state(int BAND_NUM, int KPOINT_NUM, pswf_t* wf, ppot_t
 		printf("READ PROJECTIONS\n");
 		ppot_t pp = pps[labels[p]];
 		double rmax = pp.wave_grid[pp.wave_gridsize-1];
-		double res[3] = {0,0,0};
-		double frac[3] = {0,0,0};
-		double testcoord[3] = {0,0,0};
 		vcross(res, lattice+3, lattice+6);
 		int grid1 = (int) (mag(res) * rmax / vol * fftg[0]) + 1;
 		vcross(res, lattice+0, lattice+6);
@@ -105,11 +102,14 @@ double complex* realspace_state(int BAND_NUM, int KPOINT_NUM, pswf_t* wf, ppot_t
 		int center1 = (int) round(coords[3*p+0] * fftg[0]);
 		int center2 = (int) round(coords[3*p+1] * fftg[1]);
 		int center3 = (int) round(coords[3*p+2] * fftg[2]);
-		int ii=0, jj=0, kk=0;
-		double phasecoord[3] = {0,0,0};
-		double phase = 0;
 		#pragma omp parallel for
 		for (int i = -grid1 + center1; i <= grid1 + center1; i++) {
+			double res[3] = {0,0,0};
+			double frac[3] = {0,0,0};
+			double testcoord[3] = {0,0,0};
+			int ii=0, jj=0, kk=0;
+			double phasecoord[3] = {0,0,0};
+			double phase = 0;
 			for (int j = -grid2 + center2; j <= grid2 + center2; j++) {
 				for (int k = -grid3 + center3; k <= grid3 + center3; k++) {
 					testcoord[0] = (double) i / fftg[0] - coords[3*p+0];

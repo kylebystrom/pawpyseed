@@ -81,14 +81,13 @@ double complex* realspace_state(int BAND_NUM, int KPOINT_NUM, pswf_t* wf, ppot_t
 				frac[0] = (double) i / fftg[0];
 				frac[1] = (double) j / fftg[1];
 				frac[2] = (double) k / fftg[2];
-				kdotr = dot(wf->k, frac);
+				kdotr = dot(wf->kpts[KPOINT_NUM]->k, frac);
 				x[i*fftg[1]*fftg[2] + j*fftg[1] + k] *= cexp(2*PI*I*kdotr);
 			}
 		}
 	}
 
 	int num_sites = wf->num_sites;
-	#pragma omp parallel for
 	for (int p = 0; p < num_sites; p++) {
 		projection_t pros = wf->kpts[KPOINT_NUM]->bands[BAND_NUM]->projections[p];
 		printf("READ PROJECTIONS\n");
@@ -107,6 +106,9 @@ double complex* realspace_state(int BAND_NUM, int KPOINT_NUM, pswf_t* wf, ppot_t
 		int center2 = (int) round(coords[3*p+1] * fftg[1]);
 		int center3 = (int) round(coords[3*p+2] * fftg[2]);
 		int ii=0, jj=0, kk=0;
+		double phasecoord[3] = {0,0,0};
+		double phase = 0;
+		#pragma omp parallel for
 		for (int i = -grid1 + center1; i <= grid1 + center1; i++) {
 			for (int j = -grid2 + center2; j <= grid2 + center2; j++) {
 				for (int k = -grid3 + center3; k <= grid3 + center3; k++) {
@@ -121,12 +123,16 @@ double complex* realspace_state(int BAND_NUM, int KPOINT_NUM, pswf_t* wf, ppot_t
 						frac[0] = (double) ii / fftg[0];
 						frac[1] = (double) jj / fftg[1];
 						frac[2] = (double) kk / fftg[2];
+						phasecoord[0] = coords[3*p+0] + ((i-ii) / fftg[0]);
+						phasecoord[1] = coords[3*p+1] + ((j-jj) / fftg[1]);
+						phasecoord[2] = coords[3*p+2] + ((k-kk) / fftg[2]);
+						phase = dot(wf->kpts[KPOINT_NUM]->k, phasecoord);
 						projection_t pros = wf->kpts[KPOINT_NUM]->bands[BAND_NUM]->projections[p];
 						for (int n = 0; n < pros.total_projs; n++) {
 							x[ii*fftg[1]*fftg[2] + jj*fftg[2] + kk] += wave_value(pp.funcs[pros.ns[n]],
 								pp.wave_gridsize, pp.wave_grid,
 								pros.ms[n], coords+3*p, frac, lattice)
-								* pros.overlaps[n];
+								* pros.overlaps[n] * cexp(2*PI*I*phase);
 						}
 					}
 				}

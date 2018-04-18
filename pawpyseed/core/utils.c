@@ -326,7 +326,7 @@ double complex wave_value(funcset_t funcs, int size, double* x, int m,
 
 	double ae_radial_val = wave_interpolate(r, size, x, funcs.aewave, funcs.aewave_spline);
 	double ps_radial_val = wave_interpolate(r, size, x, funcs.pswave, funcs.pswave_spline);
-	double radial_val = ae_radial_val - ps_radial_val;
+	double radial_val = (ae_radial_val - ps_radial_val) / r;
 
 	if (r==0) return Ylm(funcs.l, m, 0, 0) * radial_val;
 	double theta = 0, phi = 0;

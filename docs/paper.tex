@@ -31,22 +31,38 @@ to perform analysis of density functional theory (DFT) wavefunctions in the
 projector augmented wave (PAW) formalism. The primary function of this code
 is to calculate the overlap operator of two single-particle Kohn-Sham states
 from different periodic structures with the same lattice, which is made nontrivial
-by the depency of PAW augmentation regions on the basis of the structure.
+by the dependency of PAW augmentation regions on the basis of the structure.
 The code is potentially useful for the analysis of point defect levels in
 solids because it can determine the composition of defect levels in the basis
 of the single-particle states of the bulk system.}
 
 \section{Theory}
 
-\subsection{Projector Augmented Wave (PAW) Method}
+%\subsection{Projector Augmented Wave (PAW) Method}
 
 \subsection{Projections}
+
+The equation of a PAW wavefunction is\cite{blochl}
 \begin{equation}
 \ket{\psi_{n\mathbf{k}}}=\ket{\widetilde{\psi}_{n\mathbf{k}}}+
-\sum_{a,n,l,m}(\ket{\phi_{a\ind}}-\ket{\widetilde{\phi}_{a\ind}})
+\sum_{a,l,m,\epsilon}(\ket{\phi_{a\ind}}-\ket{\widetilde{\phi}_{a\ind}})
 \braket{\widetilde{p}_{a\ind}|\widetilde{\psi}_{n\mathbf{k}}}
 \label{eq:1}
 \end{equation}
+where the sum is over the sites $a$ in the structure and a set of
+angular and radial quantum nubers $l$, $m$, and $\epsilon$ at each site.
+The conventional overlap operator used for these wavefunctions is
+\begin{equation}
+\widetilde{A}=A+\sum_i\sum_j\ket{\widetilde{p}_i}(\bra{\phi_i}A\ket{\phi_j}
+-\bra{\widetilde{\phi_i}}A\ket{\widetilde{\phi_j}})\bra{\widetilde{p}_j}
+\label{eq:loc}
+\end{equation}
+where $i$ and $j$ are abbreviations for a particular index set
+$a,l,m,\epsilon$. This overlap operator requires that the augmentation
+regions of the two wavefunctions are same. Since these augmentation regions
+are defined by the sites in the structure, the structures must be the same,
+so a new formalism is necessary to calculate overlap operators for wavefunctions
+in different structures.
 
 \subsubsection{Projection onto Basis from Different Structure}
 In the pure physical picture of a quantum mechanical system, the eigenfunctions of the time
@@ -58,6 +74,9 @@ bulk crystal might yield information about how the defect level is constructed. 
 the defect state might project primarily onto the conduction band, characterizing it
 as a weakly perturbed host state. Such an understanding of defect levels could help select
 corrections to perform on the defect system.\cite{lany}
+For two structures (denoted R and S) with the same
+lattice but different bases, the overlap operator of two Kohn-Sham single particle states
+is described by the following terms:
 \begin{equation}
 \centering
 \begin{split}
@@ -65,7 +84,7 @@ corrections to perform on the defect system.\cite{lany}
 O_M & =\sum_{a\in M_{RS}}\sum_{l,m}\sum_{\epsilon_1}\sum_{\epsilon_2}
 \braket{\widetilde{\psi}_{Rn_1\mathbf{k}}|\widetilde{p}_{a\ind _1}}
 (\braket{\phi_{a\ind _1}|{\phi_{a\ind _2}}}
--\bra{\widetilde{\phi}_{a\ind _1}}\ket{\widetilde{\phi}_{a\ind _2}})
+-\braket{\widetilde{\phi}_{a\ind _1}|\widetilde{\phi}_{a\ind _2}})
 \braket{\widetilde{p}_{a\ind _2}|\widetilde{\psi}_{Sn_2\mathbf{k}}}\\
 O_R & =\sum_{i\in N_R}\braket{\widetilde{\psi}_{Rn_1\mathbf{k}}|\widetilde{p}_i}
 (\bra{\phi_i}-\bra{\widetilde{\phi}_i})
@@ -78,12 +97,32 @@ O_N & =\sum_{i,j\in N_{RS}}\braket{\widetilde{\psi}_{Rn_1\mathbf{k}}|
 \end{split}
 \label{eq:finp}
 \end{equation}
-Equation \ref{eq:finp} is derived in Appendix A.
+Here, $M_{RS}$ is the set of sites that are identical in structures R and S,
+$N_R$ and $N_S$ are all other sites in these structures,
+and $N_{RS}$ is teh set of all pairs of sites, one in structure R and one in structure
+S, with overlapping augmentation spheres. Equation \ref{eq:finp} is derived in Appendix A.
 
 \section{Implementation}
 
 \begin{table}
 \centering
+\caption{Runtime scaling functions for each component of the code and
+definitions for shorthand symbols to express runtime. Approximate
+scales with the number of electrons are also shown.
+*The frequency refers to how often the routine is called. "Per band"
+indicates that the routine runs once every time a band from one structure
+is projected onto all the bands of a basis structure. "Per structure"
+indicates that the routine is a "setup" routine that must be called once
+for each structure and corresponding band structure to do perform projections. "Per lattice"
+operations are required once per unique lattice used.
+"Per structure pair" is the same as "per structure" except that the routine
+is only run once for a pair of structures with the same lattice and plane-wave
+basis set, the bands of one such structure to be used as a basis set for the other.
+**Number of sites flexibly refers to the number of sites relevant to the calculation,
+which worst-case scales with the total number of sites in the structure. For example,
+calculating $O_M$ and $O_N$ only require the sites in sets $M$ and $N_RS$, respectively.}
+\label{tab:runtime}
+
 \begin{tabular}{|c|c|c|}
 \hline
 Computational Task & $\Theta$ & Frequency*\\
@@ -97,7 +136,7 @@ $\braket{\widetilde{p}_i|\widetilde{\psi}_{n\mathbf{k}}}$ & $BKSF\mathrm{log}(F)
 $(\bra{\phi_i}-\bra{\widetilde{\phi}_i})
 \ket{\widetilde{\psi}_{n\mathbf{k}}}$ & $BKSNPW \sim n^3$ & per structure\\
 spherical Bessel transform partial waves & $NPG\mathrm{log}(G) \sim n$ & per structure pair\\
-project plane waves onto partial waves & $EPKW \sim n$ & per structure pair\\
+project plane waves onto partial waves & $EPKW \sim n$ & per lattice\\
 projections for overlapping aug spheres & $NPL \sim n$ & per structure pair\\
 \hline
 \end{tabular}
@@ -117,21 +156,6 @@ S & number of spin states\\
 W & number of plane waves\\
 n & number of electrons (approximate scaling)
 \end{tabular}
-\caption{Runtime scaling functions for each component of the code and
-definitions for shorthand symbols to express runtime. Approximate
-scales with the number of electrons are also shown.
-*The frequency refers to how often the routine is called. "Per band"
-indicates that the routine runs once every time a band from one structure
-is projected onto all the bands of a basis structure. "Per structure"
-indicates that the routine is a "setup" routine that must be called once
-for each structure and corresponding band structure to do perform projections.
-"Per structure pair" is the same as "per structure" except that the routine
-is only run once for a pair of structures with the same lattice and plane-wave
-basis set, the bands of one such structure to be used as a basis set for the other.
-**Number of sites flexibly refers to the number of sites relevant to the calculation,
-which worst-case scales with the total number of sites in the structure. For example,
-calculating $O_M$ and $O_N$ only require the sites in sets $M$ and $N_RS$, respectively.}
-\label{tab:runtime}
 \end{table}
 
 The program is implemented as a Python package that interfaces with C functions through
@@ -145,7 +169,7 @@ so as to maximize computational efficiency is summarized in the following subsec
 
 The all electron partial waves fluctuate rapidly near the nucleus,
 so the pseudowavefunction cannot be projected onto the partial waves
-via a uniform Cartesian grid as is doen with the projector functions.
+via coarse Cartesian grid as is doen with the projector functions.
 However, A plane wave can be expanded as a sum of spherical
 Bessel functions via Rayleigh expansion.
 \begin{equation}
@@ -189,6 +213,55 @@ uses the fast spherical Bessel transform method NumSBT developed by Talman.\cite
 It runs in $O(NlnN)$ time and works on a logarithmic grid, making it convenient for use with
 the POTCAR representations of the partial waves. The resulting logarithmic k-space
 grid can be used to calculate the values of the relevant integrals via interpolation.
+
+\section{Projector function evaluation}
+
+The projector function overlaps with the plane-wave states are calculated using the same
+algorithm as VASP.\cite{vasp,vasp2,vasp3,vasp4}
+
+\section{Projections for Overlapping Augmentation Spheres}
+
+For two different structures, it is possible for atoms to have augmentation spheres
+that overlap but are not directly on top of each other, or to have atoms of different elements
+with the same position. In these cases, the overlap integrals of the partial waves
+must be evaluated numerically on a per structure pair basis. The current method is a relatively
+crude discrete integral in 3D space, which likely harms the precision of the overlap integral evaluation.
+More precise and efficient methods are being considered.
+
+\section{Results and Example Usage}
+
+To test the program for its primary purpose of defect level analysis, the projection
+of a defect level wavefunction onto the valence band of the bulk is defined:
+\begin{equation}
+v_d=\sum_{\mathbf{k}}\sum_{i\in \mathbb{V}}|\braket{\psi_{Bn_i\mathbf{k}}|\psi_{Dn_d\mathbf{k}}}|^2
+\label{eq:vproj}
+\end{equation}
+where $i$ are the band indices of valence bands $\mathbb{V}$ in the bulk structure, the $B$
+subscript denotes the bulk band structure, and the $D$ subscript denotes the point defect
+band structure. This value, as well as the similarly defined $c_d$ for the conduction band,
+were calculate for several charge states of the Silicon single vacancy, Phosphorus substitutional,
+and Boron substitutional. The results are plotted in Figure \ref{fig:plots}.
+As expected, the phosphorous and boron substitutional defects show litting mixing
+of valence and conduction character in the defect levels because they are very shallow
+defects, whereas the deeper vacancy character is shown by the mixing of conduction
+and valence character in three nearly degenerate bands in the band gap.
+
+\section{Conclusions}
+
+PAWpySeed provides useful utilities for reading and analyzing PAW wavefunctions
+from VASP, particularly for point defect levels. However, the current capabilities
+of PAWpySeed are primarily qualitative because of mediocre numerical precision
+and a lack of quantitative applications of the code. One potential quantitative
+application to be developed in the future is the perturbation theory correction
+proposedby Lany and Zunger for correcting defect level energies.\cite{lany}
+The main barriers to such a correction are currently the lack of adequate
+description of the deep level character of the defects and the difference
+between the single particle states of DFT and higher level-of-theory
+single-particle states. Work to resolve such issues is currently in development.
+Namely, code is being written to construct atomic vacuum states onto which
+PAW wavefunctions can be projected. In addition, the SCDM-k decomposition method
+will written into PAWpySeed to construct localized orbitals for energy
+corrections.\cite{scdm,scdmk}
 
 \section*{Appendix A: Derivation of Overlap Operators from PAW Formalism}
 

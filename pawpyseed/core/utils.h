@@ -269,6 +269,9 @@ grid x center at 3D vector ion_pos, at position pos, given the real space lattic
 double complex wave_value(funcset_t funcs, int size, double* x, int m,
         double* ion_pos, double* pos, double* lattice);
 
+double complex wave_value2(double* x, double* wave, double* spline, int size,
+	int l, int m, double* pos);
+
 /**
 Set up spline coefficients for spline interpolation.
 Essentially a translation into C of the VASP SPLCOF function.

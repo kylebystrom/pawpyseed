@@ -338,6 +338,26 @@ double complex wave_value(funcset_t funcs, int size, double* x, int m,
 	return radial_val * sph_val;
 }
 
+double complex wave_value2(double* x, double* wave, double* spline, int size,
+	int l, int m, double* pos) {
+
+	double temp[3] = {0,0,0};
+	double r = 0;
+	min_cart_path(pos, ion_pos, lattice, temp, &r);
+
+	double ae_radial_val = wave_interpolate(r, size, x, wave, spline);
+	double radial_val = (ae_radial_val - ps_radial_val) / r;
+
+	if (r==0) return Ylm(l, m, 0, 0) * radial_val;
+	double theta = 0, phi = 0;
+	theta = acos(temp[2]/r);
+	if (r - fabs(temp[2]) == 0) phi = 0;
+	else phi = acos(temp[0] / pow(temp[0]*temp[0] + temp[1]*temp[1], 0.5));
+	if (temp[1] < 0) phi = 2*PI - phi;
+	double complex sph_val = Ylm(l, m, theta, phi);
+	return radial_val * sph_val;
+}
+
 double complex proj_value(funcset_t funcs, double* x, int m, double rmax,
 	double* ion_pos, double* pos, double* lattice) {
 

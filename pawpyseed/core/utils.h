@@ -144,6 +144,8 @@ Minimum of a and b
 */
 int min(int a, int b);
 
+int max(int a, int b);
+
 /**
 Calculates the cross product top X bottom and places
 it in res, assuming that top and bottom are both
@@ -269,7 +271,7 @@ grid x center at 3D vector ion_pos, at position pos, given the real space lattic
 double complex wave_value(funcset_t funcs, int size, double* x, int m,
         double* ion_pos, double* pos, double* lattice);
 
-double complex wave_value2(double* x, double* wave, double* spline, int size,
+double complex wave_value2(double* x, double* wave, double** spline, int size,
 	int l, int m, double* pos);
 
 /**

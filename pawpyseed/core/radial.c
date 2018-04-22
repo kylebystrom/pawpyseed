@@ -28,7 +28,7 @@ double complex offsite_wave_overlap(double* dcoord, double* r1, double* f1, doub
 		dr = (r1[rstep+1] - r1[rstep]);
 		NUM_RADIAL_SUBSTEPS = max(1, (int) (dr/0.01));
 		dr /= NUM_RADIAL_SUBSTEPS;
-		NUM_THETA = min(100, max(3, (int) (r1[rstep] * PI / 0.02)));
+		NUM_THETA = min(80, max(6, (int) (r1[rstep] * PI / 0.01)));
 		double* costhetas = QUADRATURE_POINTS[NUM_THETA-3];
 		double* dcosthetas = QUADRATURE_WEIGHTS[NUM_THETA-3];
 		for (int substep = 0; substep < NUM_RADIAL_SUBSTEPS; substep++) {
@@ -37,7 +37,7 @@ double complex offsite_wave_overlap(double* dcoord, double* r1, double* f1, doub
 				costheta = costhetas[thetastep];
 				dcostheta = dcosthetas[thetastep];
 				sintheta = pow(1 - pow(costheta, 2), 0.5);
-				NUM_PHI = max((int) ((NUM_THETA+1)*2*sintheta), 6);
+				NUM_PHI = max((int) ((NUM_THETA+1)*2*sintheta/4)*4, 12);
 				dphi = 2 * PI / NUM_PHI;
 				for (int phistep = 0; phistep < NUM_PHI; phistep++) {
 					phi = phistep * dphi;
@@ -64,7 +64,7 @@ double complex offsite_wave_overlap(double* dcoord, double* r1, double* f1, doub
 		dr = (r2[rstep+1] - r2[rstep]) / NUM_RADIAL_SUBSTEPS;
 		NUM_RADIAL_SUBSTEPS = max(1, (int) (dr/0.01));
 		dr /= NUM_RADIAL_SUBSTEPS;
-		NUM_THETA = min(100, max(3, (int) (r2[rstep] * PI / 0.02)));
+		NUM_THETA = min(100, max(6, (int) (r2[rstep] * PI / 0.01)));
 		double* costhetas = QUADRATURE_POINTS[NUM_THETA-3];
 		double* dcosthetas = QUADRATURE_WEIGHTS[NUM_THETA-3];
 		for (int substep = 0; substep < NUM_RADIAL_SUBSTEPS; substep++) {
@@ -73,7 +73,7 @@ double complex offsite_wave_overlap(double* dcoord, double* r1, double* f1, doub
 				costheta = costhetas[thetastep];
 				dcostheta = dcosthetas[thetastep];
 				sintheta = pow(1 - pow(costheta, 2), 0.5);
-				NUM_PHI = max((int) ((NUM_THETA+1)*2*sintheta), 6);
+				NUM_PHI = max((int) ((NUM_THETA+1)*2*sintheta/4)*4, 12);
 				dphi = 2 * PI / NUM_PHI;
 				for (int phistep = 0; phistep < NUM_PHI; phistep++) {
 					phi = phistep * dphi;

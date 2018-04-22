@@ -46,7 +46,7 @@ PAWC.setup_projections.argtypes = PAWC.setup_projections_no_rayleigh.argtypes
 PAWC.setup_projections_copy_rayleigh.argtypes = [c_void_p] + PAWC.setup_projections.argtypes
 
 PAWC.project_realspace_state.argtypes = [c_int, c_int, c_void_p, c_void_p, c_void_p, POINTER(c_int), POINTER(c_int), POINTER(c_double), POINTER(c_int), POINTER(c_double)]
-wf.projector.project_realspace_state.restype = c_void_p
+PAWC.project_realspace_state.restype = c_void_p
 
 PAWC.pseudoprojection.restype = POINTER(c_double)
 PAWC.compensation_terms.restype = POINTER(c_double)

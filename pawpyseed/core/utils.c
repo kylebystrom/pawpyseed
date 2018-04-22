@@ -229,6 +229,13 @@ int min(int a, int b) {
 		return a;
 }
 
+int max(int a, int b) {
+	if (a < b)
+		return b;
+	else
+		return a;
+}
+
 double* get_occs(pswf_t* wf) {
 	kpoint_t** kpts = wf->kpts;
 	double* occs = (double*) malloc(wf->nwk*wf->nband*wf->nspin*sizeof(double));
@@ -326,7 +333,11 @@ double complex wave_value(funcset_t funcs, int size, double* x, int m,
 
 	double ae_radial_val = wave_interpolate(r, size, x, funcs.aewave, funcs.aewave_spline);
 	double ps_radial_val = wave_interpolate(r, size, x, funcs.pswave, funcs.pswave_spline);
-	double radial_val = (ae_radial_val - ps_radial_val) / r;
+	double radial_val = (ae_radial_val - ps_radial_val);
+	if (r < x[0])
+		radial_val /= x[0];
+	else
+		radial_val /= r;
 
 	if (r==0) return Ylm(funcs.l, m, 0, 0) * radial_val;
 	double theta = 0, phi = 0;
@@ -338,22 +349,23 @@ double complex wave_value(funcset_t funcs, int size, double* x, int m,
 	return radial_val * sph_val;
 }
 
-double complex wave_value2(double* x, double* wave, double* spline, int size,
+double complex wave_value2(double* x, double* wave, double** spline, int size,
 	int l, int m, double* pos) {
 
-	double temp[3] = {0,0,0};
-	double r = 0;
-	min_cart_path(pos, ion_pos, lattice, temp, &r);
+	double r = mag(pos);
 
-	double ae_radial_val = wave_interpolate(r, size, x, wave, spline);
-	double radial_val = (ae_radial_val - ps_radial_val) / r;
+	double radial_val = wave_interpolate(r, size, x, wave, spline);
+	if (r < x[0])
+		radial_val /= x[0];
+	else
+		radial_val /= r;
 
 	if (r==0) return Ylm(l, m, 0, 0) * radial_val;
 	double theta = 0, phi = 0;
-	theta = acos(temp[2]/r);
-	if (r - fabs(temp[2]) == 0) phi = 0;
-	else phi = acos(temp[0] / pow(temp[0]*temp[0] + temp[1]*temp[1], 0.5));
-	if (temp[1] < 0) phi = 2*PI - phi;
+	theta = acos(pos[2]/r);
+	if (r - fabs(pos[2]) == 0) phi = 0;
+	else phi = acos(pos[0] / pow(pos[0]*pos[0] + pos[1]*pos[1], 0.5));
+	if (pos[1] < 0) phi = 2*PI - phi;
 	double complex sph_val = Ylm(l, m, theta, phi);
 	return radial_val * sph_val;
 }

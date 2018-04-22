@@ -6,6 +6,7 @@
 #include "quadrature.h"
 #include "utils.h"
 #include "radial.h"
+#include "gaunt.h"
 
 #define PI 3.14159265358979323846
 #define RHO_PREC 0.008
@@ -15,8 +16,8 @@ double complex Ylm_rad(int l, int m, double* r) {
 	if (R < 10e-12) return 0;
 
 	double costheta = 0, phi = 0;
-	costheta = temp[2]/r;
-	if (r - fabs(r[2]) < 10e-12) phi = 0;
+	costheta = r[2]/R;
+	if (R - fabs(r[2]) < 10e-12) phi = 0;
 	else phi = acos(r[0] / pow(r[0]*r[0] + r[1]*r[1], 0.5));
 	if (r[1] < 0) phi = 2*PI - phi;
 	return Ylm2(l, m, costheta, phi);
@@ -53,7 +54,7 @@ double Pkern1(int l1, int l2, int l3, double r1, double r2, double r3) {
 	return total;
 }
 
-double LKern1(int l1, int l2, int l3, double r1, double r2, double R) {
+double Lkern1(int l1, int l2, int l3, double r1, double r2, double R) {
 	if (r1+r2-R > 0 && r1-r2+R > 0 && r2-r1+R > 0) {
 		return 2 * PI * Pkern1(l1, l2, l3, r1, r2, R);
 	} else {
@@ -67,6 +68,7 @@ double complex offsite_wave_overlap(double* dcoord, double* r1, double* f1, doub
 
 	double R = mag(dcoord);
 	double complex total = 0;
+	double dx, dy, Ii, Ij, ri, rj = 0;
 
 	for (int i = 0; i < size1-1; i++) {
 		dx = r1[i+1] - r1[i];
@@ -81,8 +83,8 @@ double complex offsite_wave_overlap(double* dcoord, double* r1, double* f1, doub
 			double complex subtotal = 0;
 			for (int l = abs(l1-l2); l <= l1+l2; l+=2) {
 				for (int m = -l; m <= l; m++) {
-					subtotal += GAUNT_COEFF[l1][l2][l][l1+m1][l2+m2][l3+m3]
-						* Ylm_rad(dcoord) * Lkern1(ri, rj, R);
+					subtotal += GAUNT_COEFF[l1][l2][l][l1+m1][l2+m2][l+m]
+						* Ylm_rad(l, m, dcoord) * Lkern1(l1, l2, l, ri, rj, R);
 				}
 			}
 			total += subtotal * Ii * Ij;
@@ -91,3 +93,5 @@ double complex offsite_wave_overlap(double* dcoord, double* r1, double* f1, doub
 
 	return total * pow(-1, l1);
 }
+
+

@@ -37,7 +37,7 @@ double tfac(int n, int l) {
 			total /= i;
 		}
 	}
-	return total;
+	return 1 / total;
 }
 
 double Pkern1(int l1, int l2, int l3, double r1, double r2, double r3) {
@@ -79,9 +79,10 @@ double complex offsite_wave_overlap(double* dcoord, double* r1, double* f1, doub
 			Ij = dy * dy * (f2[j]/2 + dy * (spline2[0][j]/3 + dy * (spline2[1][j]/4 + spline2[2][j]*dx/5)));
 			rj = (r2[j+1] + r2[j]) / 2;
 			double complex subtotal = 0;
-			for (int l = abs(l1-l2); l <= l1+l2; l++) {
+			for (int l = abs(l1-l2); l <= l1+l2; l+=2) {
 				for (int m = -l; m <= l; m++) {
-					subtotal += GAUNT_COEFF[l1][m1][l2][m2][l][m] * Ylm_rad(dcoord) * Lkern1(ri, rj, R);
+					subtotal += GAUNT_COEFF[l1][l2][l][l1+m1][l2+m2][l3+m3]
+						* Ylm_rad(dcoord) * Lkern1(ri, rj, R);
 				}
 			}
 			total += subtotal * Ii * Ij;

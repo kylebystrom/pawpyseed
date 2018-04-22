@@ -13,8 +13,12 @@
 
 double complex Ylm_rad(int l, int m, double* r) {
 	double R = mag(r);
-	if (R < 10e-12 && l != 0) return 0;
-
+	if (R < 10e-12) {
+		if (l == 0)
+			return 1.0 / 2 / pow(PI, 0.5);
+		else
+			return 0;
+	}
 	double costheta = 0, phi = 0;
 	costheta = r[2]/R;
 	if (R - fabs(r[2]) < 10e-12) phi = 0;
@@ -55,7 +59,7 @@ double Pkern1(int l1, int l2, int l3, double r1, double r2, double r3) {
 }
 
 double Lkern1(int l1, int l2, int l3, double r1, double r2, double R) {
-	if (r1+r2-R > 0 && r1-r2+R > 0 && r2-r1+R > 0) {
+	if (r1+r2-R > 0 && r1-r2+R >= 0 && r2-r1+R >= 0) {
 		return 2 * PI * Pkern1(l1, l2, l3, r1, r2, R);
 	} else {
 		return 0;
@@ -69,6 +73,17 @@ double complex offsite_wave_overlap(double* dcoord, double* r1, double* f1, doub
 	double R = mag(dcoord);
 	double complex total = 0;
 	double dx, dy, Ii, Ij, ri, rj = 0;
+	
+	int lx = l1, ly = l2, mx = m1, my = m2;
+	if (m1 < 0 && m2 < 0) {
+		mx = -m1;
+		my = -m2;
+	} else if (m2 < 0) {
+		mx = m2;
+		my = m1;
+		lx = l2;
+		ly = l1;
+	}
 
 	for (int i = 0; i < size1-1; i++) {
 		dx = r1[i+1] - r1[i];
@@ -82,16 +97,14 @@ double complex offsite_wave_overlap(double* dcoord, double* r1, double* f1, doub
 			rj = (r2[j+1] + r2[j]) / 2;
 			double complex subtotal = 0;
 			for (int l = abs(l1-l2); l <= l1+l2; l+=2) {
-				for (int m = -l; m <= l; m++) {
-					subtotal += GAUNT_COEFF[l1][l2][(l-abs(l1-l2))/2][l1+m1][m2]
-						* Ylm_rad(l, m, dcoord) * Lkern1(l1, l2, l, ri, rj, R);
-				}
+				subtotal += GAUNT_COEFF[lx][ly][(l-abs(lx-ly))/2][lx+mx][my]
+					* Ylm_rad(l, -mx-my, dcoord) * Lkern1(lx, ly, l, ri, rj, R);
 			}
 			total += subtotal * Ii * Ij;
 		}
 	}
 
-	return total * pow(-1, l1);
+	return total * pow(-1, lx);
 }
 
 

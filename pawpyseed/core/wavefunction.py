@@ -194,9 +194,9 @@ class PseudoWavefunction:
 			basis (Pseudowavefunction): pseudowavefunctions onto whose bands
 				the band of self is projected
 		"""
-		nband = PAWC.get_nband(c_void_p(self.wf_ptr))
-		nwk = PAWC.get_nwk(c_void_p(self.wf_ptr))
-		nspin = PAWC.get_nspin(c_void_p(self.wf_ptr))
+		nband = PAWC.get_nband(c_void_p(basis.wf_ptr))
+		nwk = PAWC.get_nwk(c_void_p(basis.wf_ptr))
+		nspin = PAWC.get_nspin(c_void_p(basis.wf_ptr))
 
 		res = PAWC.pseudoprojection(c_void_p(basis.wf_ptr), c_void_p(self.wf_ptr), band_num)
 		res = cdouble_to_numpy(res, 2*nband*nwk*nspin)
@@ -391,9 +391,9 @@ class Wavefunction:
 		"""
 
 		res = self.projector.pseudoprojection(c_void_p(basis.pwf.wf_ptr), c_void_p(self.pwf.wf_ptr), band_num)
-		nband = self.projector.get_nband(c_void_p(basis.pwf.wf_ptr))
-		nwk = self.projector.get_nwk(c_void_p(basis.pwf.wf_ptr))
-		nspin = self.projector.get_nspin(c_void_p(basis.pwf.wf_ptr))
+		nband = basis.projector.get_nband(c_void_p(basis.pwf.wf_ptr))
+		nwk = basis.projector.get_nwk(c_void_p(basis.pwf.wf_ptr))
+		nspin = basis.projector.get_nspin(c_void_p(basis.pwf.wf_ptr))
 		res = cdouble_to_numpy(res, 2*nband*nwk*nspin)
 		print("datsa", nband, nwk, nspin)
 		sys.stdout.flush()
@@ -473,7 +473,7 @@ class Wavefunction:
 				aewaves = np.append(aewaves, aepw)
 				pswaves = np.append(pswaves, pspw)
 
-		print (num_els, clabels, ls, pgrids, wgrids, rmaxs)
+		#print (num_els, clabels, ls, pgrids, wgrids, rmaxs)
 		return self.projector.get_projector_list(num_els, numpy_to_cint(clabels),
 			numpy_to_cint(ls), numpy_to_cdouble(pgrids), numpy_to_cdouble(wgrids),
 			numpy_to_cdouble(projectors), numpy_to_cdouble(aewaves), numpy_to_cdouble(pswaves),
@@ -517,7 +517,7 @@ class Wavefunction:
 					labels[e] = label
 					label = label + 1
 
-		print (pps)
+		#print (pps)
 		basis.projector_list = basis.get_c_projectors_from_pps(pps)
 		basisnums = np.array([labels[el(s)] for s in basis.structure], dtype=np.int32)
 		basiscoords = np.array([], np.float64)
@@ -596,7 +596,7 @@ class Wavefunction:
 			pps[label] = self.cr.pps[e]
 			labels[e] = label
 			label += 1
-		print (pps, labels)
+		#print (pps, labels)
 		if basis != None:
 			for e in basis.cr.pps:
 				if not e in labels:

@@ -156,3 +156,78 @@ double* wave_spherical_bessel_transform(sbt_descriptor_t* d, double* f, int l) {
 	free(fs);
 	return vals;
 }
+
+double* inverse_wave_spherical_bessel_transform(sbt_descriptor_t* d, double* f, int l) {
+
+	//double kmin = d->kmin;
+	//double kappamin = d->kappamin;
+	//double rmin = d->rmin;
+	//double rhomin = d->rhomin;
+	//double drho = d->drho;
+	double kmin = d->rmin;
+	double kappamin = d->rhomin;
+	double rmin = d->kmin;
+	double rhomin = d->kappamin;
+	double drho = d->drho;
+	double dt = d->dt;
+	int N = d->N;
+	double complex** M = d->mult_table;
+	//double* ks = d->ks;
+	//double* r = d->rs;
+	double* ks = d->rs;
+	double* r = d->ks;
+	double* fs = (double*) malloc(N*sizeof(double));
+	CHECK_ALLOCATION(fs);
+	double C = f[0] / pow(r[N/2], l+1);
+	for (int i = 0; i < N/2; i++) {
+		fs[i] = C * pow(r[i], l+1);
+	}
+	for (int i = N/2; i < N; i++) {
+		fs[i] = f[i-N/2];
+	}
+
+	MKL_Complex16* x = mkl_malloc(N * sizeof(MKL_Complex16), 64);
+
+	DFTI_DESCRIPTOR_HANDLE handle = 0;
+	MKL_LONG dim = 1;
+	MKL_LONG length = N;
+	MKL_LONG status = 0;
+
+	double* vals = malloc(N / 2 * sizeof(double));
+
+	status = DftiCreateDescriptor(&handle, DFTI_DOUBLE, DFTI_COMPLEX, dim, length);
+	status = DftiCommitDescriptor(handle);
+
+	double phase = 0;
+	for (int m = 0; m < N; m++) {
+		//x[m].real = pow(r[m], 0.5) * fs[m]; // f is multiplied by r
+		x[m].real = pow(r[m], 1.5) * fs[m];
+		x[m].imag = 0;
+	}
+	double rp=0.0, ip=0.0;
+	status = DftiComputeBackward(handle, x);
+	printf("status %ld\n", status);
+	for (int n = 0; n < N; n++) {
+		rp = x[n].real * creal(M[l][n]) - x[n].imag * cimag(M[l][n]);
+		ip = x[n].imag * creal(M[l][n]) + x[n].real * cimag(M[l][n]);
+		x[n].real = rp;// * cos(phase) - ip * sin(phase);
+		x[n].imag = ip;// * cos(phase) + rp * sin(phase);
+		if (n >= N/2) {
+			x[n].real = 0;
+			x[n].imag = 0;
+		}
+	}
+	status = DftiComputeBackward(handle, x);
+	printf("status %ld\n", status);
+	double kp = 0;
+	for (int p = 0; p < N / 2; p++) {
+		kp = kmin * exp(p * drho);
+		vals[p] = x[p].real;
+		//vals[p] *= 2 / pow(ks[p], 1.5);
+		vals[p] *= 2 / pow(ks[p], 1.5);
+	}
+
+	mkl_free(x);
+	free(fs);
+	return vals;
+}

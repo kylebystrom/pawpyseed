@@ -1,4 +1,5 @@
 \documentclass[12pt]{article}
+\usepackage{authblk}
 \usepackage{enumitem}
 \usepackage{amsmath}
 \usepackage{amssymb}
@@ -12,7 +13,7 @@
 \usepackage{braket}
 \usepackage[margin=1.0in]{geometry}
 \usepackage[style=chem-acs,backend=bibtex,articletitle=false]{biblatex}
-\graphicspath{ {images/} }
+\graphicspath{ {../../Si_stuff/} }
 \bibliography{mybib}
 
 \begin{document}
@@ -21,12 +22,16 @@
 
 \title{PAWpySeed: A parallelized Python/C package for analyzing
 DFT wavefunctions in the PAW formalism}
-\author{Kyle Bystrom\\
-        kylebystrom@berkeley.edu\\
-		UC Berkeley Department of Materials Science and Engineering}
+\author[1]{Kyle Bystrom (kylebystrom@berkeley.edu)}
+\affil[1]{UC Berkeley Department of Materials Science and Engineering}
 \date{\today}
 \maketitle
-\abstract{A parallelized Python and C package has been developed
+\abstract{\emph{Note: My current plan is to build this work into a senior thesis,
+but currently it is quite messy and incomplete because I still have a lot of work
+to do before I will feel comfortable presenting this as a complete work. I would appreciate
+any feedback on what I have done so far.}
+
+A parallelized Python and C package has been developed
 to perform analysis of density functional theory (DFT) wavefunctions in the
 projector augmented wave (PAW) formalism. The primary function of this code
 is to calculate the overlap operator of two single-particle Kohn-Sham states
@@ -36,9 +41,42 @@ The code is potentially useful for the analysis of point defect levels in
 solids because it can determine the composition of defect levels in the basis
 of the single-particle states of the bulk system.}
 
+\section{Overview}
+
+In the pure physical picture of a quantum mechanical system, the eigenfunctions of the time
+independent Hamiltonian form a complete basis for any function in real space. By expressing
+a wavefunction from a system in the basis of the eigenstates of another system, one might
+be able to learn about the nature of the wavefunction in question. For example, projecting
+the wavefunction of a defect level in a periodic crystal onto the eigenfunctions of the
+bulk crystal might yield information about how the defect level is constructed. For example,
+the defect state might project primarily onto the conduction band, characterizing it
+as a weakly perturbed host state. Such an understanding of defect levels could help select
+corrections to perform on the defect system.\cite{lany}
+
+The program developed here is designed to evaluate the overlap operators necessary for the
+above projections in the projector augmented wave formalism (PAW) developed by Blochl.\cite{blochl}
+pawpyseed interfaces with the Vienna \emph{ab initio} Simulaton
+Package (VASP)\cite{vasp,vasp1,vasp2,vasp3,vasp4}, but will interface with other plane wave
+codes in the future.
+
+The main purpose of this code is to analyze defect wavefunctions, as explained above;
+however, the formalism adn interface developed is relatively general in purpose, and
+may suit other uses. The code can perform convenient operations not included in VASP,
+such as writing all electron wavefunctions with phases to volumetric data files, which may
+be useful for visualization. In addition, one future application plan is to use a given
+set of norm-conserving pseudopotentials to convert PAW wavefunctions to NC wavefunctions,
+which could be useful for researchers working with GW codes, which usually require
+NC wavefunctions. Lastly, operators besides overlap operators can hypothetically be evaluated
+in this formalism, which might be useful for optical applications, since materials can
+change structure when absorbing a photon.
+
 \section{Theory}
 
-%\subsection{Projector Augmented Wave (PAW) Method}
+The projector augmented wave (PAW) method defines a transformation between the all electron
+(AE) single particle states of the Kohn Sham wavefunction and a pseudo (PS) wavefunction
+that is smooth throughout the lattice and therefore can be expressed in a plane wave basis set.\cite{blochl}
+This means that the AE wavefunction is a sum of plane waves and site-localized atomic states,
+which makes calculating operators difficult if the ion positions change.
 
 \subsection{Projections}
 
@@ -65,15 +103,6 @@ so a new formalism is necessary to calculate overlap operators for wavefunctions
 in different structures.
 
 \subsubsection{Projection onto Basis from Different Structure}
-In the pure physical picture of a quantum mechanical system, the eigenfunctions of the time
-independent Hamiltonian form a complete basis for any function in real space. By expressing
-a wavefunction from a system in the basis of the eigenstates of another system, one might
-be able to learn about the nature of the wavefunction in question. For example, projecting
-the wavefunction of a defect level in a periodic crystal onto the eigenfunctions of the
-bulk crystal might yield information about how the defect level is constructed. For example,
-the defect state might project primarily onto the conduction band, characterizing it
-as a weakly perturbed host state. Such an understanding of defect levels could help select
-corrections to perform on the defect system.\cite{lany}
 For two structures (denoted R and S) with the same
 lattice but different bases, the overlap operator of two Kohn-Sham single particle states
 is described by the following terms:
@@ -165,6 +194,11 @@ of a shared memory computing node. Detailed runtime scaling for each routine is
 provided in Table \ref{tab:runtime}. An explanation of how each term is calculated
 so as to maximize computational efficiency is summarized in the following subsections.
 
+\subsection{Projector function evaluation}
+
+The projector function overlaps with the plane-wave states are calculated using the same
+algorithm as VASP.\cite{vasp}
+
 \subsection{Projection of Pseudowavefunctions onto Partial Waves}
 
 The all electron partial waves fluctuate rapidly near the nucleus,
@@ -214,19 +248,49 @@ It runs in $O(NlnN)$ time and works on a logarithmic grid, making it convenient 
 the POTCAR representations of the partial waves. The resulting logarithmic k-space
 grid can be used to calculate the values of the relevant integrals via interpolation.
 
-\section{Projector function evaluation}
+The current implementation uses the "high-k" algorithm developed by Talman. At low
+values of k, this algorithm becomes imprecise, though the precision
+of the current implementation has been tested and found to be about
+$10^{-3}$ for a bulk Ga test system. Future versions of the code
+will select the most precise of the "low-k" and "high-k" algorithms for each point,
+and the density of the momentum space grid will be increased.
 
-The projector function overlaps with the plane-wave states are calculated using the same
-algorithm as VASP.\cite{vasp,vasp2,vasp3,vasp4}
+The main problem with this algorithm is that it is the slowest component of the code
+and consumes the majority of the computational time even when only a few sites out
+of a structure with hundreds of sites require the calculation. A potential fix is,
+rather than integrating in reciprocal space, which becomes prohibitively slow for large
+lattices, to remove the high-frequency components of the partial waves via Fourier transform.
+This is counterintuitive because the purpose of the partial waves is to preserve the high-frequency
+components of the atomic wavefunctions, but when projecting onto the smooth pseudowavefunction,
+the high-frequency components have no impact because they are not present in the pseudowavefunction.
+Removing the high frequency components, therefore, allows the projection onto the partial waves
+to be done in real space without aliasing.
 
-\section{Projections for Overlapping Augmentation Spheres}
+\subsection{Projections for Overlapping Augmentation Spheres}
 
 For two different structures, it is possible for atoms to have augmentation spheres
 that overlap but are not directly on top of each other, or to have atoms of different elements
 with the same position. In these cases, the overlap integrals of the partial waves
 must be evaluated numerically on a per structure pair basis. The current method is a relatively
-crude discrete integral in 3D space, which likely harms the precision of the overlap integral evaluation.
-More precise and efficient methods are being considered.
+crude discrete integral in 3D space, which is the limiting factor in the precision of the code.
+The current precision of this two-center overlap integral is about $10^{-2}$, which is adequate
+for qualitative evaluations of band composition but not for quantitative charge corrections.
+
+An implementation is in development in which a kernel function developed by Hierse and
+Oppeneer is used to reduce the 3-dimensional discrete integrals
+to the integral of an analytical term over the two radial distribution functions.\cite{hierse_kernel} 
+This method has the potential to vastly improve both the performance and precision of
+this step of the code, but the relevant kernel function for overlap integrals
+scales inversely with the internuclear separation, so detailed tests are required
+to design the implementation in a numerically precise fashion. Most likely, it will be
+best to divide the integrals into three cases: (1) internuclear separation is very small
+and can be assumed to vanish, (2) internuclear separation is small, but not small enough
+to be ignored numerically, but the kernel function at a given $r_1$ is very narrow
+in $r_2$, (3) the internuclear separation is large and the kernel function smooth everywhere
+relative to the partial wave grid density.
+
+The Gaunt coefficients are required for the evaluation of the kernel function, and these
+are calculated and stored efficiently with sympy and the selection rules for \cite{gaunt_selection}.
 
 \section{Results and Example Usage}
 
@@ -239,29 +303,105 @@ v_d=\sum_{\mathbf{k}}\sum_{i\in \mathbb{V}}|\braket{\psi_{Bn_i\mathbf{k}}|\psi_{
 where $i$ are the band indices of valence bands $\mathbb{V}$ in the bulk structure, the $B$
 subscript denotes the bulk band structure, and the $D$ subscript denotes the point defect
 band structure. This value, as well as the similarly defined $c_d$ for the conduction band,
-were calculate for several charge states of the Silicon single vacancy, Phosphorus substitutional,
-and Boron substitutional. The results are plotted in Figure \ref{fig:plots}.
-As expected, the phosphorous and boron substitutional defects show litting mixing
-of valence and conduction character in the defect levels because they are very shallow
-defects, whereas the deeper vacancy character is shown by the mixing of conduction
-and valence character in three nearly degenerate bands in the band gap.
+were calculated for several charge states of the silicon single vacancy, phosphorus substitutional,
+and boron substitutional. A 128-atom supercell was used (127 for the vacancy), with
+the PBE GGA functional in VASP.\cite{gga,ggaerr} A Monkhorst-Pack 2x2x2 k-point mesh was used.
 
-\section{Conclusions}
+\begin{figure}
+\includegraphics[width=0.32\textwidth]{Bcharge_0.png}
+\includegraphics[width=0.32\textwidth]{Bcharge_-1.png}
+\includegraphics[width=0.32\textwidth]{Pcharge_0.png}
+\includegraphics[width=0.32\textwidth]{Pcharge_1.png}
+\includegraphics[width=0.32\textwidth]{charge_-2.png}
+\includegraphics[width=0.32\textwidth]{charge_-1.png}
+\includegraphics[width=0.32\textwidth]{charge_0.png}
+\includegraphics[width=0.32\textwidth]{charge_1.png}
+\includegraphics[width=0.32\textwidth]{charge_2.png}
+\caption{Valence and conduction band character of several charge states
+of three Si point defects, determined by evaluating the overlap
+operator between all electron wavefunctions. The charge states prefixed by B are
+boron substitutionals, those prefixed by P are phosphorous substitutionals,
+and those without a prefix are Si single vacancies.}
+\label{fig:ae_proj}
+\end{figure}
+
+\begin{figure}
+\includegraphics[width=0.32\textwidth]{pseudo/Bcharge_0.png}
+\includegraphics[width=0.32\textwidth]{pseudo/Bcharge_-1.png}
+\includegraphics[width=0.32\textwidth]{pseudo/Pcharge_0.png}
+\includegraphics[width=0.32\textwidth]{pseudo/Pcharge_1.png}
+\includegraphics[width=0.32\textwidth]{pseudo/charge_-2.png}
+\includegraphics[width=0.32\textwidth]{pseudo/charge_-1.png}
+\includegraphics[width=0.32\textwidth]{pseudo/charge_0.png}
+\includegraphics[width=0.32\textwidth]{pseudo/charge_1.png}
+\includegraphics[width=0.32\textwidth]{pseudo/charge_2.png}
+\caption{Valence and conduction band character of several charge states
+of three Si point defects, determined by only evaluating
+the overlap operator between pseudowavefunctions and then forcibly
+normalizing the result to 1. The charge states prefixed by B are
+boron substitutionals, those prefixed by P ar phosphorous substitutionals,
+and those without a prefix are Si single vacancies.}
+\label{fig:ps_proj}
+\end{figure}
+
+Figure \ref{fig:ae_proj} shows the valence and conduction band characters of
+each defect and charge state. The shallow character of the phosphorous and boron
+substitutionals result in each band being strongly associated with either the bulk
+or conduction bands. In the Si vacancy, three bands have some mixing of conduction
+and valence character, which is sensible because the vacancy is a deeper defect.
+
+The same defects are analyzed in Figure \ref{fig:ps_proj}, except that the overlap
+operators were evaluated using pseudowavefunctions, which is much faster but
+less physically meaningful because the pseudowavefunctions are unnormalized
+and not orthogonal (the
+diagram forcibly normalizes valence and conduction character) and
+different in shape than the true AE single-particle states. However, as shown
+for these simple Si systems, the same qualitative valence-conduction character is
+observed, indicating that such qualitative methods might be useful for more quickly
+analyzing bands.
+
+The sulfur substitutional in silicon was analyzed in a 216-atom supercell,
+but further work is required to interpret the results meaningfully, so they
+will be released in future work.
+
+\section{Conclusions and Future Work}
+
+Most of the work performed thus far has centered on the writing and testing of
+PAWpySeed for basic functionality on various systems. As elaborated below,
+a major goal for future work is to add new functionality to PAWpySeed and increase
+its precision. However, the most prescient matter is taking the results
+accumulated on test defect systems and comparing the output of PAWpySeed to the
+DFT formation energies and eigenvalues of the systems. The results above
+verify the functionality of the code but not its usefulness, which will only
+be discernible in comparision with the quantitative output of the DFT calculations.
+This, along with increasing the efficiency and precision of the code, will be
+the main goal of work over the next several months.
 
 PAWpySeed provides useful utilities for reading and analyzing PAW wavefunctions
 from VASP, particularly for point defect levels. However, the current capabilities
 of PAWpySeed are primarily qualitative because of mediocre numerical precision
 and a lack of quantitative applications of the code. One potential quantitative
 application to be developed in the future is the perturbation theory correction
-proposedby Lany and Zunger for correcting defect level energies.\cite{lany}
+proposed by Lany and Zunger for correcting defect level energies.\cite{lany}
 The main barriers to such a correction are currently the lack of adequate
 description of the deep level character of the defects and the difference
 between the single particle states of DFT and higher level-of-theory
 single-particle states. Work to resolve such issues is currently in development.
 Namely, code is being written to construct atomic vacuum states onto which
 PAW wavefunctions can be projected. In addition, the SCDM-k decomposition method
-will written into PAWpySeed to construct localized orbitals for energy
+will be written into PAWpySeed to construct localized orbitals for energy
 corrections.\cite{scdm,scdmk}
+
+\section{Acknowledgments}
+
+I would like to thank Danny Broberg and Mark Asta for excellent advising
+and encouragement throughout my work with the Asta Research Group at UC Berkeley,
+as well as all the members of the Asta Research Group and Hacking Materials
+Research Group at Lawrence Berkeley National Laboratory for various
+valuable research and learning opportunities. My summer 2017 undergraduate
+research, mainly related to development of an open-source data science code
+called matminer, was supported
+by a summer research stipend from the UC Berkeley College of Chemistry.
 
 \section*{Appendix A: Derivation of Overlap Operators from PAW Formalism}
 
@@ -291,7 +431,7 @@ specify a spherical harmonic and index which uniquely specify partial wave at a 
 index. A summation over $i$ (or $j$, as below) represents a summation over $a$, $l$, $m$,
 and $\epsilon$. For further details on the PAW method, including the physical significance
 and construction of the partial waves and projector functions, see Blochl's original paper
-and Kresse and Joubert's paper relating ultrasoft pseudopotentials and PAW.\cite{blochl,kresse_joubert}
+and Kresse and Joubert's paper relating ultrasoft pseudopotentials and PAW.\cite{blochl,vasp4}
 The next step is to define a pseudo operator $\widetilde{A}$ for each operator $A$
 such that $\bra{\psi}A\ket{\psi}=\bra{\widetilde{\psi}}\widetilde{A}\ket{\widetilde{\psi}}$.
 Because $\ket{\psi}=T\ket{\widetilde{\psi}}$, one can write
@@ -341,10 +481,10 @@ so the entire second line of Equation \ref{eq:nonloc} vanishes, giving Blochl's 
 \begin{equation}
 \widetilde{A}=A+\sum_i\sum_j\ket{\widetilde{p}_i}(\bra{\phi_i}A\ket{\phi_j}
 -\bra{\widetilde{\phi_i}}A\ket{\widetilde{\phi_j}})\bra{\widetilde{p}_j}
-\label{eq:loc}
+\label{eq:loc1}
 \end{equation}
 
-However, while the overlap operator is local, the simplification in Equation \ref{eq:loc} assumes that
+However, while the overlap operator is local, the simplification in Equation \ref{eq:loc1} assumes that
 the summations over $i$ and $j$ go over the same species at the same locations in the same lattice;
 only the third condition is always satisfied for systems of interest for projections between different
 bases. Equation \ref{eq:res} is a more convenient representation than Equation \ref{eq:nonloc} for this
@@ -367,7 +507,7 @@ O_3 & =\sum_i\sum_j\braket{\widetilde{\psi}_{Rn_1\mathbf{k}}|
 \widetilde{p}_i}(\bra{\phi_i}-\bra{\widetilde{\phi}_i})
 (\ket{\phi_j}-\ket{\widetilde{\phi}_j})\braket{\widetilde{p}_j|\widetilde{\psi}_{Sn_2\mathbf{k}}}
 \end{split}
-\label{eq:ov1}
+\label{eq:ov1a}
 \end{equation}
 
 The pseudowavefunctions can be expanded as a summation of plane waves,
@@ -382,7 +522,7 @@ $$\widetilde{O}=\braket{\widetilde{\psi}_{n_1\mathbf{k}_1}|\widetilde{\psi}_{n_2
 In VASP, structures with the same energy, k-points, and lattice will have the same basis set,
 so this projection is performed simply by reading plane wave coefficients from the VASP WAVECAR file.
 
-It is important to simplify the calculation of the other terms in equation \ref{eq:ov1} as much
+It is important to simplify the calculation of the other terms in equation \ref{eq:ov1a} as much
 as possible because their calculation can be quite computationally intensive, and the number of
 necessary calculations for projecting onto an entire basis set can scale with the number
 of sites times the size of the basis set. One major simplification is that if a site $a$ in structure

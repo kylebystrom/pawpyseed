@@ -548,10 +548,11 @@ double complex* rayexp_terms(double* kpt, int* Gs, int num_waves,
 		frac_to_cartesian(pvec, reclattice);
 		//if (l == 0) printf("PVECART %lf %lf %lf\n", pvec[0], pvec[1], pvec[2]);
 		k = mag(pvec);
-		direction(pvec, phat);
+		if (k > 10e-12) direction(pvec, phat);
 		overlap = wave_interpolate(k, wave_gridsize, grid, wave, spline);
 		for (int m = -l; m <= l; m++) {
-			ylmdir = conj(Ylm(l, m, phat[0], phat[1]));
+			if (k > 10e-12) ylmdir = conj(Ylm(l, m, phat[0], phat[1]));
+			else ylmdir = 0;
 			//if (k < 0.1 && l == 0) overlap = -0.1693;
 			//else if (k < 0.1) overlap = 0;
 			terms[(2*l+1)*w+l+m] = ylmdir * overlap;

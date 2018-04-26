@@ -460,13 +460,13 @@ void overlap_setup(pswf_t* wf_R, pswf_t* wf_S, ppot_t* pps,
 
 	printf("STARTING OVERLAP_SETUP\n");
 	int NUM_KPTS = wf_R->nwk * wf_R->nspin;
-	int NUM_BANDS = wf_R->nband;
+	int NUM_BANDS = wf_S->nband;
 	double inv_sqrt_vol = pow(determinant(wf_R->lattice), -0.5);
 	#pragma omp parallel for
 	for (int w = 0; w < NUM_BANDS * NUM_KPTS; w++) {
 		kpoint_t* kpt_R = wf_R->kpts[w%NUM_KPTS];
 		kpoint_t* kpt_S = wf_S->kpts[w%NUM_KPTS];
-		band_t* band_R = kpt_R->bands[w/NUM_KPTS];
+		//band_t* band_R = kpt_R->bands[w/NUM_KPTS];
 		band_t* band_S = kpt_S->bands[w/NUM_KPTS];
 
 		projection_t* wps = (projection_t*) malloc(num_N_R * sizeof(projection_t));
@@ -491,12 +491,13 @@ void overlap_setup(pswf_t* wf_R, pswf_t* wf_S, ppot_t* pps,
 		band_S->wave_projections = wps;
 	}
 	printf("ONE THIRD DONE\n");
+	NUM_BANDS = wf_R->nband;
 	#pragma omp parallel for
 	for (int w = 0; w < NUM_BANDS * NUM_KPTS; w++) {
 		kpoint_t* kpt_R = wf_R->kpts[w%NUM_KPTS];
 		kpoint_t* kpt_S = wf_S->kpts[w%NUM_KPTS];
 		band_t* band_R = kpt_R->bands[w/NUM_KPTS];
-		band_t* band_S = kpt_S->bands[w/NUM_KPTS];
+		//band_t* band_S = kpt_S->bands[w/NUM_KPTS];
 
 		projection_t* wps = (projection_t*) malloc(num_N_S * sizeof(projection_t));
 		for (int n = 0; n < num_N_S; n++) {
@@ -588,8 +589,8 @@ double* compensation_terms(int BAND_NUM, pswf_t* wf_S, pswf_t* wf_R, ppot_t* pps
 	printf("%d %d %d %d %d %d\n", BAND_NUM, num_elems, num_M, num_N_R, num_N_S, num_N_RS);
 	printf("%d %lf %d %lf %d\n", proj_labels[0], proj_coords[0], ref_labels[0], ref_coords[0], fft_grid[1]);
 	
-	int NUM_KPTS = wf_S->nwk * wf_S->nspin;
-	int NUM_BANDS = wf_S->nband;
+	int NUM_KPTS = wf_R->nwk * wf_S->nspin;
+	int NUM_BANDS = wf_R->nband;
 
 	double* overlap = (double*) calloc(2 * NUM_KPTS * NUM_BANDS, sizeof(double));
 	CHECK_ALLOCATION(overlap);
@@ -656,10 +657,14 @@ double* compensation_terms(int BAND_NUM, pswf_t* wf_S, pswf_t* wf_R, ppot_t* pps
 			projection_t ppron = band_S->projections[site_num];
 			for (int i = 0; i < pp.total_projs; i++) {
 				temp += conj(pron.overlaps[i]) * ppron.overlaps[i];
+				//if (w % NUM_KPTS == 0) {
+				//	printf("%lf %lf %lf %lf\n", creal(pron.overlaps[i]), cimag(pron.overlaps[i]), creal(ppron.overlaps[i]), cimag(ppron.overlaps[i]));
+				//}
 			}
 		}
 		overlap[2*w] += creal(temp);
 		overlap[2*w+1]+= cimag(temp);
+		//printf("temp 3 %d %d %d %lf %lf\n", kpt_S->num_waves, kpt_R->num_waves, w%NUM_KPTS, creal(temp), cimag(temp));
 
 		temp = 0 + 0 * I;
 		for (int s = 0; s < num_N_RS; s++) {

@@ -95,7 +95,6 @@ double* wave_spherical_bessel_transform(sbt_descriptor_t* d, double* f, int l) {
 
 	double kmin = d->kmin;
 	double kappamin = d->kappamin;
-	double rmin = d->rmin;
 	double rhomin = d->rhomin;
 	double drho = d->drho;
 	double dt = d->dt;
@@ -166,7 +165,6 @@ double* inverse_wave_spherical_bessel_transform(sbt_descriptor_t* d, double* f, 
 	//double drho = d->drho;
 	double kmin = d->rmin;
 	double kappamin = d->rhomin;
-	double rmin = d->kmin;
 	double rhomin = d->kappamin;
 	double drho = d->drho;
 	double dt = d->dt;
@@ -178,12 +176,11 @@ double* inverse_wave_spherical_bessel_transform(sbt_descriptor_t* d, double* f, 
 	double* r = d->ks;
 	double* fs = (double*) malloc(N*sizeof(double));
 	CHECK_ALLOCATION(fs);
-	double C = f[0] / pow(r[N/2], l+1);
 	for (int i = 0; i < N/2; i++) {
-		fs[i] = C * pow(r[i], l+1);
+		fs[i] = f[i];
 	}
 	for (int i = N/2; i < N; i++) {
-		fs[i] = f[i-N/2];
+		fs[i] = 0;
 	}
 
 	MKL_Complex16* x = mkl_malloc(N * sizeof(MKL_Complex16), 64);
@@ -222,9 +219,9 @@ double* inverse_wave_spherical_bessel_transform(sbt_descriptor_t* d, double* f, 
 	double kp = 0;
 	for (int p = 0; p < N / 2; p++) {
 		kp = kmin * exp(p * drho);
-		vals[p] = x[p].real;
+		vals[p] = x[p + N / 2].real / PI * 2;
 		//vals[p] *= 2 / pow(ks[p], 1.5);
-		vals[p] *= 2 / pow(ks[p], 1.5);
+		vals[p] *= 2 / pow(ks[p + N / 2], 1.5);
 	}
 
 	mkl_free(x);

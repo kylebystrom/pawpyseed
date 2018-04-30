@@ -39,6 +39,8 @@ typedef struct funcset {
         double** diffwave_spline; ///< spline coefficients for diffwave
         double* kwave; ///< Expansion of diffwave in spherical Bessel functions
         double** kwave_spline; ///< spline coefficients for kwave
+        double* smooth_diffwave; ///< diffwave on linear grid with high-frequency components removed
+        double** smooth_diffwave_spline; ///< spline coefficients for smooth_diffwave
 } funcset_t;
 
 typedef struct ppot {
@@ -79,6 +81,7 @@ typedef struct band {
 	double N;
 	double complex energy; ///< energy of the band
 	float complex* Cs; ///< plane wave coefficients (normalized to 1)
+	double complex* CRs; ///< wavefunction in real space
 	projection_t* projections; ///< length==number of sites in structure
 	projection_t* wave_projections; ///< length==number of sites in structure
 } band_t;
@@ -248,7 +251,7 @@ grid x, at radius r. rmax is the maximum radius of the projector.
 Uses spline interpolation, where proj_spline is the set of spline coefficients
 for proj set up by spline_coeff
 */
-double proj_interpolate(double r, double rmax, double* x, double* proj, double** proj_spline);
+double proj_interpolate(double r, double rmax, int size, double* x, double* proj, double** proj_spline);
 
 /**
 Interpolate the discretely defined partial wave f, defined on logarithmic radial grix x,
@@ -257,12 +260,18 @@ coefficients for f set up by spline_coeff
 */
 double wave_interpolate(double r, int size, double* x, double* f, double** wave_spline);
 
+double complex proj_value_helper(double r, double rmax, int size,
+	double* pos, double* x, double* f, double* s, int l, int m);
+
 /**
 Return the value of funcs->proj, defined on linear radial grid x centered
 at 3D vector ion_pos, at position pos, given the real space lattice.
 */
 double complex proj_value(funcset_t funcs, double* x, int m, double rmax,
 	double* ion_pos, double* pos, double* lattice);
+
+double complex smooth_wave_value(funcset_t funcs, double* x, int m, double rmax,
+	int size, double* ion_pos, double* pos, double* lattice);
 
 /**
 Return the value of funcs->aewave-funcs->pswave, defined on logarithmic radial
@@ -273,6 +282,12 @@ double complex wave_value(funcset_t funcs, int size, double* x, int m,
 
 double complex wave_value2(double* x, double* wave, double** spline, int size,
 	int l, int m, double* pos);
+
+/**
+Convenience function for setting up real_proj_site_t* lists
+*/
+void setup_site(real_proj_site_t* sites, ppot_t* pps, int num_sites, int* site_nums,
+	int* labels, double* coords, int pr0_pw1);
 
 /**
 Set up spline coefficients for spline interpolation.

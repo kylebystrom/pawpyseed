@@ -228,3 +228,13 @@ double* inverse_wave_spherical_bessel_transform(sbt_descriptor_t* d, double* f, 
 	free(fs);
 	return vals;
 }
+
+void free_sbt_descriptor(sbt_descriptor_t* d) {
+	for (int l = 0; l <= pps[i].lmax; l++) {
+		free(d->mult_table[l]);
+	}
+	free(d->ks);
+	free(d->rs);
+	free(d->mult_table);
+	free(d);
+}

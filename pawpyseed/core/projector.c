@@ -15,6 +15,7 @@
 
 #define c 0.262465831
 #define PI 3.14159265358979323846
+#define DENSE_GRIDE_SCALE 4
 
 ppot_t* get_projector_list(int num_els, int* labels, int* ls, double* proj_grids, double* wave_grids,
 	double* projectors, double* aewaves, double* pswaves, double* rmaxs) {
@@ -55,6 +56,20 @@ ppot_t* get_projector_list(int num_els, int* labels, int* ls, double* proj_grids
 		}
 		funcset_t* funcs = (funcset_t*) malloc(pps[i].num_projs*sizeof(funcset_t));
 		CHECK_ALLOCATION(funcs);
+		double* dense_wavegrid = (double*) malloc(DENSE_GRIDE_SCALE * pps[i].wave_gridsize * sizeof(double));
+		CHECK_ALLOCATION(dense_wavegrid);
+		dense_wavegrid[0] = pps[i].wave_grid[0];
+		double factor = pow(pps[i].wave_grid[1]/pps[i].wave_grid[0], 1.0/DENSE_GRIDE_SCALE);
+		for (int p = 1; p < pps[i].wave_gridsize * DENSE_GRIDE_SCALE; p++) {
+			dense_wavegrid[p] = dense_wavegrid[p-1] * factor;
+		}
+		pps[i].wave_rmax = pps[i].wave_grid[pps[i].wave_gridsize-1];
+		pps[i].smooth_grid = (double*) malloc(pps[i].proj_gridsize * sizeof(double));
+		for (int j = 0; j < pps[i].proj_gridsize; j++) {
+			pps[i].smooth_grid[j] = pps[i].wave_rmax / pps[i].proj_gridsize * j;
+		}
+		double* dense_kwavegrid = (double*) malloc(DENSE_GRIDE_SCALE * pps[i].wave_gridsize * sizeof(double));
+		CHECK_ALLOCATION(dense_kwavegrid);
 		for (int k = 0; k < pps[i].num_projs; k++) {
 			funcs[k].proj = (double*) malloc(sizeof(double)*pps[i].proj_gridsize);
 			funcs[k].aewave = (double*) malloc(sizeof(double)*pps[i].wave_gridsize);
@@ -83,21 +98,53 @@ ppot_t* get_projector_list(int num_els, int* labels, int* ls, double* proj_grids
 			funcs[k].aewave_spline = spline_coeff(pps[i].wave_grid, funcs[k].aewave, pps[i].wave_gridsize);
 			funcs[k].pswave_spline = spline_coeff(pps[i].wave_grid, funcs[k].pswave, pps[i].wave_gridsize);
 			funcs[k].diffwave_spline = spline_coeff(pps[i].wave_grid, funcs[k].diffwave, pps[i].wave_gridsize);
+
+			double* dense_diffwave = (double*) malloc(DENSE_GRIDE_SCALE * pps[i].wave_gridsize * sizeof(double));
+			dense_diffwave[0] = funcs[k].diffwave[0];
+			for (int p = 1; p < pps[i].wave_gridsize * DENSE_GRIDE_SCALE; p++) {
+				dense_wavegrid[p] = dense_wavegrid[p-1] * factor;
+				dense_diffwave[p] = wave_interpolate(dense_wavegrid[p], pps[i].wave_gridsize,
+					pps[i].wave_grid, funcs[k].diffwave, funcs[k].diffwave_spline);
+			}
+			funcs[k].smooth_diffwave = dense_diffwave;
+
 		}
-		sbt_descriptor_t* d = spherical_bessel_transform_setup(520.0, 5000.0, pps[i].lmax,
+
+		sbt_descriptor_t* d = spherical_bessel_transform_setup(520.0, 1000000.0, pps[i].lmax,
 			pps[i].wave_gridsize, pps[i].wave_grid, pps[i].kwave_grid);
 		for (int k = 0; k < pps[i].num_projs; k++) {
 			funcs[k].kwave = wave_spherical_bessel_transform(d, funcs[k].diffwave, funcs[k].l);
 			//funcs[k].kwave = besselt(pps[i].wave_grid, pps[i].kwave_grid, funcs[k].diffwave, 520.0, pps[i].wave_gridsize, funcs[k].l);
 			funcs[k].kwave_spline = spline_coeff(pps[i].kwave_grid, funcs[k].kwave, pps[i].wave_gridsize);
 		}
-		for (int l = 0; l <= pps[i].lmax; l++) {
-			free(d->mult_table[l]);
+		free_sbt_descriptor(d);
+		d = spherical_bessel_transform_setup(520, 0, pps[i].lmax, pps[i].wave_gridsize*DENSE_GRIDE_SCALE,
+			dense_wavegrid, dense_kwavegrid);
+		for (int k = 0; k < pps[i].num_projs; k++) {
+			double* dense_kwave = wave_spherical_bessel_transform(d, funcs[k].smooth_diffwave, funcs[k].l);
+			double* smooth_diffwave = inverse_wave_spherical_bessel_transform(d,
+				dense_kwave, funcs[k].l);
+			double** smooth_wave_spline = spline_coeff(dense_wavegrid,
+				smooth_diffwave, DENSE_GRIDE_SCALE*pps[i].wave_gridsize);
+			free(dense_kwave);
+
+			double* sdw = (double*) malloc(pps[i].proj_gridsize*sizeof(double));
+			for (int p = 0; p < pps[i].proj_gridsize; p++) {
+				// smooth_grid should be like proj_grid except that rmax should be rmax of the partial wave
+				// difference
+				sdw[p] = wave_interpolate(pps[i].smooth_grid[k], pps[i].wave_gridsize*DENSE_GRIDE_SCALE,
+					dense_wavegrid, smooth_diffwave, smooth_wave_spline);
+			}
+			double** sdw_spline = spline_coeff(pps[i].proj_grid, sdw, pps[i].proj_gridsize);
+			free(funcs[k].smooth_diffwave);
+			funcs[k].smooth_diffwave = sdw;
+			funcs[k].smooth_diffwave_spline = sdw_spline;
+			free(smooth_diffwave);
+			free(smooth_wave_spline[0]);
+			free(smooth_wave_spline[1]);
+			free(smooth_wave_spline[2]);
 		}
-		free(d->ks);
-		free(d->rs);
-		free(d->mult_table);
-		free(d);
+		free_sbt_descriptor(d);
 		pps[i].funcs = funcs;
 		make_pwave_overlap_matrices(pps+i);
 	}
@@ -135,118 +182,32 @@ real_proj_site_t* projector_values(int num_sites, int* labels, double* coords,
 
 	real_proj_site_t* sites = (real_proj_site_t*) malloc(num_sites * sizeof(real_proj_site_t));
 	CHECK_ALLOCATION(sites);
+	int* all_sites = (int*) malloc(num_sites * sizeof(int));
 	for (int i = 0; i < num_sites; i++) {
-		sites[i].index = i;
-		sites[i].elem = labels[i];
-		sites[i].num_projs = pps[labels[i]].num_projs;
-		sites[i].rmax = pps[labels[i]].rmax;
-		sites[i].total_projs = pps[labels[i]].total_projs;
-		sites[i].num_indices = 0;
-		sites[i].coord = malloc(3 * sizeof(double));
-		CHECK_ALLOCATION(sites[i].coord);
-		sites[i].coord[0] = coords[3*i+0];
-		sites[i].coord[1] = coords[3*i+1];
-		sites[i].coord[2] = coords[3*i+2];
-		sites[i].indices = calloc(pps[labels[i]].num_cart_gridpts, sizeof(int));
-		CHECK_ALLOCATION(sites[i].indices);
-		sites[i].projs = (real_proj_t*) malloc(sites[i].total_projs * sizeof(real_proj_t));
-		int p = 0;
-		for (int j = 0; j < sites[i].num_projs; j++) {
-			for (int m = -pps[labels[i]].funcs[j].l; m <= pps[labels[i]].funcs[j].l; m++) {
-				sites[i].projs[p].l = pps[labels[i]].funcs[j].l;
-				sites[i].projs[p].m = m;
-				sites[i].projs[p].func_num = j;
-				sites[i].projs[p].values = malloc(pps[labels[i]].num_cart_gridpts * sizeof(double complex));
-				sites[i].projs[p].paths = malloc(3*pps[labels[i]].num_cart_gridpts * sizeof(double));
-				CHECK_ALLOCATION(sites[i].projs[p].values);
-				CHECK_ALLOCATION(sites[i].projs[p].paths);
-				p++;
-			}
-		}
+		all_sites[i] = i;
 	}
+	setup_site(sites, pps, num_sites, all_sites, labels, coords, lattice, fftg, 0);
 
-	#pragma omp parallel for
-	for (int p = 0; p < num_sites; p++) {
-		double res[3] = {0,0,0};
-		double frac[3] = {0,0,0};
-		double testcoord[3] = {0,0,0};
-		vcross(res, lattice+3, lattice+6);
-		int grid1 = (int) (mag(res) * sites[p].rmax / vol * fftg[0]) + 1;
-		vcross(res, lattice+0, lattice+6);
-		int grid2 = (int) (mag(res) * sites[p].rmax / vol * fftg[1]) + 1;
-		vcross(res, lattice+0, lattice+3);
-		int grid3 = (int) (mag(res) * sites[p].rmax / vol * fftg[2]) + 1;
-		int center1 = (int) round(coords[3*p+0] * fftg[0]);
-		int center2 = (int) round(coords[3*p+1] * fftg[1]);
-		int center3 = (int) round(coords[3*p+2] * fftg[2]);
-		int ii=0, jj=0, kk=0;
-		for (int i = -grid1 + center1; i <= grid1 + center1; i++) {
-			for (int j = -grid2 + center2; j <= grid2 + center2; j++) {
-				for (int k = -grid3 + center3; k <= grid3 + center3; k++) {
-					testcoord[0] = (double) i / fftg[0] - coords[3*p+0];
-					testcoord[1] = (double) j / fftg[1] - coords[3*p+1];
-					testcoord[2] = (double) k / fftg[2] - coords[3*p+2];
-					frac_to_cartesian(testcoord, lattice);
-					if (mag(testcoord) < 0.99 * sites[p].rmax) {
-						ii = (i%fftg[0] + fftg[0]) % fftg[0];
-						jj = (j%fftg[1] + fftg[1]) % fftg[1];
-						kk = (k%fftg[2] + fftg[2]) % fftg[2];
-						frac[0] = (double) ii / fftg[0];
-						frac[1] = (double) jj / fftg[1];
-						frac[2] = (double) kk / fftg[2];
-						sites[p].indices[sites[p].num_indices] = ii*fftg[1]*fftg[2] + jj*fftg[2] + kk;
-						for (int n = 0; n < sites[p].total_projs; n++) {
-							sites[p].projs[n].paths[3*sites[p].num_indices+0] = testcoord[0];
-							sites[p].projs[n].paths[3*sites[p].num_indices+1] = testcoord[1];
-							sites[p].projs[n].paths[3*sites[p].num_indices+2] = testcoord[2];
-							sites[p].projs[n].values[sites[p].num_indices] = proj_value(pps[labels[p]].funcs[sites[p].projs[n].func_num],
-								pps[labels[p]].proj_grid,
-								sites[p].projs[n].m, sites[p].rmax, coords+3*p, frac, lattice);
-						//if (p == 0) printf("coordandval %lf %lf %lf %d %d\n", r, creal(sites[p].projs[n].values[sites[p].num_indices])*pow(vol,0.5), cimag(sites[p].projs[n].values[sites[p].num_indices])*pow(vol, 0.5), sites[p].num_indices,n);
-						}
-						sites[p].num_indices++;
-					}
-				}
-			}
-		}
-	}
+	free(all_sites);
+	return sites;
+}
 
-	/*
-	for (int i = 0; i < fftg[0]; i++) {
-		double path[3] = {0,0,0};
-		double r = 0;
-		for (int j = 0; j < fftg[1]; j++) {
-			for (int k = 0; k  < fftg[2]; k++) {
-				double frac[3] = {(double)i/fftg[0], (double)j/fftg[1], (double)k/fftg[2]};
-				for (int p = 0; p < num_sites; p++) {
-					min_cart_path(frac, coords+3*p, lattice, path, &r);
-					if (r < 0.99 * sites[p].rmax) {
-						sites[p].indices[sites[p].num_indices] = i*fftg[1]*fftg[2] + j*fftg[2] + k;
-						for (int n = 0; n < sites[p].total_projs; n++) {
-							sites[p].projs[n].paths[3*sites[p].num_indices] = path[0];
-							sites[p].projs[n].paths[3*sites[p].num_indices+1] = path[1];
-							sites[p].projs[n].paths[3*sites[p].num_indices+2] = path[2];
-							sites[p].projs[n].values[sites[p].num_indices] = proj_value(pps[labels[p]].funcs[sites[p].projs[n].func_num],
-								pps[labels[p]].proj_grid,
-								sites[p].projs[n].m, sites[p].rmax, coords+3*p, frac, lattice);
-						//if (p == 0) printf("coordandval %lf %lf %lf %d %d\n", r, creal(sites[p].projs[n].values[sites[p].num_indices])*pow(vol,0.5), cimag(sites[p].projs[n].values[sites[p].num_indices])*pow(vol, 0.5), sites[p].num_indices,n);
-						}
-						sites[p].num_indices++;
-					}
-				}
-			}
-		}
-	}
-	*/
-	//for (int i = 0; i < num_sites; i++) {
-	//	printf("looking for nan %d %e\n", sites[0].num_indices, creal(sites[i].projs[0].values[0]));
-	//}
+real_proj_site_t* smooth_pw_values(int num_N, int* Nlst, int* labels, double* coords,
+	double* lattice, double* reclattice, ppot_t* pps, int* fftg) {
+
+	double intervals[3] = {mag(lattice)/fftg[0], mag(lattice+3)/fftg[1], mag(lattice+6)/fftg[2]};
+	double vol = determinant(lattice);
+	int num_pts = fftg[0] * fftg[1] * fftg[2];
+
+	real_proj_site_t* sites = (real_proj_site_t*) malloc(num_N * sizeof(real_proj_site_t));
+	CHECK_ALLOCATION(sites);
+	setup_site(sites, pps, num_N, Nlst, labels, coords, lattice, fftg, 1);
 
 	return sites;
 }
 
 void onto_projector_helper(band_t* band, fft_complex* x, real_proj_site_t* sites,
-	int num_sites, int* labels, double* lattice, double* reclattice, double* kpt, ppot_t* pps, int* fftg) {
+	int num_sites, double* lattice, double* reclattice, double* kpt, ppot_t* pps, int* fftg) {
 
 	double dv = determinant(lattice) / fftg[0] / fftg[1] / fftg[2];
 
@@ -294,7 +255,7 @@ void onto_projector_helper(band_t* band, fft_complex* x, real_proj_site_t* sites
 	}
 }
 
-void onto_projector(kpoint_t* kpt, int band_num, real_proj_site_t* sites, int num_sites, int* labels,
+void onto_projector(kpoint_t* kpt, int band_num, real_proj_site_t* sites, int num_sites,
 	int* G_bounds, double* lattice, double* reclattice, ppot_t* pps, int* fftg) {
 
 	double* k = kpt->k;
@@ -308,9 +269,10 @@ void onto_projector(kpoint_t* kpt, int band_num, real_proj_site_t* sites, int nu
 	//printf("determinant %lf\n", determinant(lattice));
 	fft3d(x, G_bounds, lattice, k, Gs, Cs, num_waves, fftg);
 
-	onto_projector_helper(kpt->bands[band_num], x, sites, num_sites, labels, lattice, reclattice, k, pps, fftg);
+	onto_projector_helper(kpt->bands[band_num], x, sites, num_sites, lattice, reclattice, k, pps, fftg);
 
-	mkl_free(x);
+	kpt->bands[band_num]->CRs = x;
+	//mkl_free(x);
 }
 
 void add_num_cart_gridpts(ppot_t* pp_ptr, double* lattice, int* fftg) {
@@ -429,7 +391,7 @@ void setup_projections_no_rayleigh(pswf_t* wf, ppot_t* pps, int num_elems,
 	for (int w = 0; w < NUM_BANDS * NUM_KPTS; w++) {
 		kpoint_t* kpt = wf->kpts[w % NUM_KPTS];
 		int band_num = w / NUM_KPTS;
-		onto_projector(kpt, band_num, sites, num_sites, labels,
+		onto_projector(kpt, band_num, sites, num_sites,
 			wf->G_bounds, wf->lattice, wf->reclattice, pps, fftg);
 	}
 	free_real_proj_site_list(sites, num_sites);	

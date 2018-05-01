@@ -5,6 +5,8 @@
 #include <math.h>
 #include <omp.h>
 #include <time.h>
+#include <mkl.h>
+#include <mkl_types.h>
 #include "utils.h"
 
 #define PI 3.14159265358979323846
@@ -374,16 +376,16 @@ double complex wave_value2(double* x, double* wave, double** spline, int size,
 }
 
 double complex proj_value_helper(double r, double rmax, int size,
-	double* pos, double* x, double* f, double* s, int l, int m) {
+	double* temp, double* x, double* f, double** s, int l, int m) {
 
 	double radial_val = proj_interpolate(r, rmax, size, x, f, s);
-	if (r == 0) return Ylm(funcs.l, m, 0, 0) * radial_val;
+	if (r == 0) return Ylm(l, m, 0, 0) * radial_val;
 	double theta = 0, phi = 0;
 	theta = acos(temp[2]/r);
 	if (r - fabs(temp[2]) == 0) phi = 0;
 	else phi = acos(temp[0] / pow(temp[0]*temp[0] + temp[1]*temp[1], 0.5));
 	if (temp[1] < 0) phi = 2*PI - phi;
-	double complex sph_val = Ylm(funcs.l, m, theta, phi);
+	double complex sph_val = Ylm(l, m, theta, phi);
 	return radial_val * sph_val;
 }
 
@@ -410,7 +412,9 @@ double complex smooth_wave_value(funcset_t funcs, double* x, int m, double rmax,
 }
 
 void setup_site(real_proj_site_t* sites, ppot_t* pps, int num_sites, int* site_nums,
-	int* labels, double* coords, int pr0_pw1) {
+	int* labels, double* coords, double* lattice, int* fftg, int pr0_pw1) {
+	
+	double vol = determinant(lattice);
 
 	for (int s = 0; s < num_sites; s++) {
 		int i = site_nums[s];
@@ -445,7 +449,7 @@ void setup_site(real_proj_site_t* sites, ppot_t* pps, int num_sites, int* site_n
 		}
 	}
 
-	#pragma omp parallel for
+	//#pragma omp parallel for
 	for (int s = 0; s < num_sites; s++) {
 		int p = site_nums[s];
 		double res[3] = {0,0,0};
@@ -461,8 +465,7 @@ void setup_site(real_proj_site_t* sites, ppot_t* pps, int num_sites, int* site_n
 		int center2 = (int) round(coords[3*p+1] * fftg[1]);
 		int center3 = (int) round(coords[3*p+2] * fftg[2]);
 		int ii=0, jj=0, kk=0;
-		double R0;
-		R0 = sites[p].rmax * (pps[labels[p]].proj_gridsize-1)
+		double R0 = (pps[labels[p]].proj_gridsize-1) * sites[p].rmax
 			/ pps[labels[p]].proj_gridsize;
 		for (int i = -grid1 + center1; i <= grid1 + center1; i++) {
 			for (int j = -grid2 + center2; j <= grid2 + center2; j++) {
@@ -485,12 +488,12 @@ void setup_site(real_proj_site_t* sites, ppot_t* pps, int num_sites, int* site_n
 							sites[p].projs[n].paths[3*sites[p].num_indices+2] = testcoord[2];
 							if (pr0_pw1)
 								sites[p].projs[n].values[sites[p].num_indices] = smooth_wave_value(pps[labels[p]].funcs[sites[p].projs[n].func_num],
-									pps[labels[p]].proj_gridsize, pps[labels[p]].smooth_grid,
-									sites[p].projs[n].m, sites[p].rmax, coords+3*p, frac, lattice);
+									pps[labels[p]].smooth_grid, sites[p].projs[n].m, sites[p].rmax,
+									pps[labels[p]].proj_gridsize, coords+3*p, frac, lattice);
 							else
 								sites[p].projs[n].values[sites[p].num_indices] = proj_value(pps[labels[p]].funcs[sites[p].projs[n].func_num],
-									pps[labels[p]].proj_gridsize, pps[labels[p]].proj_grid,
-									sites[p].projs[n].m, sites[p].rmax, coords+3*p, frac, lattice);
+									pps[labels[p]].proj_grid, sites[p].projs[n].m, sites[p].rmax,
+									pps[labels[p]].proj_gridsize, coords+3*p, frac, lattice);
 						}
 						sites[p].num_indices++;
 					}

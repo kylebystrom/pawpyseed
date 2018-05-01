@@ -48,8 +48,9 @@ typedef struct ppot {
         int total_projs; ///< number of projector functions
         int lmax; ///< maximum l-value of any projector
         funcset_t* funcs; ///< funcset for each projector, see funcset
-        double rmax; //.< maximum radius of the projector functions
-        double* pspw_overlap_matrix; ///< overlap matrix for pseudo partial waves
+        double rmax; //< maximum radius of the projector functions
+        double wave_rmax; ///< maximum radius of the partial waves
+	double* pspw_overlap_matrix; ///< overlap matrix for pseudo partial waves
         double* aepw_overlap_matrix; ///< overlap matrix for all electron partial waves
         double* diff_overlap_matrix; ///< overlap matrix of difference between all electron and partial waves
         int proj_gridsize; ///< number of points on projector radial grid
@@ -58,6 +59,7 @@ typedef struct ppot {
         double* wave_grid; ///< real radial grid for partial waves
         double* kwave_grid; ///< reciprocal radial grid for partial waves
         double* proj_grid; ///< real radial grid for projector functions
+	double* smooth_grid;
 } ppot_t;
 
 typedef struct projection {
@@ -136,6 +138,7 @@ typedef struct real_proj_site {
 	int num_projs;
 	int total_projs;
 	int num_indices;
+	int gridsize;
 	double rmax;
 	double* coord;
 	int* indices;
@@ -261,14 +264,14 @@ coefficients for f set up by spline_coeff
 double wave_interpolate(double r, int size, double* x, double* f, double** wave_spline);
 
 double complex proj_value_helper(double r, double rmax, int size,
-	double* pos, double* x, double* f, double* s, int l, int m);
+	double* pos, double* x, double* f, double** s, int l, int m);
 
 /**
 Return the value of funcs->proj, defined on linear radial grid x centered
 at 3D vector ion_pos, at position pos, given the real space lattice.
 */
 double complex proj_value(funcset_t funcs, double* x, int m, double rmax,
-	double* ion_pos, double* pos, double* lattice);
+	int size, double* ion_pos, double* pos, double* lattice);
 
 double complex smooth_wave_value(funcset_t funcs, double* x, int m, double rmax,
 	int size, double* ion_pos, double* pos, double* lattice);
@@ -287,7 +290,7 @@ double complex wave_value2(double* x, double* wave, double** spline, int size,
 Convenience function for setting up real_proj_site_t* lists
 */
 void setup_site(real_proj_site_t* sites, ppot_t* pps, int num_sites, int* site_nums,
-	int* labels, double* coords, int pr0_pw1);
+    int* labels, double* coords, double* lattice, int* fftg, int pr0_pw1);
 
 /**
 Set up spline coefficients for spline interpolation.

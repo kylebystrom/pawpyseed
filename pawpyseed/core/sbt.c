@@ -88,6 +88,7 @@ sbt_descriptor_t* spherical_bessel_transform_setup(double encut, double enbuf, i
 	descriptor->mult_table = mult_table;
 	descriptor->ks = ks;
 	descriptor->rs = rs;
+	descriptor->lmax = lmax;
 	return descriptor;
 }
 
@@ -230,7 +231,7 @@ double* inverse_wave_spherical_bessel_transform(sbt_descriptor_t* d, double* f, 
 }
 
 void free_sbt_descriptor(sbt_descriptor_t* d) {
-	for (int l = 0; l <= pps[i].lmax; l++) {
+	for (int l = 0; l <= d->lmax; l++) {
 		free(d->mult_table[l]);
 	}
 	free(d->ks);

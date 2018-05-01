@@ -59,6 +59,7 @@ ppot_t* get_projector_list(int num_els, int* labels, int* ls, double* proj_grids
 		double* dense_wavegrid = (double*) malloc(DENSE_GRIDE_SCALE * pps[i].wave_gridsize * sizeof(double));
 		CHECK_ALLOCATION(dense_wavegrid);
 		dense_wavegrid[0] = pps[i].wave_grid[0];
+		double factor = pow(pps[i].wave_grid[1]/pps[i].wave_grid[0], 1.0/DENSE_GRIDE_SCALE);
 		for (int p = 1; p < pps[i].wave_gridsize * DENSE_GRIDE_SCALE; p++) {
 			dense_wavegrid[p] = dense_wavegrid[p-1] * factor;
 		}
@@ -99,7 +100,6 @@ ppot_t* get_projector_list(int num_els, int* labels, int* ls, double* proj_grids
 			funcs[k].diffwave_spline = spline_coeff(pps[i].wave_grid, funcs[k].diffwave, pps[i].wave_gridsize);
 
 			double* dense_diffwave = (double*) malloc(DENSE_GRIDE_SCALE * pps[i].wave_gridsize * sizeof(double));
-			double factor = pow(pps[i].wave_grid[1]/pps[i].wave_grid[0], 1.0/DENSE_GRIDE_SCALE);
 			dense_diffwave[0] = funcs[k].diffwave[0];
 			for (int p = 1; p < pps[i].wave_gridsize * DENSE_GRIDE_SCALE; p++) {
 				dense_wavegrid[p] = dense_wavegrid[p-1] * factor;
@@ -119,7 +119,7 @@ ppot_t* get_projector_list(int num_els, int* labels, int* ls, double* proj_grids
 		}
 		free_sbt_descriptor(d);
 		d = spherical_bessel_transform_setup(520, 0, pps[i].lmax, pps[i].wave_gridsize*DENSE_GRIDE_SCALE,
-			funcs[k].dense_wavegrid, funcs[k].dense_kwavegrid);
+			dense_wavegrid, dense_kwavegrid);
 		for (int k = 0; k < pps[i].num_projs; k++) {
 			double* dense_kwave = wave_spherical_bessel_transform(d, funcs[k].smooth_diffwave, funcs[k].l);
 			double* smooth_diffwave = inverse_wave_spherical_bessel_transform(d,
@@ -129,7 +129,7 @@ ppot_t* get_projector_list(int num_els, int* labels, int* ls, double* proj_grids
 			free(dense_kwave);
 
 			double* sdw = (double*) malloc(pps[i].proj_gridsize*sizeof(double));
-			for (int p = 0; p < proj_gridsize; p++) {
+			for (int p = 0; p < pps[i].proj_gridsize; p++) {
 				// smooth_grid should be like proj_grid except that rmax should be rmax of the partial wave
 				// difference
 				sdw[p] = wave_interpolate(pps[i].smooth_grid[k], pps[i].wave_gridsize*DENSE_GRIDE_SCALE,
@@ -144,6 +144,7 @@ ppot_t* get_projector_list(int num_els, int* labels, int* ls, double* proj_grids
 			free(smooth_wave_spline[1]);
 			free(smooth_wave_spline[2]);
 		}
+		free_sbt_descriptor(d);
 		pps[i].funcs = funcs;
 		make_pwave_overlap_matrices(pps+i);
 	}
@@ -185,8 +186,9 @@ real_proj_site_t* projector_values(int num_sites, int* labels, double* coords,
 	for (int i = 0; i < num_sites; i++) {
 		all_sites[i] = i;
 	}
-	setup_site(sites, pps, num_sites, all_sites, labels, coords, 0);
+	setup_site(sites, pps, num_sites, all_sites, labels, coords, lattice, fftg, 0);
 
+	free(all_sites);
 	return sites;
 }
 
@@ -197,9 +199,9 @@ real_proj_site_t* smooth_pw_values(int num_N, int* Nlst, int* labels, double* co
 	double vol = determinant(lattice);
 	int num_pts = fftg[0] * fftg[1] * fftg[2];
 
-	real_proj_site_t* sites = (real_proj_site_t*) malloc(num_sites * sizeof(real_proj_site_t));
+	real_proj_site_t* sites = (real_proj_site_t*) malloc(num_N * sizeof(real_proj_site_t));
 	CHECK_ALLOCATION(sites);
-	setup_site(sites, pps, num_N, Nlst,	labels, coords, 1);
+	setup_site(sites, pps, num_N, Nlst, labels, coords, lattice, fftg, 1);
 
 	return sites;
 }

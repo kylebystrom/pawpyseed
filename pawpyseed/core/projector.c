@@ -455,8 +455,11 @@ void overlap_setup(pswf_t* wf_R, pswf_t* wf_S, ppot_t* pps,
 	int* labels_R, int* labels_S, double* coords_R, double* coords_S,
 	int* N_R, int* N_S, int* N_RS_R, int* N_RS_S, int num_N_R, int num_N_S, int num_N_RS) {
 
-	double complex** overlaps = (double complex**) malloc(num_N_RS * sizeof(double complex*));
-	CHECK_ALLOCATION(overlaps);
+	double complex** overlaps = NULL;
+	if (num_N_RS > 0) {
+		overlaps = (double complex**) malloc(num_N_RS * sizeof(double complex*));
+		CHECK_ALLOCATION(overlaps);
+	}
 
 	printf("STARTING OVERLAP_SETUP\n");
 	int NUM_KPTS = wf_R->nwk * wf_R->nspin;
@@ -469,8 +472,11 @@ void overlap_setup(pswf_t* wf_R, pswf_t* wf_S, ppot_t* pps,
 		//band_t* band_R = kpt_R->bands[w/NUM_KPTS];
 		band_t* band_S = kpt_S->bands[w/NUM_KPTS];
 
-		projection_t* wps = (projection_t*) malloc(num_N_R * sizeof(projection_t));
-		CHECK_ALLOCATION(wps);
+		projection_t* wps = NULL;
+		if (num_N_R > 0) {
+			wps = (projection_t*) malloc(num_N_R * sizeof(projection_t));
+			CHECK_ALLOCATION(wps);
+		}
 		for (int n = 0; n < num_N_R; n++) {
 			int s = N_R[n];
 			ppot_t pp = pps[labels_R[s]];
@@ -499,7 +505,11 @@ void overlap_setup(pswf_t* wf_R, pswf_t* wf_S, ppot_t* pps,
 		band_t* band_R = kpt_R->bands[w/NUM_KPTS];
 		//band_t* band_S = kpt_S->bands[w/NUM_KPTS];
 
-		projection_t* wps = (projection_t*) malloc(num_N_S * sizeof(projection_t));
+		projection_t* wps = NULL;
+		if (num_N_S > 0) {
+			wps = (projection_t*) malloc(num_N_S * sizeof(projection_t));
+			CHECK_ALLOCATION(wps);
+		}
 		for (int n = 0; n < num_N_S; n++) {
 			int s = N_S[n];
 			ppot_t pp = pps[labels_S[s]];
@@ -520,8 +530,11 @@ void overlap_setup(pswf_t* wf_R, pswf_t* wf_S, ppot_t* pps,
 	}
 	printf("TWO THIRDS DONE\n");
 	
-	double* dcoords = malloc(3 * num_N_RS * sizeof(double));
-	CHECK_ALLOCATION(dcoords);
+	double* dcoords =  NULL;
+	if (num_N_RS > 0) {
+		dcoords = (double*) malloc(3 * num_N_RS * sizeof(double));
+		CHECK_ALLOCATION(dcoords);
+	}
 	#pragma omp parallel for
 	for (int i = 0; i < num_N_RS; i++) {
 		double R = 0;

@@ -5,6 +5,8 @@
 #include <math.h>
 #include <omp.h>
 #include <time.h>
+#include <mkl.h>
+#include <mkl_types.h>
 #include "utils.h"
 
 #define PI 3.14159265358979323846
@@ -133,6 +135,9 @@ void free_kpoint(kpoint_t* kpt, int num_elems, ppot_t* pps) {
 		}
 		if (curr_band->wave_projections != NULL) {
 			free(curr_band->wave_projections);
+		}
+		if (curr_band->CRs != NULL) {
+			mkl_free(curr_band->CRs);
 		}
 		free(curr_band);
 	}
@@ -306,8 +311,8 @@ double complex Ylm2(int l, int m, double costheta, double phi) {
 		legendre(l, m, costheta) * cexp(I*m*phi);
 }
 
-double proj_interpolate(double r, double rmax, double* x, double* proj, double** proj_spline) {
-	int ind = min((int)(r/rmax*100), 98);
+double proj_interpolate(double r, double rmax, int size, double* x, double* proj, double** proj_spline) {
+	int ind = min((int)(r/rmax*size), size-2);
 	double rem = r - x[ind];
 	double radval = proj[ind] + rem * (proj_spline[0][ind] +
 						rem * (proj_spline[1][ind] +
@@ -370,41 +375,132 @@ double complex wave_value2(double* x, double* wave, double** spline, int size,
 	return radial_val * sph_val;
 }
 
-double complex proj_value(funcset_t funcs, double* x, int m, double rmax,
-	double* ion_pos, double* pos, double* lattice) {
+double complex proj_value_helper(double r, double rmax, int size,
+	double* temp, double* x, double* f, double** s, int l, int m) {
 
-	double temp[3] = {0,0,0};
-	double r = 0;
-	min_cart_path(pos, ion_pos, lattice, temp, &r);
-
-	double radial_val = proj_interpolate(r, rmax, x, funcs.proj, funcs.proj_spline);
-	if (r == 0) return Ylm(funcs.l, m, 0, 0) * radial_val;
+	double radial_val = proj_interpolate(r, rmax, size, x, f, s);
+	if (r == 0) return Ylm(l, m, 0, 0) * radial_val;
 	double theta = 0, phi = 0;
 	theta = acos(temp[2]/r);
 	if (r - fabs(temp[2]) == 0) phi = 0;
 	else phi = acos(temp[0] / pow(temp[0]*temp[0] + temp[1]*temp[1], 0.5));
 	if (temp[1] < 0) phi = 2*PI - phi;
-	//printf("inp %d %lf %d\n", m, rmax, funcs.l);
-	double complex sph_val = Ylm(funcs.l, m, theta, phi);
-	//printf("out %lf %lf %lf %lf %lf %lf %lf %lf %lf\n", phi, theta, r, temp[0], temp[1], temp[2], radial_val, creal(sph_val), cimag(sph_val));
+	double complex sph_val = Ylm(l, m, theta, phi);
 	return radial_val * sph_val;
 }
 
-double complex onto_partial_wave(double* pvec, double* reclattice, double complex* kwave,
-	double kappamin, double dkappa, int N, double** wave_spline) {
+double complex proj_value(funcset_t funcs, double* x, int m, double rmax,
+	int size, double* ion_pos, double* pos, double* lattice) {
 
 	double temp[3] = {0,0,0};
-	temp[0] = reclattice[0] * pvec[0] + reclattice[3] * pvec[1] + reclattice[6] * pvec[2];
-	temp[0] = reclattice[1] * pvec[0] + reclattice[4] * pvec[1] + reclattice[7] * pvec[2];
-	temp[0] = reclattice[2] * pvec[0] + reclattice[5] * pvec[1] + reclattice[8] * pvec[2];
+	double r = 0;
+	min_cart_path(pos, ion_pos, lattice, temp, &r);
 
-	int n = (int) ((log(mag(temp)) - kappamin) / dkappa);
-	double rem = mag(temp) - exp(kappamin + n * dkappa);
-	double val = kwave[n] + rem * (wave_spline[0][n] +
-				rem * (wave_spline[1][n] + 
-				rem * wave_spline[2][n]));
-	return val;
+	return proj_value_helper(r, rmax, size, temp, x, funcs.proj,
+		funcs.proj_spline, funcs.l, m);
+}
 
+double complex smooth_wave_value(funcset_t funcs, double* x, int m, double rmax,
+	int size, double* ion_pos, double* pos, double* lattice) {
+
+	double temp[3] = {0,0,0};
+	double r = 0;
+	min_cart_path(pos, ion_pos, lattice, temp, &r);
+
+	return proj_value_helper(r, rmax, size, temp, x, funcs.smooth_diffwave,
+		funcs.smooth_diffwave_spline, funcs.l, m);
+}
+
+void setup_site(real_proj_site_t* sites, ppot_t* pps, int num_sites, int* site_nums,
+	int* labels, double* coords, double* lattice, int* fftg, int pr0_pw1) {
+	
+	double vol = determinant(lattice);
+
+	for (int s = 0; s < num_sites; s++) {
+		int i = site_nums[s];
+		sites[i].index = i;
+		sites[i].elem = labels[i];
+		sites[i].gridsize = pps[labels[i]].proj_gridsize;
+		sites[i].num_projs = pps[labels[i]].num_projs;
+		if (pr0_pw1) sites[i].rmax = pps[labels[i]].wave_rmax;
+		else sites[i].rmax = pps[labels[i]].rmax;
+		sites[i].total_projs = pps[labels[i]].total_projs;
+		sites[i].num_indices = 0;
+		sites[i].coord = malloc(3 * sizeof(double));
+		CHECK_ALLOCATION(sites[i].coord);
+		sites[i].coord[0] = coords[3*i+0];
+		sites[i].coord[1] = coords[3*i+1];
+		sites[i].coord[2] = coords[3*i+2];
+		sites[i].indices = calloc(pps[labels[i]].num_cart_gridpts, sizeof(int));
+		CHECK_ALLOCATION(sites[i].indices);
+		sites[i].projs = (real_proj_t*) malloc(sites[i].total_projs * sizeof(real_proj_t));
+		int p = 0;
+		for (int j = 0; j < sites[i].num_projs; j++) {
+			for (int m = -pps[labels[i]].funcs[j].l; m <= pps[labels[i]].funcs[j].l; m++) {
+				sites[i].projs[p].l = pps[labels[i]].funcs[j].l;
+				sites[i].projs[p].m = m;
+				sites[i].projs[p].func_num = j;
+				sites[i].projs[p].values = malloc(pps[labels[i]].num_cart_gridpts * sizeof(double complex));
+				sites[i].projs[p].paths = malloc(3*pps[labels[i]].num_cart_gridpts * sizeof(double));
+				CHECK_ALLOCATION(sites[i].projs[p].values);
+				CHECK_ALLOCATION(sites[i].projs[p].paths);
+				p++;
+			}
+		}
+	}
+
+	//#pragma omp parallel for
+	for (int s = 0; s < num_sites; s++) {
+		int p = site_nums[s];
+		double res[3] = {0,0,0};
+		double frac[3] = {0,0,0};
+		double testcoord[3] = {0,0,0};
+		vcross(res, lattice+3, lattice+6);
+		int grid1 = (int) (mag(res) * sites[p].rmax / vol * fftg[0]) + 1;
+		vcross(res, lattice+0, lattice+6);
+		int grid2 = (int) (mag(res) * sites[p].rmax / vol * fftg[1]) + 1;
+		vcross(res, lattice+0, lattice+3);
+		int grid3 = (int) (mag(res) * sites[p].rmax / vol * fftg[2]) + 1;
+		int center1 = (int) round(coords[3*p+0] * fftg[0]);
+		int center2 = (int) round(coords[3*p+1] * fftg[1]);
+		int center3 = (int) round(coords[3*p+2] * fftg[2]);
+		int ii=0, jj=0, kk=0;
+		double R0 = (pps[labels[p]].proj_gridsize-1) * sites[p].rmax
+			/ pps[labels[p]].proj_gridsize;
+		for (int i = -grid1 + center1; i <= grid1 + center1; i++) {
+			for (int j = -grid2 + center2; j <= grid2 + center2; j++) {
+				for (int k = -grid3 + center3; k <= grid3 + center3; k++) {
+					testcoord[0] = (double) i / fftg[0] - coords[3*p+0];
+					testcoord[1] = (double) j / fftg[1] - coords[3*p+1];
+					testcoord[2] = (double) k / fftg[2] - coords[3*p+2];
+					frac_to_cartesian(testcoord, lattice);
+					if (mag(testcoord) < R0) {
+						ii = (i%fftg[0] + fftg[0]) % fftg[0];
+						jj = (j%fftg[1] + fftg[1]) % fftg[1];
+						kk = (k%fftg[2] + fftg[2]) % fftg[2];
+						frac[0] = (double) ii / fftg[0];
+						frac[1] = (double) jj / fftg[1];
+						frac[2] = (double) kk / fftg[2];
+						sites[p].indices[sites[p].num_indices] = ii*fftg[1]*fftg[2] + jj*fftg[2] + kk;
+						for (int n = 0; n < sites[p].total_projs; n++) {
+							sites[p].projs[n].paths[3*sites[p].num_indices+0] = testcoord[0];
+							sites[p].projs[n].paths[3*sites[p].num_indices+1] = testcoord[1];
+							sites[p].projs[n].paths[3*sites[p].num_indices+2] = testcoord[2];
+							if (pr0_pw1)
+								sites[p].projs[n].values[sites[p].num_indices] = smooth_wave_value(pps[labels[p]].funcs[sites[p].projs[n].func_num],
+									pps[labels[p]].smooth_grid, sites[p].projs[n].m, sites[p].rmax,
+									pps[labels[p]].proj_gridsize, coords+3*p, frac, lattice);
+							else
+								sites[p].projs[n].values[sites[p].num_indices] = proj_value(pps[labels[p]].funcs[sites[p].projs[n].func_num],
+									pps[labels[p]].proj_grid, sites[p].projs[n].m, sites[p].rmax,
+									pps[labels[p]].proj_gridsize, coords+3*p, frac, lattice);
+						}
+						sites[p].num_indices++;
+					}
+				}
+			}
+		}
+	}
 }
 
 //adapted from VASP source code

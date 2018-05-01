@@ -23,6 +23,7 @@ typedef struct sbt_descriptor {
         double complex** mult_table; ///< M_l(t) for l up to lmax
         double* ks; ///< Reciprocal space grid
         double* rs; ///< Real space grid
+		int lmax;
 } sbt_descriptor_t;
 
 /**
@@ -43,5 +44,9 @@ f is defined on the grid corresponding to the r
 passed into spherical_bessesl_transform_setup.
 */
 double* wave_spherical_bessel_transform(sbt_descriptor_t* d, double* f, int l);
+
+double* inverse_wave_spherical_bessel_transform(sbt_descriptor_t* d, double* f, int l);
+
+void free_sbt_descriptor(sbt_descriptor_t* d);
 
 #endif

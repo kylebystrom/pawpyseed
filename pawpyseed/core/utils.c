@@ -128,12 +128,12 @@ void free_kpoint(kpoint_t* kpt, int num_elems, ppot_t* pps) {
 	for (int b = 0; b < kpt->num_bands; b++) {
 		band_t* curr_band = kpt->bands[b];
 		free(curr_band->Cs);
-		//if (curr_band->projections != NULL) {
-		//	free(curr_band->projections);
-		//}
-		//if (curr_band->wave_projections != NULL) {
-		//	free(curr_band->wave_projections);
-		//}
+		if (curr_band->projections != NULL) {
+			free(curr_band->projections);
+		}
+		if (curr_band->wave_projections != NULL) {
+			free(curr_band->wave_projections);
+		}
 		free(curr_band);
 	}
 	if (kpt->expansion != NULL) {

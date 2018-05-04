@@ -207,12 +207,10 @@ real_proj_site_t* smooth_pw_values(int num_N, int* Nlst, int* labels, double* co
 }
 
 void onto_projector_helper(band_t* band, fft_complex* x, real_proj_site_t* sites,
-	int num_sites, double* lattice, double* reclattice, double* kpt, ppot_t* pps, int* fftg) {
+	int num_sites, double* lattice, double* reclattice, double* kpt, ppot_t* pps, int* fftg,
+	projection_t* projections) {
 
 	double dv = determinant(lattice) / fftg[0] / fftg[1] / fftg[2];
-
-	band->projections = (projection_t*) malloc(num_sites * sizeof(projection_t));
-	CHECK_ALLOCATION (band->projections);
 
 	double path[3] = {0,0,0};
 	double kdotr = 0;
@@ -228,7 +226,6 @@ void onto_projector_helper(band_t* band, fft_complex* x, real_proj_site_t* sites
 		//printf("checking coord %lf %lf %lf\n", sites[s].coord[0], sites[s].coord[1], sites[s].coord[2]);
 		num_indices = sites[s].num_indices;
 		int* indices = sites[s].indices;
-		projection_t* projections = band->projections;
 		projections[s].num_projs = sites[s].num_projs;
 		projections[s].total_projs = sites[s].total_projs;
 		projections[s].ns = malloc(sites[s].total_projs * sizeof(int));
@@ -265,14 +262,39 @@ void onto_projector(kpoint_t* kpt, int band_num, real_proj_site_t* sites, int nu
 	
 	fft_complex* x = (fft_complex*) mkl_calloc(fftg[0]*fftg[1]*fftg[2], sizeof(fft_complex), 64);
 	CHECK_ALLOCATION(x);
-	//printf("integrating params %e %e %e %e %e\n", dv, inv_sqrt_vol, kmins[0], kmins[1], kmins[2]);
-	//printf("determinant %lf\n", determinant(lattice));
 	fft3d(x, G_bounds, lattice, k, Gs, Cs, num_waves, fftg);
 
-	onto_projector_helper(kpt->bands[band_num], x, sites, num_sites, lattice, reclattice, k, pps, fftg);
+	band_t* band = kpt->bands[band_num];
+	band->projections = (projection_t*) malloc(num_sites * sizeof(projection_t));
+	CHECK_ALLOCATION (band->projections);
 
-	kpt->bands[band_num]->CRs = x;
-	//mkl_free(x);
+	onto_projector_helper(kpt->bands[band_num], x, sites, num_sites,
+		lattice, reclattice, k, pps, fftg, band->projections);
+
+	//kpt->bands[band_num]->CRs = x;
+	mkl_free(x);
+}
+
+void onto_smoothpw(kpoint_t* kpt, int band_num, real_proj_site_t* sites, int num_sites,
+	int* G_bounds, double* lattice, double* reclattice, ppot_t* pps, int* fftg) {
+
+	double* k = kpt->k;
+	int* Gs = kpt->Gs;
+	float complex* Cs = kpt->bands[band_num]->Cs;
+	int num_waves = kpt->num_waves;
+
+	fft_complex* x = (fft_complex*) mkl_calloc(fftg[0]*fftg[1]*fftg[2], sizeof(fft_complex), 64);
+	CHECK_ALLOCATION(x);
+	fft3d(x, G_bounds, lattice, k, Gs, Cs, num_waves, fftg);
+
+	band_t* band = kpt->bands[band_num];
+	band->wave_projections = (projection_t*) malloc(num_sites * sizeof(projection_t));
+	CHECK_ALLOCATION (band->wave_projections);
+
+	onto_projector_helper(kpt->bands[band_num], x, sites, num_sites,
+		lattice, reclattice, k, pps, fftg, band->wave_projections);
+
+	mkl_free(x);
 }
 
 void add_num_cart_gridpts(ppot_t* pp_ptr, double* lattice, int* fftg) {
@@ -372,6 +394,10 @@ void make_pwave_overlap_matrices(ppot_t* pp_ptr) {
 void setup_projections_no_rayleigh(pswf_t* wf, ppot_t* pps, int num_elems,
 	int num_sites, int* fftg, int* labels, double* coords) {
 
+	wf->fftg = (int*) malloc(3*sizeof(int));
+	wf->fftg[0] = fftg[0];
+	wf->fftg[1] = fftg[1];
+	wf->fftg[2] = fftg[2];
 	printf("ptrvals %p %p\n", wf, pps);
 	wf->num_elems = num_elems;
 	wf->num_sites = num_sites;
@@ -490,6 +516,109 @@ void overlap_setup(pswf_t* wf_R, pswf_t* wf_S, ppot_t* pps,
 		}
 		band_R->wave_projections = wps;
 	}
+	printf("TWO THIRDS DONE\n");
+	
+	double* dcoords =  NULL;
+	if (num_N_RS > 0) {
+		dcoords = (double*) malloc(3 * num_N_RS * sizeof(double));
+		CHECK_ALLOCATION(dcoords);
+	}
+	#pragma omp parallel for
+	for (int i = 0; i < num_N_RS; i++) {
+		double R = 0;
+		int l1, l2;
+		int s1 = N_RS_R[i];
+		int s2 = N_RS_S[i];
+		printf("%d %d\n", N_RS_R[i], N_RS_S[i]);
+		ppot_t pp1 = pps[labels_R[s1]];
+		ppot_t pp2 = pps[labels_S[s2]];
+		// CALCULATE THE DIFF COORD HERE, PASS TO offsite_wave_overlap AND SAVE IT FOR USE IN compensation_terms
+		overlaps[i] = calloc(pp1.total_projs * pp2.total_projs, sizeof(double complex));
+		CHECK_ALLOCATION(overlaps[i]);
+		double* coord1 = coords_R + 3 * s1;
+		double* coord2 = coords_S + 3 * s2;
+		min_cart_path(coord2, coord1, wf_R->lattice, dcoords + 3*i, &R);
+		printf("herewego %lf %lf %lf\nherewego%lf %lf %lf\n", coord1[0], coord1[1], coord1[2], coord2[0], coord2[1], coord2[2]);
+		int tj = 0;
+		for (int j = 0; j < pp1.num_projs; j++) {
+			l1 = pp1.funcs[j].l;
+			for (int m1 = -l1; m1 <= l1; m1++) {
+				int tk = 0;
+				for (int k = 0; k < pp2.num_projs; k++) {
+					l2 = pp2.funcs[k].l;
+					for (int m2 = -l2; m2 <= l2; m2++) {
+						if (1) {//R > 0.001) {
+							overlaps[i][tj*pp2.total_projs+tk] =
+								offsite_wave_overlap(dcoords + 3*i, pp1.wave_grid,
+								pp1.funcs[j].diffwave,
+								pp1.funcs[j].diffwave_spline, pp1.wave_gridsize,
+								pp2.wave_grid, pp2.funcs[k].diffwave,
+								pp2.funcs[k].diffwave_spline, pp2.wave_gridsize,
+								wf_R->lattice, l1, m1, l2, m2);
+						} else if (l1 == l2 && m1 == m2) {
+							overlaps[i][tj*pp2.total_projs+tk] = pp2.diff_overlap_matrix[j*pp2.num_projs+k];
+						}
+						//printf("%d %d %d %d\n", N_RS_R[i], N_RS_S[i], tj, tk);
+						tk++;
+					}
+				}
+				tj++;
+			}
+		}
+	}
+	printf("%d %d %d %d stff\n", num_N_R, num_N_S, num_N_RS, 0);
+	//printf("%p %p %p %p\n", overlaps[0], overlaps[1], overlaps[2], overlaps[3]);
+	wf_S->overlaps = overlaps;
+	wf_S->dcoords = dcoords;
+	wf_S->num_aug_overlap_sites = num_N_RS;
+	wf_R->num_aug_overlap_sites = num_N_RS;
+	printf("finished overlap setup\n");
+}
+
+void overlap_setup_real(pswf_t* wf_R, pswf_t* wf_S, ppot_t* pps,
+	int* labels_R, int* labels_S, double* coords_R, double* coords_S,
+	int* N_R, int* N_S, int* N_RS_R, int* N_RS_S, int num_N_R, int num_N_S, int num_N_RS) {
+
+	double complex** overlaps = NULL;
+	if (num_N_RS > 0) {
+		overlaps = (double complex**) malloc(num_N_RS * sizeof(double complex*));
+		CHECK_ALLOCATION(overlaps);
+	}
+
+	printf("STARTING OVERLAP_SETUP\n");
+	int NUM_KPTS = wf_R->nwk * wf_R->nspin;
+	int NUM_BANDS = wf_S->nband;
+	double inv_sqrt_vol = pow(determinant(wf_R->lattice), -0.5);
+	real_proj_site_t* sites_N_R = smooth_pw_values(num_N_R, N_R, labels_R, coords_R,
+		wf_S->lattice, wf_S->reclattice, pps, wf->fftg);
+	void onto_smoothpw(kpoint_t* kpt, int band_num, real_proj_site_t* sites, int num_sites,
+	int* G_bounds, double* lattice, double* reclattice, ppot_t* pps, int* fftg)
+	#pragma omp parallel for
+	for (int w = 0; w < NUM_BANDS * NUM_KPTS; w++) {
+		kpoint_t* kpt_S = wf_S->kpts[w%NUM_KPTS];
+
+		projection_t* wps = NULL;
+		if (num_N_R > 0) {
+			onto_smoothpw(kpt_S, w/NUM_KPTS, sites_N_R, num_N_R,
+				kpt_S->G_bounds, wf_S->lattice, wf_S->reclattice, pps, wf->fftg);
+		}
+	}
+	free_real_proj_site_list(sites_N_R);
+	printf("ONE THIRD DONE\n");
+	real_proj_site_t* sites_N_S = smooth_pw_values(num_N_S, N_S, labels_S, coords_S,
+		wf_R->lattice, wf_R->reclattice, pps, wf->fftg);
+	NUM_BANDS = wf_R->nband;
+	#pragma omp parallel for
+	for (int w = 0; w < NUM_BANDS * NUM_KPTS; w++) {
+		kpoint_t* kpt_R = wf_R->kpts[w%NUM_KPTS];
+
+		projection_t* wps = NULL;
+		if (num_N_S > 0) {
+			onto_smoothpw(kpt_R, w/NUM_KPTS, sites_N_S, num_N_S,
+				kpt_R->G_bounds, wf_R->lattice, wf_R->reclattice, pps, wf->fftg);
+		}
+	}
+	free_real_proj_site_list(sites_N_S);
 	printf("TWO THIRDS DONE\n");
 	
 	double* dcoords =  NULL;

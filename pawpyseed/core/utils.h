@@ -28,37 +28,37 @@ expanded in spherical Bessel functions, and spline
 coefficients for each grid.
 */
 typedef struct funcset {
-        int l; ///< l quantum number
-        double* proj; ///< projector function
-        double** proj_spline; ///< projector function spline
-        double* aewave; ///< all electron partial wave
-        double** aewave_spline; ///< ae partial wave spline coefficients
-        double* pswave; ///< pseudo partial wave
-        double** pswave_spline; ///< ps partial wave spline coefficients
-        double* diffwave; ///< aewave-pswave
-        double** diffwave_spline; ///< spline coefficients for diffwave
-        double* kwave; ///< Expansion of diffwave in spherical Bessel functions
-        double** kwave_spline; ///< spline coefficients for kwave
-        double* smooth_diffwave; ///< diffwave on linear grid with high-frequency components removed
-        double** smooth_diffwave_spline; ///< spline coefficients for smooth_diffwave
+	int l; ///< l quantum number
+	double* proj; ///< projector function
+	double** proj_spline; ///< projector function spline
+	double* aewave; ///< all electron partial wave
+	double** aewave_spline; ///< ae partial wave spline coefficients
+	double* pswave; ///< pseudo partial wave
+	double** pswave_spline; ///< ps partial wave spline coefficients
+	double* diffwave; ///< aewave-pswave
+	double** diffwave_spline; ///< spline coefficients for diffwave
+	double* kwave; ///< Expansion of diffwave in spherical Bessel functions
+	double** kwave_spline; ///< spline coefficients for kwave
+	double* smooth_diffwave; ///< diffwave on linear grid with high-frequency components removed
+	double** smooth_diffwave_spline; ///< spline coefficients for smooth_diffwave
 } funcset_t;
 
 typedef struct ppot {
-        int num_projs; ///< number of radial projector functions
-        int total_projs; ///< number of projector functions
-        int lmax; ///< maximum l-value of any projector
-        funcset_t* funcs; ///< funcset for each projector, see funcset
-        double rmax; //< maximum radius of the projector functions
-        double wave_rmax; ///< maximum radius of the partial waves
+	int num_projs; ///< number of radial projector functions
+	int total_projs; ///< number of projector functions
+	int lmax; ///< maximum l-value of any projector
+	funcset_t* funcs; ///< funcset for each projector, see funcset
+	double rmax; //< maximum radius of the projector functions
+	double wave_rmax; ///< maximum radius of the partial waves
 	double* pspw_overlap_matrix; ///< overlap matrix for pseudo partial waves
-        double* aepw_overlap_matrix; ///< overlap matrix for all electron partial waves
-        double* diff_overlap_matrix; ///< overlap matrix of difference between all electron and partial waves
-        int proj_gridsize; ///< number of points on projector radial grid
-        int wave_gridsize; ///< number of points on partial wave radial grid
-        int num_cart_gridpts; ///< number of real space grid points that can fit in the projector sphere
-        double* wave_grid; ///< real radial grid for partial waves
-        double* kwave_grid; ///< reciprocal radial grid for partial waves
-        double* proj_grid; ///< real radial grid for projector functions
+	double* aepw_overlap_matrix; ///< overlap matrix for all electron partial waves
+	double* diff_overlap_matrix; ///< overlap matrix of difference between all electron and partial waves
+	int proj_gridsize; ///< number of points on projector radial grid
+	int wave_gridsize; ///< number of points on partial wave radial grid
+	int num_cart_gridpts; ///< number of real space grid points that can fit in the projector sphere
+	double* wave_grid; ///< real radial grid for partial waves
+	double* kwave_grid; ///< reciprocal radial grid for partial waves
+	double* proj_grid; ///< real radial grid for projector functions
 	double* smooth_grid;
 } ppot_t;
 
@@ -115,6 +115,7 @@ typedef struct pswf {
 	int nwk;
 	double* lattice;
 	double* reclattice;
+	int* fftg;
 	int num_aug_overlap_sites;
 	double* dcoords;
 	double complex** overlaps;

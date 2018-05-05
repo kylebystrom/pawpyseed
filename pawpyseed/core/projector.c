@@ -15,7 +15,7 @@
 
 #define c 0.262465831
 #define PI 3.14159265358979323846
-#define DENSE_GRIDE_SCALE 4
+#define DENSE_GRID_SCALE 200
 
 ppot_t* get_projector_list(int num_els, int* labels, int* ls, double* proj_grids, double* wave_grids,
 	double* projectors, double* aewaves, double* pswaves, double* rmaxs) {
@@ -56,11 +56,11 @@ ppot_t* get_projector_list(int num_els, int* labels, int* ls, double* proj_grids
 		}
 		funcset_t* funcs = (funcset_t*) malloc(pps[i].num_projs*sizeof(funcset_t));
 		CHECK_ALLOCATION(funcs);
-		double* dense_wavegrid = (double*) malloc(DENSE_GRIDE_SCALE * pps[i].wave_gridsize * sizeof(double));
+		double* dense_wavegrid = (double*) malloc(DENSE_GRID_SCALE * pps[i].wave_gridsize * sizeof(double));
 		CHECK_ALLOCATION(dense_wavegrid);
 		dense_wavegrid[0] = pps[i].wave_grid[0];
-		double factor = pow(pps[i].wave_grid[1]/pps[i].wave_grid[0], 1.0/DENSE_GRIDE_SCALE);
-		for (int p = 1; p < pps[i].wave_gridsize * DENSE_GRIDE_SCALE; p++) {
+		double factor = pow(pps[i].wave_grid[1]/pps[i].wave_grid[0], 1.0/DENSE_GRID_SCALE);
+		for (int p = 1; p < pps[i].wave_gridsize * DENSE_GRID_SCALE; p++) {
 			dense_wavegrid[p] = dense_wavegrid[p-1] * factor;
 		}
 		pps[i].wave_rmax = pps[i].wave_grid[pps[i].wave_gridsize-1];
@@ -68,7 +68,7 @@ ppot_t* get_projector_list(int num_els, int* labels, int* ls, double* proj_grids
 		for (int j = 0; j < pps[i].proj_gridsize; j++) {
 			pps[i].smooth_grid[j] = pps[i].wave_rmax / pps[i].proj_gridsize * j;
 		}
-		double* dense_kwavegrid = (double*) malloc(DENSE_GRIDE_SCALE * pps[i].wave_gridsize * sizeof(double));
+		double* dense_kwavegrid = (double*) malloc(DENSE_GRID_SCALE * pps[i].wave_gridsize * sizeof(double));
 		CHECK_ALLOCATION(dense_kwavegrid);
 		for (int k = 0; k < pps[i].num_projs; k++) {
 			funcs[k].proj = (double*) malloc(sizeof(double)*pps[i].proj_gridsize);
@@ -99,10 +99,9 @@ ppot_t* get_projector_list(int num_els, int* labels, int* ls, double* proj_grids
 			funcs[k].pswave_spline = spline_coeff(pps[i].wave_grid, funcs[k].pswave, pps[i].wave_gridsize);
 			funcs[k].diffwave_spline = spline_coeff(pps[i].wave_grid, funcs[k].diffwave, pps[i].wave_gridsize);
 
-			double* dense_diffwave = (double*) malloc(DENSE_GRIDE_SCALE * pps[i].wave_gridsize * sizeof(double));
+			double* dense_diffwave = (double*) malloc(DENSE_GRID_SCALE * pps[i].wave_gridsize * sizeof(double));
 			dense_diffwave[0] = funcs[k].diffwave[0];
-			for (int p = 1; p < pps[i].wave_gridsize * DENSE_GRIDE_SCALE; p++) {
-				dense_wavegrid[p] = dense_wavegrid[p-1] * factor;
+			for (int p = 1; p < pps[i].wave_gridsize * DENSE_GRID_SCALE; p++) {
 				dense_diffwave[p] = wave_interpolate(dense_wavegrid[p], pps[i].wave_gridsize,
 					pps[i].wave_grid, funcs[k].diffwave, funcs[k].diffwave_spline);
 			}
@@ -110,7 +109,7 @@ ppot_t* get_projector_list(int num_els, int* labels, int* ls, double* proj_grids
 
 		}
 
-		sbt_descriptor_t* d = spherical_bessel_transform_setup(520.0, 1000000.0, pps[i].lmax,
+		sbt_descriptor_t* d = spherical_bessel_transform_setup(500.0, 1000000.0, pps[i].lmax,
 			pps[i].wave_gridsize, pps[i].wave_grid, pps[i].kwave_grid);
 		for (int k = 0; k < pps[i].num_projs; k++) {
 			funcs[k].kwave = wave_spherical_bessel_transform(d, funcs[k].diffwave, funcs[k].l);
@@ -118,24 +117,24 @@ ppot_t* get_projector_list(int num_els, int* labels, int* ls, double* proj_grids
 			funcs[k].kwave_spline = spline_coeff(pps[i].kwave_grid, funcs[k].kwave, pps[i].wave_gridsize);
 		}
 		free_sbt_descriptor(d);
-		d = spherical_bessel_transform_setup(520, 0, pps[i].lmax, pps[i].wave_gridsize*DENSE_GRIDE_SCALE,
+		sbt_descriptor_t* d2 = spherical_bessel_transform_setup(1600, 00, pps[i].lmax, pps[i].wave_gridsize*DENSE_GRID_SCALE,
 			dense_wavegrid, dense_kwavegrid);
 		for (int k = 0; k < pps[i].num_projs; k++) {
-			double* dense_kwave = wave_spherical_bessel_transform(d, funcs[k].smooth_diffwave, funcs[k].l);
-			double* smooth_diffwave = inverse_wave_spherical_bessel_transform(d,
+			double* dense_kwave = wave_spherical_bessel_transform(d2, funcs[k].smooth_diffwave, funcs[k].l);
+			double* smooth_diffwave = inverse_wave_spherical_bessel_transform(d2,
 				dense_kwave, funcs[k].l);
 			double** smooth_wave_spline = spline_coeff(dense_wavegrid,
-				smooth_diffwave, DENSE_GRIDE_SCALE*pps[i].wave_gridsize);
+				smooth_diffwave, DENSE_GRID_SCALE*pps[i].wave_gridsize);
 			free(dense_kwave);
 
 			double* sdw = (double*) malloc(pps[i].proj_gridsize*sizeof(double));
 			for (int p = 0; p < pps[i].proj_gridsize; p++) {
 				// smooth_grid should be like proj_grid except that rmax should be rmax of the partial wave
 				// difference
-				sdw[p] = wave_interpolate(pps[i].smooth_grid[k], pps[i].wave_gridsize*DENSE_GRIDE_SCALE,
+				sdw[p] = wave_interpolate(pps[i].smooth_grid[p], pps[i].wave_gridsize*DENSE_GRID_SCALE,
 					dense_wavegrid, smooth_diffwave, smooth_wave_spline);
 			}
-			double** sdw_spline = spline_coeff(pps[i].proj_grid, sdw, pps[i].proj_gridsize);
+			double** sdw_spline = spline_coeff(pps[i].smooth_grid, sdw, pps[i].proj_gridsize);
 			free(funcs[k].smooth_diffwave);
 			funcs[k].smooth_diffwave = sdw;
 			funcs[k].smooth_diffwave_spline = sdw_spline;
@@ -144,7 +143,7 @@ ppot_t* get_projector_list(int num_els, int* labels, int* ls, double* proj_grids
 			free(smooth_wave_spline[1]);
 			free(smooth_wave_spline[2]);
 		}
-		free_sbt_descriptor(d);
+		free_sbt_descriptor(d2);
 		pps[i].funcs = funcs;
 		make_pwave_overlap_matrices(pps+i);
 	}
@@ -547,7 +546,7 @@ void overlap_setup(pswf_t* wf_R, pswf_t* wf_S, ppot_t* pps,
 				for (int k = 0; k < pp2.num_projs; k++) {
 					l2 = pp2.funcs[k].l;
 					for (int m2 = -l2; m2 <= l2; m2++) {
-						if (1) {//R > 0.001) {
+						if (R > 0.001) {
 							overlaps[i][tj*pp2.total_projs+tk] =
 								offsite_wave_overlap(dcoords + 3*i, pp1.wave_grid,
 								pp1.funcs[j].diffwave,
@@ -590,9 +589,7 @@ void overlap_setup_real(pswf_t* wf_R, pswf_t* wf_S, ppot_t* pps,
 	int NUM_BANDS = wf_S->nband;
 	double inv_sqrt_vol = pow(determinant(wf_R->lattice), -0.5);
 	real_proj_site_t* sites_N_R = smooth_pw_values(num_N_R, N_R, labels_R, coords_R,
-		wf_S->lattice, wf_S->reclattice, pps, wf->fftg);
-	void onto_smoothpw(kpoint_t* kpt, int band_num, real_proj_site_t* sites, int num_sites,
-	int* G_bounds, double* lattice, double* reclattice, ppot_t* pps, int* fftg)
+		wf_S->lattice, wf_S->reclattice, pps, wf_S->fftg);
 	#pragma omp parallel for
 	for (int w = 0; w < NUM_BANDS * NUM_KPTS; w++) {
 		kpoint_t* kpt_S = wf_S->kpts[w%NUM_KPTS];
@@ -600,13 +597,13 @@ void overlap_setup_real(pswf_t* wf_R, pswf_t* wf_S, ppot_t* pps,
 		projection_t* wps = NULL;
 		if (num_N_R > 0) {
 			onto_smoothpw(kpt_S, w/NUM_KPTS, sites_N_R, num_N_R,
-				kpt_S->G_bounds, wf_S->lattice, wf_S->reclattice, pps, wf->fftg);
+				wf_S->G_bounds, wf_S->lattice, wf_S->reclattice, pps, wf_S->fftg);
 		}
 	}
-	free_real_proj_site_list(sites_N_R);
+	free_real_proj_site_list(sites_N_R, num_N_R);
 	printf("ONE THIRD DONE\n");
 	real_proj_site_t* sites_N_S = smooth_pw_values(num_N_S, N_S, labels_S, coords_S,
-		wf_R->lattice, wf_R->reclattice, pps, wf->fftg);
+		wf_R->lattice, wf_R->reclattice, pps, wf_R->fftg);
 	NUM_BANDS = wf_R->nband;
 	#pragma omp parallel for
 	for (int w = 0; w < NUM_BANDS * NUM_KPTS; w++) {
@@ -615,10 +612,10 @@ void overlap_setup_real(pswf_t* wf_R, pswf_t* wf_S, ppot_t* pps,
 		projection_t* wps = NULL;
 		if (num_N_S > 0) {
 			onto_smoothpw(kpt_R, w/NUM_KPTS, sites_N_S, num_N_S,
-				kpt_R->G_bounds, wf_R->lattice, wf_R->reclattice, pps, wf->fftg);
+				wf_R->G_bounds, wf_R->lattice, wf_R->reclattice, pps, wf_R->fftg);
 		}
 	}
-	free_real_proj_site_list(sites_N_S);
+	free_real_proj_site_list(sites_N_S, num_N_S);
 	printf("TWO THIRDS DONE\n");
 	
 	double* dcoords =  NULL;
@@ -650,7 +647,7 @@ void overlap_setup_real(pswf_t* wf_R, pswf_t* wf_S, ppot_t* pps,
 				for (int k = 0; k < pp2.num_projs; k++) {
 					l2 = pp2.funcs[k].l;
 					for (int m2 = -l2; m2 <= l2; m2++) {
-						if (1) {//R > 0.001) {
+						if (R > 0.001) {
 							overlaps[i][tj*pp2.total_projs+tk] =
 								offsite_wave_overlap(dcoords + 3*i, pp1.wave_grid,
 								pp1.funcs[j].diffwave,

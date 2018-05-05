@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <complex.h>
 #include <math.h>
+#include <float.h>
 #include <omp.h>
 #include <time.h>
 #include <mkl.h>
@@ -66,7 +67,7 @@ sbt_descriptor_t* spherical_bessel_transform_setup(double encut, double enbuf, i
 		for (int j = 1; j <= 10; j++)
 			phi1 += atan((2*t)/(2*j-1));
 		
-		phi2 = -atan(sinh(PI*t/2)/cosh(PI*t/2));
+		phi2 = -atan(tanh(PI*t/2));
 		phi = phi1 + phi2 + phi3;
 		mult_table[0][i] = pow(PI/2, 0.5) * cexp(I * phi) / N;
 		if (i == 0) mult_table[0][i] = 0.5 * mult_table[0][i];
@@ -113,7 +114,7 @@ double* wave_spherical_bessel_transform(sbt_descriptor_t* d, double* f, int l) {
 		fs[i] = f[i-N/2];
 	}
 
-	MKL_Complex16* x = mkl_malloc(N * sizeof(MKL_Complex16), 64);
+	MKL_Complex16* x = mkl_calloc(N, sizeof(MKL_Complex16), 64);
 
 	DFTI_DESCRIPTOR_HANDLE handle = 0;
 	MKL_LONG dim = 1;
@@ -132,7 +133,6 @@ double* wave_spherical_bessel_transform(sbt_descriptor_t* d, double* f, int l) {
 	}
 	double rp=0.0, ip=0.0;
 	status = DftiComputeBackward(handle, x);
-	printf("status %ld\n", status);
 	for (int n = 0; n < N; n++) {
 		rp = x[n].real * creal(M[l][n]) - x[n].imag * cimag(M[l][n]);
 		ip = x[n].imag * creal(M[l][n]) + x[n].real * cimag(M[l][n]);

@@ -29,6 +29,10 @@ PAWC.overlap_setup.argtypes = [c_void_p, c_void_p, c_void_p, POINTER(c_int), POI
 				POINTER(c_double), POINTER(c_double)] + 4*[POINTER(c_int)] + 3*[c_int]
 PAWC.overlap_setup.restype = None
 
+PAWC.overlap_setup_real.argtypes = [c_void_p, c_void_p, c_void_p, POINTER(c_int), POINTER(c_int),
+                POINTER(c_double), POINTER(c_double)] + 4*[POINTER(c_int)] + 3*[c_int]
+PAWC.overlap_setup_real.restype = None
+
 PAWC.realspace_state_ri.argtypes = [c_int, c_int, c_void_p, c_void_p, POINTER(c_int), POINTER(c_int), POINTER(c_double)]
 PAWC.write_realspace_state_ri_return.argtypes = [c_char_p, c_char_p] + PAWC.realspace_state_ri.argtypes
 PAWC.write_realspace_state_ri_noreturn.argtypes = PAWC.write_realspace_state_ri_return.argtypes

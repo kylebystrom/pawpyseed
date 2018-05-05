@@ -312,6 +312,8 @@ double complex Ylm2(int l, int m, double costheta, double phi) {
 }
 
 double proj_interpolate(double r, double rmax, int size, double* x, double* proj, double** proj_spline) {
+	if (r > x[size-1]) return 0;
+	if (r < x[0]) return proj[0];
 	int ind = min((int)(r/rmax*size), size-2);
 	double rem = r - x[ind];
 	double radval = proj[ind] + rem * (proj_spline[0][ind] +
@@ -321,6 +323,7 @@ double proj_interpolate(double r, double rmax, int size, double* x, double* proj
 }
 
 double wave_interpolate(double r, int size, double* x, double* f, double** wave_spline) {
+	if (r > x[size-1]) return 0;
 	if (r < x[0]) return f[0];
 	int ind = min((int) (log(r/x[0]) / log(x[1]/x[0])), size-2);
 	double rem = r - x[ind];
@@ -726,3 +729,9 @@ void ALLOCATION_FAILED() {
 	printf("ALLOCATION FAILED\n");
 	exit(-1);
 }
+
+double* get_smooth_wave(ppot_t* lst, int num) {
+	//return lst[num].funcs[0].smooth_diffwave;
+	return lst[num].smooth_grid;
+}
+

@@ -33,7 +33,8 @@ into real space and calculates from <p_i|psit_nk> from the grid points found
 in projector_values.
 */
 void onto_projector_helper(band_t* band, fft_complex* x, real_proj_site_t* sites,
-	int num_sites, double* lattice, double* reclattice, double* kpt, ppot_t* pps, int* fftg);
+    int num_sites, double* lattice, double* reclattice, double* kpt, ppot_t* pps, int* fftg,
+    projection_t* projections);
 
 /**
 Calculates <p_i|psit_nk> for all i={R,epsilon,l,m} in the structure for one band
@@ -78,6 +79,9 @@ structures:
 <(phi2_i-phit2_i)|psit1_n1k>
 <(phi1_i-phit1_i)|(phi2_i-phit2_i)>
 */
+void overlap_setup(pswf_t* wf_R, pswf_t* wf_S, ppot_t* pps,
+        int* labels_R, int* labels_S, double* coords_R, double* coords_S,
+        int* N_R, int* N_S, int* N_RS_R, int* N_RS_S, int num_N_R, int num_N_S, int num_N_RS);
 void overlap_setup(pswf_t* wf_R, pswf_t* wf_S, ppot_t* pps,
         int* labels_R, int* labels_S, double* coords_R, double* coords_S,
         int* N_R, int* N_S, int* N_RS_R, int* N_RS_S, int num_N_R, int num_N_S, int num_N_RS);

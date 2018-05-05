@@ -18,7 +18,7 @@
 #define DENSE_GRID_SCALE 200
 
 ppot_t* get_projector_list(int num_els, int* labels, int* ls, double* proj_grids, double* wave_grids,
-	double* projectors, double* aewaves, double* pswaves, double* rmaxs) {
+	double* projectors, double* aewaves, double* pswaves, double* rmaxs, double grid_encut) {
 
 	setbuf(stdout,NULL);	
 	ppot_t* pps = (ppot_t*) malloc(num_els * sizeof(ppot_t));
@@ -109,7 +109,7 @@ ppot_t* get_projector_list(int num_els, int* labels, int* ls, double* proj_grids
 
 		}
 
-		sbt_descriptor_t* d = spherical_bessel_transform_setup(500.0, 1000000.0, pps[i].lmax,
+		sbt_descriptor_t* d = spherical_bessel_transform_setup(grid_encut, 10000000.0, pps[i].lmax,
 			pps[i].wave_gridsize, pps[i].wave_grid, pps[i].kwave_grid);
 		for (int k = 0; k < pps[i].num_projs; k++) {
 			funcs[k].kwave = wave_spherical_bessel_transform(d, funcs[k].diffwave, funcs[k].l);
@@ -117,7 +117,7 @@ ppot_t* get_projector_list(int num_els, int* labels, int* ls, double* proj_grids
 			funcs[k].kwave_spline = spline_coeff(pps[i].kwave_grid, funcs[k].kwave, pps[i].wave_gridsize);
 		}
 		free_sbt_descriptor(d);
-		sbt_descriptor_t* d2 = spherical_bessel_transform_setup(1600, 00, pps[i].lmax, pps[i].wave_gridsize*DENSE_GRID_SCALE,
+		sbt_descriptor_t* d2 = spherical_bessel_transform_setup(grid_encut, 0.0, pps[i].lmax, pps[i].wave_gridsize*DENSE_GRID_SCALE,
 			dense_wavegrid, dense_kwavegrid);
 		for (int k = 0; k < pps[i].num_projs; k++) {
 			double* dense_kwave = wave_spherical_bessel_transform(d2, funcs[k].smooth_diffwave, funcs[k].l);
@@ -649,11 +649,11 @@ void overlap_setup_real(pswf_t* wf_R, pswf_t* wf_S, ppot_t* pps,
 					for (int m2 = -l2; m2 <= l2; m2++) {
 						if (R > 0.001) {
 							overlaps[i][tj*pp2.total_projs+tk] =
-								offsite_wave_overlap(dcoords + 3*i, pp1.wave_grid,
-								pp1.funcs[j].diffwave,
-								pp1.funcs[j].diffwave_spline, pp1.wave_gridsize,
-								pp2.wave_grid, pp2.funcs[k].diffwave,
-								pp2.funcs[k].diffwave_spline, pp2.wave_gridsize,
+								reciprocal_offsite_wave_overlap(dcoords + 3*i,
+								pp1.kwave_grid, pp1.funcs[j].kwave,
+								pp1.funcs[j].kwave_spline, pp1.kwave_gridsize,
+								pp2.kwave_grid, pp2.funcs[k].kwave,
+								pp2.funcs[k].kwave_spline, pp2.kwave_gridsize,
 								wf_R->lattice, l1, m1, l2, m2);
 						} else if (l1 == l2 && m1 == m2) {
 							overlaps[i][tj*pp2.total_projs+tk] = pp2.diff_overlap_matrix[j*pp2.num_projs+k];

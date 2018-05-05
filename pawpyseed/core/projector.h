@@ -13,7 +13,7 @@ Returns a point to a list of ppot_t objects, one for each element in a POTCAR
 file. Called as a helper function by Wavefunction.make_c_projectors
 */
 ppot_t* get_projector_list(int num_els, int* labels, int* ls, double* proj_grids, double* wave_grids,
-	double* projectors, double* aewaves, double* pswaves, double* rmaxs);
+	double* projectors, double* aewaves, double* pswaves, double* rmaxs, double grid_encut);
 
 /**
 Finds the coordinates on the FFT grid that fall within each projection sphere

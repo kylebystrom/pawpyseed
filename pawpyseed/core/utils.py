@@ -22,7 +22,7 @@ PAWC = CDLL(os.path.join(MODULE_DIR, "pawpy.so"))
 PAWC.read_wavefunctions.argtypes = (c_char_p, POINTER(c_double))
 PAWC.read_wavefunctions.restype = c_void_p
 
-PAWC.get_projector_list.argtypes = [c_int, POINTER(c_int), POINTER(c_int)] + [POINTER(c_double)]*6
+PAWC.get_projector_list.argtypes = [c_int, POINTER(c_int), POINTER(c_int)] + [POINTER(c_double)]*6 + [c_double]
 PAWC.get_projector_list.restype = c_void_p
 
 PAWC.overlap_setup.argtypes = [c_void_p, c_void_p, c_void_p, POINTER(c_int), POINTER(c_int),

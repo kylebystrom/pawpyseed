@@ -474,10 +474,11 @@ class Wavefunction:
 				pswaves = np.append(pswaves, pspw)
 
 		#print (num_els, clabels, ls, pgrids, wgrids, rmaxs)
+		grid_encut = (2 * np.pi * self.dim / self.structure.lattice.abc)**2 / 0.262
 		return self.projector.get_projector_list(num_els, numpy_to_cint(clabels),
 			numpy_to_cint(ls), numpy_to_cdouble(pgrids), numpy_to_cdouble(wgrids),
 			numpy_to_cdouble(projectors), numpy_to_cdouble(aewaves), numpy_to_cdouble(pswaves),
-			numpy_to_cdouble(rmaxs))
+			numpy_to_cdouble(rmaxs), c_double(max(grid_encut)))
 
 	@staticmethod
 	def setup_multiple_projections(basis_dir, wf_dirs, ignore_errors = False):

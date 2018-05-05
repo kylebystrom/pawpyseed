@@ -18,4 +18,9 @@ double complex offsite_wave_overlap(double* dcoord, double* r1, double* f1, doub
 	double* r2, double* f2, double** spline2, int size2,
 	double* lattice, int l1, int m1, int l2, int m2);
 
+double complex reciprocal_offsite_wave_overlap(double* dcoord,
+	double* k1, double* f1, double** s1, int size1,
+	double* k2, double* f2, double** s2, int size2,
+	double* lattice, int l1, int m1, int l2, int m2);
+
 #endif

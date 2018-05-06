@@ -147,7 +147,6 @@ double complex reciprocal_offsite_wave_overlap(double* dcoord,
 		for (int knum = 0; knum < KGRID_SIZE; knum++) {
 			kgrid[knum] = kmin * pow(kmax/kmin, (double) knum / KGRID_SIZE);
 			kk = kgrid[knum];
-			printf("KK %lf\n", kk);
 			ifunc[knum] = wave_interpolate(kk, size1, k1, f1, s1)
 				* wave_interpolate(kk, size2, k2, f2, s2)
 				* kk * kk * sbf(kk*R, L);

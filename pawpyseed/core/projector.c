@@ -15,7 +15,7 @@
 
 #define c 0.262465831
 #define PI 3.14159265358979323846
-#define DENSE_GRID_SCALE 1
+#define DENSE_GRID_SCALE 40
 
 ppot_t* get_projector_list(int num_els, int* labels, int* ls, double* proj_grids, double* wave_grids,
 	double* projectors, double* aewaves, double* pswaves, double* rmaxs, double grid_encut) {
@@ -109,7 +109,7 @@ ppot_t* get_projector_list(int num_els, int* labels, int* ls, double* proj_grids
 
 		}
 
-		sbt_descriptor_t* d = spherical_bessel_transform_setup(grid_encut, 100000.0, pps[i].lmax,
+		sbt_descriptor_t* d = spherical_bessel_transform_setup(grid_encut, 10000000.0, pps[i].lmax,
 			pps[i].wave_gridsize, pps[i].wave_grid, pps[i].kwave_grid);
 		for (int k = 0; k < pps[i].num_projs; k++) {
 			funcs[k].kwave = wave_spherical_bessel_transform(d, funcs[k].diffwave, funcs[k].l);
@@ -117,6 +117,7 @@ ppot_t* get_projector_list(int num_els, int* labels, int* ls, double* proj_grids
 			funcs[k].kwave_spline = spline_coeff(pps[i].kwave_grid, funcs[k].kwave, pps[i].wave_gridsize);
 		}
 		free_sbt_descriptor(d);
+		/*
 		pps[i].dense_kgrid = (double*) malloc (pps[i].wave_gridsize * DENSE_GRID_SCALE * sizeof(double*));
 		d = spherical_bessel_transform_setup(grid_encut, 10e7, pps[i].lmax,
             pps[i].wave_gridsize * DENSE_GRID_SCALE, dense_wavegrid, pps[i].dense_kgrid);
@@ -126,7 +127,8 @@ ppot_t* get_projector_list(int num_els, int* labels, int* ls, double* proj_grids
                 pps[i].wave_gridsize * DENSE_GRID_SCALE);
         }
 		free_sbt_descriptor(d);
-		sbt_descriptor_t* d2 = spherical_bessel_transform_setup(grid_encut, 0, pps[i].lmax, pps[i].wave_gridsize*DENSE_GRID_SCALE,
+		*/
+		sbt_descriptor_t* d2 = spherical_bessel_transform_setup(0.5*grid_encut, 0, pps[i].lmax, pps[i].wave_gridsize*DENSE_GRID_SCALE,
 			dense_wavegrid, dense_kwavegrid);
 		for (int k = 0; k < pps[i].num_projs; k++) {
 			double* dense_kwave = wave_spherical_bessel_transform(d2, funcs[k].smooth_diffwave, funcs[k].l);

@@ -15,7 +15,7 @@
 
 #define c 0.262465831
 #define PI 3.14159265358979323846
-#define DENSE_GRID_SCALE 200
+#define DENSE_GRID_SCALE 1
 
 ppot_t* get_projector_list(int num_els, int* labels, int* ls, double* proj_grids, double* wave_grids,
 	double* projectors, double* aewaves, double* pswaves, double* rmaxs, double grid_encut) {
@@ -109,7 +109,7 @@ ppot_t* get_projector_list(int num_els, int* labels, int* ls, double* proj_grids
 
 		}
 
-		sbt_descriptor_t* d = spherical_bessel_transform_setup(grid_encut, 10000000.0, pps[i].lmax,
+		sbt_descriptor_t* d = spherical_bessel_transform_setup(grid_encut, 100000.0, pps[i].lmax,
 			pps[i].wave_gridsize, pps[i].wave_grid, pps[i].kwave_grid);
 		for (int k = 0; k < pps[i].num_projs; k++) {
 			funcs[k].kwave = wave_spherical_bessel_transform(d, funcs[k].diffwave, funcs[k].l);
@@ -117,7 +117,16 @@ ppot_t* get_projector_list(int num_els, int* labels, int* ls, double* proj_grids
 			funcs[k].kwave_spline = spline_coeff(pps[i].kwave_grid, funcs[k].kwave, pps[i].wave_gridsize);
 		}
 		free_sbt_descriptor(d);
-		sbt_descriptor_t* d2 = spherical_bessel_transform_setup(grid_encut, 0.0, pps[i].lmax, pps[i].wave_gridsize*DENSE_GRID_SCALE,
+		pps[i].dense_kgrid = (double*) malloc (pps[i].wave_gridsize * DENSE_GRID_SCALE * sizeof(double*));
+		d = spherical_bessel_transform_setup(grid_encut, 10e7, pps[i].lmax,
+            pps[i].wave_gridsize * DENSE_GRID_SCALE, dense_wavegrid, pps[i].dense_kgrid);
+        for (int k = 0; k < pps[i].num_projs; k++) {
+            funcs[k].dense_kwave = wave_spherical_bessel_transform(d, funcs[k].smooth_diffwave, funcs[k].l);
+            funcs[k].dense_kwave_spline = spline_coeff(pps[i].dense_kgrid, funcs[k].dense_kwave,
+                pps[i].wave_gridsize * DENSE_GRID_SCALE);
+        }
+		free_sbt_descriptor(d);
+		sbt_descriptor_t* d2 = spherical_bessel_transform_setup(grid_encut, 0, pps[i].lmax, pps[i].wave_gridsize*DENSE_GRID_SCALE,
 			dense_wavegrid, dense_kwavegrid);
 		for (int k = 0; k < pps[i].num_projs; k++) {
 			double* dense_kwave = wave_spherical_bessel_transform(d2, funcs[k].smooth_diffwave, funcs[k].l);
@@ -126,7 +135,6 @@ ppot_t* get_projector_list(int num_els, int* labels, int* ls, double* proj_grids
 			double** smooth_wave_spline = spline_coeff(dense_wavegrid,
 				smooth_diffwave, DENSE_GRID_SCALE*pps[i].wave_gridsize);
 			free(dense_kwave);
-
 			double* sdw = (double*) malloc(pps[i].proj_gridsize*sizeof(double));
 			for (int p = 0; p < pps[i].proj_gridsize; p++) {
 				// smooth_grid should be like proj_grid except that rmax should be rmax of the partial wave
@@ -647,16 +655,25 @@ void overlap_setup_real(pswf_t* wf_R, pswf_t* wf_S, ppot_t* pps,
 				for (int k = 0; k < pp2.num_projs; k++) {
 					l2 = pp2.funcs[k].l;
 					for (int m2 = -l2; m2 <= l2; m2++) {
-						if (R > 0.001) {
+						if (1){//(R > 0.001) {
+							//overlaps[i][tj*pp2.total_projs+tk] =
+							//	reciprocal_offsite_wave_overlap(dcoords + 3*i,
+							//	pp1.dense_kgrid, pp1.funcs[j].dense_kwave,
+							//	pp1.funcs[j].dense_kwave_spline, pp1.wave_gridsize * DENSE_GRID_SCALE,
+							//	pp2.dense_kgrid, pp2.funcs[k].dense_kwave,
+							//	pp2.funcs[k].dense_kwave_spline, pp2.wave_gridsize * DENSE_GRID_SCALE,
+							//	wf_R->lattice, l1, m1, l2, m2);
 							overlaps[i][tj*pp2.total_projs+tk] =
-								reciprocal_offsite_wave_overlap(dcoords + 3*i,
-								pp1.kwave_grid, pp1.funcs[j].kwave,
-								pp1.funcs[j].kwave_spline, pp1.kwave_gridsize,
-								pp2.kwave_grid, pp2.funcs[k].kwave,
-								pp2.funcs[k].kwave_spline, pp2.kwave_gridsize,
-								wf_R->lattice, l1, m1, l2, m2);
+                                reciprocal_offsite_wave_overlap(dcoords + 3*i,
+                                pp1.kwave_grid, pp1.funcs[j].kwave,
+                                pp1.funcs[j].kwave_spline, pp1.wave_gridsize,
+                                pp2.kwave_grid, pp2.funcs[k].kwave,
+                                pp2.funcs[k].kwave_spline, pp2.wave_gridsize,
+                                wf_R->lattice, l1, m1, l2, m2);
+							if (l1==l2 && m1==m2) printf("HIHIHI %d %d %d %d %lf %lf\n", l1,l2,m1,m2, creal(overlaps[i][tj*pp2.total_projs+tk]), cimag(overlaps[i][tj*pp2.total_projs+tk]));
 						} else if (l1 == l2 && m1 == m2) {
 							overlaps[i][tj*pp2.total_projs+tk] = pp2.diff_overlap_matrix[j*pp2.num_projs+k];
+							printf("HIHIHI %d %d %d %d %lf %lf\n", l1,l2,m1,m2, creal(overlaps[i][tj*pp2.total_projs+tk]), cimag(overlaps[i][tj*pp2.total_projs+tk]));
 						}
 						//printf("%d %d %d %d\n", N_RS_R[i], N_RS_S[i], tj, tk);
 						tk++;

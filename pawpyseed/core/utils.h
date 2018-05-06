@@ -41,6 +41,8 @@ typedef struct funcset {
 	double** kwave_spline; ///< spline coefficients for kwave
 	double* smooth_diffwave; ///< diffwave on linear grid with high-frequency components removed
 	double** smooth_diffwave_spline; ///< spline coefficients for smooth_diffwave
+	double* dense_kwave;
+	double** dense_kwave_spline;
 } funcset_t;
 
 typedef struct ppot {
@@ -60,6 +62,7 @@ typedef struct ppot {
 	double* kwave_grid; ///< reciprocal radial grid for partial waves
 	double* proj_grid; ///< real radial grid for projector functions
 	double* smooth_grid;
+	double* dense_kgrid;
 } ppot_t;
 
 typedef struct projection {
@@ -312,6 +315,8 @@ double spline_integral(double* x, double* a, double** s, int size);
 void frac_from_index(int index, double* coord, int* fftg);
 
 double sph_bessel(double k, double r, int l);
+
+double sbf(double x, int l);
 
 /**
 Calculates <(phi_i-phit_i)|psit_nk> for one pseudowavefunction

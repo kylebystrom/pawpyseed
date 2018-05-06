@@ -517,7 +517,6 @@ double** spline_coeff(double* x, double* y, int N) {
 	CHECK_ALLOCATION(coeff[1]);
 	CHECK_ALLOCATION(coeff[2]);
 
-	printf("pl %d\n", N);
 	double d1p1 = (y[1] - y[0]) / (x[1] - x[0]);
 	if (d1p1 > 0.99E30) {
 		coeff[1][0] = 0;
@@ -610,6 +609,25 @@ double sph_bessel(double k, double r, int l) {
 		return 0;
 	}
 }
+
+double sbf(double x, int l) {
+	if (x < 10e-6) {
+		if (l==0) return 1;
+		else return 0;
+	}
+	double jlm1 = sin(x) / x;
+	double jl = sin(x) / x*x - cos(x) / x;
+	double jlp1 = 0;
+	if (l == 0) return jlm1;
+	if (l == 1) return jl;
+	for (int ll = 1; ll < l; ll++) {
+		jlp1 = (2*ll+1)/x*jl - jlm1;
+		jlm1 = jl;
+		jl = jlp1;
+	}
+	return jlp1;
+}
+
 
 double complex rayexp(double* kpt, int* Gs, float complex* Cs, int l, int m,
 	int num_waves, double complex* sum_terms, double* ionp) {

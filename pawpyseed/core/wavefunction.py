@@ -361,13 +361,13 @@ class Wavefunction:
 			N_RS_R, N_RS_S = [], []
 		self.site_cat = [M_R, M_S, N_R, N_S, N_RS_R, N_RS_S]
 		start = time.monotonic()
-		self.projector.overlap_setup(c_void_p(basis.pwf.wf_ptr), c_void_p(self.pwf.wf_ptr), c_void_p(projector_list),
+		self.projector.overlap_setup_real(c_void_p(basis.pwf.wf_ptr), c_void_p(self.pwf.wf_ptr), c_void_p(projector_list),
 			numpy_to_cint(basisnums), numpy_to_cint(selfnums),
 			numpy_to_cdouble(basiscoords), numpy_to_cdouble(selfcoords),
 			numpy_to_cint(N_R), numpy_to_cint(N_S),
 			numpy_to_cint(N_RS_R), numpy_to_cint(N_RS_S), len(N_R), len(N_S), len(N_RS_R));
 			#numpy_to_cint(M_R), numpy_to_cint(M_S),
-                        #numpy_to_cint(M_R), numpy_to_cint(M_S), len(M_R), len(M_R), len(M_R));
+			#numpy_to_cint(M_R), numpy_to_cint(M_S), len(M_R), len(M_R), len(M_R));
 		end = time.monotonic()
 		Timer.overlap_time(end-start)
 		print('-------------\nran overlap_setup in %f seconds\n---------------' % (end-start))

@@ -9,7 +9,7 @@
 #include "gaunt.h"
 
 #define PI 3.14159265358979323846
-#define KGRID_SIZE 500
+#define KGRID_SIZE 387
 
 double complex offsite_wave_overlap(double* dcoord, double* r1, double* f1, double** spline1, int size1,
 	double* r2, double* f2, double** spline2, int size2,
@@ -104,6 +104,19 @@ double complex reciprocal_offsite_wave_overlap(double* dcoord,
 	double* k2, double* f2, double** s2, int size2,
 	double* lattice, int l1, int m1, int l2, int m2) {
 
+	double temp;
+	if (l1 < l2) {
+		temp = l1;
+		l1 = l2;
+		l2 = temp;
+		temp = m1;
+		m1 = m2;
+		m2 = temp;
+	}
+	if (m2 < 0) {
+		m1 = -m1;
+		m2 = -m2;
+	}
 	double kmax = k1[size1-1];
 	if (kmax > k2[size2-1]) {
 		kmax = k2[size2-1];
@@ -113,9 +126,9 @@ double complex reciprocal_offsite_wave_overlap(double* dcoord,
 		kmin = k2[0];
 	}
 
-	double theta = 0; phi = 0;
-	double R = mag(dcoord)
-	if (r < 10e-12) {
+	double theta = 0, phi = 0;
+	double R = mag(dcoord);
+	if (R < 10e-12) {
 		theta = 0;
 		phi = 0;
 		R = 0;
@@ -129,19 +142,27 @@ double complex reciprocal_offsite_wave_overlap(double* dcoord,
 	double* kgrid = (double*) malloc(KGRID_SIZE * sizeof(double));
 	double* ifunc = (double*) malloc(KGRID_SIZE * sizeof(double));
 	double complex total = 0;
+	double kk;
 	for (int L = abs(l1-l2); L <= l1+l2; L++) {
 		for (int knum = 0; knum < KGRID_SIZE; knum++) {
-			kgrid[knum] = pow(kmax/kmin, (double) knum / KGRID_SIZE);
+			kgrid[knum] = kmin * pow(kmax/kmin, (double) knum / KGRID_SIZE);
 			kk = kgrid[knum];
+			printf("KK %lf\n", kk);
 			ifunc[knum] = wave_interpolate(kk, size1, k1, f1, s1)
 				* wave_interpolate(kk, size2, k2, f2, s2)
-				* kk * kk * sph_bessel(kk, R, L);
+				* kk * kk * sbf(kk*R, L);
 		}
 
 		double** ispline = spline_coeff(kgrid, ifunc, KGRID_SIZE);
-		total += spline_integral(kgrid, ifunc, ispline, KGRID_SIZE)
-			* SBTFACS[l1][l2][(L-abs(l1-l2))/2][l1+m1][m2]
-			* Ylm(L, m1-m2, theta, phi) * cpow(I, l2+L-l1);
+		if (R > 10e-10)
+			total += spline_integral(kgrid, ifunc, ispline, KGRID_SIZE)
+				* SBTFACS[l1][l2][(L-abs(l1-l2))/2][l1+m1][m2]
+				* Ylm(L, m1-m2, theta, phi) * cpow(I, l2+L-l1);
+		else {
+			if (L == 0 && l1 == l2 && m1 == m2)
+				total += spline_integral(kgrid, ifunc, ispline, KGRID_SIZE)
+					* 2 / PI;
+		}
 		free(ispline[0]);
 		free(ispline[1]);
 		free(ispline[2]);

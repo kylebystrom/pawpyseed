@@ -15,7 +15,7 @@
 
 #define c 0.262465831
 #define PI 3.14159265358979323846
-#define DENSE_GRID_SCALE 40
+#define DENSE_GRID_SCALE 1
 
 ppot_t* get_projector_list(int num_els, int* labels, int* ls, double* proj_grids, double* wave_grids,
 	double* projectors, double* aewaves, double* pswaves, double* rmaxs, double grid_encut) {
@@ -132,8 +132,7 @@ ppot_t* get_projector_list(int num_els, int* labels, int* ls, double* proj_grids
 			dense_wavegrid, dense_kwavegrid);
 		for (int k = 0; k < pps[i].num_projs; k++) {
 			double* dense_kwave = wave_spherical_bessel_transform(d2, funcs[k].smooth_diffwave, funcs[k].l);
-			double* smooth_diffwave = inverse_wave_spherical_bessel_transform(d2,
-				dense_kwave, funcs[k].l);
+			double* smooth_diffwave = inverse_wave_spherical_bessel_transform(d2, dense_kwave, funcs[k].l);
 			double** smooth_wave_spline = spline_coeff(dense_wavegrid,
 				smooth_diffwave, DENSE_GRID_SCALE*pps[i].wave_gridsize);
 			free(dense_kwave);
@@ -152,6 +151,9 @@ ppot_t* get_projector_list(int num_els, int* labels, int* ls, double* proj_grids
 			free(smooth_wave_spline[0]);
 			free(smooth_wave_spline[1]);
 			free(smooth_wave_spline[2]);
+			free(smooth_wave_spline);
+			for (int p = 0; p < pps[i].proj_gridsize; p++)
+				printf("PARTIALWAVEDIFF %lf %lf\n", pps[i].smooth_grid[p], funcs[k].smooth_diffwave[p]);
 		}
 		free_sbt_descriptor(d2);
 		pps[i].funcs = funcs;
@@ -556,7 +558,7 @@ void overlap_setup(pswf_t* wf_R, pswf_t* wf_S, ppot_t* pps,
 				for (int k = 0; k < pp2.num_projs; k++) {
 					l2 = pp2.funcs[k].l;
 					for (int m2 = -l2; m2 <= l2; m2++) {
-						if (R > 0.001) {
+						if (1){//(R > 0.001) {
 							overlaps[i][tj*pp2.total_projs+tk] =
 								offsite_wave_overlap(dcoords + 3*i, pp1.wave_grid,
 								pp1.funcs[j].diffwave,
@@ -564,6 +566,13 @@ void overlap_setup(pswf_t* wf_R, pswf_t* wf_S, ppot_t* pps,
 								pp2.wave_grid, pp2.funcs[k].diffwave,
 								pp2.funcs[k].diffwave_spline, pp2.wave_gridsize,
 								wf_R->lattice, l1, m1, l2, m2);
+							//overlaps[i][tj*pp2.total_projs+tk] =
+                            //    reciprocal_offsite_wave_overlap(dcoords + 3*i,
+                            //    pp1.kwave_grid, pp1.funcs[j].kwave,
+                            //    pp1.funcs[j].kwave_spline, pp1.wave_gridsize,
+                            //    pp2.kwave_grid, pp2.funcs[k].kwave,
+                            //   pp2.funcs[k].kwave_spline, pp2.wave_gridsize,
+                            //    wf_R->lattice, l1, m1, l2, m2);
 						} else if (l1 == l2 && m1 == m2) {
 							overlaps[i][tj*pp2.total_projs+tk] = pp2.diff_overlap_matrix[j*pp2.num_projs+k];
 						}
@@ -598,34 +607,32 @@ void overlap_setup_real(pswf_t* wf_R, pswf_t* wf_S, ppot_t* pps,
 	int NUM_KPTS = wf_R->nwk * wf_R->nspin;
 	int NUM_BANDS = wf_S->nband;
 	double inv_sqrt_vol = pow(determinant(wf_R->lattice), -0.5);
-	real_proj_site_t* sites_N_R = smooth_pw_values(num_N_R, N_R, labels_R, coords_R,
-		wf_S->lattice, wf_S->reclattice, pps, wf_S->fftg);
-	#pragma omp parallel for
-	for (int w = 0; w < NUM_BANDS * NUM_KPTS; w++) {
-		kpoint_t* kpt_S = wf_S->kpts[w%NUM_KPTS];
-
-		projection_t* wps = NULL;
-		if (num_N_R > 0) {
+	if (num_N_R > 0) {
+		real_proj_site_t* sites_N_R = smooth_pw_values(num_N_R, N_R, labels_R, coords_R,
+			wf_S->lattice, wf_S->reclattice, pps, wf_S->fftg);
+		#pragma omp parallel for
+		for (int w = 0; w < NUM_BANDS * NUM_KPTS; w++) {
+			kpoint_t* kpt_S = wf_S->kpts[w%NUM_KPTS];
+	
 			onto_smoothpw(kpt_S, w/NUM_KPTS, sites_N_R, num_N_R,
 				wf_S->G_bounds, wf_S->lattice, wf_S->reclattice, pps, wf_S->fftg);
 		}
+		free_real_proj_site_list(sites_N_R, num_N_R);
 	}
-	free_real_proj_site_list(sites_N_R, num_N_R);
 	printf("ONE THIRD DONE\n");
-	real_proj_site_t* sites_N_S = smooth_pw_values(num_N_S, N_S, labels_S, coords_S,
-		wf_R->lattice, wf_R->reclattice, pps, wf_R->fftg);
-	NUM_BANDS = wf_R->nband;
-	#pragma omp parallel for
-	for (int w = 0; w < NUM_BANDS * NUM_KPTS; w++) {
-		kpoint_t* kpt_R = wf_R->kpts[w%NUM_KPTS];
+	if (num_N_S > 0) {
+		real_proj_site_t* sites_N_S = smooth_pw_values(num_N_S, N_S, labels_S, coords_S,
+			wf_R->lattice, wf_R->reclattice, pps, wf_R->fftg);
+		NUM_BANDS = wf_R->nband;
+		#pragma omp parallel for
+		for (int w = 0; w < NUM_BANDS * NUM_KPTS; w++) {
+			kpoint_t* kpt_R = wf_R->kpts[w%NUM_KPTS];
 
-		projection_t* wps = NULL;
-		if (num_N_S > 0) {
 			onto_smoothpw(kpt_R, w/NUM_KPTS, sites_N_S, num_N_S,
 				wf_R->G_bounds, wf_R->lattice, wf_R->reclattice, pps, wf_R->fftg);
 		}
+		free_real_proj_site_list(sites_N_S, num_N_S);
 	}
-	free_real_proj_site_list(sites_N_S, num_N_S);
 	printf("TWO THIRDS DONE\n");
 	
 	double* dcoords =  NULL;
@@ -658,21 +665,21 @@ void overlap_setup_real(pswf_t* wf_R, pswf_t* wf_S, ppot_t* pps,
 					l2 = pp2.funcs[k].l;
 					for (int m2 = -l2; m2 <= l2; m2++) {
 						if (1){//(R > 0.001) {
-							//overlaps[i][tj*pp2.total_projs+tk] =
-							//	reciprocal_offsite_wave_overlap(dcoords + 3*i,
-							//	pp1.dense_kgrid, pp1.funcs[j].dense_kwave,
-							//	pp1.funcs[j].dense_kwave_spline, pp1.wave_gridsize * DENSE_GRID_SCALE,
-							//	pp2.dense_kgrid, pp2.funcs[k].dense_kwave,
-							//	pp2.funcs[k].dense_kwave_spline, pp2.wave_gridsize * DENSE_GRID_SCALE,
-							//	wf_R->lattice, l1, m1, l2, m2);
-							overlaps[i][tj*pp2.total_projs+tk] =
+							/*overlaps[i][tj*pp2.total_projs+tk] =
                                 reciprocal_offsite_wave_overlap(dcoords + 3*i,
                                 pp1.kwave_grid, pp1.funcs[j].kwave,
                                 pp1.funcs[j].kwave_spline, pp1.wave_gridsize,
                                 pp2.kwave_grid, pp2.funcs[k].kwave,
                                 pp2.funcs[k].kwave_spline, pp2.wave_gridsize,
-                                wf_R->lattice, l1, m1, l2, m2);
-							if (l1==l2 && m1==m2) printf("HIHIHI %d %d %d %d %lf %lf\n", l1,l2,m1,m2, creal(overlaps[i][tj*pp2.total_projs+tk]), cimag(overlaps[i][tj*pp2.total_projs+tk]));
+                                wf_R->lattice, l1, m1, l2, m2);*/
+							overlaps[i][tj*pp2.total_projs+tk] =
+                            	offsite_wave_overlap(dcoords + 3*i, pp1.wave_grid,
+                            	pp1.funcs[j].diffwave,
+                            	pp1.funcs[j].diffwave_spline, pp1.wave_gridsize,
+                            	pp2.wave_grid, pp2.funcs[k].diffwave,
+                            	pp2.funcs[k].diffwave_spline, pp2.wave_gridsize,
+                            	wf_R->lattice, l1, m1, l2, m2);
+							//if (l1==l2 && m1==m2) printf("HIHIHI %d %d %d %d %lf %lf\n", l1,l2,m1,m2, creal(overlaps[i][tj*pp2.total_projs+tk]), cimag(overlaps[i][tj*pp2.total_projs+tk]));
 						} else if (l1 == l2 && m1 == m2) {
 							overlaps[i][tj*pp2.total_projs+tk] = pp2.diff_overlap_matrix[j*pp2.num_projs+k];
 							printf("HIHIHI %d %d %d %d %lf %lf\n", l1,l2,m1,m2, creal(overlaps[i][tj*pp2.total_projs+tk]), cimag(overlaps[i][tj*pp2.total_projs+tk]));

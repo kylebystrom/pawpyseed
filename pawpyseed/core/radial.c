@@ -9,7 +9,7 @@
 #include "gaunt.h"
 
 #define PI 3.14159265358979323846
-#define KGRID_SIZE 387
+#define KGRID_SIZE 500
 
 double complex offsite_wave_overlap(double* dcoord, double* r1, double* f1, double** spline1, int size1,
 	double* r2, double* f2, double** spline2, int size2,
@@ -104,18 +104,22 @@ double complex reciprocal_offsite_wave_overlap(double* dcoord,
 	double* k2, double* f2, double** s2, int size2,
 	double* lattice, int l1, int m1, int l2, int m2) {
 
-	double temp;
+	int lx, ly, mx, my;
 	if (l1 < l2) {
-		temp = l1;
-		l1 = l2;
-		l2 = temp;
-		temp = m1;
-		m1 = m2;
-		m2 = temp;
+		lx = l2;
+		ly = l1;
+		mx = m2;
+		my = m1;
 	}
-	if (m2 < 0) {
-		m1 = -m1;
-		m2 = -m2;
+	else {
+		lx = l1;
+		ly = l2;
+		mx = m1;
+		my = m2;
+	}
+	if (my < 0) {
+		mx = -mx;
+		my = -my;
 	}
 	double kmax = k1[size1-1];
 	if (kmax > k2[size2-1]) {
@@ -143,7 +147,7 @@ double complex reciprocal_offsite_wave_overlap(double* dcoord,
 	double* ifunc = (double*) malloc(KGRID_SIZE * sizeof(double));
 	double complex total = 0;
 	double kk;
-	for (int L = abs(l1-l2); L <= l1+l2; L++) {
+	for (int L = abs(l1-l2); L <= l1+l2; L+=2) {
 		for (int knum = 0; knum < KGRID_SIZE; knum++) {
 			kgrid[knum] = kmin * pow(kmax/kmin, (double) knum / KGRID_SIZE);
 			kk = kgrid[knum];
@@ -155,7 +159,7 @@ double complex reciprocal_offsite_wave_overlap(double* dcoord,
 		double** ispline = spline_coeff(kgrid, ifunc, KGRID_SIZE);
 		if (R > 10e-10)
 			total += spline_integral(kgrid, ifunc, ispline, KGRID_SIZE)
-				* SBTFACS[l1][l2][(L-abs(l1-l2))/2][l1+m1][m2]
+				* SBTFACS[lx][lx][(L-abs(l1-l2))/2][lx+mx][my]
 				* Ylm(L, m1-m2, theta, phi) * cpow(I, l2+L-l1);
 		else {
 			if (L == 0 && l1 == l2 && m1 == m2)

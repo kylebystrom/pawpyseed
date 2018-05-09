@@ -130,12 +130,12 @@ void free_kpoint(kpoint_t* kpt, int num_elems, ppot_t* pps) {
 	for (int b = 0; b < kpt->num_bands; b++) {
 		band_t* curr_band = kpt->bands[b];
 		free(curr_band->Cs);
-		if (curr_band->projections != NULL) {
-			free(curr_band->projections);
-		}
-		if (curr_band->wave_projections != NULL) {
-			free(curr_band->wave_projections);
-		}
+		//if (curr_band->projections != NULL) {
+		//	free(curr_band->projections);
+		//}
+		//if (curr_band->wave_projections != NULL) {
+		//	free(curr_band->wave_projections);
+		//}
 		if (curr_band->CRs != NULL) {
 			mkl_free(curr_band->CRs);
 		}
@@ -421,32 +421,32 @@ void setup_site(real_proj_site_t* sites, ppot_t* pps, int num_sites, int* site_n
 
 	for (int s = 0; s < num_sites; s++) {
 		int i = site_nums[s];
-		sites[i].index = i;
-		sites[i].elem = labels[i];
-		sites[i].gridsize = pps[labels[i]].proj_gridsize;
-		sites[i].num_projs = pps[labels[i]].num_projs;
-		if (pr0_pw1) sites[i].rmax = pps[labels[i]].wave_rmax;
-		else sites[i].rmax = pps[labels[i]].rmax;
-		sites[i].total_projs = pps[labels[i]].total_projs;
-		sites[i].num_indices = 0;
-		sites[i].coord = malloc(3 * sizeof(double));
-		CHECK_ALLOCATION(sites[i].coord);
-		sites[i].coord[0] = coords[3*i+0];
-		sites[i].coord[1] = coords[3*i+1];
-		sites[i].coord[2] = coords[3*i+2];
-		sites[i].indices = calloc(pps[labels[i]].num_cart_gridpts, sizeof(int));
-		CHECK_ALLOCATION(sites[i].indices);
-		sites[i].projs = (real_proj_t*) malloc(sites[i].total_projs * sizeof(real_proj_t));
+		sites[s].index = i;
+		sites[s].elem = labels[i];
+		sites[s].gridsize = pps[labels[i]].proj_gridsize;
+		sites[s].num_projs = pps[labels[i]].num_projs;
+		if (pr0_pw1) sites[s].rmax = pps[labels[i]].wave_rmax;
+		else sites[s].rmax = pps[labels[i]].rmax;
+		sites[s].total_projs = pps[labels[i]].total_projs;
+		sites[s].num_indices = 0;
+		sites[s].coord = malloc(3 * sizeof(double));
+		CHECK_ALLOCATION(sites[s].coord);
+		sites[s].coord[0] = coords[3*i+0];
+		sites[s].coord[1] = coords[3*i+1];
+		sites[s].coord[2] = coords[3*i+2];
+		sites[s].indices = calloc(pps[labels[i]].num_cart_gridpts, sizeof(int));
+		CHECK_ALLOCATION(sites[s].indices);
+		sites[s].projs = (real_proj_t*) malloc(sites[s].total_projs * sizeof(real_proj_t));
 		int p = 0;
-		for (int j = 0; j < sites[i].num_projs; j++) {
+		for (int j = 0; j < sites[s].num_projs; j++) {
 			for (int m = -pps[labels[i]].funcs[j].l; m <= pps[labels[i]].funcs[j].l; m++) {
-				sites[i].projs[p].l = pps[labels[i]].funcs[j].l;
-				sites[i].projs[p].m = m;
-				sites[i].projs[p].func_num = j;
-				sites[i].projs[p].values = malloc(pps[labels[i]].num_cart_gridpts * sizeof(double complex));
-				sites[i].projs[p].paths = malloc(3*pps[labels[i]].num_cart_gridpts * sizeof(double));
-				CHECK_ALLOCATION(sites[i].projs[p].values);
-				CHECK_ALLOCATION(sites[i].projs[p].paths);
+				sites[s].projs[p].l = pps[labels[i]].funcs[j].l;
+				sites[s].projs[p].m = m;
+				sites[s].projs[p].func_num = j;
+				sites[s].projs[p].values = malloc(pps[labels[i]].num_cart_gridpts * sizeof(double complex));
+				sites[s].projs[p].paths = malloc(3*pps[labels[i]].num_cart_gridpts * sizeof(double));
+				CHECK_ALLOCATION(sites[s].projs[p].values);
+				CHECK_ALLOCATION(sites[s].projs[p].paths);
 				p++;
 			}
 		}
@@ -459,17 +459,17 @@ void setup_site(real_proj_site_t* sites, ppot_t* pps, int num_sites, int* site_n
 		double frac[3] = {0,0,0};
 		double testcoord[3] = {0,0,0};
 		vcross(res, lattice+3, lattice+6);
-		int grid1 = (int) (mag(res) * sites[p].rmax / vol * fftg[0]) + 1;
+		int grid1 = (int) (mag(res) * sites[s].rmax / vol * fftg[0]) + 1;
 		vcross(res, lattice+0, lattice+6);
-		int grid2 = (int) (mag(res) * sites[p].rmax / vol * fftg[1]) + 1;
+		int grid2 = (int) (mag(res) * sites[s].rmax / vol * fftg[1]) + 1;
 		vcross(res, lattice+0, lattice+3);
-		int grid3 = (int) (mag(res) * sites[p].rmax / vol * fftg[2]) + 1;
+		int grid3 = (int) (mag(res) * sites[s].rmax / vol * fftg[2]) + 1;
 		int center1 = (int) round(coords[3*p+0] * fftg[0]);
 		int center2 = (int) round(coords[3*p+1] * fftg[1]);
 		int center3 = (int) round(coords[3*p+2] * fftg[2]);
 		int ii=0, jj=0, kk=0;
-		double R0 = (pps[labels[p]].proj_gridsize-1) * sites[p].rmax
-			/ pps[labels[p]].proj_gridsize;
+		double R0 = (pps[labels[p]].proj_gridsize-1) * sites[s].rmax
+			/ pps[labels[s]].proj_gridsize;
 		for (int i = -grid1 + center1; i <= grid1 + center1; i++) {
 			for (int j = -grid2 + center2; j <= grid2 + center2; j++) {
 				for (int k = -grid3 + center3; k <= grid3 + center3; k++) {
@@ -484,21 +484,23 @@ void setup_site(real_proj_site_t* sites, ppot_t* pps, int num_sites, int* site_n
 						frac[0] = (double) ii / fftg[0];
 						frac[1] = (double) jj / fftg[1];
 						frac[2] = (double) kk / fftg[2];
-						sites[p].indices[sites[p].num_indices] = ii*fftg[1]*fftg[2] + jj*fftg[2] + kk;
-						for (int n = 0; n < sites[p].total_projs; n++) {
-							sites[p].projs[n].paths[3*sites[p].num_indices+0] = testcoord[0];
-							sites[p].projs[n].paths[3*sites[p].num_indices+1] = testcoord[1];
-							sites[p].projs[n].paths[3*sites[p].num_indices+2] = testcoord[2];
+						sites[s].indices[sites[s].num_indices] = ii*fftg[1]*fftg[2] + jj*fftg[2] + kk;
+						for (int n = 0; n < sites[s].total_projs; n++) {
+							sites[s].projs[n].paths[3*sites[s].num_indices+0] = testcoord[0];
+							sites[s].projs[n].paths[3*sites[s].num_indices+1] = testcoord[1];
+							sites[s].projs[n].paths[3*sites[s].num_indices+2] = testcoord[2];
 							if (pr0_pw1)
-								sites[p].projs[n].values[sites[p].num_indices] = smooth_wave_value(pps[labels[p]].funcs[sites[p].projs[n].func_num],
-									pps[labels[p]].smooth_grid, sites[p].projs[n].m, sites[p].rmax,
+								sites[s].projs[n].values[sites[s].num_indices] = smooth_wave_value(pps[labels[p]].funcs[sites[s].projs[n].func_num],
+									pps[labels[p]].smooth_grid, sites[s].projs[n].m, sites[s].rmax,
 									pps[labels[p]].proj_gridsize, coords+3*p, frac, lattice);
 							else
-								sites[p].projs[n].values[sites[p].num_indices] = proj_value(pps[labels[p]].funcs[sites[p].projs[n].func_num],
-									pps[labels[p]].proj_grid, sites[p].projs[n].m, sites[p].rmax,
+								sites[s].projs[n].values[sites[s].num_indices] = proj_value(pps[labels[p]].funcs[sites[s].projs[n].func_num],
+									pps[labels[p]].proj_grid, sites[s].projs[n].m, sites[s].rmax,
 									pps[labels[p]].proj_gridsize, coords+3*p, frac, lattice);
 						}
-						sites[p].num_indices++;
+						sites[s].num_indices++;
+						//if (sites[s].num_indices >= pps[labels[p]].num_cart_gridpts)
+						//	printf("SETUP_SITE ERROR %d %d %d\n", sites[s].num_indices, p, pr0_pw1);
 					}
 				}
 			}
@@ -616,7 +618,7 @@ double sbf(double x, int l) {
 		else return 0;
 	}
 	double jlm1 = sin(x) / x;
-	double jl = sin(x) / x*x - cos(x) / x;
+	double jl = sin(x) / (x*x) - cos(x) / x;
 	double jlp1 = 0;
 	if (l == 0) return jlm1;
 	if (l == 1) return jl;

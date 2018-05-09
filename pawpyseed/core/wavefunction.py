@@ -304,9 +304,10 @@ class Wavefunction:
 		for i in range(len(ref_sites)):
 			if not i in M_R:
 				N_R.append(i)
-			for j in range(len(sites)):
-				if (not j in N_S) and (not j in M_S):
-					N_S.append(j)
+		for j in range(len(sites)):
+			if (not j in N_S) and (not j in M_S):
+				N_S.append(j)
+		
 		N_RS = []
 		for i in N_R:
 			for j in N_S:

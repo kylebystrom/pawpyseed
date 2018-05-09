@@ -36,7 +36,7 @@ void test_get_projector_list() {
 	double ae[10] = {0,0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9};
 	double ps[10] = {0,0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9};
 	double p[10] = {0,0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9};
-	ppot_t* lst = get_projector_list(1, labels, ls, pg, wg, p, ae, ps, rm);
+	ppot_t* lst = get_projector_list(1, labels, ls, pg, wg, p, ae, ps, rm, 7000);
 	
 	make_pwave_overlap_matrices(lst);
 	free_ppot_list(lst, 1);
@@ -124,7 +124,7 @@ void test_compensation_terms() {
 	char* rm[1] = {"2.1042"};
 	printf("pps\n");
 	ppot_t* pps = get_projector_list(num_els, labels, ls, pgrids, wgrids,
-		projectors, aewaves, pswaves, rm);
+		projectors, aewaves, pswaves, rm, 7000);
 
 	free(labels);
 	free(pgrids);
@@ -144,7 +144,7 @@ void test_compensation_terms() {
 	printf("terms\n");
 	setup_projections(wf_proj, pps, num_els, 4, fftg, selfnums, selfcoords);
 	setup_projections(wf_ref, pps, num_els, 4, fftg, selfnums, selfcoords);
-	overlap_setup(wf_ref, wf_proj, pps, selfnums, selfnums, selfcoords, selfcoords, M, M, M, M, 4, 4, 4);
+	overlap_setup_real(wf_ref, wf_proj, pps, selfnums, selfnums, selfcoords, selfcoords, M, M, M, M, 4, 4, 4);
 	double* terms = compensation_terms(0, wf_proj, wf_ref, pps, num_els,
 		4, 0, 0, 0, M, M, N_S, N_S, N_S, N_S, selfnums, selfcoords, selfnums, selfcoords, fftg);
 	double* terms2 = compensation_terms(0, wf_proj, wf_ref, pps, num_els,

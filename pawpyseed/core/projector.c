@@ -665,20 +665,20 @@ void overlap_setup_real(pswf_t* wf_R, pswf_t* wf_S, ppot_t* pps,
 					l2 = pp2.funcs[k].l;
 					for (int m2 = -l2; m2 <= l2; m2++) {
 						if (1){//(R > 0.001) {
-							/*overlaps[i][tj*pp2.total_projs+tk] =
+							overlaps[i][tj*pp2.total_projs+tk] =
                                 reciprocal_offsite_wave_overlap(dcoords + 3*i,
                                 pp1.kwave_grid, pp1.funcs[j].kwave,
                                 pp1.funcs[j].kwave_spline, pp1.wave_gridsize,
                                 pp2.kwave_grid, pp2.funcs[k].kwave,
                                 pp2.funcs[k].kwave_spline, pp2.wave_gridsize,
-                                wf_R->lattice, l1, m1, l2, m2);*/
-							overlaps[i][tj*pp2.total_projs+tk] =
+                                wf_R->lattice, l1, m1, l2, m2);
+							/*overlaps[i][tj*pp2.total_projs+tk] =
                             	offsite_wave_overlap(dcoords + 3*i, pp1.wave_grid,
                             	pp1.funcs[j].diffwave,
                             	pp1.funcs[j].diffwave_spline, pp1.wave_gridsize,
                             	pp2.wave_grid, pp2.funcs[k].diffwave,
                             	pp2.funcs[k].diffwave_spline, pp2.wave_gridsize,
-                            	wf_R->lattice, l1, m1, l2, m2);
+                            	wf_R->lattice, l1, m1, l2, m2);*/
 							//if (l1==l2 && m1==m2) printf("HIHIHI %d %d %d %d %lf %lf\n", l1,l2,m1,m2, creal(overlaps[i][tj*pp2.total_projs+tk]), cimag(overlaps[i][tj*pp2.total_projs+tk]));
 						} else if (l1 == l2 && m1 == m2) {
 							overlaps[i][tj*pp2.total_projs+tk] = pp2.diff_overlap_matrix[j*pp2.num_projs+k];

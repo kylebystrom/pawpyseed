@@ -109,17 +109,17 @@ ppot_t* get_projector_list(int num_els, int* labels, int* ls, double* proj_grids
 
 		}
 
-		sbt_descriptor_t* d = spherical_bessel_transform_setup(grid_encut, 10000000.0, pps[i].lmax,
+		sbt_descriptor_t* d = spherical_bessel_transform_setup(1e5, 0, pps[i].lmax,
 			pps[i].wave_gridsize, pps[i].wave_grid, pps[i].kwave_grid);
 		for (int k = 0; k < pps[i].num_projs; k++) {
 			funcs[k].kwave = wave_spherical_bessel_transform(d, funcs[k].diffwave, funcs[k].l);
 			//funcs[k].kwave = besselt(pps[i].wave_grid, pps[i].kwave_grid, funcs[k].diffwave, 520.0, pps[i].wave_gridsize, funcs[k].l);
 			funcs[k].kwave_spline = spline_coeff(pps[i].kwave_grid, funcs[k].kwave, pps[i].wave_gridsize);
 		}
-		free_sbt_descriptor(d);
+		//free_sbt_descriptor(d);
 		/*
 		pps[i].dense_kgrid = (double*) malloc (pps[i].wave_gridsize * DENSE_GRID_SCALE * sizeof(double*));
-		d = spherical_bessel_transform_setup(grid_encut, 10e7, pps[i].lmax,
+		d = spherical_bessel_transform_setup(grid_encut, 1e7, pps[i].lmax,
             pps[i].wave_gridsize * DENSE_GRID_SCALE, dense_wavegrid, pps[i].dense_kgrid);
         for (int k = 0; k < pps[i].num_projs; k++) {
             funcs[k].dense_kwave = wave_spherical_bessel_transform(d, funcs[k].smooth_diffwave, funcs[k].l);
@@ -128,21 +128,30 @@ ppot_t* get_projector_list(int num_els, int* labels, int* ls, double* proj_grids
         }
 		free_sbt_descriptor(d);
 		*/
-		sbt_descriptor_t* d2 = spherical_bessel_transform_setup(0.5*grid_encut, 0, pps[i].lmax, pps[i].wave_gridsize*DENSE_GRID_SCALE,
+		sbt_descriptor_t* d2 = spherical_bessel_transform_setup(520, 0, pps[i].lmax, pps[i].wave_gridsize*DENSE_GRID_SCALE,
 			dense_wavegrid, dense_kwavegrid);
 		for (int k = 0; k < pps[i].num_projs; k++) {
-			double* dense_kwave = wave_spherical_bessel_transform(d2, funcs[k].smooth_diffwave, funcs[k].l);
-			double* smooth_diffwave = inverse_wave_spherical_bessel_transform(d2, dense_kwave, funcs[k].l);
+			//double* dense_kwave = wave_spherical_bessel_transform(d2, funcs[k].smooth_diffwave, funcs[k].l);
+			double* dense_kwave = (double*) calloc(pps[i].wave_gridsize * DENSE_GRID_SCALE, sizeof(double));
+			int q = 0;
+			while (pps[i].kwave_grid[q] < 2*pow(c*520, 0.5)) {
+				//printf("KKKK %lf\n", pps[i].kwave_grid[q]);
+				dense_kwave[q] = funcs[k].kwave[q];
+				q++;
+			}
+			double* smooth_diffwave = inverse_wave_spherical_bessel_transform(d, dense_kwave, funcs[k].l);
 			double** smooth_wave_spline = spline_coeff(dense_wavegrid,
 				smooth_diffwave, DENSE_GRID_SCALE*pps[i].wave_gridsize);
 			free(dense_kwave);
 			double* sdw = (double*) malloc(pps[i].proj_gridsize*sizeof(double));
-			for (int p = 0; p < pps[i].proj_gridsize; p++) {
+			if (funcs[k].l > 0) sdw[0] = 0;
+			for (int p = 1; p < pps[i].proj_gridsize; p++) {
 				// smooth_grid should be like proj_grid except that rmax should be rmax of the partial wave
 				// difference
 				sdw[p] = wave_interpolate(pps[i].smooth_grid[p], pps[i].wave_gridsize*DENSE_GRID_SCALE,
 					dense_wavegrid, smooth_diffwave, smooth_wave_spline);
 			}
+			if (funcs[k].l == 0) sdw[0] = sdw[1];
 			double** sdw_spline = spline_coeff(pps[i].smooth_grid, sdw, pps[i].proj_gridsize);
 			free(funcs[k].smooth_diffwave);
 			funcs[k].smooth_diffwave = sdw;
@@ -152,10 +161,11 @@ ppot_t* get_projector_list(int num_els, int* labels, int* ls, double* proj_grids
 			free(smooth_wave_spline[1]);
 			free(smooth_wave_spline[2]);
 			free(smooth_wave_spline);
-			for (int p = 0; p < pps[i].proj_gridsize; p++)
-				printf("PARTIALWAVEDIFF %lf %lf\n", pps[i].smooth_grid[p], funcs[k].smooth_diffwave[p]);
+			//for (int p = 0; p < pps[i].proj_gridsize; p++)
+			//	printf("PARTIALWAVEDIFF %lf %lf\n", pps[i].smooth_grid[p], funcs[k].smooth_diffwave[p]);
 		}
 		free_sbt_descriptor(d2);
+		free_sbt_descriptor(d);
 		pps[i].funcs = funcs;
 		make_pwave_overlap_matrices(pps+i);
 	}

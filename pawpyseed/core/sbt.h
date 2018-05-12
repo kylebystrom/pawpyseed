@@ -45,8 +45,17 @@ passed into spherical_bessesl_transform_setup.
 */
 double* wave_spherical_bessel_transform(sbt_descriptor_t* d, double* f, int l);
 
+/**
+Performs the inverse transform of f. Calling this function on the output
+of wave_spherical_bessel_transform gives the initial input to
+wave_spherical_bessel_transform on the initial radial grid passed to
+spherical_bessel_transform_setup
+*/
 double* inverse_wave_spherical_bessel_transform(sbt_descriptor_t* d, double* f, int l);
 
+/**
+Free all the memory associated with an sbt descriptor.
+*/
 void free_sbt_descriptor(sbt_descriptor_t* d);
 
 #endif

@@ -684,6 +684,13 @@ class Wavefunction:
 		to analyze by choosing any band that is more than bound conduction
 		and more than bound valence in the pseudoprojection scheme,
 		and then fully analyzing these bands using single_band_projection
+
+		Args:
+			bulk (Wavefunction object): bulk structure wavefunction
+			num_below_ef (int, 20): number of bands to analyze below the fermi level
+			num_above_ef (int, 20): number of bands to analyze above the fermi level
+			spinpol (bool, False): whether to return spin-polarized results (only allowed
+				for spin-polarized DFT output)
 		"""
 		nband = self.projector.get_nband(c_void_p(bulk.pwf.wf_ptr))
 		nwk = self.projector.get_nwk(c_void_p(bulk.pwf.wf_ptr))
@@ -762,6 +769,7 @@ class Wavefunction:
 			(if return_wf==True) An array (x slow-indexed) where the first half of the values
 				are the real part and second half of the values are the
 				imaginary part
+			The wavefunction is written with z the slow index.
 		"""
 
 		if type(dim) == type(None):
@@ -782,6 +790,23 @@ class Wavefunction:
 				dim, self.nums, self.coords)
 
 	def write_density_realspace(self, filename = "PYAECCAR", dim=None, return_wf = False):
+		"""
+		Writes the real and imaginary parts of a given band to two files,
+		prefixed by fileprefix
+
+		Args:
+			b (int): band number
+			k (int): kpoint number
+			s (int): spin number
+			dim (numpy array of 3 ints): dimensions of the FFT grid
+			filename (string, "PYAECCAR"): charge density filename
+			return_wf (bool): whether to return the wavefunction
+		Returns:
+			(if return_wf==True) An array (x slow-indexed, as in VASP)
+				with the charge densities
+			The charge density is written with z the slow index.
+		"""
+
 		if type(dim) == type(None):
 			dim = self.dim
 		self.check_c_projectors()

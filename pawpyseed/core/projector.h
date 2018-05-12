@@ -24,6 +24,12 @@ one for each site in the structure.
 real_proj_site_t* projector_values(int num_sites, int* labels, double* coords,
 	double* lattice, double* reclattice, ppot_t* pps, int* fftg);
 
+/**
+Finds the coordinates on the FFT grid that fall with each augmentation sphere
+(NOT projector sphere) and stores the values of the difference between the partial
+waves at those points, as well as the coordinates of those points, in real_proj_site_t
+objects, one for each site in the structure.
+*/
 real_proj_site_t* smooth_pw_values(int num_N, int* Nlst, int* labels, double* coords,
 	double* lattice, double* reclattice, ppot_t* pps, int* fftg);
 
@@ -40,6 +46,12 @@ void onto_projector_helper(band_t* band, fft_complex* x, real_proj_site_t* sites
 Calculates <p_i|psit_nk> for all i={R,epsilon,l,m} in the structure for one band
 */
 void onto_projector(kpoint_t* kpt, int band_num, real_proj_site_t* sites, int num_sites,
+	int* G_bounds, double* lattice, double* reclattice, ppot_t* pps, int* fftg);
+
+/**
+Calculates <(phi_i-phit_i)|psit_nk> for all i={R,epsilon,l,m} in the structure for one band
+*/
+void onto_smoothpw(kpoint_t* kpt, int band_num, real_proj_site_t* sites, int num_sites,
 	int* G_bounds, double* lattice, double* reclattice, ppot_t* pps, int* fftg);
 
 /**
@@ -82,9 +94,18 @@ structures:
 void overlap_setup(pswf_t* wf_R, pswf_t* wf_S, ppot_t* pps,
         int* labels_R, int* labels_S, double* coords_R, double* coords_S,
         int* N_R, int* N_S, int* N_RS_R, int* N_RS_S, int num_N_R, int num_N_S, int num_N_RS);
-void overlap_setup(pswf_t* wf_R, pswf_t* wf_S, ppot_t* pps,
-        int* labels_R, int* labels_S, double* coords_R, double* coords_S,
-        int* N_R, int* N_S, int* N_RS_R, int* N_RS_S, int num_N_R, int num_N_S, int num_N_RS);
+
+/**
+Much more efficient version of overlap_setup.
+Calculates three overlap terms for when bands have different
+structures:
+<(phi1_i-phit1_i)|psit2_n2k>
+<(phi2_i-phit2_i)|psit1_n1k>
+<(phi1_i-phit1_i)|(phi2_i-phit2_i)>
+*/
+void overlap_setup_real(pswf_t* wf_R, pswf_t* wf_S, ppot_t* pps,
+	int* labels_R, int* labels_S, double* coords_R, double* coords_S,
+	int* N_R, int* N_S, int* N_RS_R, int* N_RS_S, int num_N_R, int num_N_S, int num_N_RS);
 
 /**
 Calculates the components of the overlap operator in the augmentation

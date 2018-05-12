@@ -92,8 +92,8 @@ typedef struct band {
 } band_t;
 
 typedef struct rayleigh_set {
-	int l;
-	double complex* terms;
+	int l; ///< angular momentum quantum number
+	double complex* terms; ///< rayleigh epansion terms
 } rayleigh_set_t;
 
 typedef struct kpoint {
@@ -154,6 +154,9 @@ Minimum of a and b
 */
 int min(int a, int b);
 
+/**
+Maximum of a and b
+*/
 int max(int a, int b);
 
 /**
@@ -267,6 +270,9 @@ coefficients for f set up by spline_coeff
 */
 double wave_interpolate(double r, int size, double* x, double* f, double** wave_spline);
 
+/**
+Helper function for proj_value and smooth_wave_value
+*/
 double complex proj_value_helper(double r, double rmax, int size,
 	double* pos, double* x, double* f, double** s, int l, int m);
 
@@ -277,6 +283,10 @@ at 3D vector ion_pos, at position pos, given the real space lattice.
 double complex proj_value(funcset_t funcs, double* x, int m, double rmax,
 	int size, double* ion_pos, double* pos, double* lattice);
 
+/**
+Return the value of funcs->smooth_diffwave, defined on linear radial grid x
+centered at 3D vector ion_pos, at position pos, given the real space lattice
+*/
 double complex smooth_wave_value(funcset_t funcs, double* x, int m, double rmax,
 	int size, double* ion_pos, double* pos, double* lattice);
 
@@ -287,6 +297,10 @@ grid x center at 3D vector ion_pos, at position pos, given the real space lattic
 double complex wave_value(funcset_t funcs, int size, double* x, int m,
         double* ion_pos, double* pos, double* lattice);
 
+/**
+Interpolates the value of a function on a logarithmic radial grid
+at location pos.
+*/
 double complex wave_value2(double* x, double* wave, double** spline, int size,
 	int l, int m, double* pos);
 
@@ -316,6 +330,9 @@ void frac_from_index(int index, double* coord, int* fftg);
 
 double sph_bessel(double k, double r, int l);
 
+/**
+Return the value of the l-order spherical bessel function at x.
+*/
 double sbf(double x, int l);
 
 /**
@@ -341,6 +358,9 @@ waves, in reciprocal space.
 */
 void generate_rayleigh_expansion_terms(pswf_t* wf, ppot_t* pps, int num_elems);
 
+/**
+Copy the Rayleigh expansion terms from wf_R to wf.
+*/
 void copy_rayleigh_expansion_terms(pswf_t* wf, ppot_t* pps, int num_elems, pswf_t* wf_R);
 
 /**

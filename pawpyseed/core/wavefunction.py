@@ -715,20 +715,55 @@ class Wavefunction:
 		return results
 
 	def check_c_projectors(self):
+		"""
+		Check to see if the projector functions have been read in and set up.
+		If not, do so.
+		"""
+
 		if not self.projector_list:
 			self.projector_list, self.nums, self.coords = self.make_c_projectors()
 			cfunc_call(PAWC.setup_projections_no_rayleigh, None, self.pwf.wf_ptr, self.projector_list,
 					self.num_proj_els, len(self.structure), self.dim, self.nums, self.coords)
 
 	def get_state_realspace(self, b, k, s, dim=None):
+		"""
+		Returns the real and imaginary parts of a given band.
+		Args:
+			b (int): band number
+			k (int): kpoint number
+			s (int): spin number
+			dim (numpy array of 3 ints): dimensions of the FFT grid
+		Returns:
+			An array (x slow-indexed) where the first half of the values
+				are the real part and second half of the values are the
+				imaginary part
+		"""
+
 		if type(dim) == type(None):
 			dim = self.dim
 		self.check_c_projectors()
-		return cfunc_call(PAWC.realspace_state_ri, dim[0]*dim[1]*dim[2], b, k+s*self.nwk,
+		return cfunc_call(PAWC.realspace_state_ri, 2*dim[0]*dim[1]*dim[2], b, k+s*self.nwk,
 			self.pwf.wf_ptr, self.projector_list,
 			dim, self.nums, self.coords)
 
 	def write_state_realspace(self, b, k, s, fileprefix = "", dim=None, return_wf = False):
+		"""
+		Writes the real and imaginary parts of a given band to two files,
+		prefixed by fileprefix
+
+		Args:
+			b (int): band number
+			k (int): kpoint number
+			s (int): spin number
+			dim (numpy array of 3 ints): dimensions of the FFT grid
+			fileprefix (string, optional): first part of the file name
+			return_wf (bool): whether to return the wavefunction
+		Returns:
+			(if return_wf==True) An array (x slow-indexed) where the first half of the values
+				are the real part and second half of the values are the
+				imaginary part
+		"""
+
 		if type(dim) == type(None):
 			dim = self.dim
 		self.check_c_projectors()

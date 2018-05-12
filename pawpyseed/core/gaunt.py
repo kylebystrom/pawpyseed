@@ -1,3 +1,9 @@
+"""
+\file
+Python script for generating Gaunt coefficients and factors used for offsite
+partial wave overlap integrals.
+"""
+
 from sympy.physics.wigner import gaunt, wigner_3j
 import numpy as np
 from sympy import N

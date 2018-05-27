@@ -34,10 +34,44 @@ double* yk(int k, int size, double* r, double* P1, double* P2) {
 	for (int i = 0; i < size; i++) {
 		integrand1[i] = P1[i] * P2[i] * pow(r[i], k); //might need to change to k-1
 	}
-	double** spline1 = spline_coeff(r, integrand1, size);
 	for (int i = 0; i < size; i++) {
 		integrand2[i] = P1[i] * P2[i] * pow(r[i], -k-1); //might need to change to -k-2
 	}
+	double* integrals = ykint(k, size, r, integrand1, integrand2);
+
+	free(integrand1);
+	free(integrand2);
+}
+
+double* ykchg(int k, int size, double* r, double* chg) {
+	double* integrand1 = (double*) malloc(size * sizeof(double));
+	double* integrand2 = (double*) malloc(size * sizeof(double));
+
+	for (int i = 0; i < size; i++) {
+		integrand1[i] = chg[i] * pow(r[i], k); //might need to change to k-1
+	}
+	for (int i = 0; i < size; i++) {
+		integrand2[i] = chg[i] * pow(r[i], -k-1); //might need to change to -k-2
+	}
+	double* integrals = ykint(k, size, r, integrand1, integrand2);
+
+	free(integrand1);
+	free(integrand2);
+}
+
+double* dft_ecoul(int size, double* r, double* yks, double* chg) {
+
+	double* coulterm = malloc
+	for (int j = 0; j < size; j++) {
+		coulterm[j] = yks[j] * chg[j] / r[j];
+	}
+	double** spline = spline_coeff(r, coulterm, size);
+	return spline_integral(r, coulterm, spline, size);
+}
+
+double* ykint(int k, int size, double* r, double* integrand1, double* integrand2) {
+	
+	double** spline1 = spline_coeff(r, integrand1, size);
 	double** spline2 = spline_coeff(r, integrand2, size);
 	double* integrals1 = (double*) malloc(size * sizeof(double));
 	double* integrals2 = (double*) malloc(size * sizeof(double));
@@ -50,10 +84,13 @@ double* yk(int k, int size, double* r, double* P1, double* P2) {
 	for (int i = 0; i < size-1; i++) {
 		dx = r[i+1] - r[i];
 		integrals1[i+1] = integrals1[i] + dx * (a[i] + dx * (b[i]/2 + dx * (c[i]/3 + d[i]*dx/4)));
-		integrals1[i+1] *= pow(r[i], -k);
 		j = size - i - 2;
 		dx = r[j] - r[j-1];
 		integrals2[j] = integrals2[j+1] + dx * (e[j] + dx * (f[j]/2 + dx * (g[i]/3 + h[j]*dx/4)));
+	}
+	for (int i = 0; i < size-1; i++) {
+		integrals1[i+1] *= pow(r[i], -k);
+		j = size - i - 2;
 		integrals2[j] *= pow(r[j], k+1);
 	}
 
@@ -62,8 +99,6 @@ double* yk(int k, int size, double* r, double* P1, double* P2) {
 	}
 
 	free(integrals2);
-	free(integrand1);
-	free(integrand2);
 	free(spline1[0]);
 	free(spline1[1]);
 	free(spline1[2]);

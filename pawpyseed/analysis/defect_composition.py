@@ -39,6 +39,20 @@ for defect in data:
 
 class PawpyData:
 
+	def __init__(self, dos, structure, data):
+		
+		self.energies = energies
+		if type(dos) == list:
+			self.energies = dos[0]
+			self.densities = dos[1]
+			self.efermi = dos[2]
+		else:
+			self.energies = dos.energies
+			self.densities = (dos.densities[Spin.up] + dos.densities[Spin.down]) / 2
+			self.efermi = dos.efermi
+		self.structure = structure
+		self.data = data
+
 	def as_dict(self):
 
 		data = {}
@@ -56,37 +70,41 @@ class PawpyData:
 		yaml.dump(data, f)
 		f.close()
 
-	@staticmethod
-	def from_dict(data):
+	@classmethod
+	def from_dict(cls, data):
+		return cls(data['energies'], [data['densities'], data['efermi']],
+			data['structure'], data['data'])
 
-		dat.energies = data['energies']
-		dat.densities = data['densities']
-		dat.efermi = data['efermi']
-		dat.structure = data['structure']
-		dat.data = data['data']
-
-		return dat
-
-	@staticmethod
-	def read_yaml(filename):
+	@classmethod
+	def from_yaml(cls, filename):
 		f = open(filename, 'r')
 		data = yaml.load(f)
-		return self.read_dict(data)
+		return cls.from_dict(data)
 
 
 
 class BulkCharacter(PawpyData):
 
-	def __init__(self, band_dict, dos, structure):
+	def __init__(self, dos, structure, band_dict):
 
 		self.energies = dos.energies
-		self.densities = (dos.densities[Spin.up] + dos.densities[Spin.down]) / 2
-		self.efermi = dos.efermi
+		if type(dos) == list:
+			self.energies = dos[0]
+			self.densities = dos[1]
+			self.efermi = dos[2]
+		else:
+			self.energies = dos.energies
+			self.densities = (dos.densities[Spin.up] + dos.densities[Spin.down]) / 2
+			self.efermi = dos.efermi
 		self.structure = structure
 		self.data = band_dict
 
 	@staticmethod
 	def makeit(generator):
+		#Example: 
+		#>>> def_lst = ['charge_1', 'charge_0', 'charge_-1']
+		#>>> generator = Wavefunction.setup_multiple_protections('bulk', def_lst)
+		#>>> objs = BulkComposition.makeit()
 
 		bcs = {}
 
@@ -102,22 +120,51 @@ class BulkCharacter(PawpyData):
 
 class BasisExpansion(PawpyData):
 
-	def __init__(self, projs, dos, structure):
+	def __init__(self, dos, structure, projs):
 
 		self.energies = dos.energies
-		self.densities = dos.densities
-		self.efermi = dos.efermi
+		if type(dos) == list:
+			self.energies = dos[0]
+			self.densities = dos[1]
+			self.efermi = dos[2]
+		else:
+			self.energies = dos.energies
+			self.densities = (dos.densities[Spin.up] + dos.densities[Spin.down]) / 2
+			self.efermi = dos.efermi
 		self.structure = structure
 		self.data = projs
 
 
 	@staticmethod
 	def makeit(generator):
+		#Example: 
+		#>>> def_lst = ['charge_1', 'charge_0', 'charge_-1']
+		#>>> generator = Wavefunction.setup_multiple_protections('bulk', def_lst)
+		#OR
+		#>>> generator = Wavefunction.setup_multiple_projections(*pycdt_dirs('.'))
+		#
+		#>>> objs = BasisExpansion.makeit()
+
+		bes = {}
 
 		for wf_dir, basis, wf in generator:
 
+			vr = Vasprun(os.path.join(wf_dir, 'vasprun.xml'))
+			dos = vr.tdos
 			expansion = np.zeros((wf.nband, basis.nband), dtype=np.float64)
 			for b in range(wf.nband):
 				expansion[b,:] = single_band_projection(b, basis)
+			bes[wf_dir] = BasisExpansion(dos, wf.structure, expansion)
 
+		return bes
+
+def pycdt_dirs(top_dir):
+
+	bulk = os.path.join(top_dir, 'bulk')
+	dirs = []
+	for root, dirs, files in os.walk(top_dir)
+		if 'OUTCAR' in files and not 'bulk' in root:
+			dirs.append(root)
+
+	return bulk, dirs
 

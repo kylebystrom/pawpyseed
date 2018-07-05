@@ -561,11 +561,12 @@ class Wavefunction:
 
 				yield [wf_dir, basis, wf]
 				wf.free_all()
-			except:
+			except Exception as e:
 				if ignore_errors:
 					errcount += 1
 				else:
-					raise PAWpyError('Unable to setup wavefunction in directory %s' % wf_dir)
+					raise PAWpyError('Unable to setup wavefunction in directory %s' % wf_dir\
+										+'\nGot the following error:\n'+str(e))
 
 		basis.free_all()
 			

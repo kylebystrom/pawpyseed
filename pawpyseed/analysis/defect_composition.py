@@ -1,7 +1,12 @@
 import yaml
 import matplotlib.pyplot as plt 
 import numpy as np 
+import os, subprocess
+from pymatgen.io.vasp.outputs import Vasprun
+from pymatgen.io.vasp.inputs import Poscar
+from pymatgen import Spin
 
+"""
 f = open('ddres.yaml', 'r')
 data = yaml.load(f)
 f.close()
@@ -36,6 +41,7 @@ for defect in data:
 	ax2.invert_yaxis()
 	plt.title(defect)
 	plt.savefig('../../../Si_stuff/new/'+defect+'.png')
+"""
 
 class PawpyData:
 
@@ -112,7 +118,7 @@ class BulkCharacter(PawpyData):
 			vr = Vasprun(os.path.join(wf_dir, 'vasprun.xml'))
 			dos = vr.tdos
 			data = wf.defect_band_analysis(basis, spinpol = True)
-			bcs[wf_dir] = BulkCharacter(data, dos, vr.structure)
+			bcs[wf_dir] = BulkCharacter(dos, wf.structure, data)
 
 		return bcs
 
@@ -161,10 +167,12 @@ class BasisExpansion(PawpyData):
 def pycdt_dirs(top_dir):
 
 	bulk = os.path.join(top_dir, 'bulk')
-	dirs = []
-	for root, dirs, files in os.walk(top_dir)
-		if 'OUTCAR' in files and not 'bulk' in root:
-			dirs.append(root)
+	wfdirs = []
+	for root, dirs, files in os.walk(top_dir):
+		if 'bulk' in root:
+			continue
+		if 'OUTCAR' in files:
+			wfdirs.append(root)
 
-	return bulk, dirs
+	return bulk, wfdirs
 

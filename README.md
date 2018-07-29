@@ -121,3 +121,87 @@ and other applications
 density, and other POTCAR data
 * Perform general operator
 expectation values on full wavefunctions
+
+## Examples
+
+PAWpySeed is designed so that useful data can be generated
+and formatted in a few lines of code. Example 1 illustrates
+using the Wavefunction class utilities to calculate the overlap
+operators of the pseudowavefunctions of several point defect structures
+with the those of the bulk supercell of the same size (structures
+generated with PyCDT https://bitbucket.org/mbkumar/pycdt). Example 2
+shows how using the PawpyData subclasses can make some data generation
+and formatting even easier.
+
+NOTE: Having trouble writing a script to get the data you want?
+Check out pawpyseed.analysis.defect_composition, which contains a few
+examples of using PAWpySeed in the form of PawpyData subclasses.
+The PawpyData.makeit function takes a generator from the Wavefunction.setup_multiple_projections function and uses it to calculate different values, depending on the subclass. These
+subclasses cn serve as examples for how to calculate required values from a Wavefunction.
+
+### Example 1: Overlap operators of pseudowavefunctions
+
+Consider calculating the overlaps of the pseudowavefunctions of several point defect
+structures with the bulk supercell. Specifically, a few different charge states
+of the boron substitutional, phosphorous substitutional, and silicon vacancy in silicon.
+We will use PAWpySeed to calculate these overlaps and use them to find the proportion
+of the defect bands that project onto the conduction and valence bands of the bulk.
+
+```
+from pawpyseed.core.wavefunction import *
+import yaml # for storing our data
+
+dat = {} # dictionary of conduction/valence character values
+# Directories of the VASP output for the defect structures
+def_lst = ['Pcharge_0', 'Pcharge_1', 'charge_-1', 'charge_0', 'charge_1', 'charge_2', 'charge_-2', 'Bcharge_-1', 'Bcharge_0']
+# Initialize the bulk from the bulk directory
+basis = Wavefunction.from_directory('bulk')
+
+# loop over the defect directories
+for wf_dir in def_lst:
+	wf = Wavefunction.from_directory(wf_dir)
+	dat[wf_dir] = {}
+	# loop over bands near the band gap
+	for i in range(250, 262):
+		# if pseudo is true, the overlap operators of the pseudowavefunctions
+		# is evaluated, rather than of the all electron wavefunctions,
+		# which is much faster but less quantitatively informative
+		# v + c = 1 for pseudo = True
+		# v is the valence band character and c is the conduction band character
+		v, c = wf.proportion_conduction(i, basis, pseudo=True, spinpol=True)
+		dat[wf_dir][i] = (v, c)
+	print ('FINISHED DEFECt %s' % wf_dir)
+	# Wavefunction objects use C code and memory, make sure to free it!
+	wf.free_all()
+
+basis.free_all()
+f = open('res.yaml', 'w')
+yaml.dump(dat, f)
+f.close()
+```
+
+Now 'res.yaml' will contain the valence and conduction band characters for the selected bands
+and structures in a yaml-formatted dictionary.
+
+### Example 2: AE overlap operators using PawpyData subclasses
+
+The following example does the same thing as Example 1, except the all electron
+overlap operators are calculated, and only four lines of code are used!
+
+```
+from pawpyseed.core.wavefunction import *
+from pawpyseed.analysis.defect_composition import *
+
+generator = Wavefunction.setup_multiple_projections(*pycdt_dirs('.'))
+bcs = BulkCharacter.makeit(generator)
+```
+
+This script results in a list `bcs` of `BulkCharacter` objects, which each contain bulk valence
+and conduction band character for 20 bands above and below the Fermi level for each defect, the
+defect crystal structures as pymatgen Structure objects, and density of states data for each
+defect, which can be useful for plotting and analysis later.
+
+## Questions and Comments
+
+Find a bug? Areas of code unclearly documented? Other questions? Feel free to contact
+Kyle Bystrom at kylebystrom@berkeley.edu with the subject "pawpyseed: <Topic>".

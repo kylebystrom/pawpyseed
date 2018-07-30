@@ -45,7 +45,9 @@ Most computing clusters will have Intel MKL, and you can install it
 on your desktop (or any system to which you have root access) by following
 the relevant instructions at the following URL:
 <https://software.intel.com/en-us/articles/free-ipsxe-tools-and-libraries>.
-After Intel MKL is installed, add the following line to your .bashrc:
+After Intel MKL is installed, add the following line to your .bashrc
+to link MKL (NOTE: this might not be the exact directory that MKL is in,
+you need to check that first):
 ```
 export MKLROOT=/opt/intel/compilers_and_libraries_2018/linux/mkl
 ```

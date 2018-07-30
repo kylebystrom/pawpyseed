@@ -30,27 +30,27 @@ void fft3d(double* x, int* G_bounds, double* lattice,
 	double dv = determinant(lattice) / fftg[0] / fftg[1] / fftg[2];
 	double inv_sqrt_vol = pow(determinant(lattice), -0.5);
 
-	gsl_fft_complex_wavetable* tab =
-		(gsl_fft_complex_wavetable*) gsl_fft_complex_wavetable_alloc(fftg[0]);
-	gsl_fft_complex_wavetable* tabp =
-		(gsl_fft_complex_wavetable*) gsl_fft_complex_wavetable_alloc(fftg[1]);
-	gsl_fft_complex_wavetable* tabq =
-		(gsl_fft_complex_wavetable*) gsl_fft_complex_wavetable_alloc(fftg[2]);
+	gsl_double complex_wavetable* tab =
+		(gsl_double complex_wavetable*) gsl_double complex_wavetable_alloc(fftg[0]);
+	gsl_double complex_wavetable* tabp =
+		(gsl_double complex_wavetable*) gsl_double complex_wavetable_alloc(fftg[1]);
+	gsl_double complex_wavetable* tabq =
+		(gsl_double complex_wavetable*) gsl_double complex_wavetable_alloc(fftg[2]);
 
-	gsl_fft_complex_workspace* wrk =
-		(gsl_fft_complex_workspace*) gsl_fft_complex_workspace_alloc(fftg[0]);
-	gsl_fft_complex_workspace* wrkp =
-		(gsl_fft_complex_workspace*) gsl_fft_complex_workspace_alloc(fftg[1]);
-	gsl_fft_complex_workspace* wrkq =
-		(gsl_fft_complex_workspace*) gsl_fft_complex_workspace_alloc(fftg[2]);
+	gsl_double complex_workspace* wrk =
+		(gsl_double complex_workspace*) gsl_double complex_workspace_alloc(fftg[0]);
+	gsl_double complex_workspace* wrkp =
+		(gsl_double complex_workspace*) gsl_double complex_workspace_alloc(fftg[1]);
+	gsl_double complex_workspace* wrkq =
+		(gsl_double complex_workspace*) gsl_double complex_workspace_alloc(fftg[2]);
 
 	int status = 0;
 
-	status = gsl_fft_complex_backward(x, fftg[1]*fftg[2], fftg[0], tab, wrk);
+	status = gsl_double complex_backward(x, fftg[1]*fftg[2], fftg[0], tab, wrk);
 	for (int p = 0; p < fftg[0]; p++) {
-		status = gsl_fft_complex_backward(x + p * fftg[1] * fftg[2], fftg[2], fftg[1], tabp, wrkp);
+		status = gsl_double complex_backward(x + p * fftg[1] * fftg[2], fftg[2], fftg[1], tabp, wrkp);
 		for (int q = 0; q < fftg[1]; q++) {
-			status = gsl_fft_complex_backward(x + p * fftg[1] * fftg[2] + q * fftg[2], 1, fftg[2], tabq, wrkq);
+			status = gsl_double complex_backward(x + p * fftg[1] * fftg[2] + q * fftg[2], 1, fftg[2], tabq, wrkq);
 		}
 	}
 
@@ -76,12 +76,12 @@ void fft3d(double* x, int* G_bounds, double* lattice,
 		}
 	}
 	
-	gsl_fft_complex_wavetable_free(tab);
-	gsl_fft_complex_workspace_free(wrk);
-	gsl_fft_complex_wavetable_free(tabp);
-	gsl_fft_complex_workspace_free(wrkp);
-	gsl_fft_complex_wavetable_free(tabq);
-	gsl_fft_complex_workspace_free(wrkq);
+	gsl_double complex_wavetable_free(tab);
+	gsl_double complex_workspace_free(wrk);
+	gsl_double complex_wavetable_free(tabp);
+	gsl_double complex_workspace_free(wrkp);
+	gsl_double complex_wavetable_free(tabq);
+	gsl_double complex_workspace_free(wrkq);
 	//printf("total %lf\n",total);
 }
 

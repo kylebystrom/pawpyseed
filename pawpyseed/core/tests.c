@@ -30,7 +30,7 @@ int fft_check(char* wavecar, double* kpt_weights, int* fftg) {
 	setbuf(stdout, NULL);
 
 	pswf_t* wf = read_wavefunctions("WAVECAR", kpt_weights);
-	MKL_Complex16* x = (MKL_Complex16*) mkl_calloc(fftg[0]*fftg[1]*fftg[2], sizeof(MKL_Complex16), 64);
+	double complex* x = (double complex*) mkl_calloc(fftg[0]*fftg[1]*fftg[2], sizeof(double complex), 64);
 	fft3d(x, wf->G_bounds, wf->lattice, wf->kpts[0]->k, wf->kpts[0]->Gs, wf->kpts[0]->bands[0]->Cs, wf->kpts[0]->bands[0]->num_waves, fftg);
 	int* Gs = wf->kpts[0]->Gs;
 	float complex* Cs = wf->kpts[0]->bands[0]->Cs;
@@ -55,9 +55,9 @@ int fft_check(char* wavecar, double* kpt_weights, int* fftg) {
 				}
 				temp *= inv_sqrt_vol;
 				int ind = i*fftg[1]*fftg[2]+j*fftg[2]+k;
-				total1 += x[ind].real * x[ind].real + x[ind].imag * x[ind].imag;
-				total2 += cabs(temp) * cabs(temp);
-				assert (cabs(x[ind].real + I * x[ind].imag - temp) < 0.00001);
+				total1 += pow(cabs(x[ind]), 2);
+				total2 += pow(cabs(temp), 2);
+				assert (cabs(x[ind] - temp) < 0.00001);
 			}
 		}
 	}

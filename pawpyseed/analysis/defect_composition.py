@@ -157,9 +157,9 @@ class BasisExpansion(PawpyData):
 
 			vr = Vasprun(os.path.join(wf_dir, 'vasprun.xml'))
 			dos = vr.tdos
-			expansion = np.zeros((wf.nband, basis.nband), dtype=np.float64)
+			expansion = np.zeros((wf.nband, basis.nband * basis.nwk * basis.nspin), dtype=np.float64)
 			for b in range(wf.nband):
-				expansion[b,:] = single_band_projection(b, basis)
+				expansion[b,:] = wf.single_band_projection(b, basis)
 			bes[wf_dir] = BasisExpansion(dos, wf.structure, expansion)
 
 		return bes

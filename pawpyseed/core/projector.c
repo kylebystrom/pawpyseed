@@ -227,7 +227,7 @@ real_proj_site_t* smooth_pw_values(int num_N, int* Nlst, int* labels, double* co
 	return sites;
 }
 
-void onto_projector_helper(band_t* band, fft_complex* x, real_proj_site_t* sites,
+void onto_projector_helper(band_t* band, double complex* x, real_proj_site_t* sites,
 	int num_sites, double* lattice, double* reclattice, double* kpt, ppot_t* pps, int* fftg,
 	projection_t* projections) {
 
@@ -266,7 +266,7 @@ void onto_projector_helper(band_t* band, fft_complex* x, real_proj_site_t* sites
 			for (int i = 0; i < num_indices; i++) {
 				index = indices[i];
 				kdotr = dot(kpt_cart, sites[s].projs[p].paths+i*3);
-				total += fft_mult(index, x, conj(values[i]) * dv * cexp(I * kdotr));
+				total += x[index] * conj(values[i]) * dv * cexp(I * kdotr);
 			}
 			projections[s].overlaps[p] = total;
 		}
@@ -281,7 +281,7 @@ void onto_projector(kpoint_t* kpt, int band_num, real_proj_site_t* sites, int nu
 	float complex* Cs = kpt->bands[band_num]->Cs;
 	int num_waves = kpt->num_waves;
 	
-	fft_complex* x = (fft_complex*) mkl_calloc(fftg[0]*fftg[1]*fftg[2], sizeof(fft_complex), 64);
+	double complex* x = (double complex*) mkl_calloc(fftg[0]*fftg[1]*fftg[2], sizeof(double complex), 64);
 	CHECK_ALLOCATION(x);
 	fft3d(x, G_bounds, lattice, k, Gs, Cs, num_waves, fftg);
 
@@ -304,7 +304,7 @@ void onto_smoothpw(kpoint_t* kpt, int band_num, real_proj_site_t* sites, int num
 	float complex* Cs = kpt->bands[band_num]->Cs;
 	int num_waves = kpt->num_waves;
 
-	fft_complex* x = (fft_complex*) mkl_calloc(fftg[0]*fftg[1]*fftg[2], sizeof(fft_complex), 64);
+	double complex* x = (double complex*) mkl_calloc(fftg[0]*fftg[1]*fftg[2], sizeof(double complex), 64);
 	CHECK_ALLOCATION(x);
 	fft3d(x, G_bounds, lattice, k, Gs, Cs, num_waves, fftg);
 

@@ -1,8 +1,8 @@
 #ifndef GSL_FFT_H
 #define GSL_FFT_H
-#include <gsl/gsl_fft_complex.h>
+#include <gsl/gsl_double complex.h>
 
-#define fft_complex double
+#define double complex double
 
 double* fft_calloc(int num_items, int item_size);
 

@@ -10,9 +10,8 @@
 #include "linalg.h"
 
 #define PI 3.14159265359
-#define fft_complex MKL_Complex16
 
-void trilinear_interpolate_values(MKL_Complex16* x, double* frac, int* fftg, double complex* values) {
+void trilinear_interpolate_values(double complex* x, double* frac, int* fftg, double complex* values) {
 	//values: c000, c001, c010, c011, c100, c101, c110, c111
 	int i = (int) (frac[0] * fftg[0]);
 	int j = (int) (frac[1] * fftg[1]);
@@ -30,10 +29,10 @@ void trilinear_interpolate_values(MKL_Complex16* x, double* frac, int* fftg, dou
 	ind[5] = ip*fftg[1]*fftg[2] + j*fftg[2] + kp;
 	ind[6] = ip*fftg[1]*fftg[2] + jp*fftg[2] + k;
 	ind[7] = ip*fftg[1]*fftg[2] + jp*fftg[2] + kp;
-	for (int n = 0; n < 8; n++) values[n] = x[ind[n]].real + I * x[ind[n]].imag;
+	for (int n = 0; n < 8; n++) values[n] = x[ind[n]];
 }
 
-void fft3d(MKL_Complex16* x, int* G_bounds, double* lattice,
+void fft3d(double complex* x, int* G_bounds, double* lattice,
 	double* kpt, int* Gs, float complex* Cs, int num_waves, int* fftg) {
 
 	MKL_LONG status = 0;
@@ -44,8 +43,7 @@ void fft3d(MKL_Complex16* x, int* G_bounds, double* lattice,
 	//double test_total = 0;
 	for (int w = 0; w < num_waves; w++) {
 		int g1 = Gs[3*w]-G_bounds[0], g2 = Gs[3*w+1]-G_bounds[2], g3 = Gs[3*w+2]-G_bounds[4];
-		x[g1*fftg[1]*fftg[2] + g2*fftg[2] + g3].real = creal(Cs[w]);
-		x[g1*fftg[1]*fftg[2] + g2*fftg[2] + g3].imag = cimag(Cs[w]);
+		x[g1*fftg[1]*fftg[2] + g2*fftg[2] + g3] = Cs[w];
 		//test_total += cabs(Cs[w]) * cabs(Cs[w]);
 	}
 
@@ -71,12 +69,9 @@ void fft3d(MKL_Complex16* x, int* G_bounds, double* lattice,
 				frac[1] = ((double)j)/fftg[1];
 				frac[2] = ((double)k)/fftg[2];
 				kdotr = 2 * PI * dot(kmins, frac);
-				rp = x[i*fftg[1]*fftg[2] + j*fftg[2] + k].real * inv_sqrt_vol;
-				ip = x[i*fftg[1]*fftg[2] + j*fftg[2] + k].imag * inv_sqrt_vol;
-				x[i*fftg[1]*fftg[2] + j*fftg[2] + k].real = rp * cos(kdotr) - ip * sin(kdotr);
-				x[i*fftg[1]*fftg[2] + j*fftg[2] + k].imag = ip * cos(kdotr) + rp * sin(kdotr);
-				total += (pow(x[i*fftg[1]*fftg[2] + j*fftg[2] + k].real, 2)
-					+ pow(x[i*fftg[1]*fftg[2] + j*fftg[2] + k].imag, 2)) * dv;
+				x[i*fftg[1]*fftg[2] + j*fftg[2] + k] *= inv_sqrt_vol * cexp(I * kdotr);
+				total += (pow(creal(x[i*fftg[1]*fftg[2] + j*fftg[2] + k]), 2)
+					+ pow(cimag(x[i*fftg[1]*fftg[2] + j*fftg[2] + k]), 2)) * dv;
 			}
 		}
 	}
@@ -85,11 +80,8 @@ void fft3d(MKL_Complex16* x, int* G_bounds, double* lattice,
 	//printf("total %lf\n",total);
 }
 
-MKL_Complex16* fft_calloc(int num_items, int item_size) {
-        return (MKL_Complex16*) mkl_calloc(num_items, item_size, 64);
+double complex* fft_calloc(int num_items, int item_size) {
+        return (double complex*) mkl_calloc(num_items, item_size, 64);
 }
 
-double complex fft_mult(int i, MKL_Complex16* x, double complex y) {
-        return (x[i].real + I * x[i].imag) * y;
-}
 

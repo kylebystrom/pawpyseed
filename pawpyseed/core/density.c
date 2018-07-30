@@ -68,7 +68,7 @@ double* project_realspace_state(int BAND_NUM, int numtoproj, pswf_t* wf, pswf_t*
 double complex* realspace_state(int BAND_NUM, int KPOINT_NUM, pswf_t* wf, ppot_t* pps, int* fftg,
 		int* labels, double* coords) {
 
-	double complex* x = mkl_calloc(fftg[0]*fftg[1]*fftg[2], sizeof(MKL_Complex16), 64);
+	double complex* x = mkl_calloc(fftg[0]*fftg[1]*fftg[2], sizeof(double complex), 64);
 	printf("START FT\n");
 	fft3d(x, wf->G_bounds, wf->lattice, wf->kpts[KPOINT_NUM]->k,
 		wf->kpts[KPOINT_NUM]->Gs, wf->kpts[KPOINT_NUM]->bands[BAND_NUM]->Cs,

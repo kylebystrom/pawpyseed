@@ -38,7 +38,7 @@ Helper function for onto_projector, which performs the FFT of the wavefunction
 into real space and calculates from <p_i|psit_nk> from the grid points found
 in projector_values.
 */
-void onto_projector_helper(band_t* band, fft_complex* x, real_proj_site_t* sites,
+void onto_projector_helper(band_t* band, double complex* x, real_proj_site_t* sites,
     int num_sites, double* lattice, double* reclattice, double* kpt, ppot_t* pps, int* fftg,
     projection_t* projections);
 

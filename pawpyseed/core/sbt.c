@@ -114,7 +114,7 @@ double* wave_spherical_bessel_transform(sbt_descriptor_t* d, double* f, int l) {
 		fs[i] = f[i-N/2];
 	}
 
-	MKL_Complex16* x = mkl_calloc(N, sizeof(MKL_Complex16), 64);
+	double complex* x = mkl_calloc(N, sizeof(double complex), 64);
 
 	DFTI_DESCRIPTOR_HANDLE handle = 0;
 	MKL_LONG dim = 1;
@@ -128,19 +128,14 @@ double* wave_spherical_bessel_transform(sbt_descriptor_t* d, double* f, int l) {
 
 	double phase = 0;
 	for (int m = 0; m < N; m++) {
-		x[m].real = pow(r[m], 0.5) * fs[m]; // f is multiplied by r
-		x[m].imag = 0;
+		x[m] = pow(r[m], 0.5) * fs[m]; // f is multiplied by r
 	}
 	double rp=0.0, ip=0.0;
 	status = DftiComputeBackward(handle, x);
 	for (int n = 0; n < N; n++) {
-		rp = x[n].real * creal(M[l][n]) - x[n].imag * cimag(M[l][n]);
-		ip = x[n].imag * creal(M[l][n]) + x[n].real * cimag(M[l][n]);
-		x[n].real = rp;// * cos(phase) - ip * sin(phase);
-		x[n].imag = ip;// * cos(phase) + rp * sin(phase);
+		x[n] *= M[l][n];
 		if (n >= N/2) {
-			x[n].real = 0;
-			x[n].imag = 0;
+			x[n] = 0;
 		}
 	}
 	status = DftiComputeBackward(handle, x);
@@ -148,7 +143,7 @@ double* wave_spherical_bessel_transform(sbt_descriptor_t* d, double* f, int l) {
 	double kp = 0;
 	for (int p = 0; p < N / 2; p++) {
 		kp = kmin * exp(p * drho);
-		vals[p] = x[p].real;
+		vals[p] = creal(x[p]);
 		vals[p] *= 2 / pow(ks[p], 1.5);
 	}
 
@@ -184,7 +179,7 @@ double* inverse_wave_spherical_bessel_transform(sbt_descriptor_t* d, double* f, 
 		fs[i] = 0;
 	}
 
-	MKL_Complex16* x = mkl_malloc(N * sizeof(MKL_Complex16), 64);
+	double complex* x = mkl_malloc(N * sizeof(double complex), 64);
 
 	DFTI_DESCRIPTOR_HANDLE handle = 0;
 	MKL_LONG dim = 1;
@@ -198,21 +193,15 @@ double* inverse_wave_spherical_bessel_transform(sbt_descriptor_t* d, double* f, 
 
 	double phase = 0;
 	for (int m = 0; m < N; m++) {
-		//x[m].real = pow(r[m], 0.5) * fs[m]; // f is multiplied by r
-		x[m].real = pow(r[m], 1.5) * fs[m];
-		x[m].imag = 0;
+		x[m] = pow(r[m], 1.5) * fs[m];
 	}
 	double rp=0.0, ip=0.0;
 	status = DftiComputeBackward(handle, x);
 	printf("status %ld\n", status);
 	for (int n = 0; n < N; n++) {
-		rp = x[n].real * creal(M[l][n]) - x[n].imag * cimag(M[l][n]);
-		ip = x[n].imag * creal(M[l][n]) + x[n].real * cimag(M[l][n]);
-		x[n].real = rp;// * cos(phase) - ip * sin(phase);
-		x[n].imag = ip;// * cos(phase) + rp * sin(phase);
+		x[n] *= M[l][n];
 		if (n >= N/2) {
-			x[n].real = 0;
-			x[n].imag = 0;
+			x[n] = 0;
 		}
 	}
 	status = DftiComputeBackward(handle, x);
@@ -220,7 +209,7 @@ double* inverse_wave_spherical_bessel_transform(sbt_descriptor_t* d, double* f, 
 	double kp = 0;
 	for (int p = 0; p < N / 2; p++) {
 		kp = kmin * exp(p * drho);
-		vals[p] = x[p + N / 2].real / PI * 2;
+		vals[p] = creal(x[p + N / 2]) / PI * 2;
 		//vals[p] *= 2 / pow(ks[p], 1.5);
 		vals[p] *= 2 / pow(ks[p + N / 2], 1.5);
 	}

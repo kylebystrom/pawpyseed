@@ -35,13 +35,21 @@ scipy>=1.0
 pymatgen>=2018.2.13
 ```
 
-C requirements\*:
+C requirements:
 ```
 Intel C Compiler >= 16.0.4
 Intel Math Kernel Library >= 11.3.4
 ```
-\*In the future, it will be possible to compile the C
-code with the GNU compiler.
+Intel MKL is available for free installation on a variety of platforms.
+Most computing clusters will have Intel MKL, and you can install it
+on your desktop (or any system to which you have root access) by following
+the relevant instructions at the following URL:
+<https://software.intel.com/en-us/articles/free-ipsxe-tools-and-libraries>.
+After Intel MKL is installed, add the following line to your .bashrc:
+```
+export MKLROOT=/opt/intel/compilers_and_libraries_2018/linux/mkl
+```
+The setup.py file will now take care of C compilation.
 
 Optional Python dependencies:
 ```

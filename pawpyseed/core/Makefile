@@ -8,8 +8,6 @@ ICC_OBJ = utils.o gaunt.o radial.o sbt.o reader.o quadrature.o linalg.o density.
 
 pawpy_icc: $(ICC_SRC)
 	rm -f $(PWD)/pawpy.so
-	cp mkl_linalg.h linalg.h
-	cp mkl_linalg.c linalg.c
 	icc -shared -c $^ $(ICC_FLAGS) $(ICC_INCS) $(ICC_LIBS)
 	icc -shared -o pawpy.so *.o $(ICC_FLAGS) $(ICC_INCS) $(ICC_LIBS)
 

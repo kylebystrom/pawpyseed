@@ -9,7 +9,7 @@ with open('README.md', 'r') as fh:
 os.environ["CC"] = "icc"
 os.environ["CXX"] = "icc"
 
-srcfiles = ['density', 'gaunt', 'mkl_linalg', 'gsl_linalg', 'projector', 'pseudoprojector', 'quadrature',\
+srcfiles = ['density', 'gaunt', 'linalg', 'projector', 'pseudoprojector', 'quadrature',\
 			'radial', 'reader', 'sbt', 'tests', 'utils']
 cfiles = [f+'.c' for f in srcfiles]
 hfiles = [f+'.h' for f in srcfiles]

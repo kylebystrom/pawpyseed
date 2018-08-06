@@ -146,7 +146,7 @@ class TestC:
 		pass
 
 	def test_fac(self):
-		assert PAWC.fac(5) == 120
+		assert int(PAWC.fac(5)) == 120
 
 	def test_legendre(self):
 		xs = np.linspace(0,1,10000)
@@ -198,15 +198,12 @@ class TestC:
 			fcoord = site.frac_coords
 			ccoord = numpy_to_cdouble(coord)
 			cfcoord = numpy_to_cdouble(fcoord)
-			print("check")
 			PAWC.frac_to_cartesian(cfcoord, lattice)
 			temp1 = cdouble_to_numpy(cfcoord, 3)
 			assert_almost_equal(np.linalg.norm(temp1-coord), 0.0)
-			print(temp1)
 			PAWC.cartesian_to_frac(ccoord, reclattice)
 			temp2 = cdouble_to_numpy(ccoord, 3)
 			assert_almost_equal(np.linalg.norm(temp2-fcoord), 0.0)
-			print(temp2)
 
 	def test_spline(self):
 		vr = Vasprun("vasprun.xml")
@@ -299,18 +296,3 @@ class TestPy:
 
 	def teardown():
 		pass
-
-t = TestC()
-#t.setup()
-#t.test_legendre()
-#t.test_Ylm()
-#t.test_unit_conversion()
-#t.test_fft3d()
-t.test_sbt()
-t.test_memory()
-#t.test_spline()
-
-#t = TestMem()
-#t.test_read()
-#t.test_pseudo()
-#t.test_list()

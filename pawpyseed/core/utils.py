@@ -83,7 +83,7 @@ def cfunc_call(func, outsize, *args):
 		if type(arg) == np.ndarray:
 			if argtype == c_double_p:
 				cargs.append(numpy_to_cdouble(arg))
-			elif argtype = c_float_p:
+			elif argtype == c_float_p:
 				cargs.append(numpy_to_cfloat(arg))
 			elif argtype == c_int_p:
 				cargs.append(numpy_to_cint(arg))

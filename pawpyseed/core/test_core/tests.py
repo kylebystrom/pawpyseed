@@ -12,7 +12,8 @@ from pymatgen.io.vasp.inputs import Poscar, Potcar
 from pymatgen.io.vasp.outputs import Vasprun
 from pymatgen.core.structure import Structure
 
-from wavefunction import *
+from pawpyseed.utils import *
+from pawpyseed.wavefunction import *
 
 from ctypes import *
 

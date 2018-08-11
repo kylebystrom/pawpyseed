@@ -19,42 +19,42 @@ import os
 MODULE_DIR = os.path.dirname(os.path.abspath(__file__))
 PAWC = CDLL(os.path.join(MODULE_DIR, "pawpy.so"))
 
-PAWC.read_wavefunctions.argtypes = (c_char_p, POINTER(c_double))
+PAWC.read_wavefunctions.argtypes = (c_char_p, c_double_p)
 PAWC.read_wavefunctions.restype = c_void_p
 
-PAWC.get_projector_list.argtypes = [c_int, POINTER(c_int), POINTER(c_int)] + [POINTER(c_double)]*6 + [c_double]
+PAWC.get_projector_list.argtypes = [c_int, c_int_p, c_int_p] + [c_double_p]*6 + [c_double]
 PAWC.get_projector_list.restype = c_void_p
 
-PAWC.overlap_setup.argtypes = [c_void_p, c_void_p, c_void_p, POINTER(c_int), POINTER(c_int),
-				POINTER(c_double), POINTER(c_double)] + 4*[POINTER(c_int)] + 3*[c_int]
+PAWC.overlap_setup.argtypes = [c_void_p, c_void_p, c_void_p, c_int_p, c_int_p,
+				c_double_p, c_double_p] + 4*[c_int_p] + 3*[c_int]
 PAWC.overlap_setup.restype = None
 
-PAWC.overlap_setup_real.argtypes = [c_void_p, c_void_p, c_void_p, POINTER(c_int), POINTER(c_int),
-                POINTER(c_double), POINTER(c_double)] + 4*[POINTER(c_int)] + 3*[c_int]
+PAWC.overlap_setup_real.argtypes = [c_void_p, c_void_p, c_void_p, c_int_p, c_int_p,
+                c_double_p, c_double_p] + 4*[c_int_p] + 3*[c_int]
 PAWC.overlap_setup_real.restype = None
 
-PAWC.realspace_state_ri.argtypes = [c_int, c_int, c_void_p, c_void_p, POINTER(c_int), POINTER(c_int), POINTER(c_double)]
+PAWC.realspace_state_ri.argtypes = [c_int, c_int, c_void_p, c_void_p, c_int_p, c_int_p, c_double_p]
 PAWC.write_realspace_state_ri_return.argtypes = [c_char_p, c_char_p] + PAWC.realspace_state_ri.argtypes
 PAWC.write_realspace_state_ri_noreturn.argtypes = PAWC.write_realspace_state_ri_return.argtypes
-PAWC.realspace_state_ri.restype = POINTER(c_double)
-PAWC.write_realspace_state_ri_return.restype = POINTER(c_double)
+PAWC.realspace_state_ri.restype = c_double_p
+PAWC.write_realspace_state_ri_return.restype = c_double_p
 PAWC.write_realspace_state_ri_noreturn.restype = None
 
-PAWC.write_density_return.argtypes = [c_char_p, c_void_p, c_void_p, POINTER(c_int), POINTER(c_int), POINTER(c_double)]
+PAWC.write_density_return.argtypes = [c_char_p, c_void_p, c_void_p, c_int_p, c_int_p, c_double_p]
 PAWC.write_density_noreturn.argtypes = PAWC.write_density_return.argtypes
-PAWC.write_density_return.restype = POINTER(c_double)
+PAWC.write_density_return.restype = c_double_p
 PAWC.write_density_noreturn.restype = None
 
-PAWC.setup_projections_no_rayleigh.argtypes = [c_void_p, c_void_p, c_int, c_int, POINTER(c_int), POINTER(c_int), POINTER(c_double)]
+PAWC.setup_projections_no_rayleigh.argtypes = [c_void_p, c_void_p, c_int, c_int, c_int_p, c_int_p, c_double_p]
 PAWC.setup_projections.argtypes = PAWC.setup_projections_no_rayleigh.argtypes
 PAWC.setup_projections_copy_rayleigh.argtypes = [c_void_p] + PAWC.setup_projections.argtypes
 
-PAWC.project_realspace_state.argtypes = [c_int, c_int, c_void_p, c_void_p, c_void_p, POINTER(c_int), POINTER(c_int), POINTER(c_double), POINTER(c_int), POINTER(c_double)]
+PAWC.project_realspace_state.argtypes = [c_int, c_int, c_void_p, c_void_p, c_void_p, c_int_p, c_int_p, c_double_p, c_int_p, c_double_p]
 PAWC.project_realspace_state.restype = c_void_p
 
-PAWC.pseudoprojection.restype = POINTER(c_double)
-PAWC.compensation_terms.restype = POINTER(c_double)
-PAWC.get_occs.restype = POINTER(c_double)
+PAWC.pseudoprojection.restype = c_double_p
+PAWC.compensation_terms.restype = c_double_p
+PAWC.get_occs.restype = c_double_p
 PAWC.get_nband.restype = c_int
 PAWC.get_nwk.restype = c_int
 PAWC.get_nspin.restype = c_int
@@ -77,15 +77,15 @@ def cfunc_call(func, outsize, *args):
 	function func
 	"""
 	cargs = []
-	for arg in args:
+	for argtype, arg in zip(func.argtypes, args):
 		if type(arg) == list:
 			arg = np.array(arg)
 		if type(arg) == np.ndarray:
-			if arg.dtype == np.float64:
+			if argtype == c_double_p:
 				cargs.append(numpy_to_cdouble(arg))
-			elif arg.dtype == np.float32:
+			elif argtype = c_float_p:
 				cargs.append(numpy_to_cfloat(arg))
-			elif arg.dtype == np.int32 or arg.dtype == int:
+			elif argtype == c_int_p:
 				cargs.append(numpy_to_cint(arg))
 			else:
 				raise PAWpyError("cfunc_call: invalid array type %s" % repr(arg.dtype))
@@ -95,14 +95,16 @@ def cfunc_call(func, outsize, *args):
 			cargs.append(arg)
 		elif type(arg) == str:
 			cargs.append(arg.encode('utf-8'))
+		else:
+			raise PAWpyError("cfunc_call: unsupported argument type %s" % repr(arg.dtype))
 	res = func(*cargs)
 	if outsize == None:
 		return res
-	if func.restype == POINTER(c_double):
+	if func.restype == c_double_p:
 		return cdouble_to_numpy(res, outsize)
 	elif func.restype == POINTER(c_float):
 		return cfloat_to_numpy(res, outsize)
-	elif func.restype == POINTER(c_int):
+	elif func.restype == c_int_p:
 		return cint_to_numpy(res, outsize)
 	return res
 
@@ -126,7 +128,7 @@ def cdouble_to_numpy(arr, length):
 	in C to a numpy array of np.float64.
 	Frees the pointer.
 	"""
-	arr = cast(arr, POINTER(c_double))
+	arr = cast(arr, c_double_p)
 	newarr = np.zeros(length)
 	for i in range(length):
 		newarr[i] = arr[i]
@@ -139,7 +141,7 @@ def cfloat_to_numpy(arr, length):
 	in C to a numpy array of np.float64.
 	Frees the pointer.
 	"""
-	arr = cast(arr, POINTER(c_int))
+	arr = cast(arr, c_int_p)
 	newarr = np.zeros(length)
 	for i in range(length):
 		newarr[i] = arr[i]
@@ -154,7 +156,7 @@ def numpy_to_cdouble(arr):
 	newarr = (c_double * len(arr))()
 	for i in range(len(arr)):
 		newarr[i] = arr[i]
-	newarr = cast(newarr, POINTER(c_double))
+	newarr = cast(newarr, c_double_p)
 	return newarr
 
 def numpy_to_cfloat(arr):
@@ -177,7 +179,7 @@ def numpy_to_cint(arr):
 	newarr = (c_int * len(arr))()
 	for i in range(len(arr)):
 		newarr[i] = int(arr[i])
-	newarr = cast(newarr, POINTER(c_int))
+	newarr = cast(newarr, c_int_p)
 	return newarr
 
 def el(site):

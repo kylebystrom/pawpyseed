@@ -233,13 +233,12 @@ class Wavefunction:
 		self.structure = struct
 		self.pwf = pwf
 		self.cr = cr
-		self.projector = PAWC
 		self.dim = outcar.ngf
 		self.dim = np.array(self.dim).astype(np.int32) // 2
 		self.projector_list = None
-		self.nband = self.projector.get_nband(c_void_p(pwf.wf_ptr))
-		self.nwk = self.projector.get_nwk(c_void_p(pwf.wf_ptr))
-		self.nspin = self.projector.get_nspin(c_void_p(pwf.wf_ptr))
+		self.nband = PAWC.get_nband(c_void_p(pwf.wf_ptr))
+		self.nwk = PAWC.get_nwk(c_void_p(pwf.wf_ptr))
+		self.nspin = PAWC.get_nspin(c_void_p(pwf.wf_ptr))
 		self.nums = None
 		self.coords = None
 
@@ -330,7 +329,8 @@ class Wavefunction:
 		#	basis.projection_data = self.make_c_projectors(basis)
 		#projector_list, selfnums, selfcoords, basisnums, basiscoords = basis.projection_data
 		if setup_basis:
-			basis.projector_list, self.nums, self.coords, basis.nums, basis.coords = self.make_c_projectors(basis)
+			basis.projector_list, self.nums, self.coords,
+				basis.nums, basis.coords = self.make_c_projectors(basis)
 		projector_list = basis.projector_list
 		basisnums = basis.nums
 		basiscoords = basis.coords
@@ -342,15 +342,15 @@ class Wavefunction:
 		print ("TYPETHING", basis.pwf.wf_ptr, type(basis.pwf.wf_ptr))
 		
 		if setup_basis:
-			self.projector.setup_projections(c_void_p(basis.pwf.wf_ptr),
-				c_void_p(projector_list), self.num_proj_els,
-				len(basis.structure), numpy_to_cint(self.dim), numpy_to_cint(basisnums),
-				numpy_to_cdouble(basiscoords))
+			cfunc_call(PAWC.setup_projections, None,
+						basis.pwf.wf_ptr, projector_list,
+						self.num_proj_els, len(basis.structure), self.dim,
+						basisnums, basiscoords)
 		start = time.monotonic()
-		self.projector.setup_projections_copy_rayleigh(c_void_p(self.pwf.wf_ptr), c_void_p(basis.pwf.wf_ptr),
-			c_void_p(projector_list), self.num_proj_els,
-			len(self.structure), numpy_to_cint(self.dim), numpy_to_cint(selfnums),
-			numpy_to_cdouble(selfcoords))
+		cfunc_call(PAWC.setup_projections_copy_rayleigh, None,
+					self.pwf.wf_ptr, basis.pwf.wf_ptr,
+					projector_list, self.num_proj_els, len(self.structure),
+					self.dum, selfnums, selfcoords)
 		end = time.monotonic()
 		print('--------------\nran setup_projections in %f seconds\n---------------' % (end-start))
 		Timer.setup_time(end-start)
@@ -362,13 +362,12 @@ class Wavefunction:
 			N_RS_R, N_RS_S = [], []
 		self.site_cat = [M_R, M_S, N_R, N_S, N_RS_R, N_RS_S]
 		start = time.monotonic()
-		self.projector.overlap_setup_real(c_void_p(basis.pwf.wf_ptr), c_void_p(self.pwf.wf_ptr), c_void_p(projector_list),
-			numpy_to_cint(basisnums), numpy_to_cint(selfnums),
-			numpy_to_cdouble(basiscoords), numpy_to_cdouble(selfcoords),
-			numpy_to_cint(N_R), numpy_to_cint(N_S),
-			numpy_to_cint(N_RS_R), numpy_to_cint(N_RS_S), len(N_R), len(N_S), len(N_RS_R));
-			#numpy_to_cint(M_R), numpy_to_cint(M_S),
-			#numpy_to_cint(M_R), numpy_to_cint(M_S), len(M_R), len(M_R), len(M_R));
+		cfunc_call(PAWC.overlap_setup_real, None, basis.pwf.wf_ptr, self.pwf.wf_ptr,
+					projector_list, basisnums, selfnums, basiscoords, selfcoords,
+					N_R, N_S, N_RS_R, N_RS_S, len(N_R), len(N_S), len(N_RS_R))
+		#cfunc_call(PAWC.overlap_setup_real, None, basis.pwf.wf_ptr, self.pwf.wf_ptr,
+		#			projector_list, basisnums, selfnums, basiscoords, selfcoords,
+		#			M_R, M_S, M_R, M_S, len(M_R), len(M_R), len(M_R))
 		end = time.monotonic()
 		Timer.overlap_time(end-start)
 		print('-------------\nran overlap_setup in %f seconds\n---------------' % (end-start))
@@ -391,14 +390,13 @@ class Wavefunction:
 				as described above
 		"""
 
-		res = self.projector.pseudoprojection(c_void_p(basis.pwf.wf_ptr), c_void_p(self.pwf.wf_ptr), band_num)
-		nband = basis.projector.get_nband(c_void_p(basis.pwf.wf_ptr))
-		nwk = basis.projector.get_nwk(c_void_p(basis.pwf.wf_ptr))
-		nspin = basis.projector.get_nspin(c_void_p(basis.pwf.wf_ptr))
-		res = cdouble_to_numpy(res, 2*nband*nwk*nspin)
+		nband = PAWC.get_nband(c_void_p(basis.pwf.wf_ptr))
+		nwk = PAWC.get_nwk(c_void_p(basis.pwf.wf_ptr))
+		nspin = PAWC.get_nspin(c_void_p(basis.pwf.wf_ptr))
+		res = cfunc_call(PAWC.pseudoprojection, 2*nband*nwk*nspin,
+						basis.pwf.wf_ptr, self.pwf.wf_ptr)
 		print("datsa", nband, nwk, nspin)
 		sys.stdout.flush()
-		#projector_list, selfnums, selfcoords, basisnums, basiscoords = basis.projection_data
 		projector_list = basis.projector_list
 		basisnums = basis.nums
 		basiscoords = basis.coords
@@ -408,24 +406,25 @@ class Wavefunction:
 		M_R, M_S, N_R, N_S, N_RS_R, N_RS_S = self.site_cat
 		
 		start = time.monotonic()
-		ct = self.projector.compensation_terms(band_num, c_void_p(self.pwf.wf_ptr), c_void_p(basis.pwf.wf_ptr), c_void_p(projector_list), 
-			len(self.cr.pps), len(M_R), len(N_R), len(N_S), len(N_RS_R), numpy_to_cint(M_R), numpy_to_cint(M_S),
-			numpy_to_cint(N_R), numpy_to_cint(N_S), numpy_to_cint(N_RS_R), numpy_to_cint(N_RS_S),
-			numpy_to_cint(selfnums), numpy_to_cdouble(selfcoords),
-			numpy_to_cint(basisnums), numpy_to_cdouble(basiscoords),
-			numpy_to_cint(self.dim))
+		ct = cfunc_call(PAWC.compensation_terms, 2*nband*nwk*nspin,
+						band_num, self.pwf.wf_ptr, basis.pwf.wf_ptr,
+						projector_list, len(self.cr.pps),
+						len(M_R), len(N_R), len(N_S), len(N_RS_R),
+						M_R, M_S, N_R, N_S, N_RS_R, N_RS_S,
+						selfnums, selfcoords, basisnums, basiscoords,
+						self.dim)
 		end = time.monotonic()
 		Timer.augmentation_time(end-start)
 		print('---------\nran compensation_terms in %f seconds\n-----------' % (end-start))
 		"""
-		ct = self.projector.compensation_terms(band_num, c_void_p(self.pwf.wf_ptr), c_void_p(basis.pwf.wf_ptr), c_void_p(projector_list), 
-			len(self.cr.pps), 0, len(M_R), len(M_S), len(M_S), numpy_to_cint([]), numpy_to_cint([]),
-			numpy_to_cint(M_R), numpy_to_cint(M_S), numpy_to_cint(M_R), numpy_to_cint(M_S),
-			numpy_to_cint(selfnums), numpy_to_cdouble(selfcoords),
-			numpy_to_cint(basisnums), numpy_to_cdouble(basiscoords),
-			numpy_to_cint(self.dim))
+		ct = cfunc_call(PAWC.compensation_terms, 2*nband*nwk*nspin,
+						band_num, self.pwf.wf_ptr, basis.pwf.wf_ptr,
+						projector_list, len(self.cr.pps),
+						0, len(M_R), len(M_S), len(M_S),
+						np.array([]), np.array([]), M_R, M_S, M_R, M_S,
+						selfnums, selfcoords, basisnums, basiscoords,
+						self.dim)
 		"""
-		ct = cdouble_to_numpy(ct, 2*nband*nwk*nspin)
 		res += ct
 		return res[::2] + 1j * res[1::2]
 
@@ -476,10 +475,14 @@ class Wavefunction:
 
 		#print (num_els, clabels, ls, pgrids, wgrids, rmaxs)
 		grid_encut = (2 * np.pi * self.dim / self.structure.lattice.abc)**2 / 0.262
-		return self.projector.get_projector_list(num_els, numpy_to_cint(clabels),
-			numpy_to_cint(ls), numpy_to_cdouble(pgrids), numpy_to_cdouble(wgrids),
-			numpy_to_cdouble(projectors), numpy_to_cdouble(aewaves), numpy_to_cdouble(pswaves),
-			numpy_to_cdouble(rmaxs), c_double(max(grid_encut)))
+		#return PAWC.get_projector_list(num_els, numpy_to_cint(clabels),
+		#	numpy_to_cint(ls), numpy_to_cdouble(pgrids), numpy_to_cdouble(wgrids),
+		#	numpy_to_cdouble(projectors), numpy_to_cdouble(aewaves), numpy_to_cdouble(pswaves),
+		#	numpy_to_cdouble(rmaxs), c_double(max(grid_encut)))
+		return cfunc_call(PAWC.get_projector_list, None,
+							num_els, clabels, ls, pgrids, wgrids,
+							projectors, aewaves, pswaves,
+							rmaxs, c_double(max(grid_encut)))
 
 	@staticmethod
 	def setup_multiple_projections(basis_dir, wf_dirs, ignore_errors = False):
@@ -531,10 +534,13 @@ class Wavefunction:
 		basis.num_proj_els = len(pps)
 
 		sys.stdout.flush()	
-		basis.projector.setup_projections(c_void_p(basis.pwf.wf_ptr),
-			c_void_p(projector_list), label,
-			len(basis.structure), numpy_to_cint(basis.dim), numpy_to_cint(basisnums),
-			numpy_to_cdouble(basiscoords))
+		#PAWC.setup_projections(c_void_p(basis.pwf.wf_ptr),
+		#	c_void_p(projector_list), label,
+		#	len(basis.structure), numpy_to_cint(basis.dim), numpy_to_cint(basisnums),
+		#	numpy_to_cdouble(basiscoords))
+		cfunc_call(PAWC.setup_projections, None,
+					basis.pwf.wf_ptr, projector_list, label,
+					basis.structure, basis.dim, basisnums, basiscoords)
 
 		for wf_dir, cr in zip(wf_dirs, crs[1:]):
 
@@ -643,10 +649,10 @@ class Wavefunction:
 				proportion of band band_num
 		"""
 
-		nband = self.projector.get_nband(c_void_p(bulk.pwf.wf_ptr))
-		nwk = self.projector.get_nwk(c_void_p(bulk.pwf.wf_ptr))
-		nspin = self.projector.get_nspin(c_void_p(bulk.pwf.wf_ptr))
-		occs = cdouble_to_numpy(self.projector.get_occs(c_void_p(bulk.pwf.wf_ptr)), nband*nwk*nspin)
+		nband = PAWC.get_nband(c_void_p(bulk.pwf.wf_ptr))
+		nwk = PAWC.get_nwk(c_void_p(bulk.pwf.wf_ptr))
+		nspin = PAWC.get_nspin(c_void_p(bulk.pwf.wf_ptr))
+		occs = cdouble_to_numpy(PAWC.get_occs(c_void_p(bulk.pwf.wf_ptr)), nband*nwk*nspin)
 
 		if pseudo:
 			res = self.pwf.pseudoprojection(band_num, bulk.pwf)
@@ -693,11 +699,11 @@ class Wavefunction:
 			spinpol (bool, False): whether to return spin-polarized results (only allowed
 				for spin-polarized DFT output)
 		"""
-		nband = self.projector.get_nband(c_void_p(bulk.pwf.wf_ptr))
-		nwk = self.projector.get_nwk(c_void_p(bulk.pwf.wf_ptr))
-		nspin = self.projector.get_nspin(c_void_p(bulk.pwf.wf_ptr))
+		nband = PAWC.get_nband(c_void_p(bulk.pwf.wf_ptr))
+		nwk = PAWC.get_nwk(c_void_p(bulk.pwf.wf_ptr))
+		nspin = PAWC.get_nspin(c_void_p(bulk.pwf.wf_ptr))
 		#totest = set()
-		occs = cdouble_to_numpy(self.projector.get_occs(c_void_p(bulk.pwf.wf_ptr)), nband*nwk*nspin)
+		occs = cdouble_to_numpy(PAWC.get_occs(c_void_p(bulk.pwf.wf_ptr)), nband*nwk*nspin)
 		vbm = 0
 		for i in range(nband):
 			if occs[i*nwk*nspin] > 0.5:
@@ -834,7 +840,7 @@ class Wavefunction:
 		Frees all of the C structures associated with the Wavefunction object.
 		After being called, this object is not usable.
 		"""
-		self.projector.free_pswf(c_void_p(self.pwf.wf_ptr))
+		PAWC.free_pswf(c_void_p(self.pwf.wf_ptr))
 		if self.projector_list != None:
-			self.projector.free_ppot_list(c_void_p(self.projector_list), len(self.cr.pps))
+			PAWC.free_ppot_list(c_void_p(self.projector_list), len(self.cr.pps))
 

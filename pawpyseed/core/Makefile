@@ -6,10 +6,10 @@ ICC_FLAGS = -std=c11 -lmkl_rt -fopenmp -lpthread -ldl -lm -O3 -fPIC -Wall -DMKL_
 ICC_SRC = utils.c gaunt.c radial.c sbt.c reader.c quadrature.c linalg.c density.c pseudoprojector.c projector.c tests.c
 ICC_OBJ = utils.o gaunt.o radial.o sbt.o reader.o quadrature.o linalg.o density.c pseudoprojector.o projector.o tests.o
 
-pawpy_icc: $(ICC_SRC)
+pawpy: $(ICC_SRC)
 	rm -f $(PWD)/pawpy.so
-	icc -shared -c $^ $(ICC_FLAGS) $(ICC_INCS) $(ICC_LIBS)
-	icc -shared -o pawpy.so *.o $(ICC_FLAGS) $(ICC_INCS) $(ICC_LIBS)
+	$(PAWPYCC) -shared -c $^ $(ICC_FLAGS) $(ICC_INCS) $(ICC_LIBS)
+	$(PAWPYCC) -shared -o pawpy.so *.o $(ICC_FLAGS) $(ICC_INCS) $(ICC_LIBS)
 
 lite:
 	rm -f $(PWD)/pawpy.so

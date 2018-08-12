@@ -3,6 +3,9 @@ import os, subprocess
 import shutil
 import sys
 
+class PawpyBuildError(Exception):
+	pass
+
 with open('README.md', 'r') as fh:
 	long_description = fh.read()
 
@@ -34,6 +37,16 @@ setup(name='pawpyseed',
 if len(sys.argv) > 1 and sys.argv[1] == 'build':
 	currdir = os.getcwd()
 	os.chdir(os.path.join(currdir,'build/lib/pawpyseed/core'))
-	subprocess.call('make pawpy_icc'.split())
+	if not "PAWPYCC" in os.environ:
+		if subprocess.call("which icc".split()) == 0:
+			os.environ["PAWPYCC"] = "icc"
+		elif subprocess.call("which gcc".split()) == 0:
+			os.environ["PAWPYCC"] = "gcc"
+		else:
+			raise PawpyBuildError("Can't find icc or gcc compiler!")
+
+	status = subprocess.call('make pawpy'.split())
+	if status != 0:
+		raise PawpyBuildError("Can't compile pawpy.so! Check the C error output for details.")
 	os.chdir(currdir)
 

@@ -16,6 +16,10 @@ from ctypes import *
 
 import os
 
+c_int_p = POINTER(c_int)
+c_float_p = POINTER(c_float)
+c_double_p = POINTER(c_double)
+
 MODULE_DIR = os.path.dirname(os.path.abspath(__file__))
 PAWC = CDLL(os.path.join(MODULE_DIR, "pawpy.so"))
 
@@ -52,8 +56,13 @@ PAWC.setup_projections_copy_rayleigh.argtypes = [c_void_p] + PAWC.setup_projecti
 PAWC.project_realspace_state.argtypes = [c_int, c_int, c_void_p, c_void_p, c_void_p, c_int_p, c_int_p, c_double_p, c_int_p, c_double_p]
 PAWC.project_realspace_state.restype = c_void_p
 
+PAWC.pseudoprojection.argtypes = [c_void_p, c_void_p, c_int]
 PAWC.pseudoprojection.restype = c_double_p
+
+PAWC.compensation_terms.argtypes = [c_int] + [c_void_p]*3 + [c_int]*5 + [c_int_p]*6 \
+									+ [c_int_p, c_double_p]*2 + [c_int_p]
 PAWC.compensation_terms.restype = c_double_p
+
 PAWC.get_occs.restype = c_double_p
 PAWC.get_nband.restype = c_int
 PAWC.get_nwk.restype = c_int
@@ -78,7 +87,7 @@ def cfunc_call(func, outsize, *args):
 	"""
 	cargs = []
 	for argtype, arg in zip(func.argtypes, args):
-		if type(arg) == list:
+		if type(arg) == list or type(arg) == tuple:
 			arg = np.array(arg)
 		if type(arg) == np.ndarray:
 			if argtype == c_double_p:
@@ -89,14 +98,18 @@ def cfunc_call(func, outsize, *args):
 				cargs.append(numpy_to_cint(arg))
 			else:
 				raise PAWpyError("cfunc_call: invalid array type %s" % repr(arg.dtype))
-		elif type(arg) == int:
+		elif argtype == c_void_p:
 			cargs.append(arg)
-		elif type(arg) == float:
-			cargs.append(arg)
+		elif argtype == c_int:
+			cargs.append(c_int(arg))
+		elif argtype == c_float:
+			cargs.append(c_float(arg))
+		elif argtype == c_double:
+			cargs.append(c_double(arg))
 		elif type(arg) == str:
 			cargs.append(arg.encode('utf-8'))
 		else:
-			raise PAWpyError("cfunc_call: unsupported argument type %s" % repr(arg.dtype))
+			raise PAWpyError("cfunc_call: unsupported argument type %s" % type(arg))
 	res = func(*cargs)
 	if outsize == None:
 		return res

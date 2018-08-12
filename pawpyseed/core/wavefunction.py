@@ -329,8 +329,7 @@ class Wavefunction:
 		#	basis.projection_data = self.make_c_projectors(basis)
 		#projector_list, selfnums, selfcoords, basisnums, basiscoords = basis.projection_data
 		if setup_basis:
-			basis.projector_list, self.nums, self.coords,
-				basis.nums, basis.coords = self.make_c_projectors(basis)
+			basis.projector_list, self.nums, self.coords, basis.nums, basis.coords = self.make_c_projectors(basis)
 		projector_list = basis.projector_list
 		basisnums = basis.nums
 		basiscoords = basis.coords
@@ -350,7 +349,7 @@ class Wavefunction:
 		cfunc_call(PAWC.setup_projections_copy_rayleigh, None,
 					self.pwf.wf_ptr, basis.pwf.wf_ptr,
 					projector_list, self.num_proj_els, len(self.structure),
-					self.dum, selfnums, selfcoords)
+					self.dim, selfnums, selfcoords)
 		end = time.monotonic()
 		print('--------------\nran setup_projections in %f seconds\n---------------' % (end-start))
 		Timer.setup_time(end-start)
@@ -394,7 +393,7 @@ class Wavefunction:
 		nwk = PAWC.get_nwk(c_void_p(basis.pwf.wf_ptr))
 		nspin = PAWC.get_nspin(c_void_p(basis.pwf.wf_ptr))
 		res = cfunc_call(PAWC.pseudoprojection, 2*nband*nwk*nspin,
-						basis.pwf.wf_ptr, self.pwf.wf_ptr)
+						basis.pwf.wf_ptr, self.pwf.wf_ptr, band_num)
 		print("datsa", nband, nwk, nspin)
 		sys.stdout.flush()
 		projector_list = basis.projector_list
@@ -478,11 +477,11 @@ class Wavefunction:
 		#return PAWC.get_projector_list(num_els, numpy_to_cint(clabels),
 		#	numpy_to_cint(ls), numpy_to_cdouble(pgrids), numpy_to_cdouble(wgrids),
 		#	numpy_to_cdouble(projectors), numpy_to_cdouble(aewaves), numpy_to_cdouble(pswaves),
-		#	numpy_to_cdouble(rmaxs), c_double(max(grid_encut)))
+		#	numpy_to_cdouble(rmaxs), max(grid_encut))
 		return cfunc_call(PAWC.get_projector_list, None,
 							num_els, clabels, ls, pgrids, wgrids,
 							projectors, aewaves, pswaves,
-							rmaxs, c_double(max(grid_encut)))
+							rmaxs, max(grid_encut))
 
 	@staticmethod
 	def setup_multiple_projections(basis_dir, wf_dirs, ignore_errors = False):
@@ -540,7 +539,7 @@ class Wavefunction:
 		#	numpy_to_cdouble(basiscoords))
 		cfunc_call(PAWC.setup_projections, None,
 					basis.pwf.wf_ptr, projector_list, label,
-					basis.structure, basis.dim, basisnums, basiscoords)
+					len(basis.structure), basis.dim, basisnums, basiscoords)
 
 		for wf_dir, cr in zip(wf_dirs, crs[1:]):
 

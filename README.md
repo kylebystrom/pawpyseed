@@ -27,9 +27,14 @@ variable `MKLROOT` must be present and point to the Math Kernel Library.
 
 ### Dependencies
 
+All dependencies indicate the minimum version tested.
+PAWpySeed might work fine with earlier versions, but
+errors related to use of earlier versions are not supported
+and will not be addressed.
+
 Python requirements:
 ```
-python>=3.6 or python>=2.7
+python>=3.5
 numpy>=1.14
 scipy>=1.0
 pymatgen>=2018.2.13
@@ -37,7 +42,7 @@ pymatgen>=2018.2.13
 
 C requirements:
 ```
-Intel C Compiler >= 16.0.4
+icc >= 16.0.4 OR gcc >= 4.8.5
 Intel Math Kernel Library >= 11.3.4
 ```
 Intel MKL is available for free installation on a variety of platforms.
@@ -50,7 +55,11 @@ to link MKL (NOTE: this might not be the exact directory that MKL is in,
 you need to check that first):
 ```
 export MKLROOT=/opt/intel/compilers_and_libraries_2018/linux/mkl
+export LD_LIBRARY_PATH=$MKLROOT/lib/intel64_lin:$LD_LIBRARY_PATH
+export C_INCLUDE_PATH=$MKLROOT/include:$C_INCLUDE_PATH
 ```
+The last line is optional but might be useful for future PAWpySeed builds
+and other programs which make use of MKL.
 The setup.py file will now take care of C compilation.
 
 Optional Python dependencies:
@@ -180,7 +189,7 @@ for wf_dir in def_lst:
 		# v is the valence band character and c is the conduction band character
 		v, c = wf.proportion_conduction(i, basis, pseudo=True, spinpol=True)
 		dat[wf_dir][i] = (v, c)
-	print ('FINISHED DEFECt %s' % wf_dir)
+	print ('FINISHED DEFECT %s' % wf_dir)
 	# Wavefunction objects use C code and memory, make sure to free it!
 	wf.free_all()
 
@@ -194,6 +203,22 @@ Now 'res.yaml' will contain the valence and conduction band characters for the s
 and structures in a yaml-formatted dictionary.
 
 ### Example 2: AE overlap operators using PawpyData subclasses
+
+To calculate the AE overlap operators, it is first necessary to run the setup
+routines which calculate the overlap operators of the projector functions
+with the PS wavefunctions and with each other. This is demonstrated in the
+following script:
+
+```
+from pawpyseed.core.wavefunction import *
+
+basis = Wavefunction.from_directory('bulk')
+wf = Wavefunction.from_directory('defect')
+
+wf.setup_projection(basis, setup_basis=True)
+
+v, c = wf.proportion_condition(253, basis, pseudo=False, spinpol=True)
+```
 
 The following example does the same thing as Example 1, except the all electron
 overlap operators are calculated, and only four lines of code are used!

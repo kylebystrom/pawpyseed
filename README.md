@@ -178,20 +178,20 @@ basis = Wavefunction.from_directory('bulk')
 
 # loop over the defect directories
 for wf_dir in def_lst:
-	wf = Wavefunction.from_directory(wf_dir)
-	dat[wf_dir] = {}
-	# loop over bands near the band gap
-	for i in range(250, 262):
-		# if pseudo is true, the overlap operators of the pseudowavefunctions
-		# is evaluated, rather than of the all electron wavefunctions,
-		# which is much faster but less quantitatively informative
-		# v + c = 1 for pseudo = True
-		# v is the valence band character and c is the conduction band character
-		v, c = wf.proportion_conduction(i, basis, pseudo=True, spinpol=True)
-		dat[wf_dir][i] = (v, c)
-	print ('FINISHED DEFECT %s' % wf_dir)
-	# Wavefunction objects use C code and memory, make sure to free it!
-	wf.free_all()
+    wf = Wavefunction.from_directory(wf_dir)
+    dat[wf_dir] = {}
+    # loop over bands near the band gap
+    for i in range(250, 262):
+        # if pseudo is true, the overlap operators of the pseudowavefunctions
+        # is evaluated, rather than of the all electron wavefunctions,
+        # which is much faster but less quantitatively informative
+        # v + c = 1 for pseudo = True
+        # v is the valence band character and c is the conduction band character
+        v, c = wf.proportion_conduction(i, basis, pseudo=True, spinpol=True)
+        dat[wf_dir][i] = (v, c)
+    print ('FINISHED DEFECT %s' % wf_dir)
+    # Wavefunction objects use C code and memory, make sure to free it!
+    wf.free_all()
 
 basis.free_all()
 f = open('res.yaml', 'w')

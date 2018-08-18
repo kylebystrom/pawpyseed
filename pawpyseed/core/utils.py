@@ -1,14 +1,13 @@
+## @package pawpyseed.core.utils
+# Main utilities file for the Python portion of the code.
+# This files stores 1) the PAWC ctypes module, which
+# contains all of the C functions used to read and analyze
+# PAW wavefunctions, 2) converter functions than transfer
+# data from numpy arrays to C pointers and vice versa,
+# 3) cfunc_call, which is used to conveniently call ctypes
+# functions, and 4) a few other utilties employed mainly
+# by the wavefunction classes.
 
-"""@package pawpyseed.core.wavefunction
-Main utilities file for the Python portion of the code.
-This files stores 1) the PAWC ctypes module, which
-contains all of the C functions used to read and analyze
-PAW wavefunctions, 2) converter functions than transfer
-data from numpy arrays to C pointers and vice versa,
-3) cfunc_call, which is used to conveniently call ctypes
-functions, and 4) a few other utilties employed mainly
-by the wavefunction classes.
-"""
 
 import numpy as np
 from ctypes import *

@@ -1,10 +1,9 @@
 # coding: utf-8
 
-"""
-\file
-Base class containing Python classes for parsing files
-and storing and analyzing wavefunction data.
-"""
+## @package pawpyseed.core.wavefunction
+# Base class containing Python classes for parsing files
+# and storing and analyzing wavefunction data.
+
 
 from pymatgen.io.vasp.inputs import Potcar, Poscar
 from pymatgen.io.vasp.outputs import Vasprun, Outcar

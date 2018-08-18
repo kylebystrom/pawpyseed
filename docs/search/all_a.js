@@ -1,8 +1,15 @@
 var searchData=
 [
-  ['l',['l',['../structfuncset.html#a8edda6bc8fa89552eed15a138cc3716f',1,'funcset::l()'],['../structrayleigh__set.html#a2f72eba6d4a8481622365ffb806d939f',1,'rayleigh_set::l()']]],
-  ['legendre',['legendre',['../utils_8h.html#a8ea41329e3326d2b03c68b610e241691',1,'utils.h']]],
-  ['linalg_2eh',['linalg.h',['../linalg_8h.html',1,'']]],
-  ['lmax',['lmax',['../structppot.html#a3ae23fb6a33564c96f4cebf6e9e30fd1',1,'ppot']]],
-  ['ls',['ls',['../structprojection.html#a5df038b921ae9dfd7ccb79a0b6af8ae3',1,'projection']]]
+  ['k',['k',['../structkpoint.html#a47154749e0f1dd2ab4f0d75f0ff64f8b',1,'kpoint::k()'],['../namespacepawpyseed_1_1core_1_1rayleigh.html#a45c3242d3f6560553b5e5bf85f220a65',1,'pawpyseed.core.rayleigh.k()']]],
+  ['kappamin',['kappamin',['../structsbt__descriptor.html#a78657f5794225e2c80da2cdaa6fe8c72',1,'sbt_descriptor']]],
+  ['kinetic',['kinetic',['../classpawpyseed_1_1core_1_1wavefunction_1_1Pseudopotential.html#a56cec7be94c916119f9389b06fe1f35a',1,'pawpyseed::core::wavefunction::Pseudopotential']]],
+  ['kmin',['kmin',['../structsbt__descriptor.html#a7165b992f113fa94d73b84a9e42938aa',1,'sbt_descriptor']]],
+  ['kpoint',['kpoint',['../structkpoint.html',1,'']]],
+  ['kpoint_5ft',['kpoint_t',['../utils_8h.html#a8cafed6b50bb2761b72f06bf2281bcc5',1,'utils.h']]],
+  ['kpts',['kpts',['../structpswf.html#ab2b049719d612729a68724b97b15bf58',1,'pswf::kpts()'],['../classpawpyseed_1_1core_1_1wavefunction_1_1PseudoWavefunction.html#abb781e080ade928f69ae9d9c94872aa3',1,'pawpyseed.core.wavefunction.PseudoWavefunction.kpts()']]],
+  ['ks',['ks',['../structsbt__descriptor.html#ae9669ec7ae8646caa74212d2822e2e4b',1,'sbt_descriptor']]],
+  ['kwave',['kwave',['../structfuncset.html#a9dcd53c46ea813a9e805d9795729dc71',1,'funcset']]],
+  ['kwave_5fgrid',['kwave_grid',['../structppot.html#a159da879325c513c6aea23e5222165b1',1,'ppot']]],
+  ['kwave_5fspline',['kwave_spline',['../structfuncset.html#a26d8c098ba6ee0fefcbb8a9c79285923',1,'funcset']]],
+  ['kws',['kws',['../classpawpyseed_1_1core_1_1wavefunction_1_1PseudoWavefunction.html#ab59c3d0ccad34fb9cfaa38c2a1aa40d6',1,'pawpyseed.core.wavefunction.PseudoWavefunction.kws()'],['../namespaceprojector.html#a783730f993ebc126c15d04685a47e024',1,'projector.kws()']]]
 ];

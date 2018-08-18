@@ -50,7 +50,7 @@
 body {
   margin: 20;
   padding: 20;
-  background: #151515 url("../images/bkg.png") 0 0;
+  background: #151515 url("images/bkg.png") 0 0;
   color: #eaeaea;
   font-size: 16px;
   line-height: 1.5;
@@ -153,7 +153,7 @@ dt {
   font-weight: bold; }
 
 ul li {
-  list-style-image: url("../images/bullet.png"); }
+  list-style-image: url("images/bullet.png"); }
 
 blockquote {
   color: #aaa;
@@ -227,7 +227,7 @@ hr {
 
 .btn-github .icon {
   opacity: 0.6;
-  background: url("../images/blacktocat.png") 0 0 no-repeat; }
+  background: url("images/blacktocat.png") 0 0 no-repeat; }
 
 /* Links
    a, a:hover, a:visited

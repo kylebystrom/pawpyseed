@@ -10,5 +10,6 @@ var searchData=
   ['write_5frealspace_5fstate_5fri_5fnoreturn',['write_realspace_state_ri_noreturn',['../density_8h.html#a85841eea85bcadc62781c67943c0e04b',1,'density.h']]],
   ['write_5frealspace_5fstate_5fri_5freturn',['write_realspace_state_ri_return',['../density_8h.html#a4e34f12f6770cb3d91d0595de75cd436',1,'density.h']]],
   ['write_5fstate_5frealspace',['write_state_realspace',['../classpawpyseed_1_1core_1_1wavefunction_1_1Wavefunction.html#a35ea78bbe59287ab37ce71b1a6f0f7ea',1,'pawpyseed::core::wavefunction::Wavefunction']]],
-  ['write_5fvolumetric',['write_volumetric',['../density_8h.html#afaf51ca488301a9c2780494e13afe055',1,'density.h']]]
+  ['write_5fvolumetric',['write_volumetric',['../density_8h.html#afaf51ca488301a9c2780494e13afe055',1,'density.h']]],
+  ['write_5fyaml',['write_yaml',['../classpawpyseed_1_1analysis_1_1defect__composition_1_1PawpyData.html#adf54d52e750a126fe225a0175dfae165',1,'pawpyseed::analysis::defect_composition::PawpyData']]]
 ];

@@ -1,6 +1,5 @@
 
-"""
-\file
+"""@package pawpyseed.core.wavefunction
 Main utilities file for the Python portion of the code.
 This files stores 1) the PAWC ctypes module, which
 contains all of the C functions used to read and analyze

@@ -1,6 +1,6 @@
 var searchData=
 [
-  ['f',['f',['../namespacepawpyseed_1_1core_1_1gaunt.html#a5aae9b12477bf7aaba364d9c43b680ca',1,'pawpyseed.core.gaunt.f()'],['../namespacepawpyseed_1_1core_1_1quadrature.html#a2f5cfe509f26c1a6b4227f52421f7fdb',1,'pawpyseed.core.quadrature.f()'],['../namespacepawpyseed_1_1core_1_1rayleigh.html#a8e2301da02ad707473ac3b65e59663c0',1,'pawpyseed.core.rayleigh.f()'],['../namespaceprojector.html#a94b2d99b0b7638692967bc722de341b5',1,'projector.f()'],['../namespacepawpyseed_1_1analysis_1_1plots.html#abebcf96b0c36f295f1b806e75454635f',1,'pawpyseed.analysis.plots.f()']]],
+  ['f',['f',['../namespacepawpyseed_1_1core_1_1gaunt.html#a5aae9b12477bf7aaba364d9c43b680ca',1,'pawpyseed.core.gaunt.f()'],['../namespacepawpyseed_1_1core_1_1quadrature.html#a2f5cfe509f26c1a6b4227f52421f7fdb',1,'pawpyseed.core.quadrature.f()'],['../namespacepawpyseed_1_1core_1_1rayleigh.html#a8e2301da02ad707473ac3b65e59663c0',1,'pawpyseed.core.rayleigh.f()'],['../namespacepawpyseed_1_1analysis_1_1plots.html#abebcf96b0c36f295f1b806e75454635f',1,'pawpyseed.analysis.plots.f()']]],
   ['fac',['fac',['../utils_8h.html#a75fe42379006bcd22259df3b5f20b770',1,'utils.h']]],
   ['facs',['facs',['../namespacepawpyseed_1_1core_1_1gaunt.html#adfc9f1cbb9e1d96d9a0955a2f3adaa77',1,'pawpyseed::core::gaunt']]],
   ['fft3d',['fft3d',['../linalg_8h.html#ae6255b4be7de52e072442ee6c194963a',1,'linalg.h']]],

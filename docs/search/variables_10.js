@@ -1,15 +1,10 @@
 var searchData=
 [
-  ['r',['r',['../namespacepawpyseed_1_1core_1_1rayleigh.html#a92b829d6db56c2116a6ff30c80f5de69',1,'pawpyseed.core.rayleigh.r()'],['../namespacepawpyseed_1_1analysis_1_1plots.html#a0ead40e5362cd527cfebe430e478bd93',1,'pawpyseed.analysis.plots.r()']]],
-  ['realprojs',['realprojs',['../classpawpyseed_1_1core_1_1wavefunction_1_1Pseudopotential.html#a7b9de1ea11550218bbe2e58a56dbf1d1',1,'pawpyseed::core::wavefunction::Pseudopotential']]],
-  ['recipprojs',['recipprojs',['../classpawpyseed_1_1core_1_1wavefunction_1_1Pseudopotential.html#ad4b01bafe71f488e5b2cd3a83a3a2ee3',1,'pawpyseed::core::wavefunction::Pseudopotential']]],
-  ['reclattice',['reclattice',['../structpswf.html#a2a0453d35e9c128eb71a3d4158c361ae',1,'pswf']]],
-  ['res',['res',['../namespaceprojector.html#ae412cd73ef2431bf045641b9da8f581e',1,'projector']]],
-  ['restype',['restype',['../namespacepawpyseed_1_1core_1_1utils.html#a63c68f8dfbb4a315fbaaa479672afe76',1,'pawpyseed::core::utils']]],
-  ['rhomin',['rhomin',['../structsbt__descriptor.html#a44b46c781837878634bbdc35ab3b3096',1,'sbt_descriptor']]],
-  ['rmax',['rmax',['../structppot.html#a5e04d074f79b2f7d3c993239d575cbd3',1,'ppot::rmax()'],['../structreal__proj__site.html#a28b96f97cb72845d3814dd0d6d8c907b',1,'real_proj_site::rmax()'],['../classpawpyseed_1_1core_1_1wavefunction_1_1Pseudopotential.html#a924e508f4686918771f174a5650b0d79',1,'pawpyseed.core.wavefunction.Pseudopotential.rmax()']]],
-  ['rmaxstr',['rmaxstr',['../classpawpyseed_1_1core_1_1wavefunction_1_1Pseudopotential.html#a0f72ebf690ce00d3e61345c4aab5d30b',1,'pawpyseed::core::wavefunction::Pseudopotential']]],
-  ['rmaxstrs',['rmaxstrs',['../classpawpyseed_1_1core_1_1wavefunction_1_1Pseudopotential.html#a0ff34bee9c663f1505e232c941aa14e4',1,'pawpyseed::core::wavefunction::Pseudopotential']]],
-  ['rmin',['rmin',['../structsbt__descriptor.html#a9fc1844c1b2e1513ddeac8ecd15ef47d',1,'sbt_descriptor']]],
-  ['rs',['rs',['../structsbt__descriptor.html#af35d9dda2dc51c23ae1713f94d3b27fa',1,'sbt_descriptor']]]
+  ['sbtfacs',['SBTFACS',['../gaunt_8h.html#ad4c3967f6100245a3e6dda857bb5f3f4',1,'gaunt.h']]],
+  ['site_5fcat',['site_cat',['../classpawpyseed_1_1core_1_1wavefunction_1_1Wavefunction.html#af68d04a4f991dfc7d296dbaf7d993c53',1,'pawpyseed::core::wavefunction::Wavefunction']]],
+  ['smooth_5fdiffwave',['smooth_diffwave',['../structfuncset.html#a454724c7b79d4a972f72185cbde3d875',1,'funcset']]],
+  ['smooth_5fdiffwave_5fspline',['smooth_diffwave_spline',['../structfuncset.html#a9c1d3d68e3766d8467626985ade063f9',1,'funcset']]],
+  ['smooth_5fgrid',['smooth_grid',['../structppot.html#a77afec89417406a452f3330c4667bfef',1,'ppot']]],
+  ['step',['step',['../classpawpyseed_1_1core_1_1wavefunction_1_1Pseudopotential.html#af64c029616e3d173b557d4b23c8dd46a',1,'pawpyseed::core::wavefunction::Pseudopotential']]],
+  ['structure',['structure',['../classpawpyseed_1_1core_1_1wavefunction_1_1Wavefunction.html#a169cc0d6e35ed50a399a2ec66e1de513',1,'pawpyseed.core.wavefunction.Wavefunction.structure()'],['../classpawpyseed_1_1analysis_1_1defect__composition_1_1PawpyData.html#a12615168eaa7f37e0ca7b0b51fabf2a6',1,'pawpyseed.analysis.defect_composition.PawpyData.structure()'],['../classpawpyseed_1_1analysis_1_1defect__composition_1_1BulkCharacter.html#a4b2b8e9268c93a7c0dfc98523a09bb78',1,'pawpyseed.analysis.defect_composition.BulkCharacter.structure()'],['../classpawpyseed_1_1analysis_1_1defect__composition_1_1BasisExpansion.html#aca395554859d7792803db72773ba339a',1,'pawpyseed.analysis.defect_composition.BasisExpansion.structure()']]]
 ];

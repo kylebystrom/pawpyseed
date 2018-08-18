@@ -1,13 +1,9 @@
 var searchData=
 [
-  ['sbtfacs',['SBTFACS',['../gaunt_8h.html#ad4c3967f6100245a3e6dda857bb5f3f4',1,'gaunt.h']]],
-  ['scripts',['scripts',['../namespacesetup.html#a45010f2cc65cf779c33b8be481626cc7',1,'setup']]],
-  ['site_5fcat',['site_cat',['../classpawpyseed_1_1core_1_1wavefunction_1_1Wavefunction.html#af68d04a4f991dfc7d296dbaf7d993c53',1,'pawpyseed::core::wavefunction::Wavefunction']]],
-  ['smooth_5fdiffwave',['smooth_diffwave',['../structfuncset.html#a454724c7b79d4a972f72185cbde3d875',1,'funcset']]],
-  ['smooth_5fdiffwave_5fspline',['smooth_diffwave_spline',['../structfuncset.html#a9c1d3d68e3766d8467626985ade063f9',1,'funcset']]],
-  ['smooth_5fgrid',['smooth_grid',['../structppot.html#a77afec89417406a452f3330c4667bfef',1,'ppot']]],
-  ['srcfiles',['srcfiles',['../namespacesetup.html#a40b71f87cede7f31dd6f6fb3d342ec66',1,'setup']]],
-  ['status',['status',['../namespacesetup.html#a69a6d71431c656207a7bbd6f88f8cffd',1,'setup']]],
-  ['step',['step',['../classpawpyseed_1_1core_1_1wavefunction_1_1Pseudopotential.html#af64c029616e3d173b557d4b23c8dd46a',1,'pawpyseed::core::wavefunction::Pseudopotential']]],
-  ['structure',['structure',['../classpawpyseed_1_1core_1_1wavefunction_1_1Wavefunction.html#a169cc0d6e35ed50a399a2ec66e1de513',1,'pawpyseed.core.wavefunction.Wavefunction.structure()'],['../classpawpyseed_1_1analysis_1_1defect__composition_1_1PawpyData.html#a12615168eaa7f37e0ca7b0b51fabf2a6',1,'pawpyseed.analysis.defect_composition.PawpyData.structure()'],['../classpawpyseed_1_1analysis_1_1defect__composition_1_1BulkCharacter.html#a4b2b8e9268c93a7c0dfc98523a09bb78',1,'pawpyseed.analysis.defect_composition.BulkCharacter.structure()'],['../classpawpyseed_1_1analysis_1_1defect__composition_1_1BasisExpansion.html#aca395554859d7792803db72773ba339a',1,'pawpyseed.analysis.defect_composition.BasisExpansion.structure()']]]
+  ['t',['T',['../classpawpyseed_1_1core_1_1wavefunction_1_1Pseudopotential.html#a137e7ec03841c76234a4642035f36562',1,'pawpyseed::core::wavefunction::Pseudopotential']]],
+  ['temp1',['temp1',['../namespacepawpyseed_1_1core_1_1rayleigh.html#a29275c472e71e81df54890bcb8fdda70',1,'pawpyseed::core::rayleigh']]],
+  ['temp2',['temp2',['../namespacepawpyseed_1_1core_1_1rayleigh.html#af26c0018d90b2bb4409ccb5d3d97943c',1,'pawpyseed::core::rayleigh']]],
+  ['terms',['terms',['../structrayleigh__set.html#a03858cbca1d924facfa6600c6535cdd3',1,'rayleigh_set']]],
+  ['total',['total',['../namespacepawpyseed_1_1core_1_1quad__check.html#a72bac036ead93f16ffc746b21787036c',1,'pawpyseed::core::quad_check']]],
+  ['total_5fprojs',['total_projs',['../structppot.html#a9f5cd6c6cf37bf5db2d1cc7ef60556f0',1,'ppot::total_projs()'],['../structprojection.html#a3b24a44891d6a448b8a2b2c858d9a3ca',1,'projection::total_projs()'],['../structreal__proj__site.html#aeb5be77d198fea1d107efca7a33d66b9',1,'real_proj_site::total_projs()']]]
 ];

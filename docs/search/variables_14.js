@@ -1,10 +1,11 @@
 var searchData=
 [
-  ['v',['v',['../namespaceprojector.html#a180523a6a85ebaba61a52ae217ed9f2b',1,'projector']]],
-  ['val',['val',['../namespacepawpyseed_1_1core_1_1gaunt.html#ad1f5784b2989485301e5c20e1dcee13e',1,'pawpyseed::core::gaunt']]],
-  ['val2',['val2',['../namespacepawpyseed_1_1core_1_1gaunt.html#ae4061891548407916d166d27c776b948',1,'pawpyseed::core::gaunt']]],
-  ['val3',['val3',['../namespacepawpyseed_1_1core_1_1gaunt.html#a9d58ce953b2c20332bcc4083ce718ba3',1,'pawpyseed::core::gaunt']]],
-  ['values',['values',['../structprojgrid.html#a03daabd1db81f186379fc0df40610cb6',1,'projgrid::values()'],['../structreal__proj.html#a1296cd502858d56dcb62ad66a6c4596e',1,'real_proj::values()']]],
-  ['version',['version',['../namespacesetup.html#a2aa722b36a933088812b50ea79b97a5c',1,'setup']]],
-  ['vr',['vr',['../namespaceprojector.html#ad84d0f7fe5b16d192784884e9d9efa43',1,'projector']]]
+  ['w',['w',['../namespacepawpyseed_1_1core_1_1rayleigh.html#a305e205990826f3928397f759679ac31',1,'pawpyseed::core::rayleigh']]],
+  ['wave_5fgrid',['wave_grid',['../structppot.html#a8e4962b828e0f59e506e035237350053',1,'ppot']]],
+  ['wave_5fgridsize',['wave_gridsize',['../structppot.html#a49f2ddce38f232bfd8840a29a5e72a8d',1,'ppot']]],
+  ['wave_5fprojections',['wave_projections',['../structband.html#aaf9df6fc5a67b50ecfa8975cf82af4cc',1,'band']]],
+  ['wave_5frmax',['wave_rmax',['../structppot.html#a1e28c596eacf066f9a8307dc1bad8686',1,'ppot']]],
+  ['weight',['weight',['../structkpoint.html#a88c15b92c9dbf47d29c9ade4aa36aef6',1,'kpoint']]],
+  ['wf_5fptr',['wf_ptr',['../classpawpyseed_1_1core_1_1wavefunction_1_1PseudoWavefunction.html#abbffb59e8179a9f539a0064acd378094',1,'pawpyseed::core::wavefunction::PseudoWavefunction']]],
+  ['wts',['wts',['../namespacepawpyseed_1_1core_1_1quad__check.html#a4ce3bc92dfb697c16675e21c0ca246d5',1,'pawpyseed::core::quad_check']]]
 ];

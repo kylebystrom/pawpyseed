@@ -16,7 +16,5 @@ var searchData=
   ['as_5fdict',['as_dict',['../classpawpyseed_1_1analysis_1_1defect__composition_1_1PawpyData.html#a5be3a69224bb463f84144282d1faadb0',1,'pawpyseed::analysis::defect_composition::PawpyData']]],
   ['atomicdensity',['atomicdensity',['../classpawpyseed_1_1core_1_1wavefunction_1_1Pseudopotential.html#a8102e7c32389232e1314d8a6f0dfac27',1,'pawpyseed::core::wavefunction::Pseudopotential']]],
   ['augmentation_5ftime',['augmentation_time',['../classpawpyseed_1_1core_1_1wavefunction_1_1Timer.html#af311a3e5363ff2219b7e060a23e41d0e',1,'pawpyseed::core::wavefunction::Timer']]],
-  ['augs',['augs',['../classpawpyseed_1_1core_1_1wavefunction_1_1Pseudopotential.html#a0d324b8c85c3e8cbaeb0a0e27205409f',1,'pawpyseed::core::wavefunction::Pseudopotential']]],
-  ['author',['author',['../namespacesetup.html#a3a57a4772d418a06835249cbade0d86a',1,'setup']]],
-  ['author_5femail',['author_email',['../namespacesetup.html#a5b08034343aa2be607722a8b315f3625',1,'setup']]]
+  ['augs',['augs',['../classpawpyseed_1_1core_1_1wavefunction_1_1Pseudopotential.html#a0d324b8c85c3e8cbaeb0a0e27205409f',1,'pawpyseed::core::wavefunction::Pseudopotential']]]
 ];

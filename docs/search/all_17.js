@@ -1,4 +1,7 @@
 var searchData=
 [
-  ['x',['x',['../namespacepawpyseed_1_1core_1_1quadrature.html#ae4e7a512dfb8bbb88e9776e951e5c4c8',1,'pawpyseed.core.quadrature.x()'],['../namespacepawpyseed_1_1core_1_1rayleigh.html#a3e3052b17ec06a85da30ca178bc836b8',1,'pawpyseed.core.rayleigh.x()']]]
+  ['y',['y',['../namespacepawpyseed_1_1core_1_1rayleigh.html#ad061676e910b5aaf55a5f71c5731f607',1,'pawpyseed::core::rayleigh']]],
+  ['yh',['yh',['../namespacepawpyseed_1_1analysis_1_1plots.html#ac3f0bb20a491ccefdf769816af65c2aa',1,'pawpyseed::analysis::plots']]],
+  ['ylm',['Ylm',['../utils_8h.html#ae8156dcec36c011904a87a98c735eb80',1,'utils.h']]],
+  ['ylm2',['Ylm2',['../utils_8h.html#ad7b36fc484d0fb229e10dde80871c2a6',1,'utils.h']]]
 ];

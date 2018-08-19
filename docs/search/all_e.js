@@ -1,10 +1,10 @@
 var searchData=
 [
   ['analysis',['analysis',['../namespacepawpyseed_1_1analysis.html',1,'pawpyseed']]],
-  ['compiler',['compiler',['../namespacepawpyseed_1_1compiler.html',1,'pawpyseed']]],
   ['core',['core',['../namespacepawpyseed_1_1core.html',1,'pawpyseed']]],
   ['defect_5fcomposition',['defect_composition',['../namespacepawpyseed_1_1analysis_1_1defect__composition.html',1,'pawpyseed::analysis']]],
   ['gaunt',['gaunt',['../namespacepawpyseed_1_1core_1_1gaunt.html',1,'pawpyseed::core']]],
+  ['pawpyseed',['PAWpySeed',['../index.html',1,'']]],
   ['paths',['paths',['../structreal__proj.html#a05c39d02f94284d06ad549c8c6eb040d',1,'real_proj']]],
   ['pawc',['PAWC',['../namespacepawpyseed_1_1core_1_1utils.html#a198ff34e94badaacc8236460347eb51a',1,'pawpyseed::core::utils']]],
   ['pawpydata',['PawpyData',['../classpawpyseed_1_1analysis_1_1defect__composition_1_1PawpyData.html',1,'pawpyseed::analysis::defect_composition']]],

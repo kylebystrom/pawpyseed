@@ -11,6 +11,7 @@ var searchData=
   ['read_5fone_5fband',['read_one_band',['../reader_8h.html#a2b1ca1c6f6884c8d3ddfb25e6495f18b',1,'reader.h']]],
   ['read_5fwavefunctions',['read_wavefunctions',['../reader_8h.html#af42fe870fdde3e44e0647913ab0fd836',1,'reader.h']]],
   ['reader_2eh',['reader.h',['../reader_8h.html',1,'']]],
+  ['readme_2emd',['README.md',['../README_8md.html',1,'']]],
   ['real_5fproj',['real_proj',['../structreal__proj.html',1,'']]],
   ['real_5fproj_5fsite',['real_proj_site',['../structreal__proj__site.html',1,'']]],
   ['real_5fproj_5fsite_5ft',['real_proj_site_t',['../utils_8h.html#ab775d07eb4baee2c78eafabc65e07f9e',1,'utils.h']]],

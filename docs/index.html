@@ -1,5 +1,5 @@
 ---
-title: Main Page
+title: PAWpySeed
 layout: default
 ---
 <!-- HTML header for doxygen 1.8.11-->
@@ -9,7 +9,8 @@ layout: default
 <meta http-equiv="Content-Type" content="text/xhtml;charset=UTF-8"/>
 <meta http-equiv="X-UA-Compatible" content="IE=9"/>
 <meta name="generator" content="Doxygen 1.8.11"/>
-<title>PAWpySeed: Main Page</title>
+<title>My Project: PAWpySeed</title>
+<link href="tabs.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="jquery.js"></script>
 <script type="text/javascript" src="dynsections.js"></script>
 <link href="search/search.css" rel="stylesheet" type="text/css"/>
@@ -27,9 +28,8 @@ layout: default
  <tbody>
  <tr style="height: 56px;">
   <td id="projectalign" style="padding-left: 0.5em;">
-   <div id="projectname">PAWpySeed
+   <div id="projectname">My Project
    </div>
-   <div id="projectbrief">Efficient utilities for analyzing PAW wavefunctions</div>
   </td>
  </tr>
  </tbody>
@@ -80,10 +80,60 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
 
 <div class="header">
   <div class="headertitle">
-<div class="title">PAWpySeed Documentation</div>  </div>
+<div class="title">PAWpySeed </div>  </div>
 </div><!--header-->
 <div class="contents">
-</div><!-- contents -->
+<div class="textblock"><p>PAWpySeed is a parallelized Python and C tool for reading and analyzing the optimized band structure and wave functions of VASP DFT calculations. The code is written for the PAW formalism developed by P.E. Blochl and implemented in VASP.</p>
+<h2>Installation</h2>
+<p>In the future, PAWpySeed will be installable with pip. For the time being, installation should be performed by cloning this repository and running the <code>setup.py</code> script in the root directory of the repository.</p>
+<div class="fragment"><div class="line"><a name="l00001"></a><span class="lineno">    1</span>&#160;python setup.py build</div><div class="line"><a name="l00002"></a><span class="lineno">    2</span>&#160;python setup.py install</div></div><!-- fragment --><p>The <code>build</code> command, in addition to the standard distutils setup, compiles the C code in the <code><a class="el" href="namespacepawpyseed_1_1core.html">pawpyseed.core</a></code> module into a shared object in the core module, <code>pawpy.so</code>. Currently, compiling the C code requires the Intel C compiler, <code>icc</code>, as well as the Intel Math Kernel Library. When the <code>build</code> command is run, an environment variable <code>MKLROOT</code> must be present and point to the Math Kernel Library.</p>
+<h3>Dependencies</h3>
+<p>All dependencies indicate the minimum version tested. PAWpySeed might work fine with earlier versions, but errors related to use of earlier versions are not supported and will not be addressed.</p>
+<p>Python requirements: </p><div class="fragment"><div class="line"><a name="l00001"></a><span class="lineno">    1</span>&#160;python&gt;=3.5</div><div class="line"><a name="l00002"></a><span class="lineno">    2</span>&#160;numpy&gt;=1.14</div><div class="line"><a name="l00003"></a><span class="lineno">    3</span>&#160;scipy&gt;=1.0</div><div class="line"><a name="l00004"></a><span class="lineno">    4</span>&#160;pymatgen&gt;=2018.2.13</div></div><!-- fragment --><p>C requirements: </p><div class="fragment"><div class="line"><a name="l00001"></a><span class="lineno">    1</span>&#160;icc &gt;= 16.0.4 OR gcc &gt;= 4.8.5</div><div class="line"><a name="l00002"></a><span class="lineno">    2</span>&#160;Intel Math Kernel Library &gt;= 11.3.4</div></div><!-- fragment --><p> Intel MKL is available for free installation on a variety of platforms. Most computing clusters will have Intel MKL, and you can install it on your desktop (or any system to which you have root access) by following the relevant instructions at the following URL: <a href="https://software.intel.com/en-us/articles/free-ipsxe-tools-and-libraries">https://software.intel.com/en-us/articles/free-ipsxe-tools-and-libraries</a>. After Intel MKL is installed, add the following line to your .bashrc to link MKL (NOTE: this might not be the exact directory that MKL is in, you need to check that first): </p><div class="fragment"><div class="line"><a name="l00001"></a><span class="lineno">    1</span>&#160;export MKLROOT=/opt/intel/compilers_and_libraries_2018/linux/mkl</div><div class="line"><a name="l00002"></a><span class="lineno">    2</span>&#160;export LD_LIBRARY_PATH=$MKLROOT/lib/intel64_lin:$LD_LIBRARY_PATH</div><div class="line"><a name="l00003"></a><span class="lineno">    3</span>&#160;export C_INCLUDE_PATH=$MKLROOT/include:$C_INCLUDE_PATH</div></div><!-- fragment --><p> The last line is optional but might be useful for future PAWpySeed builds and other programs which make use of MKL. The setup.py file will now take care of C compilation.</p>
+<p>Optional Python dependencies: </p><div class="fragment"><div class="line"><a name="l00001"></a><span class="lineno">    1</span>&#160;sympy&gt;=1.1.1</div><div class="line"><a name="l00002"></a><span class="lineno">    2</span>&#160;matplotlib&gt;=0.2.5</div></div><!-- fragment --><h2>Theory and Input</h2>
+<h3>PAW</h3>
+<p>The projector augmented wave (PAW) method is a technique used in plane wave density functional theory to simplify the description of the wavefunctions near the nuclei of a system. The strong Coulombic forces near an atomic nucleus creates quickly oscillating wavefunctions that are not well described by plane waves without prohibitively large basis sets, so a "pseudopotential" is introduced near the atomic nuclei which results in smooth "pseudowavefunctions" well described by plane waves. The full wavefunctions can be recovered by a linear transform of the pseudowavefunctions. The PAW method requires three sets of functions: projector functions, onto which pseudowavefunctions are projected to probe their character; full partial waves, which describe atomic valence states derived from the true potential; and pseudo partial waves, which are derived from the full partial waves and pseudopotential.</p>
+<h3>Files</h3>
+<p>The projector functions and partial waves are unique to each element and stored in the POTCAR file used in a VASP calculation. The pseudowavefunction is the part of the wavefunction optimized during a DFT calculation and is stored in the WAVECAR output file in VASP. PAWpySeed parses both files to retrieve all parts of the full Kohn Sham wavefunctions.</p>
+<h2>The Code</h2>
+<p>The main purpose of PAWpySeed is to evaluate overlap operators between Kohn-Sham wavefunctions from different structures, which is not done by standard plane-wave DFT codes. Such functionality can be useful for analyzing the composition of defect levels in solids, which is main application for which the code is currently focused.</p>
+<h3>Implementation</h3>
+<ul>
+<li>Python Interface</li>
+<li>Computationally intensive tasks in C</li>
+<li>Parallelized with openmp</li>
+</ul>
+<h3>Current Functionality</h3>
+<ul>
+<li>Read pseudowavefunctions</li>
+<li>Read projectors and partial waves from VASP POTCAR</li>
+<li>Evaluate overlap operators between bands, including when bands belong to different structures with the same lattice</li>
+<li>Project point defect levels onto bulk valence and conduction bands</li>
+<li>Convenient pycdt interface</li>
+</ul>
+<h3>Future Functionality</h3>
+<ul>
+<li>Localize orbitals with SCDM-k</li>
+<li>Atomic Hartree Fock and GGA DFT database for use in charge corrections and other applications</li>
+<li>Read noncollinear pseudowavefunctions</li>
+<li>Convert PAW wavefunctions to NC wavefunctions (for use in GW calculations)</li>
+<li>Perturbative charge corrections</li>
+<li>Read pseudopotential, atomic charge density, and other POTCAR data</li>
+<li>Perform general operator expectation values on full wavefunctions</li>
+</ul>
+<h2>Examples</h2>
+<p>PAWpySeed is designed so that useful data can be generated and formatted in a few lines of code. Example 1 illustrates using the Wavefunction class utilities to calculate the overlap operators of the pseudowavefunctions of several point defect structures with the those of the bulk supercell of the same size (structures generated with PyCDT <a href="https://bitbucket.org/mbkumar/pycdt">https://bitbucket.org/mbkumar/pycdt</a>). Example 2 shows how using the PawpyData subclasses can make some data generation and formatting even easier.</p>
+<p>NOTE: Having trouble writing a script to get the data you want? Check out <a class="el" href="namespacepawpyseed_1_1analysis_1_1defect__composition.html">pawpyseed.analysis.defect_composition</a>, which contains a few examples of using PAWpySeed in the form of PawpyData subclasses. The PawpyData.makeit function takes a generator from the Wavefunction.setup_multiple_projections function and uses it to calculate different values, depending on the subclass. These subclasses cn serve as examples for how to calculate required values from a Wavefunction.</p>
+<h3>Example 1: Overlap operators of pseudowavefunctions</h3>
+<p>Consider calculating the overlaps of the pseudowavefunctions of several point defect structures with the bulk supercell. Specifically, a few different charge states of the boron substitutional, phosphorous substitutional, and silicon vacancy in silicon. We will use PAWpySeed to calculate these overlaps and use them to find the proportion of the defect bands that project onto the conduction and valence bands of the bulk.</p>
+<div class="fragment"><div class="line"><a name="l00001"></a><span class="lineno">    1</span>&#160;from pawpyseed.core.wavefunction import *</div><div class="line"><a name="l00002"></a><span class="lineno">    2</span>&#160;import yaml # for storing our data</div><div class="line"><a name="l00003"></a><span class="lineno">    3</span>&#160;</div><div class="line"><a name="l00004"></a><span class="lineno">    4</span>&#160;dat = {} # dictionary of conduction/valence character values</div><div class="line"><a name="l00005"></a><span class="lineno">    5</span>&#160;# Directories of the VASP output for the defect structures</div><div class="line"><a name="l00006"></a><span class="lineno">    6</span>&#160;def_lst = [&#39;Pcharge_0&#39;, &#39;Pcharge_1&#39;, &#39;charge_-1&#39;, &#39;charge_0&#39;, &#39;charge_1&#39;, &#39;charge_2&#39;, &#39;charge_-2&#39;, &#39;Bcharge_-1&#39;, &#39;Bcharge_0&#39;]</div><div class="line"><a name="l00007"></a><span class="lineno">    7</span>&#160;# Initialize the bulk from the bulk directory</div><div class="line"><a name="l00008"></a><span class="lineno">    8</span>&#160;basis = Wavefunction.from_directory(&#39;bulk&#39;)</div><div class="line"><a name="l00009"></a><span class="lineno">    9</span>&#160;</div><div class="line"><a name="l00010"></a><span class="lineno">   10</span>&#160;# loop over the defect directories</div><div class="line"><a name="l00011"></a><span class="lineno">   11</span>&#160;for wf_dir in def_lst:</div><div class="line"><a name="l00012"></a><span class="lineno">   12</span>&#160;    wf = Wavefunction.from_directory(wf_dir)</div><div class="line"><a name="l00013"></a><span class="lineno">   13</span>&#160;    dat[wf_dir] = {}</div><div class="line"><a name="l00014"></a><span class="lineno">   14</span>&#160;    # loop over bands near the band gap</div><div class="line"><a name="l00015"></a><span class="lineno">   15</span>&#160;    for i in range(250, 262):</div><div class="line"><a name="l00016"></a><span class="lineno">   16</span>&#160;        # if pseudo is true, the overlap operators of the pseudowavefunctions</div><div class="line"><a name="l00017"></a><span class="lineno">   17</span>&#160;        # is evaluated, rather than of the all electron wavefunctions,</div><div class="line"><a name="l00018"></a><span class="lineno">   18</span>&#160;        # which is much faster but less quantitatively informative</div><div class="line"><a name="l00019"></a><span class="lineno">   19</span>&#160;        # v + c = 1 for pseudo = True</div><div class="line"><a name="l00020"></a><span class="lineno">   20</span>&#160;        # v is the valence band character and c is the conduction band character</div><div class="line"><a name="l00021"></a><span class="lineno">   21</span>&#160;        v, c = wf.proportion_conduction(i, basis, pseudo=True, spinpol=True)</div><div class="line"><a name="l00022"></a><span class="lineno">   22</span>&#160;        dat[wf_dir][i] = (v, c)</div><div class="line"><a name="l00023"></a><span class="lineno">   23</span>&#160;    print (&#39;FINISHED DEFECT %s&#39; % wf_dir)</div><div class="line"><a name="l00024"></a><span class="lineno">   24</span>&#160;    # Wavefunction objects use C code and memory, make sure to free it!</div><div class="line"><a name="l00025"></a><span class="lineno">   25</span>&#160;    wf.free_all()</div><div class="line"><a name="l00026"></a><span class="lineno">   26</span>&#160;</div><div class="line"><a name="l00027"></a><span class="lineno">   27</span>&#160;basis.free_all()</div><div class="line"><a name="l00028"></a><span class="lineno">   28</span>&#160;f = open(&#39;res.yaml&#39;, &#39;w&#39;)</div><div class="line"><a name="l00029"></a><span class="lineno">   29</span>&#160;yaml.dump(dat, f)</div><div class="line"><a name="l00030"></a><span class="lineno">   30</span>&#160;f.close()</div></div><!-- fragment --><p>Now 'res.yaml' will contain the valence and conduction band characters for the selected bands and structures in a yaml-formatted dictionary.</p>
+<h3>Example 2: AE overlap operators using PawpyData subclasses</h3>
+<p>To calculate the AE overlap operators, it is first necessary to run the setup routines which calculate the overlap operators of the projector functions with the PS wavefunctions and with each other. This is demonstrated in the following script:</p>
+<div class="fragment"><div class="line"><a name="l00001"></a><span class="lineno">    1</span>&#160;from pawpyseed.core.wavefunction import *</div><div class="line"><a name="l00002"></a><span class="lineno">    2</span>&#160;</div><div class="line"><a name="l00003"></a><span class="lineno">    3</span>&#160;basis = Wavefunction.from_directory(&#39;bulk&#39;)</div><div class="line"><a name="l00004"></a><span class="lineno">    4</span>&#160;wf = Wavefunction.from_directory(&#39;defect&#39;)</div><div class="line"><a name="l00005"></a><span class="lineno">    5</span>&#160;</div><div class="line"><a name="l00006"></a><span class="lineno">    6</span>&#160;wf.setup_projection(basis, setup_basis=True)</div><div class="line"><a name="l00007"></a><span class="lineno">    7</span>&#160;</div><div class="line"><a name="l00008"></a><span class="lineno">    8</span>&#160;v, c = wf.proportion_condition(253, basis, pseudo=False, spinpol=True)</div></div><!-- fragment --><p>The following example does the same thing as Example 1, except the all electron overlap operators are calculated, and only four lines of code are used!</p>
+<div class="fragment"><div class="line"><a name="l00001"></a><span class="lineno">    1</span>&#160;from pawpyseed.core.wavefunction import *</div><div class="line"><a name="l00002"></a><span class="lineno">    2</span>&#160;from pawpyseed.analysis.defect_composition import *</div><div class="line"><a name="l00003"></a><span class="lineno">    3</span>&#160;</div><div class="line"><a name="l00004"></a><span class="lineno">    4</span>&#160;generator = Wavefunction.setup_multiple_projections(*pycdt_dirs(&#39;.&#39;))</div><div class="line"><a name="l00005"></a><span class="lineno">    5</span>&#160;bcs = BulkCharacter.makeit(generator)</div></div><!-- fragment --><p>This script results in a list <code>bcs</code> of <code>BulkCharacter</code> objects, which each contain bulk valence and conduction band character for 20 bands above and below the Fermi level for each defect, the defect crystal structures as pymatgen Structure objects, and density of states data for each defect, which can be useful for plotting and analysis later.</p>
+<h2>Questions and Comments</h2>
+<p>Find a bug? Areas of code unclearly documented? Other questions? Feel free to contact Kyle Bystrom at <a href="#" onclick="location.href='mai'+'lto:'+'kyl'+'eb'+'yst'+'ro'+'m@b'+'er'+'kel'+'ey'+'.ed'+'u'; return false;">kyleb<span style="display: none;">.nosp@m.</span>ystr<span style="display: none;">.nosp@m.</span>om@be<span style="display: none;">.nosp@m.</span>rkel<span style="display: none;">.nosp@m.</span>ey.ed<span style="display: none;">.nosp@m.</span>u</a> with the subject "pawpyseed: &lt;Topic&gt;". </p>
+</div></div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
 Generated by &#160;<a href="http://www.doxygen.org/index.html">

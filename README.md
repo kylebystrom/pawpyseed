@@ -1,7 +1,9 @@
 # PAWpySeed
 
 Repository: <https://github.com/kylebystrom/pawpyseed/>
+
 Documentation: <https://kylebystrom.github.io/pawpyseed/documentation>
+
 Examples/Tutorials: <https://kylebystrom.github.io/pawpyseed/example_list.html>
 
 **WARNING: PAWpySeed is still in early development. Documentation is
@@ -152,84 +154,6 @@ density, and other POTCAR data
 * Perform general operator
 expectation values on full wavefunctions
 
-### Example 1: Overlap operators of pseudowavefunctions
-
-Consider calculating the overlaps of the pseudowavefunctions of several point defect
-structures with the bulk supercell. Specifically, a few different charge states
-of the boron substitutional, phosphorous substitutional, and silicon vacancy in silicon.
-We will use PAWpySeed to calculate these overlaps and use them to find the proportion
-of the defect bands that project onto the conduction and valence bands of the bulk.
-
-```
-from pawpyseed.core.wavefunction import *
-import yaml # for storing our data
-
-dat = {} # dictionary of conduction/valence character values
-# Directories of the VASP output for the defect structures
-def_lst = ['Pcharge_0', 'Pcharge_1', 'charge_-1', 'charge_0', 'charge_1', 'charge_2', 'charge_-2', 'Bcharge_-1', 'Bcharge_0']
-# Initialize the bulk from the bulk directory
-basis = Wavefunction.from_directory('bulk')
-
-# loop over the defect directories
-for wf_dir in def_lst:
-    wf = Wavefunction.from_directory(wf_dir)
-    dat[wf_dir] = {}
-    # loop over bands near the band gap
-    for i in range(250, 262):
-        # if pseudo is true, the overlap operators of the pseudowavefunctions
-        # is evaluated, rather than of the all electron wavefunctions,
-        # which is much faster but less quantitatively informative
-        # v + c = 1 for pseudo = True
-        # v is the valence band character and c is the conduction band character
-        v, c = wf.proportion_conduction(i, basis, pseudo=True, spinpol=True)
-        dat[wf_dir][i] = (v, c)
-    print ('FINISHED DEFECT %s' % wf_dir)
-    # Wavefunction objects use C code and memory, make sure to free it!
-    wf.free_all()
-
-basis.free_all()
-f = open('res.yaml', 'w')
-yaml.dump(dat, f)
-f.close()
-```
-
-Now 'res.yaml' will contain the valence and conduction band characters for the selected bands
-and structures in a yaml-formatted dictionary.
-
-### Example 2: AE overlap operators using PawpyData subclasses
-
-To calculate the AE overlap operators, it is first necessary to run the setup
-routines which calculate the overlap operators of the projector functions
-with the PS wavefunctions and with each other. This is demonstrated in the
-following script:
-
-```
-from pawpyseed.core.wavefunction import *
-
-basis = Wavefunction.from_directory('bulk')
-wf = Wavefunction.from_directory('defect')
-
-wf.setup_projection(basis, setup_basis=True)
-
-v, c = wf.proportion_condition(253, basis, pseudo=False, spinpol=True)
-```
-
-The following example does the same thing as Example 1, except the all electron
-overlap operators are calculated, and only four lines of code are used!
-
-```
-from pawpyseed.core.wavefunction import *
-from pawpyseed.analysis.defect_composition import *
-
-generator = Wavefunction.setup_multiple_projections(*pycdt_dirs('.'))
-bcs = BulkCharacter.makeit(generator)
-```
-
-This script results in a list `bcs` of `BulkCharacter` objects, which each contain bulk valence
-and conduction band character for 20 bands above and below the Fermi level for each defect, the
-defect crystal structures as pymatgen Structure objects, and density of states data for each
-defect, which can be useful for plotting and analysis later.
-
 ## Acknowledgments
 
 The code in PAWpySeed is based on a several algorithms and codes, which are enumerated
@@ -266,6 +190,10 @@ code.
 NUMSBT is distributed under the Standard CPC License, and the algorithm is
 developed in the following paper:
     * Talman, J. Computer Physics Communications 2009, 180, 332 –338.
+4. **Doxygen**:
+Doxygen is a documentation generator from which I built the docs for PAWpySeed.
+It is an excellent tool that allows for clean, up-to-date documentaton
+that is easy to make and navigate. Check it out at <http://www.stack.nl/~dimitri/doxygen/>
 
 
 ## Questions and Comments

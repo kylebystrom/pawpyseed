@@ -16,5 +16,5 @@ The PawpyData.makeit function takes a generator from the Wavefunction.setup_mult
 subclasses cn serve as examples for how to calculate required values from a Wavefunction.
 
 List of Examples:
-1. [Overlap operators of pseudowavefunctions]({{ site.baseurl }}/examples/example1.md)
-2. [AE overlap operators using PawpyData subclasses]({{ site.baseurl }}/examples/example2.md)
+1. [Overlap operators of pseudowavefunctions]({{ site.baseurl }}/examples/example1.html)
+2. [AE overlap operators using PawpyData subclasses]({{ site.baseurl }}/examples/example2.html)

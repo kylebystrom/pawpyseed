@@ -1,4 +1,6 @@
 #!/bin/sh
 doxygen dox.config
-mv html documentation
+rm -r documentation/*
+mv html/* documentation
+rm -r html
 cat ../README.md > index.md

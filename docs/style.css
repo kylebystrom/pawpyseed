@@ -18,8 +18,8 @@ h1.groupheader {
 }
 
 h2.groupheader {
-	border-bottom: 1px solid #879ECB;
-	color: #354C7B;
+	border-bottom: 1px solid #786134;
+	color: #CAB384;
 	font-size: 150%;
 	font-weight: normal;
 	margin-top: 1.75em;
@@ -93,8 +93,8 @@ h3.version {
 }
 
 div.qindex, div.navtab{
-	background-color: #EBEFF6;
-	border: 1px solid #A3B4D7;
+	background-color: #141009;
+	border: 1px solid #5C4B28;
 	text-align: center;
 }
 
@@ -110,13 +110,13 @@ div.navtab {
 /* @group Link Styling */
 
 a {
-	color: #3D578C;
+	color: #C2A873;
 	font-weight: normal;
 	text-decoration: none;
 }
 
 .contents a:visited {
-	color: #4665A2;
+	color: #B99A5D;
 }
 
 a:hover {
@@ -129,13 +129,13 @@ a.qindex {
 
 a.qindexHL {
 	font-weight: bold;
-	background-color: #9CAFD4;
-	color: #ffffff;
-	border: 1px double #869DCA;
+	background-color: #63502B;
+	color: #000000;
+	border: 1px double #796235;
 }
 
 .contents a.qindexHL:visited {
-        color: #ffffff;
+        color: #000000;
 }
 
 a.el {
@@ -146,11 +146,11 @@ a.elRef {
 }
 
 a.code, a.code:visited, a.line, a.line:visited {
-	color: #4665A2; 
+	color: #B99A5D; 
 }
 
 a.codeRef, a.codeRef:visited, a.lineRef, a.lineRef:visited {
-	color: #4665A2; 
+	color: #B99A5D; 
 }
 
 /* @end */
@@ -160,8 +160,8 @@ dl.el {
 }
 
 pre.fragment {
-        border: 1px solid #C4CFE5;
-        background-color: #FBFCFD;
+        border: 1px solid #3B301A;
+        background-color: #040302;
         padding: 4px 6px;
         margin: 4px 8px 4px 2px;
         overflow: auto;
@@ -175,8 +175,8 @@ pre.fragment {
 div.fragment {
         padding: 4px 6px;
         margin: 4px 8px 4px 2px;
-	background-color: #FBFCFD;
-	border: 1px solid #C4CFE5;
+	background-color: #040302;
+	border: 1px solid #3B301A;
 }
 
 div.line {
@@ -221,21 +221,21 @@ span.lineno {
 	padding-right: 4px;
 	text-align: right;
 	border-right: 2px solid #0F0;
-	background-color: #E8E8E8;
+	background-color: #171717;
         white-space: pre;
 }
 span.lineno a {
-	background-color: #D8D8D8;
+	background-color: #272727;
 }
 
 span.lineno a:hover {
-	background-color: #C8C8C8;
+	background-color: #373737;
 }
 
 div.ah, span.ah {
-	background-color: black;
+	background-color: #32CD32;
 	font-weight: bold;
-	color: #ffffff;
+	color: #000000;
 	margin-bottom: 3px;
 	margin-top: 3px;
 	padding: 0.2em;
@@ -271,8 +271,8 @@ div.groupText {
 }
 
 body {
-	background-color: white;
-	color: black;
+	background-color: #000000;
+	color: #32CD32;
         margin: 0;
 }
 
@@ -283,9 +283,9 @@ div.contents {
 }
 
 td.indexkey {
-	background-color: #EBEFF6;
+	background-color: #141009;
 	font-weight: bold;
-	border: 1px solid #C4CFE5;
+	border: 1px solid #3B301A;
 	margin: 2px 0px 2px 0;
 	padding: 2px 10px;
         white-space: nowrap;
@@ -293,14 +293,14 @@ td.indexkey {
 }
 
 td.indexvalue {
-	background-color: #EBEFF6;
-	border: 1px solid #C4CFE5;
+	background-color: #141009;
+	border: 1px solid #3B301A;
 	padding: 2px 10px;
 	margin: 2px 0px;
 }
 
 tr.memlist {
-	background-color: #EEF1F7;
+	background-color: #110E08;
 }
 
 p.formulaDsp {
@@ -339,35 +339,35 @@ img.footer {
 /* @group Code Colorization */
 
 span.keyword {
-	color: #008000
+	color: #FF7FFF
 }
 
 span.keywordtype {
-	color: #604020
+	color: #9FBFDF
 }
 
 span.keywordflow {
-	color: #e08000
+	color: #1F7FFF
 }
 
 span.comment {
-	color: #800000
+	color: #7FFFFF
 }
 
 span.preprocessor {
-	color: #806020
+	color: #7F9FDF
 }
 
 span.stringliteral {
-	color: #002080
+	color: #FFDF7F
 }
 
 span.charliteral {
-	color: #008080
+	color: #FF7F7F
 }
 
 span.vhdldigit { 
-	color: #ff00ff 
+	color: #00FF00 
 }
 
 span.vhdlchar { 
@@ -375,16 +375,16 @@ span.vhdlchar {
 }
 
 span.vhdlkeyword { 
-	color: #700070 
+	color: #8FFF8F 
 }
 
 span.vhdllogic { 
-	color: #ff0000 
+	color: #00FFFF 
 }
 
 blockquote {
-        background-color: #F7F8FB;
-        border-left: 2px solid #9CAFD4;
+        background-color: #080704;
+        border-left: 2px solid #63502B;
         margin: 0 24px 0 4px;
         padding: 0 12px 0 16px;
 }
@@ -393,7 +393,7 @@ blockquote {
 
 /*
 .search {
-	color: #003399;
+	color: #FFCC66;
 	font-weight: bold;
 }
 
@@ -404,9 +404,9 @@ form.search {
 
 input.search {
 	font-size: 75%;
-	color: #000080;
+	color: #FFFF7F;
 	font-weight: normal;
-	background-color: #e8eef2;
+	background-color: #17110D;
 }
 */
 
@@ -417,18 +417,18 @@ td.tiny {
 .dirtab {
 	padding: 4px;
 	border-collapse: collapse;
-	border: 1px solid #A3B4D7;
+	border: 1px solid #5C4B28;
 }
 
 th.dirtab {
-	background: #EBEFF6;
+	background: #141009;
 	font-weight: bold;
 }
 
 hr {
 	height: 0px;
 	border: none;
-	border-top: 1px solid #4A6AAA;
+	border-top: 1px solid #B59555;
 }
 
 hr.footer {
@@ -463,7 +463,7 @@ table.memberdecls {
 .mdescLeft, .mdescRight,
 .memItemLeft, .memItemRight,
 .memTemplItemLeft, .memTemplItemRight, .memTemplParams {
-	background-color: #F9FAFC;
+	background-color: #060503;
 	border: none;
 	margin: 4px;
 	padding: 1px 0 0 8px;
@@ -475,7 +475,7 @@ table.memberdecls {
 }
 
 .memSeparator {
-        border-bottom: 1px solid #DEE4F0;
+        border-bottom: 1px solid #211B0F;
         line-height: 1px;
         margin: 0px;
         padding: 0px;
@@ -490,7 +490,7 @@ table.memberdecls {
 }
 
 .memTemplParams {
-	color: #4665A2;
+	color: #B99A5D;
         white-space: nowrap;
 	font-size: 80%;
 }
@@ -503,14 +503,14 @@ table.memberdecls {
 
 .memtemplate {
 	font-size: 80%;
-	color: #4665A2;
+	color: #B99A5D;
 	font-weight: normal;
 	margin-left: 9px;
 }
 
 .memnav {
-	background-color: #EBEFF6;
-	border: 1px solid #A3B4D7;
+	background-color: #141009;
+	border: 1px solid #5C4B28;
 	text-align: center;
 	margin: 2px;
 	margin-right: 15px;
@@ -548,16 +548,16 @@ table.memberdecls {
 }
 
 .memproto, dl.reflist dt {
-        border-top: 1px solid #A8B8D9;
-        border-left: 1px solid #A8B8D9;
-        border-right: 1px solid #A8B8D9;
+        border-top: 1px solid #574726;
+        border-left: 1px solid #574726;
+        border-right: 1px solid #574726;
         padding: 6px 0px 6px 0px;
-        color: #253555;
+        color: #DACAAA;
         font-weight: bold;
         text-shadow: 0px 1px 1px rgba(255, 255, 255, 0.9);
-        background-image:url('nav_f.png');
-        background-repeat:repeat-x;
-        background-color: #E2E8F2;
+        /*background-image:url('nav_f.png');
+        background-repeat:repeat-x;*/
+        background-color: #1D170D;
         /* opera specific markup */
         box-shadow: 5px 5px 5px rgba(0, 0, 0, 0.15);
         border-top-right-radius: 4px;
@@ -574,15 +574,15 @@ table.memberdecls {
 }
 
 .memdoc, dl.reflist dd {
-        border-bottom: 1px solid #A8B8D9;      
-        border-left: 1px solid #A8B8D9;      
-        border-right: 1px solid #A8B8D9; 
+        border-bottom: 1px solid #574726;      
+        border-left: 1px solid #574726;      
+        border-right: 1px solid #574726; 
         padding: 6px 10px 2px 10px;
-        background-color: #FBFCFD;
+        background-color: #040302;
         border-top-width: 0;
-        background-image:url('nav_g.png');
-        background-repeat:repeat-x;
-        background-color: #FFFFFF;
+        /*background-image:url('nav_g.png');
+        background-repeat:repeat-x;*/
+        background-color: #000000;
         /* opera specific markup */
         border-bottom-left-radius: 4px;
         border-bottom-right-radius: 4px;
@@ -615,7 +615,7 @@ dl.reflist dd {
 }
 
 .paramname {
-	color: #602020;
+	color: #9FDFDF;
 	white-space: nowrap;
 }
 .paramname em {
@@ -665,13 +665,13 @@ span.mlabels {
 }
 
 span.mlabel {
-        background-color: #728DC1;
-        border-top:1px solid #5373B4;
-        border-left:1px solid #5373B4;
-        border-right:1px solid #C4CFE5;
-        border-bottom:1px solid #C4CFE5;
+        background-color: #8D723E;
+        border-top:1px solid #AC8C4B;
+        border-left:1px solid #AC8C4B;
+        border-right:1px solid #3B301A;
+        border-bottom:1px solid #3B301A;
 	text-shadow: none;
-	color: white;
+	color: #000000;
 	margin-right: 4px;
 	padding: 2px 3px;
 	border-radius: 3px;
@@ -688,8 +688,8 @@ span.mlabel {
 
 div.directory {
         margin: 10px 0px;
-        border-top: 1px solid #9CAFD4;
-        border-bottom: 1px solid #9CAFD4;
+        border-top: 1px solid #63502B;
+        border-bottom: 1px solid #63502B;
         width: 100%;
 }
 
@@ -727,7 +727,7 @@ div.directory {
 
 .directory tr.even {
 	padding-left: 6px;
-	background-color: #F7F8FB;
+	background-color: #080704;
 }
 
 .directory img {
@@ -745,11 +745,11 @@ div.directory {
         cursor: pointer;
         padding-left: 2px;
         padding-right: 2px;
-	color: #3D578C;
+	color: #C2A873;
 }
 
 .arrow {
-    color: #9CAFD4;
+    color: #63502B;
     -webkit-user-select: none;
     -khtml-user-select: none;
     -moz-user-select: none;
@@ -769,8 +769,8 @@ div.directory {
     height: 14px;
     width: 16px;
     display: inline-block;
-    background-color: #728DC1;
-    color: white;
+    background-color: #8D723E;
+    color: #000000;
     text-align: center;
     border-radius: 4px;
     margin-left: 2px;
@@ -834,7 +834,7 @@ div.dynheader {
 
 address {
 	font-style: normal;
-	color: #2A3D61;
+	color: #D5C29E;
 }
 
 table.doxtable caption {
@@ -848,13 +848,13 @@ table.doxtable {
 }
 
 table.doxtable td, table.doxtable th {
-	border: 1px solid #2D4068;
+	border: 1px solid #D2BF97;
 	padding: 3px 7px 2px;
 }
 
 table.doxtable th {
-	background-color: #374F7F;
-	color: #FFFFFF;
+	background-color: #C8B080;
+	color: #000000;
 	font-size: 110%;
 	padding-bottom: 4px;
 	padding-top: 5px;
@@ -863,7 +863,7 @@ table.doxtable th {
 table.fieldtable {
         /*width: 100%;*/
         margin-bottom: 10px;
-        border: 1px solid #A8B8D9;
+        border: 1px solid #574726;
         border-spacing: 0px;
         -moz-border-radius: 4px;
         -webkit-border-radius: 4px;
@@ -879,8 +879,8 @@ table.fieldtable {
 
 .fieldtable td.fieldtype, .fieldtable td.fieldname {
         white-space: nowrap;
-        border-right: 1px solid #A8B8D9;
-        border-bottom: 1px solid #A8B8D9;
+        border-right: 1px solid #574726;
+        border-bottom: 1px solid #574726;
         vertical-align: top;
 }
 
@@ -889,7 +889,7 @@ table.fieldtable {
 }
 
 .fieldtable td.fielddoc {
-        border-bottom: 1px solid #A8B8D9;
+        border-bottom: 1px solid #574726;
         /*width: 100%;*/
 }
 
@@ -906,11 +906,11 @@ table.fieldtable {
 }
 
 .fieldtable th {
-        background-image:url('nav_f.png');
-        background-repeat:repeat-x;
-        background-color: #E2E8F2;
+        /*background-image:url('nav_f.png');
+        background-repeat:repeat-x;*/
+        background-color: #1D170D;
         font-size: 90%;
-        color: #253555;
+        color: #DACAAA;
         padding-bottom: 4px;
         padding-top: 5px;
         text-align:left;
@@ -920,7 +920,7 @@ table.fieldtable {
         -webkit-border-top-right-radius: 4px;
         border-top-left-radius: 4px;
         border-top-right-radius: 4px;
-        border-bottom: 1px solid #A8B8D9;
+        border-bottom: 1px solid #574726;
 }
 
 
@@ -942,8 +942,8 @@ table.fieldtable {
 	background-position: 0 -5px;
 	height:30px;
 	line-height:30px;
-	color:#8AA0CC;
-	border:solid 1px #C2CDE4;
+	color:#755F33;
+	border:solid 1px #3D321B;
 	overflow:hidden;
 	margin:0px;
 	padding:0px;
@@ -958,7 +958,7 @@ table.fieldtable {
 	background-image:url('bc_s.png');
 	background-repeat:no-repeat;
 	background-position:right;
-	color:#364D7C;
+	color:#C9B283;
 }
 
 .navpath li.navelem a
@@ -967,7 +967,7 @@ table.fieldtable {
 	display:block;
 	text-decoration: none;
 	outline: none;
-	color: #283A5D;
+	color: #D7C5A2;
 	font-family: 'Lucida Grande',Geneva,Helvetica,Arial,sans-serif;
 	text-shadow: 0px 1px 1px rgba(255, 255, 255, 0.9);
 	text-decoration: none;        
@@ -975,7 +975,7 @@ table.fieldtable {
 
 .navpath li.navelem a:hover
 {
-	color:#6884BD;
+	color:#977B42;
 }
 
 .navpath li.footer
@@ -987,7 +987,7 @@ table.fieldtable {
         background-image:none;
         background-repeat:no-repeat;
         background-position:right;
-        color:#364D7C;
+        color:#C9B283;
         font-size: 8pt;
 }
 
@@ -1032,11 +1032,11 @@ div.ingroups a
 
 div.header
 {
-        background-image:url('nav_h.png');
-        background-repeat:repeat-x;
-	background-color: #F9FAFC;
+        /*background-image:url('nav_h.png');
+        background-repeat:repeat-x;*.
+	background-color: #060503;
 	margin:  0px;
-	border-bottom: 1px solid #C4CFE5;
+	border-bottom: 1px solid #3B301A;
 }
 
 div.headertitle
@@ -1061,7 +1061,7 @@ dl.note
         margin-left:-7px;
         padding-left: 3px;
         border-left:4px solid;
-        border-color: #D0C000;
+        border-color: #2F3FFF;
 }
 
 dl.warning, dl.attention
@@ -1069,7 +1069,7 @@ dl.warning, dl.attention
         margin-left:-7px;
         padding-left: 3px;
         border-left:4px solid;
-        border-color: #FF0000;
+        border-color: #00FFFF;
 }
 
 dl.pre, dl.post, dl.invariant
@@ -1077,7 +1077,7 @@ dl.pre, dl.post, dl.invariant
         margin-left:-7px;
         padding-left: 3px;
         border-left:4px solid;
-        border-color: #00D000;
+        border-color: #FF2FFF;
 }
 
 dl.deprecated
@@ -1085,7 +1085,7 @@ dl.deprecated
         margin-left:-7px;
         padding-left: 3px;
         border-left:4px solid;
-        border-color: #505050;
+        border-color: #AFAFAF;
 }
 
 dl.todo
@@ -1093,7 +1093,7 @@ dl.todo
         margin-left:-7px;
         padding-left: 3px;
         border-left:4px solid;
-        border-color: #00C0E0;
+        border-color: #FF3F1F;
 }
 
 dl.test
@@ -1101,7 +1101,7 @@ dl.test
         margin-left:-7px;
         padding-left: 3px;
         border-left:4px solid;
-        border-color: #3030E0;
+        border-color: #CFCF1F;
 }
 
 dl.bug
@@ -1109,7 +1109,7 @@ dl.bug
         margin-left:-7px;
         padding-left: 3px;
         border-left:4px solid;
-        border-color: #C08050;
+        border-color: #3F7FAF;
 }
 
 dl.section dd {
@@ -1160,7 +1160,7 @@ dl.section dd {
 	padding: 0px;
 	margin: 0px;
 	width: 100%;
-	border-bottom: 1px solid #5373B4;
+	border-bottom: 1px solid #AC8C4B;
 }
 
 .image
@@ -1190,7 +1190,7 @@ dl.section dd {
 
 div.zoom
 {
-	border: 1px solid #90A5CE;
+	border: 1px solid #6F5A31;
 }
 
 dl.citelist {
@@ -1198,7 +1198,7 @@ dl.citelist {
 }
 
 dl.citelist dt {
-        color:#334975;
+        color:#CCB68A;
         float:left;
         font-weight:bold;
         margin-right:10px;
@@ -1212,8 +1212,8 @@ dl.citelist dd {
 
 div.toc {
         padding: 14px 25px;
-        background-color: #F4F6FA;
-        border: 1px solid #D8DFEE;
+        background-color: #0B0905;
+        border: 1px solid #272011;
         border-radius: 7px 7px 7px 7px;
         float: right;
         height: auto;
@@ -1231,7 +1231,7 @@ div.toc li {
 
 div.toc h3 {
         font: bold 12px/1.2 Arial,FreeSans,sans-serif;
-	color: #4665A2;
+	color: #B99A5D;
         border-bottom: 0 none;
         margin: 0;
 }
@@ -1293,7 +1293,7 @@ tr.heading h2 {
 #powerTip {
 	cursor: default;
 	white-space: nowrap;
-	background-color: white;
+	background-color: #000000;
 	border: 1px solid gray;
 	border-radius: 4px 4px 4px 4px;
 	box-shadow: 1px 1px 7px gray;
@@ -1320,7 +1320,7 @@ tr.heading h2 {
 }
 
 #powerTip div.ttdeci {
-        color: #006318;
+        color: #FF9CE7;
 }
 
 #powerTip div {
@@ -1371,12 +1371,12 @@ tr.heading h2 {
 }
 
 #powerTip.n:after, #powerTip.ne:after, #powerTip.nw:after {
-	border-top-color: #ffffff;
+	border-top-color: #000000;
 	border-width: 10px;
 	margin: 0px -10px;
 }
 #powerTip.n:before {
-	border-top-color: #808080;
+	border-top-color: #7F7F7F;
 	border-width: 11px;
 	margin: 0px -11px;
 }
@@ -1399,13 +1399,13 @@ tr.heading h2 {
 }
 
 #powerTip.s:after, #powerTip.se:after, #powerTip.sw:after {
-	border-bottom-color: #ffffff;
+	border-bottom-color: #000000;
 	border-width: 10px;
 	margin: 0px -10px;
 }
 
 #powerTip.s:before, #powerTip.se:before, #powerTip.sw:before {
-	border-bottom-color: #808080;
+	border-bottom-color: #7F7F7F;
 	border-width: 11px;
 	margin: 0px -11px;
 }
@@ -1426,13 +1426,13 @@ tr.heading h2 {
 	left: 100%;
 }
 #powerTip.e:after {
-	border-left-color: #ffffff;
+	border-left-color: #000000;
 	border-width: 10px;
 	top: 50%;
 	margin-top: -10px;
 }
 #powerTip.e:before {
-	border-left-color: #808080;
+	border-left-color: #7F7F7F;
 	border-width: 11px;
 	top: 50%;
 	margin-top: -11px;
@@ -1442,13 +1442,13 @@ tr.heading h2 {
 	right: 100%;
 }
 #powerTip.w:after {
-	border-right-color: #ffffff;
+	border-right-color: #000000;
 	border-width: 10px;
 	top: 50%;
 	margin-top: -10px;
 }
 #powerTip.w:before {
-	border-right-color: #808080;
+	border-right-color: #7F7F7F;
 	border-width: 11px;
 	top: 50%;
 	margin-top: -11px;

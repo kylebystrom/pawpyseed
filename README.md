@@ -1,5 +1,15 @@
 # PAWpySeed
 
+Documentation: <https://kylebystrom.github.io/pawpyseed/>
+Repository: <https://github.com/kylebystrom/pawpyseed/>
+
+**WARNING: PAWpySeed is still in early development. Documentation is
+incomplete, and some features are not yet thoroughly tested. High-priority
+issues for the next couple months include: 1) documentation page containing
+the mathematical formalism, 2) examples and tutorials, 3) standardized unit
+tests. The evaluation of overlap operators is tested, but a standard test
+suite is not yet published, and some features still require more thorough testing.**
+
 PAWpySeed is a parallelized Python and C tool for reading and
 analyzing the optimized band structure and wave functions
 of VASP DFT calculations. The code is written for the PAW
@@ -235,6 +245,44 @@ This script results in a list `bcs` of `BulkCharacter` objects, which each conta
 and conduction band character for 20 bands above and below the Fermi level for each defect, the
 defect crystal structures as pymatgen Structure objects, and density of states data for each
 defect, which can be useful for plotting and analysis later.
+
+## Acknowledgments
+
+The code in PAWpySeed is based on a several algorithms and codes, which are enumerated
+here.
+
+1. **PAW**
+The PAW method was developed by P. E. Blochl in 1994. His paper deriving the method
+was helpful to me in deriving the extensions to the formalism needed to develop
+this code.
+    * P. E. Blochl. Projector augmented-wave method. Phys. Rev. B, 50:17953, 1994.
+1. **VASP**:
+PAWpySeed is primarily built to read and process the output of VASP calculations.
+PAWpySeed reads PAW wavefunctions and calculate overlap operators using algorithms
+derived from VASP and other plane-wave codes, so the following citations are warranted:
+    * G. Kresse and J. Hafner. Ab initio molecular dynamics for liquid metals. Phys. Rev. B, 47:558, 1993.
+    * G. Kresse and J. Hafner. Ab initio molecular-dynamics simulation of the liquid-metal-amorphous-semiconductor transition in germanium. Phys. Rev. B, 49:14251, 1994.
+    * G. Kresse and J. Furthmüller. Efficiency of ab-initio total energy calculations for metals and semiconductors using a plane-wave basis set. Comput. Mat. Sci., 6:15, 1996.
+    * G. Kresse and J. Furthmüller. Efficient iterative schemes for ab initio total-energy calculations using a plane-wave basis set. Phys. Rev. B, 54:11169, 1996.
+    * G. Kresse and D. Joubert. From ultrasoft pseudopotentials to the projector augmented-wave method. Phys. Rev. B, 59:1758, 1999.
+The last citation is specifically for the PAW method and potentials. See the VASP website
+at <http://community.hartree.stfc.ac.uk/wiki/site/admin/vasp.html> for information
+on citing specific functionals.
+2. **NUMSBT**:
+NUMSBT is a code written by J. D. Talman, which implements an algorithm that
+calculates the spherical Bessel transform (SBT) in O(NlogN) time.
+NUMSBT is distributed under the Standard CPC License, and the algorithm is
+developed in the following paper:
+    * Talman, J. Computer Physics Communications 2009, 180, 332 –338.
+PAWpySeed
+employs the high-k transform algorithm implemented in NUMSBT
+to calculate the overlap operators between
+overlapping augmentation spheres that have different positions or elements.
+It is also used to filter out high-frequency components from AE partial
+waves, which allows projections from pseudowavefunctions to AE partial
+waves to be performed in real space, which is a vital component of the
+code.
+
 
 ## Questions and Comments
 

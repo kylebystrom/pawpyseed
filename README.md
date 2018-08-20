@@ -1,10 +1,12 @@
 # PAWpySeed
 
-Repository: <https://github.com/kylebystrom/pawpyseed/>
+Repository: <https://github.com/kylebystrom/pawpyseed/>  
 
-Documentation: <https://kylebystrom.github.io/pawpyseed/documentation>
+Home Page: <https://kylebystrom.github.io/pawpyseed/>  
 
-Examples/Tutorials: <https://kylebystrom.github.io/pawpyseed/example_list.html>
+Documentation: <https://kylebystrom.github.io/pawpyseed/documentation>  
+
+Examples/Tutorials: <https://kylebystrom.github.io/pawpyseed/example_list.html>  
 
 **WARNING: PAWpySeed is still in early development. Documentation is
 incomplete, and some features are not yet thoroughly tested. High-priority

@@ -1,3 +1,5 @@
+# coding: utf-8
+
 from pawpyseed.wavefunction import *
 from pymatgen.io.vasp.inputs import Potcar, Poscar
 from pymatgen.io.vasp.outputs import Vasprun

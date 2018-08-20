@@ -1,16 +1,19 @@
-from distutils.core import setup, Extension
+# coding: utf-8
+
+from setuptools import setup, Extension
 import os, subprocess
 import shutil
 import sys
+import codecs
 
 class PawpyBuildError(Exception):
 	pass
 
-with open('README.md', 'r') as fh:
+with codecs.open('README.md', 'r', encoding='utf8') as fh:
 	long_description = fh.read()
 
-os.environ["CC"] = "icc"
-os.environ["CXX"] = "icc"
+#os.environ["CC"] = "icc"
+#os.environ["CXX"] = "icc"
 
 srcfiles = ['density', 'gaunt', 'linalg', 'projector', 'pseudoprojector', 'quadrature',\
 			'radial', 'reader', 'sbt', 'tests', 'utils']
@@ -18,14 +21,16 @@ cfiles = [f+'.c' for f in srcfiles]
 hfiles = [f+'.h' for f in srcfiles]
 
 setup(name='pawpyseed',
-	version='0.0.1',
-	description='Parallelized DFT wavefunction analysis utilities',
+	version='0.0.4',
+	description='Parallel C/Python package for numerical analysis of PAW DFT wavefunctions',
 	long_description=long_description,
 	long_description_content_type='text/markdown',
 	author='Kyle Bystrom',
 	author_email='kylebystrom@berkeley.edu',
+	license='BSD',
 	packages=['pawpyseed', 'pawpyseed.core', 'pawpyseed.analysis'],
 	package_data={'pawpyseed.core': cfiles+hfiles+['Makefile', 'pawpy.so']},
+	data_files=[('', ['LICENSE.txt', 'README.md'])],
 	scripts=['scripts/pawpy'],
 	url="https://github.com/kylebystrom/pawpyseed",
 	classifiers=(

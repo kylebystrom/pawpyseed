@@ -17,8 +17,21 @@ in VASP.
 
 ## Installation
 
-In the future, PAWpySeed will be installable with pip.
-For the time being, installation should be performed
+**Note**: Before installing with pip or the setup script, please
+read about the dependencies and set up your environment correctly!
+
+You can install PAWpySeed with `pip`.
+
+`pip install pawpyseed`
+
+This has been tested on Scientific Linux 7 and Linux Mint 18,
+but should work for systems that have the appropriate
+packages and environment variables defined as described below.
+Note that the setup script compiles and installs some C code
+as a shared object to be used by `ctypes` and places it
+in the package directory under `pawpyseed/core/`.
+
+Installation can also be performed
 by cloning this repository and running the `setup.py` script
 in the root directory of the repository.
 
@@ -29,17 +42,14 @@ python setup.py install
 
 The `build` command, in addition to the standard distutils setup,
 compiles the C code in the `pawpyseed.core` module into a shared
-object in the core module, `pawpy.so`. Currently, compiling the
-C code requires the Intel C compiler, `icc`, as well as the Intel
-Math Kernel Library. When the `build` command is run, an environment
-variable `MKLROOT` must be present and point to the Math Kernel Library.
+object in the core module, `pawpy.so`. See below for
+dependency details.
 
 ### Dependencies
 
 All dependencies indicate the minimum version tested.
 PAWpySeed might work fine with earlier versions, but
-errors related to use of earlier versions are not supported
-and will not be addressed.
+use of older versions will not be officially supported.
 
 Python requirements:
 ```
@@ -71,7 +81,7 @@ The last line is optional but might be useful for future PAWpySeed builds
 and other programs which make use of MKL.
 The setup.py file will now take care of C compilation.
 
-Optional Python dependencies:
+Optional Python dependencies (not used now but might be in the future):
 ```
 sympy>=1.1.1
 matplotlib>=0.2.5

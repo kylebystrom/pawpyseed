@@ -332,8 +332,21 @@ class TestMem:
 
 class TestPy:
 
-	def setup():
+	def setup(self):
 		pass
 
-	def teardown():
+	def teardown(self):
 		pass
+
+	def test_init(self):
+		wf = Wavefunction.from_directory('.', True)
+		wf.free_all()
+		wf = Wavefunction.from_directory('.', False)
+		wf.free_all()
+		wf = Wavefunction.from_files('CONTCAR', 'OUTCAR', 'WAVECAR',
+			'POTCAR', 'vasprun.xml', 'OUTCAR', True)
+		wf.free_all()
+		wf = Wavefunction.from_files('CONTCAR', 'OUTCAR', 'WAVECAR',
+			'POTCAR', 'vasprun.xml', 'OUTCAR', False)
+		wf.free_all()
+		wf = Wavefunction()

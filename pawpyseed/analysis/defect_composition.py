@@ -109,7 +109,7 @@ class BulkCharacter(PawpyData):
 	def makeit(generator):
 		#Example: 
 		#>>> def_lst = ['charge_1', 'charge_0', 'charge_-1']
-		#>>> generator = Wavefunction.setup_multiple_protections('bulk', def_lst)
+		#>>> generator = Projector.setup_multiple_protections('bulk', def_lst)
 		#>>> objs = BulkComposition.makeit()
 
 		bcs = {}
@@ -145,9 +145,9 @@ class BasisExpansion(PawpyData):
 	def makeit(generator):
 		#Example: 
 		#>>> def_lst = ['charge_1', 'charge_0', 'charge_-1']
-		#>>> generator = Wavefunction.setup_multiple_protections('bulk', def_lst)
+		#>>> generator = Projector.setup_multiple_protections('bulk', def_lst)
 		#OR
-		#>>> generator = Wavefunction.setup_multiple_projections(*pycdt_dirs('.'))
+		#>>> generator = Projector.setup_multiple_projections(*pycdt_dirs('.'))
 		#
 		#>>> objs = BasisExpansion.makeit()
 

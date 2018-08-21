@@ -629,7 +629,7 @@ void overlap_setup_real(pswf_t* wf_R, pswf_t* wf_S, ppot_t* pps,
 		}
 		free_real_proj_site_list(sites_N_R, num_N_R);
 	}
-	printf("ONE THIRD DONE\n");
+	printf("PART 1 DONE\n");
 	if (num_N_S > 0) {
 		real_proj_site_t* sites_N_S = smooth_pw_values(num_N_S, N_S, labels_S, coords_S,
 			wf_R->lattice, wf_R->reclattice, pps, wf_R->fftg);
@@ -643,7 +643,7 @@ void overlap_setup_real(pswf_t* wf_R, pswf_t* wf_S, ppot_t* pps,
 		}
 		free_real_proj_site_list(sites_N_S, num_N_S);
 	}
-	printf("TWO THIRDS DONE\n");
+	printf("PART 2 DONE\n");
 	
 	double* dcoords =  NULL;
 	if (num_N_RS > 0) {
@@ -708,7 +708,7 @@ void overlap_setup_real(pswf_t* wf_R, pswf_t* wf_S, ppot_t* pps,
 	wf_S->dcoords = dcoords;
 	wf_S->num_aug_overlap_sites = num_N_RS;
 	wf_R->num_aug_overlap_sites = num_N_RS;
-	printf("finished overlap setup\n");
+	printf("PART 3 DONE\nFINISHED OVERLAP SETUP\n");
 }
 
 double* compensation_terms(int BAND_NUM, pswf_t* wf_S, pswf_t* wf_R, ppot_t* pps,

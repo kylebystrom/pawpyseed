@@ -1,324 +1,69 @@
-# coding: utf-8
+from pawpyseed.core.wavefunction import *
 
-## @package pawpyseed.core.wavefunction
-# Base class containing Python classes for parsing files
-# and storing and analyzing wavefunction data.
+class Projector(Wavefunction):
 
-
-from pymatgen.io.vasp.inputs import Potcar, Poscar
-from pymatgen.io.vasp.outputs import Vasprun, Outcar
-from pymatgen.core.structure import Structure
-import numpy as np
-from ctypes import *
-from pawpyseed.core.utils import *
-import os, time
-import numpy as np
-import json
-
-import sys
-
-class Timer:
-	@staticmethod
-	def setup_time(t):
-		Timer.ALL_SETUP_TIME += t
-	@staticmethod
-	def overlap_time(t):
-		Timer.ALL_OVERLAP_TIME += t
-	@staticmethod
-	def augmentation_time(t):
-		Timer.ALL_AUGMENTATION_TIME += t
-	ALL_SETUP_TIME = 0
-	ALL_OVERLAP_TIME = 0
-	ALL_AUGMENTATION_TIME = 0
-
-class Pseudopotential:
-	"""
-	Contains important attributes from a VASP pseudopotential files. POTCAR
-	"settings" can be read from the pymatgen POTCAR object
-
-	Note: for the following attributes, 'index' refers to an energy
-	quantum number epsilon and angular momentum quantum number l,
-	which define one set consisting of a projector function, all electron
-	partial waves, and pseudo partial waves.
-
-	Attributes:
-		rmaxstr (str): Maximum radius of the projection operators, as string
-			of double precision float
-		grid (np.array): radial grid on which partial waves are defined
-		aepotential (np.array): All electron potential defined radially on grid
-		aecorecharge (np.array): All electron core charge defined radially
-			on grid (i.e. charge due to core, and not valence, electrons)
-		kinetic (np.array): Core kinetic energy density, defined raidally on grid
-		pspotential (np.array): pseudopotential defined on grid
-		pscorecharge (np.array): pseudo core charge defined on grid
-		ls (list): l quantum number for each index
-		pswaves (list of np.array): pseudo partial waves for each index
-		aewaves (list of np.array): all electron partial waves for each index
-		projgrid (np.array): radial grid on which projector functions are defined
-		recipprojs (list of np.array): reciprocal space projection operators
-			for each index
-		realprojs (list of np.array): real space projection operators
-			for each index
-	"""
-
-	def __init__(self, data, rmax):
-		nonradial, radial = data.split("PAW radial sets", 1)
-		partial_waves = radial.split("pseudo wavefunction")
-		gridstr, partial_waves = partial_waves[0], partial_waves[1:]
-		self.rmax = rmax
-		self.pswaves = []
-		self.aewaves = []
-		self.recipprojs = []
-		self.realprojs = []
-		self.nonlocalprojs = []
-		self.ls = []
-		self.rmaxstrs = []
-
-		auguccstr, gridstr = gridstr.split("grid", 1)
-		gridstr, aepotstr = gridstr.split("aepotential", 1)
-		aepotstr, corechgstr = aepotstr.split("core charge-density", 1)
-		try:
-			corechgstr, kenstr = corechgstr.split("kinetic energy-density", 1)
-			kenstr, pspotstr = kenstr.split("pspotential", 1)
-		except:
-			kenstr = "0 0"
-			corechgstr, pspotstr = corechgstr.split("pspotential", 1)
-		pspotstr, pscorechgstr = pspotstr.split("core charge-density (pseudized)", 1)
-		self.grid = self.make_nums(gridstr)
-		self.aepotential = self.make_nums(aepotstr)
-		self.aecorecharge = self.make_nums(corechgstr)
-		self.kinetic = self.make_nums(kenstr)
-		self.pspotential = self.make_nums(pspotstr)
-		self.pscorecharge = self.make_nums(pscorechgstr)
-
-		augstr, uccstr = auguccstr.split('uccopancies in atom', 1)
-		head, augstr = augstr.split('augmentation charges (non sperical)', 1)
-		self.augs = self.make_nums(augstr)
-
-		for pwave in partial_waves:
-			lst = pwave.split("ae wavefunction", 1)
-			self.pswaves.append(self.make_nums(lst[0]))
-			self.aewaves.append(self.make_nums(lst[1]))
-
-		projstrs = nonradial.split("Non local Part")
-		topstr, projstrs = projstrs[0], projstrs[1:]
-		self.T = float(topstr[-22:-4])
-		topstr, atpschgstr = topstr[:-22].split("atomic pseudo charge-density", 1)
-		try:
-			topstr, corechgstr = topstr.split("core charge-density (partial)", 1)
-			settingstr, localstr = topstr.split("local part", 1)
-		except:
-			corechgstr = "0 0"
-			settingstr, localstr = topstr.split("local part", 1)
-		localstr, self.gradxc = localstr.split("gradient corrections used for XC", 1)
-		self.gradxc = int(self.gradxc)
-		self.localpart = self.make_nums(localstr)
-		self.localnum = self.localpart[0]
-		self.localpart = self.localpart[1:]
-		self.coredensity = self.make_nums(corechgstr)
-		self.atomicdensity = self.make_nums(atpschgstr)
-
-		for projstr in projstrs:
-			lst = projstr.split("Reciprocal Space Part")
-			nonlocalvals, projs = lst[0], lst[1:]
-			self.rmaxstr = c_char_p()
-			self.rmaxstr.value = nonlocalvals.split()[2].encode('utf-8')
-			self.rmax = self.make_nums(nonlocalvals.split()[2])[0]
-			nonlocalvals = self.make_nums(nonlocalvals)
-			l = nonlocalvals[0]
-			count = nonlocalvals[1]
-			self.nonlocalprojs.append(nonlocalvals[2:])
-			for proj in projs:
-				recipproj, realproj = proj.split("Real Space Part")
-				self.recipprojs.append(self.make_nums(recipproj))
-				self.realprojs.append(self.make_nums(realproj))
-				self.ls.append(l)
-
-		settingstr, projgridstr = settingstr.split("STEP   =")
-		self.ndata = int(settingstr.split()[-1])
-		projgridstr = projgridstr.split("END")[0]
-		self.projgrid = self.make_nums(projgridstr)
-		self.step = (self.projgrid[0], self.projgrid[1])
-
-		self.projgrid = np.linspace(0,rmax/1.88973,self.ndata,False,dtype=np.float64)
-
-	def make_nums(self, numstring):
-		return np.fromstring(numstring, dtype = np.float64, sep = ' ')
-
-class CoreRegion:
-	"""
-	List of Pseudopotential objects to describe the core region of a structure.
-
-	Attributes:
-		pps (dict of Pseudopotential): keys are element symbols,
-			values are Pseudopotential objects
-	"""
-
-	def __init__(self, potcar):
-		self.pps = {}
-		for potsingle in potcar:
-			self.pps[potsingle.element] = Pseudopotential(potsingle.data[:-15], potsingle.rmax)
-		
-
-class PseudoWavefunction:
-	"""
-	Class for storing pseudowavefunction from WAVECAR file. Most important attribute
-	is wf_ptr, a C pointer used in the C portion of the program for storing
-	plane wave coefficients
-
-	Attributes:
-		kpts (np.array): nx3 array of fractional kpoint vectors,
-			where n is the number of kpoints
-		kws (np.array): weight of each kpoint
-		wf_ptr (ctypes POINTER): c pointer to pswf_t object
-	"""
-
-	def __init__(self, filename="WAVECAR", vr="vasprun.xml"):
-		if type(vr) == str:
-			vr = Vasprun(vr)
-		weights = vr.actual_kpoints_weights
-		kws = numpy_to_cdouble(weights)
-		self.kws = weights
-		self.kpts = vr.actual_kpoints
-		self.wf_ptr = PAWC.read_wavefunctions(filename.encode('utf-8'), kws)
-
-	def pseudoprojection(self, band_num, basis):
+	def __init__(wf, basis, setup_basis=True):
 		"""
-		Computes <psibt_n1k|psit_n2k> for all n1 and k
-		and a given n2, where psibt are basis structures
-		pseudowavefunctions and psit are self pseudowavefunctions
-
-		Arguments:
-			band_num (int): n2 (see description)
-			basis (Pseudowavefunction): pseudowavefunctions onto whose bands
-				the band of self is projected
+		Projector is a class to projector KS states
+		from wf onto the KS states of basis
+		(both wavefunction objects). Projector extends
+		Wavefunction, so a Projector is essentially
+		a Wavefunction object that is set up to be
+		projected onto basis.
 		"""
-		nband = PAWC.get_nband(c_void_p(basis.wf_ptr))
-		nwk = PAWC.get_nwk(c_void_p(basis.wf_ptr))
-		nspin = PAWC.get_nspin(c_void_p(basis.wf_ptr))
-
-		res = PAWC.pseudoprojection(c_void_p(basis.wf_ptr), c_void_p(self.wf_ptr), band_num)
-		res = cdouble_to_numpy(res, 2*nband*nwk*nspin)
-		return res[::2] + 1j * res[1::2]
-
-class Wavefunction:
-	"""
-	Class for storing and manipulating all electron wave functions in the PAW
-	formalism.
-
-	Attributes:
-		structure (pymatgen.core.structure.Structure): stucture of the material
-			that the wave function describes
-		pwf (PseudoWavefunction): Pseudowavefunction componenet
-		cr (CoreRegion): Contains the pseudopotentials, with projectors and
-			partials waves, for the structure
-		projector: ctypes object for interfacing with C code
-		wf_ptr (C pointer): pointer to the pswf_t C object for this wavefunction
-		dim (np.ndarray, length 3): dimension of the FFT grid used by VASP
-			and therefore for FFTs in this code
-	"""
-
-	def __init__(self, struct, pwf, cr, outcar, setup_projectors=True):
-		"""
-		Arguments:
-			struct (pymatgen.core.Structure): structure that the wavefunction describes
-			pwf (PseudoWavefunction): Pseudowavefunction componenet
-			cr (CoreRegion): Contains the pseudopotentials, with projectors and
-				partials waves, for the structure
-			outcar (pymatgen.io.vasp.outputs.Outcar): Outcar object for reading ngf
-		Returns:
-			Wavefunction object
-		"""
-		self.structure = struct
-		self.pwf = pwf
-		self.cr = cr
-		self.dim = outcar.ngf
-		self.dim = np.array(self.dim).astype(np.int32) // 2
-		self.projector_owner = False
+		self.structure = wf.structure
+		self.pwf = wf.pwf
+		self.cr = wf.cr
+		self.dim = wf.dim
+		self.projector_owner = True
 		self.projector_list = None
-			if setup_projectors:
-				self.projector_owner = True
-				self.projector_list, self.nums,\
-					self.coords = self.make_c_projectors()
-		self.nband = PAWC.get_nband(c_void_p(pwf.wf_ptr))
-		self.nwk = PAWC.get_nwk(c_void_p(pwf.wf_ptr))
-		self.nspin = PAWC.get_nspin(c_void_p(pwf.wf_ptr))
-		self.nums = None
-		self.coords = None
+		self.nband = wf.nband
+		self.nwk = wf.nwk
+		self.nspin = wf.nspin
+		self.nums = wf.nums
+		self.coords = wf.coords
+		self.basis = basis
+		self.wf = wf
+
+		self.setup_projection(basis, setup_basis)
 
 	@staticmethod
-	def from_files(struct="CONTCAR", pwf="WAVECAR", cr="POTCAR",
-		vr="vasprun.xml", outcar="OUTCAR", setup_projectors=True):
+	def from_files(basis, struct="CONTCAR", pwf="WAVECAR", cr="POTCAR",
+		vr="vasprun.xml", outcar="OUTCAR", setup_basis=True):
 		"""
-		Construct a Wavefunction object from file paths.
+		Construct a Projector object from file paths.
 		Arguments:
+			basis (Wavefunction): the basis Wavefunction
 			struct (str): VASP POSCAR or CONTCAR file path
 			pwf (str): VASP WAVECAR file path
 			vr (str): VASP vasprun file path
+			outcar (str): VASP OUTCAR file path
+			setup_basis (bool): whether to set up the basis
 		Returns:
-			Wavefunction object
+			Projector object
 		"""
-		return Wavefunction(Poscar.from_file(struct).structure,
+		return Projector(Poscar.from_file(struct).structure,
 			PseudoWavefunction(pwf, vr),
 			CoreRegion(Potcar.from_file(cr)),
-			Outcar(outcar), setup_projectors)
+			Outcar(outcar), setup_basis)
 
 	@staticmethod
-	def from_directory(path, setup_projectors=True):
+	def from_directory(basis, path, setup_basis=True):
 		"""
 		Assumes VASP output has the default filenames and is located
 		in the directory specificed by path.
+		Arguments:
+			basis (Wavefunction): the basis Wavefunction
+			path (str): path to the VASP calculation directory
+			setup_basis (bool): whether to set up the basis
+		Returns:
+			Projector object
 		"""
 		filepaths = []
 		for d in ["CONTCAR", "WAVECAR", "POTCAR", "vasprun.xml", "OUTCAR"]:
 			filepaths.append(str(os.path.join(path, d)))
-		args = filepaths + [setup_projectors]
-		return Wavefunction.from_files(*args)
-
-	def make_site_lists(self, basis):
-		"""
-		Organizes sites into sets for use in the projection scheme. M_R and M_S contain site indices
-		of sites which are identical in structures R (basis) and S (self). N_R and N_S contain all other
-		site indices, and N_RS contains pairs of indices in R and S with overlapping augmentation
-		spheres in the PAW formalism.
-
-		Arguments:
-			basis (Wavefunction object): Wavefunction in the same lattice as self.
-				The bands in self will be projected onto the bands in basis
-		Returns:
-			M_R (numpy array): Indices of sites in basis which have an identical site in
-				S (self) (same element and position to within tolerance of 0.02 Angstroms).
-			M_S (numpy array): Indices of sites in self which match sites in M_R
-				(i.e. M_R[i] is an identical site to M_S[i])
-			N_R (numpy array): Indices of sites in basis but not in M_R
-			N_S (numpy array): Indices of sites in self but not in M_S
-			N_RS (numpy array): Pairs of indices (one in basis and one in self) which
-				are not identical but have overlapping augmentation regions
-		"""
-		ref_sites = basis.structure.sites
-		sites = self.structure.sites
-		M_R = []
-		M_S = []
-		for i in range(len(ref_sites)):
-			for j in range(len(sites)):
-				if ref_sites[i].distance(sites[j]) <= 0.02 and el(ref_sites[i]) == el(sites[j]):
-					M_R.append(i)
-					M_S.append(j)
-		N_R = []
-		N_S = []
-		for i in range(len(ref_sites)):
-			if not i in M_R:
-				N_R.append(i)
-		for j in range(len(sites)):
-			if (not j in N_S) and (not j in M_S):
-				N_S.append(j)
-		
-		N_RS = []
-		for i in N_R:
-			for j in N_S:
-				if ref_sites[i].distance(sites[j]) < self.cr.pps[el(ref_sites[i])].rmax + self.cr.pps[el(sites[j])].rmax:
-					N_RS.append((i,j))
-		return M_R, M_S, N_R, N_S, N_RS
+		args = filepaths + [setup_basis]
+		return Projector.from_files(*args)
 
 	def setup_projection(self, basis, setup_basis=True):
 		"""
@@ -335,9 +80,9 @@ class Wavefunction:
 		#	basis.projection_data = self.make_c_projectors(basis)
 		#projector_list, selfnums, selfcoords, basisnums, basiscoords = basis.projection_data
 		if setup_basis:
-			basis.projector_list, self.nums, self.coords, \
+			self.projector_list, self.nums, self.coords,\
 				basis.nums, basis.coords = self.make_c_projectors(basis)
-		projector_list = basis.projector_list
+		projector_list = self.projector_list
 		basisnums = basis.nums
 		basiscoords = basis.coords
 		selfnums = self.nums
@@ -403,7 +148,7 @@ class Wavefunction:
 						basis.pwf.wf_ptr, self.pwf.wf_ptr, band_num)
 		print("datsa", nband, nwk, nspin)
 		sys.stdout.flush()
-		projector_list = basis.projector_list
+		projector_list = self.projector_list
 		basisnums = basis.nums
 		basiscoords = basis.coords
 		selfnums = self.nums
@@ -529,7 +274,7 @@ class Wavefunction:
 					label = label + 1
 
 		#print (pps)
-		basis.projector_list = basis.get_c_projectors_from_pps(pps)
+		projector_list = basis.get_c_projectors_from_pps(pps)
 		basisnums = np.array([labels[el(s)] for s in basis.structure], dtype=np.int32)
 		basiscoords = np.array([], np.float64)
 		for s in basis.structure:
@@ -558,7 +303,7 @@ class Wavefunction:
 				pwf = PseudoWavefunction(files['WAVECAR'], files['vasprun.xml'])
 				outcar = Outcar(files['OUTCAR'])
 
-				wf = Wavefunction(struct, pwf, cr, outcar)
+				wf = Wavefunction(struct, pwf, cr, outcar, False)
 
 				selfnums = np.array([labels[el(s)] for s in wf.structure], dtype=np.int32)
 				selfcoords = np.array([], np.float64)
@@ -569,10 +314,11 @@ class Wavefunction:
 				wf.coords = selfcoords
 				wf.num_proj_els = len(pps)
 
-				wf.setup_projection(basis, False)
+				pr = Projector(wf, basis, setup_basis=False)
 
-				yield [wf_dir, basis, wf]
+				yield [wf_dir, basis, pr]
 				wf.free_all()
+				pr.free_all()
 			except Exception as e:
 				if ignore_errors:
 					errcount += 1
@@ -581,6 +327,7 @@ class Wavefunction:
 										+'\nGot the following error:\n'+str(e))
 
 		basis.free_all()
+		print("Number of errors:", errcount)
 			
 
 	def make_c_projectors(self, basis=None):
@@ -739,117 +486,11 @@ class Wavefunction:
 		Check to see if the projector functions have been read in and set up.
 		If not, do so.
 		"""
-
-		if not self.projector_list:
-			self.projector_owner = True
-			self.projector_list, self.nums, self.coords = self.make_c_projectors()
-			cfunc_call(PAWC.setup_projections_no_rayleigh, None,
-					self.pwf.wf_ptr, self.projector_list,
-					self.num_proj_els, len(self.structure), self.dim,
-					self.nums, self.coords)
-
-	def get_state_realspace(self, b, k, s, dim=None):
-		"""
-		Returns the real and imaginary parts of a given band.
-		Args:
-			b (int): band number
-			k (int): kpoint number
-			s (int): spin number
-			dim (numpy array of 3 ints): dimensions of the FFT grid
-		Returns:
-			An array (x slow-indexed) where the first half of the values
-				are the real part and second half of the values are the
-				imaginary part
-		"""
-
-		if type(dim) == type(None):
-			dim = self.dim
-		self.check_c_projectors()
-		return cfunc_call(PAWC.realspace_state_ri, 2*dim[0]*dim[1]*dim[2], b, k+s*self.nwk,
-			self.pwf.wf_ptr, self.projector_list,
-			dim, self.nums, self.coords)
-
-	def write_state_realspace(self, b, k, s, fileprefix = "", dim=None, return_wf = False):
-		"""
-		Writes the real and imaginary parts of a given band to two files,
-		prefixed by fileprefix
-
-		Args:
-			b (int): band number
-			k (int): kpoint number
-			s (int): spin number
-			dim (numpy array of 3 ints): dimensions of the FFT grid
-			fileprefix (string, optional): first part of the file name
-			return_wf (bool): whether to return the wavefunction
-		Returns:
-			(if return_wf==True) An array (x slow-indexed) where the first half of the values
-				are the real part and second half of the values are the
-				imaginary part
-			The wavefunction is written with z the slow index.
-		"""
-
-		if type(dim) == type(None):
-			dim = self.dim
-		self.check_c_projectors()
-		filename_base = "%sB%dK%dS%d" % (fileprefix, b, k, s)
-		filename1 = "%s_REAL" % filename_base
-		filename2 = "%s_IMAG" % filename_base
-		if return_wf:
-			return cfunc_call(PAWC.write_realspace_state_ri_return, 2*dim[0]*dim[1]*dim[2], filename1, filename2,
-				b, k+s*self.nwk,
-				self.pwf.wf_ptr, self.projector_list,
-				dim, self.nums, self.coords)
-		else:
-			cfunc_call(PAWC.write_realspace_state_ri_noreturn, None, filename1, filename2,
-				b, k+s*self.nwk,
-				self.pwf.wf_ptr, self.projector_list,
-				dim, self.nums, self.coords)
-
-	def write_density_realspace(self, filename = "PYAECCAR", dim=None, return_wf = False):
-		"""
-		Writes the real and imaginary parts of a given band to two files,
-		prefixed by fileprefix
-
-		Args:
-			b (int): band number
-			k (int): kpoint number
-			s (int): spin number
-			dim (numpy array of 3 ints): dimensions of the FFT grid
-			filename (string, "PYAECCAR"): charge density filename
-			return_wf (bool): whether to return the wavefunction
-		Returns:
-			(if return_wf==True) An array (x slow-indexed, as in VASP)
-				with the charge densities
-			The charge density is written with z the slow index.
-		"""
-
-		if type(dim) == type(None):
-			dim = self.dim
-		self.check_c_projectors()
-		if return_wf:
-			res = cfunc_call(PAWC.write_density_return, dim[0]*dim[1]*dim[2], filename,
-				self.pwf.wf_ptr, self.projector_list, dim, self.nums, self.coords)
-		else:
-			cfunc_call(PAWC.write_density_noreturn, None, filename,
-				self.pwf.wf_ptr, self.projector_list, dim, self.nums, self.coords)
-			res = None
-		f = open(filename, 'r')
-		nums = f.read()
-		f.close()
-		f = open(filename, 'w')
-		dimstr = '%d %d %d\n' % (dim[0], dim[1], dim[2])
-		posstr = Poscar(self.structure).get_string() + '\n'
-		f.write(posstr + dimstr + nums)
-		f.close()
-		print ('wiped successfuly')
-		return res
+		pass
 
 	def free_all(self):
 		"""
 		Frees all of the C structures associated with the Wavefunction object.
 		After being called, this object is not usable.
 		"""
-		PAWC.free_pswf(c_void_p(self.pwf.wf_ptr))
-		if self.projector_owner:
-			PAWC.free_ppot_list(c_void_p(self.projector_list), len(self.cr.pps))
-
+		PAWC.free_ppot_list(c_void_p(self.projector_list), len(self.cr.pps))

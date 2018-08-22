@@ -2,7 +2,7 @@ from pawpyseed.core.wavefunction import *
 
 class Projector(Wavefunction):
 
-	def __init__(wf, basis, setup_basis=True):
+	def __init__(self, wf, basis, projector_list = None):
 		"""
 		Projector is a class to projector KS states
 		from wf onto the KS states of basis
@@ -16,7 +16,7 @@ class Projector(Wavefunction):
 		self.cr = wf.cr
 		self.dim = wf.dim
 		self.projector_owner = True
-		self.projector_list = None
+		self.projector_list = projector_list
 		self.nband = wf.nband
 		self.nwk = wf.nwk
 		self.nspin = wf.nspin
@@ -24,12 +24,13 @@ class Projector(Wavefunction):
 		self.coords = wf.coords
 		self.basis = basis
 		self.wf = wf
+		self.num_proj_els = wf.num_proj_els
 
-		self.setup_projection(basis, setup_basis)
+		self.setup_projection(basis, projector_list == None)
 
 	@staticmethod
 	def from_files(basis, struct="CONTCAR", pwf="WAVECAR", cr="POTCAR",
-		vr="vasprun.xml", outcar="OUTCAR", setup_basis=True):
+		vr="vasprun.xml", outcar="OUTCAR", projector_list = None):
 		"""
 		Construct a Projector object from file paths.
 		Arguments:
@@ -45,10 +46,10 @@ class Projector(Wavefunction):
 		return Projector(Poscar.from_file(struct).structure,
 			PseudoWavefunction(pwf, vr),
 			CoreRegion(Potcar.from_file(cr)),
-			Outcar(outcar), setup_basis)
+			Outcar(outcar), projector_list)
 
 	@staticmethod
-	def from_directory(basis, path, setup_basis=True):
+	def from_directory(basis, path, projector_list = None):
 		"""
 		Assumes VASP output has the default filenames and is located
 		in the directory specificed by path.
@@ -62,7 +63,7 @@ class Projector(Wavefunction):
 		filepaths = []
 		for d in ["CONTCAR", "WAVECAR", "POTCAR", "vasprun.xml", "OUTCAR"]:
 			filepaths.append(str(os.path.join(path, d)))
-		args = filepaths + [setup_basis]
+		args = filepaths + [projector_list]
 		return Projector.from_files(*args)
 
 	def setup_projection(self, basis, setup_basis=True):
@@ -259,7 +260,7 @@ class Projector(Wavefunction):
 			onto bands of basis.
 		"""
 
-		basis = Wavefunction.from_directory(basis_dir)
+		basis = Wavefunction.from_directory(basis_dir, False)
 		crs = [basis.cr] + [CoreRegion(Potcar.from_file(os.path.join(wf_dir, 'POTCAR'))) \
 			for wf_dir in wf_dirs]
 
@@ -279,7 +280,6 @@ class Projector(Wavefunction):
 		basiscoords = np.array([], np.float64)
 		for s in basis.structure:
 			basiscoords = np.append(basiscoords, s.frac_coords)
-		projector_list = basis.projector_list
 		basis.nums = basisnums
 		basis.coords = basiscoords
 		basis.num_proj_els = len(pps)
@@ -293,6 +293,8 @@ class Projector(Wavefunction):
 					basis.pwf.wf_ptr, projector_list, label,
 					len(basis.structure), basis.dim, basisnums, basiscoords)
 
+		errcount = 0
+		pr = None
 		for wf_dir, cr in zip(wf_dirs, crs[1:]):
 
 			try:
@@ -314,18 +316,20 @@ class Projector(Wavefunction):
 				wf.coords = selfcoords
 				wf.num_proj_els = len(pps)
 
-				pr = Projector(wf, basis, setup_basis=False)
+				pr = Projector(wf, basis, projector_list)
 
 				yield [wf_dir, basis, pr]
 				wf.free_all()
-				pr.free_all()
 			except Exception as e:
 				if ignore_errors:
 					errcount += 1
 				else:
 					raise PAWpyError('Unable to setup wavefunction in directory %s' % wf_dir\
 										+'\nGot the following error:\n'+str(e))
-
+		if pr:
+			pr.free_all()
+		else:
+			raise PAWpyError("Could not generate any projector setups")
 		basis.free_all()
 		print("Number of errors:", errcount)
 			

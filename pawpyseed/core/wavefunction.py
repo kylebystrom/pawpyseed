@@ -236,15 +236,16 @@ class Wavefunction:
 		self.dim = np.array(self.dim).astype(np.int32) // 2
 		self.projector_owner = False
 		self.projector_list = None
-			if setup_projectors:
-				self.projector_owner = True
-				self.projector_list, self.nums,\
-					self.coords = self.make_c_projectors()
+		if setup_projectors:
+			self.projector_owner = True
+			self.projector_list, self.nums,\
+				self.coords = self.make_c_projectors()
 		self.nband = PAWC.get_nband(c_void_p(pwf.wf_ptr))
 		self.nwk = PAWC.get_nwk(c_void_p(pwf.wf_ptr))
 		self.nspin = PAWC.get_nspin(c_void_p(pwf.wf_ptr))
 		self.nums = None
 		self.coords = None
+		self.num_proj_els = None
 
 	@staticmethod
 	def from_files(struct="CONTCAR", pwf="WAVECAR", cr="POTCAR",

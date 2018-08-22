@@ -1,0 +1,345 @@
+\documentclass[12pt]{article}
+\usepackage{authblk}
+\usepackage{enumitem}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{amsfonts}
+\usepackage{gensymb}
+\usepackage{graphicx}
+\usepackage{caption}
+\usepackage{subcaption}
+\usepackage{hyperref}
+\usepackage{float}
+\usepackage{braket}
+\usepackage[margin=1.0in]{geometry}
+\usepackage[style=chem-acs,backend=bibtex,articletitle=false]{biblatex}
+\graphicspath{ {../../Si_stuff/} }
+\bibliography{mybib}
+
+\begin{document}
+
+\newcommand{\ind}{lm\epsilon}
+
+\title{PAWpySeed: A parallelized Python/C package for analyzing
+DFT wavefunctions in the PAW formalism}
+\author[1]{Kyle Bystrom (kylebystrom@berkeley.edu)}
+\affil[1]{UC Berkeley Department of Materials Science and Engineering}
+\date{\today}
+\maketitle
+\abstract{This document serves as a technical reference for PAWpySeed.
+The main novel development of PAWpySeed, covered in Section 1,
+is the ability to evaluate the overlap operators of Kohn-Sham states
+in the PAW formulism which belong to different structures. For examples,
+one might want to project a defect level in a point defect structure
+onto the bands of the bulk structure. Additional sections will
+cover other developments as they are made.}
+
+\section{Overlap Operators in PAW for Different Structures}
+
+The equation of a PAW wavefunction is\cite{blochl}
+\begin{equation}
+\ket{\psi_{n\mathbf{k}}}=\ket{\widetilde{\psi}_{n\mathbf{k}}}+
+\sum_{a,l,m,\epsilon}(\ket{\phi_{a\ind}}-\ket{\widetilde{\phi}_{a\ind}})
+\braket{\widetilde{p}_{a\ind}|\widetilde{\psi}_{n\mathbf{k}}}
+\label{eq:1}
+\end{equation}
+where the sum is over the sites $a$ in the structure and a set of
+angular and radial quantum nubers $l$, $m$, and $\epsilon$ at each site.
+The conventional overlap operator used for these wavefunctions is
+\begin{equation}
+\widetilde{A}=A+\sum_i\sum_j\ket{\widetilde{p}_i}(\bra{\phi_i}A\ket{\phi_j}
+-\bra{\widetilde{\phi_i}}A\ket{\widetilde{\phi_j}})\bra{\widetilde{p}_j}
+\label{eq:loc}
+\end{equation}
+where $i$ and $j$ are abbreviations for a particular index set
+$a,l,m,\epsilon$. This overlap operator requires that the augmentation
+regions of the two wavefunctions are same. Since these augmentation regions
+are defined by the sites in the structure, the structures must be the same,
+so a new formalism is necessary to calculate overlap operators for wavefunctions
+in different structures.
+
+This section procedes first by deriving the main formula for calculating
+the overlap operator for KS states in different structures, and then
+presents a runtime scaling table for each operation involved in evaluating
+the formula. The algorithm for each operation is then discussed
+
+\subsection{Derivation of Formula}
+
+The following section derives an equation for the overlap operator between one
+Kohn-Sham single particle state of one structure R and one Kohn-Sham single
+particle state of another structure S, where R and S share a common lattice
+and the DFT wavefunctions are constructed with the same plane-wave PAW basis set.
+It should be noted this derivation might better be described as a manipulation
+of terms of the PAW pseudo-operator, because its main purpose is to present
+the overlap operator in a method convenient for computation rather than to derive
+an entirely new expression. The derivation also makes particular note of how
+the expression of the overlap operator relates to interfacing with the VASP code,
+though the expressions are applicable to any PAW code.
+
+The starting point for this derivation is the transformation operator that
+is performed on the pseudowavefunction to obtain the all electron wavefunction
+\begin{equation}
+T=1+\sum_a\sum_l\sum_m\sum_{\epsilon}(\ket{\phi_{a\ind}}-\ket{\widetilde{\phi}_{a\ind}})
+\bra{\widetilde{p}_{a\ind}}=1+\sum_i(\ket{\phi_i}-\ket{\widetilde{\phi}_i})
+\bra{\widetilde{p}_i}
+\label{eq:T}
+\end{equation}
+where $\phi_{a\ind}$ are all electron (AE) partial waves, $\widetilde{\phi}_{a\ind}$
+are pseudo (PS) partial waves, $\widetilde{p}_{a\ind}$ are projector functions,
+$a$ are the site indices of each atom in the structure, and $l$, $m$, and $\epsilon$
+specify a spherical harmonic and index which uniquely specify partial wave at a given
+index. A summation over $i$ (or $j$, as below) represents a summation over $a$, $l$, $m$,
+and $\epsilon$. For further details on the PAW method, including the physical significance
+and construction of the partial waves and projector functions, see Blochl's original paper
+and Kresse and Joubert's paper relating ultrasoft pseudopotentials and PAW.\cite{blochl,vasp4}
+The next step is to define a pseudo operator $\widetilde{A}$ for each operator $A$
+such that $\bra{\psi}A\ket{\psi}=\bra{\widetilde{\psi}}\widetilde{A}\ket{\widetilde{\psi}}$.
+Because $\ket{\psi}=T\ket{\widetilde{\psi}}$, one can write
+\begin{equation}
+\widetilde{A}=T^{\dagger}AT
+\label{eq:op}
+\end{equation}
+One can then plug Equation \ref{eq:T} into Equation \ref{eq:op} to find
+\begin{equation}
+\begin{split}
+\widetilde{A} = & [1+\sum_i\ket{\widetilde{p}_i}(\bra{\phi_i}-\bra{\widetilde{\phi}_i})]
+A[1+\sum_j(\ket{\phi_j}-\ket{\widetilde{\phi}_j})
+\bra{\widetilde{p}_j}]\\
+\widetilde{A} = & A+\sum_i\ket{\widetilde{p}_i}(\bra{\phi_i}-\bra{\widetilde{\phi}_i})A
++\sum_j A(\ket{\phi_j}-\ket{\widetilde{\phi}_j})\bra{\widetilde{p}_j}\\
+& +\sum_i\sum_j\ket{\widetilde{p}_i}(\bra{\phi_i}-\bra{\widetilde{\phi}_i})A
+(\ket{\phi_j}-\ket{\widetilde{\phi}_j})\bra{\widetilde{p}_j}
+\end{split}
+\label{eq:res}
+\end{equation}
+
+Using the following relation,
+\begin{equation}
+\begin{split}
+(\bra{\phi_i}-\bra{\widetilde{\phi}_i})A(\ket{\phi_j}-\ket{\widetilde{\phi}_j})
+& =\bra{\phi_i}A\ket{\phi_j}-\bra{\widetilde{\phi}_i}A\ket{\phi_j}
+-(\bra{\phi_i}-\bra{\widetilde{\phi}_i})A\ket{\widetilde{\phi}_j}\\
+& =\bra{\phi_i}A\ket{\phi_j}-\bra{\widetilde{\phi}_i}A(\ket{\phi_j}-\ket{\widetilde{\phi_j}})
+-(\bra{\phi_i}-\bra{\widetilde{\phi}_i})A\ket{\widetilde{\phi}_j}
+-\bra{\widetilde{\phi_i}}A\ket{\widetilde{\phi_j}}
+\end{split}
+\end{equation}
+
+one can rearrange Equation \ref{eq:res} in the manner of Blochl\cite{blochl}:
+\begin{equation}
+\begin{split}
+\widetilde{A}= & A+\sum_i\sum_j[\ket{\widetilde{p}_i}(\bra{\phi_i}A\ket{\phi_j}
+-\bra{\widetilde{\phi_i}}A\ket{\widetilde{\phi_j}})\bra{\widetilde{p}_j}] \\
+& +\sum_i[(1-\sum_j\ket{\widetilde{p}_j}\bra{\widetilde{\phi}_j})A(\ket{\phi_i}-\ket{\widetilde{\phi_i}})
+\bra{\widetilde{p}_i}+\ket{\widetilde{p}_i}
+(\bra{\phi_i}-\bra{\widetilde{\phi}_i})A(1-\sum_j\ket{\widetilde{\phi}_j}\bra{\widetilde{p}_j})]
+\end{split}
+\label{eq:nonloc}
+\end{equation}
+When the operator $A$ is local, then $\sum_j\ket{\widetilde{\phi}_j}\bra{\widetilde{p}_j}=1$,
+so the entire second line of Equation \ref{eq:nonloc} vanishes, giving Blochl's formulation:\cite{blochl}
+\begin{equation}
+\widetilde{A}=A+\sum_i\sum_j\ket{\widetilde{p}_i}(\bra{\phi_i}A\ket{\phi_j}
+-\bra{\widetilde{\phi_i}}A\ket{\widetilde{\phi_j}})\bra{\widetilde{p}_j}
+\label{eq:loc1}
+\end{equation}
+
+However, while the overlap operator is local, the simplification in Equation \ref{eq:loc1} assumes that
+the summations over $i$ and $j$ go over the same species at the same locations in the same lattice;
+only the third condition is always satisfied for systems of interest for projections between different
+bases. Equation \ref{eq:res} is a more convenient representation than Equation \ref{eq:nonloc} for this
+purpose because it is easily seen that all terms between projectors whose augmentation regions do not
+overlap vanish. In addition, the POTCAR file in VASP only stores the PS and AE partial waves out to the
+edge of the augmentation region, where they are equal but not nonzero, so it is useful to organize the terms
+so that they are guaranteed to vanish outside the augmentation regions. Replacing $A$ with unity
+allows the overlap between two bands
+in different structures $R$ and $S$ with the same lattice to be specified (note that the
+summation over $i$ is for structure $R$ and the summation over $j$ is for structure $S$):
+\begin{equation}
+\begin{split}
+\braket{\psi_{Rn_1\mathbf{k}}|\psi_{Sn_2\mathbf{k}}} & =\widetilde{O}+O_1+O_2+O_3\\
+\widetilde{O} & =\braket{\widetilde{\psi}_{Rn_1\mathbf{k}}|\widetilde{\psi}_{Sn_2\mathbf{k}}}\\
+O_1 & =\sum_i\braket{\widetilde{\psi}_{Rn_1\mathbf{k}}|\widetilde{p}_i}(\bra{\phi_i}-\bra{\widetilde{\phi}_i})
+\ket{\widetilde{\psi}_{Sn_2\mathbf{k}}}\\
+O_2 & =\sum_j\bra{\widetilde{\psi}_{Rn_1\mathbf{k}}}(\ket{\phi_j}-\ket{\widetilde{\phi}_j})
+\braket{\widetilde{p}_j|\widetilde{\psi}_{Sn_2\mathbf{k}}}\\
+O_3 & =\sum_i\sum_j\braket{\widetilde{\psi}_{Rn_1\mathbf{k}}|
+\widetilde{p}_i}(\bra{\phi_i}-\bra{\widetilde{\phi}_i})
+(\ket{\phi_j}-\ket{\widetilde{\phi}_j})\braket{\widetilde{p}_j|\widetilde{\psi}_{Sn_2\mathbf{k}}}
+\end{split}
+\label{eq:ov1a}
+\end{equation}
+
+The pseudowavefunctions can be expanded as a summation of plane waves,
+$$\widetilde{\psi}_{n\mathbf{k}}(\mathbf{r})=\sqrt{\frac{\omega_{\mathbf{k}}}{V}}
+e^{i\mathbf{k}\cdot \mathbf{r}}\sum_{\mathbf{G}} C_{n\mathbf{k}\mathbf{G}}
+e^{i\mathbf{G}\cdot \mathbf{r}}$$
+so the overlap between two pseudowavefunctions per unit cell can be written as
+$$\widetilde{O}=\braket{\widetilde{\psi}_{n_1\mathbf{k}_1}|\widetilde{\psi}_{n_2\mathbf{k}_2}}
+=\delta_{\mathbf{k}_1,\mathbf{k}_2}
+\omega_{\mathbf{k}} \sum_{\mathbf{G}} C^*_{n_1\mathbf{k}_1\mathbf{G}}C_{n_2\mathbf{k}_2\mathbf{G}}$$
+
+In VASP, structures with the same energy, k-points, and lattice will have the same basis set,
+so this projection is performed simply by reading plane wave coefficients from the VASP WAVECAR file.
+
+It is important to simplify the calculation of the other terms in equation \ref{eq:ov1a} as much
+as possible because their calculation can be quite computationally intensive, and the number of
+necessary calculations for projecting onto an entire basis set can scale with the number
+of sites times the size of the basis set. One major simplification is that if a site $a$ in structure
+$R$ and site $b$ in structure $S$ have the same species and position, $a$ and $b$ will only have
+overlapping augmentation regions with each other and no other sites. Then, defining $O_{1a}$
+as the summation over on-site terms for the identical sites $a$ and $b$ in $O_1$:
+$$O_{1a}+O_{2a}+O_{3a}=\sum_{l,m}\sum_{\epsilon_1}\sum_{\epsilon_2}
+\braket{\widetilde{\psi}_{Rn_1\mathbf{k}}|\widetilde{p}_{a\ind _1}}
+(\braket{\phi_{a\ind _1}|{\phi_{a\ind _2}}}
+-\braket{\widetilde{\phi}_{a\ind _1}|\widetilde{\phi}_{a\ind _2}})
+\braket{\widetilde{p}_{a\ind _2}|\widetilde{\psi}_{Sn_2\mathbf{k}}}$$
+which is the local operator solution derived by Blochl. All three terms must
+be evaluated in full for the other sites, but terms in $O_3$ where $i$ and $j$ correspond
+to sites with nonoverlapping augmentation spheres vanish. Therefore, if $M_{RS}$ is the set
+of identical sites in the structures $R$ and $S$, $N_R$ and $N_S$ are the sets of sites
+in $R$ and $S$ not in $M_{RS}$, and $N_{RS}$ is the set of \emph{pairs} of sites not in
+$M$ with overlapping augmentation regions, then
+\begin{align}
+\braket{\psi_{Rn_1\mathbf{k}}|\psi_{Sn_2\mathbf{k}}}&=\widetilde{O}+O_M+O_R+O_S+O_N\\
+O_M&=\sum_{a\in M_{RS}}\sum_{l,m}\sum_{\epsilon_1}\sum_{\epsilon_2}
+\braket{\widetilde{\psi}_{Rn_1\mathbf{k}}|\widetilde{p}_{a\ind _1}}
+(\braket{\phi_{a\ind _1}|{\phi_{a\ind _2}}}
+-\braket{\widetilde{\phi}_{a\ind _1}|\widetilde{\phi}_{a\ind _2}})
+\braket{\widetilde{p}_{a\ind _2}|\widetilde{\psi}_{Sn_2\mathbf{k}}}\\
+O_R&=\sum_{i\in N_R}\braket{\widetilde{\psi}_{Rn_1\mathbf{k}}|\widetilde{p}_i}
+(\bra{\phi_i}-\bra{\widetilde{\phi}_i})
+\ket{\widetilde{\psi}_{Sn_2\mathbf{k}}}\\
+O_S&=\sum_{j\in N_S}\bra{\widetilde{\psi}_{Rn_1\mathbf{k}}}(\ket{\phi_j}
+-\ket{\widetilde{\phi}_j})
+\braket{\widetilde{p}_j|\widetilde{\psi}_{Sn_2\mathbf{k}}}\\
+O_N&=\sum_{i,j\in N_{RS}}\braket{\widetilde{\psi}_{Rn_1\mathbf{k}}|
+\widetilde{p}_i}(\bra{\phi_i}-\bra{\widetilde{\phi}_i})
+(\ket{\phi_j}-\ket{\widetilde{\phi}_j})
+\braket{\widetilde{p}_j|\widetilde{\psi}_{Sn_2\mathbf{k}}}
+\label{eq:overlap}
+\end{align}
+
+\begin{table}
+\centering
+\caption{Runtime scaling functions for each component of the code and
+definitions for shorthand symbols to express runtime. Approximate
+scales with the number of electrons are also shown.
+*The frequency refers to how often the routine is called. "Per band"
+indicates that the routine runs once every time a band from one structure
+is projected onto all the bands of a basis structure. "Per structure"
+indicates that the routine is a "setup" routine that must be called once
+for each structure and corresponding band structure to do perform projections. "Per lattice"
+operations are required once per unique lattice used.
+"Per structure pair" is the same as "per structure" except that the routine
+is only run once for a pair of structures with the same lattice and plane-wave
+basis set, the bands of one such structure to be used as a basis set for the other.
+**Number of sites flexibly refers to the number of sites relevant to the calculation,
+which worst-case scales with the total number of sites in the structure. For example,
+calculating $O_M$ and $O_N$ only require the sites in sets $M$ and $N_RS$, respectively.}
+\label{tab:runtime}
+
+\begin{tabular}{|c|c|c|}
+\hline
+Computational Task & $\Theta$ & Frequency*\\
+\hline
+$\widetilde{O}$ & $BKSW \sim n^2$ & per band\\
+$O_M$ & $BKSNP \sim n^2$ & per band\\
+$O_R$ and $O_S$ & $BKSNP \sim n^2$ & per band\\
+$O_N$ & $BKSNP \sim n^2$ & per band\\
+$\braket{\widetilde{p}_i|\widetilde{\psi}_{n\mathbf{k}}}$ & $BKSF\mathrm{log}(F)
+\sim n^2\mathrm{log}(n)$ & per structure\\
+$(\bra{\phi_i}-\bra{\widetilde{\phi}_i})
+\ket{\widetilde{\psi}_{n\mathbf{k}}}$ & $BKSNPW \sim n^3$ & per structure\\
+spherical Bessel transform partial waves & $NPG\mathrm{log}(G) \sim n$ & per structure pair\\
+project plane waves onto partial waves & $EPKW \sim n$ & per lattice\\
+projections for overlapping aug spheres & $NPL \sim n$ & per structure pair\\
+\hline
+\end{tabular}
+
+\begin{tabular}{c|c}
+Symbol & Definition\\
+\hline
+B & number of bands\\
+E & number of elements\\
+F & size of FFT grid\\
+G & size of partial wave radial grid\\
+K & number of k-points\\
+L & size of Legendre-Gauss grid around ions\\
+N & number of sites**\\
+P & number of projector functions\\
+S & number of spin states\\
+W & number of plane waves\\
+n & number of electrons (approximate scaling)
+\end{tabular}
+\end{table}
+
+\subsection{Overlap of Pseudowavefunction ($\widetilde{O}$)}
+
+The pseudowavefunction is expanded as a sum of plane waves:
+
+\begin{equation}
+\widetilde{\psi}_{n\mathbf{k}} =\frac{1}{\sqrt{V}}\sum_{\mathbf{G}}
+C_{n\mathbf{k}\mathbf{G}}e^{i\mathbf{k'}\cdot \mathbf{r}}
+\label{eq:pswf}
+\end{equation}
+
+where $V$ is the volume of the unit cell, $\mathbf{k}$ is the k-point,
+$n$ is the band index, $\mathbf{r}$ is the position, and $C_{n\mathbf{k}\mathbf{G}}$
+are the plane-wave coefficients for the plane-waves with vector $\mathbf{k+G}$.
+
+Since plane waves are orthogonal and normalized to $V$ when integrated over the
+unit cell, the overlap of two pseudowavefunctions is evaluated easily
+by summing over plane-wave coefficients as described in the derivation section
+above.
+
+\subsection{Concentric Augmentation Spheres ($O_M$}
+
+Integrals of the type $\braket{\widetilde{\psi}_{Rn_1\mathbf{k}}|\widetilde{p}_{a\ind _1}}$
+between a pseudowavefunction and projector function are evaluated using a real-space
+FFT grid, as with VASP with LREAL=TRUE.\cite{vasp} Integrals of the
+type $\braket{\phi_{a\ind _1}|{\phi_{a\ind _2}}}$ between partial waves
+are evaluated by simple radial integration. This is possible because the augmentation
+spheres are concentric, so the spherical harmonics for the partial waves
+are orthonormal.
+
+\subsection{Partial Waves Overlapping with Pseudowavefunction ($O_R$, $O_S$)}
+
+These integrals are a little bit trickier because it is necessary to project
+a smoothly varying pseudowavefunction onto a rapidly varying AE partial wave.
+Performing such projections can become prohibitively computationally expensive
+for large cells.
+Taking advantage of the orthogonality of plane waves, this projection can be
+done in real space. Since a plane wave can be expanded around an arbitrary origin
+in space (to a phase factor) using Rayleigh expansion:
+
+\begin{equation}
+e^{i\mathbf{k} \cdot \mathbf{r}} = 4\pi \sum_{l=0}^{\infty}\sum_{m=-l}^{l}
+i^l j_l(kr)Y_l^{m*}(\mathbf{\hat{k}})Y_l^m(\mathbf{\hat{r}})
+\label{eq:pwexp}
+\end{equation}
+
+partial waves can be Fourier transformed into reciprocal space by evaluating
+overlap integrals with spherical Bessel functions. This is done using the
+$O(NlogN)$ NUMSBT algorithm developed by Talman.\cite{TALMAN} Then, all
+frequency components greater than the FFT grid density can be set to 0
+because those plane-waves are orthogonal to the finite plane-wave
+basis set of the pseudowavefunctions,
+and the partial waves can be transformed back into real space, also using
+the NUMSBT algorithm. This results in a smooth partial waves
+for which $(\bra{\phi_i}-\bra{\widetilde{\phi}_i})\ket{\widetilde{\psi}_{n\mathbf{k}}}$
+can be evaluated in real space.
+
+\subsection{Partial Wave Overlap on Non-Orthgonal Augmentation Spheres ($O_N$)}
+
+The $O_N$ term appears similar to the $O_M$ term, except that the integrals
+$(\bra{\phi_i}-\bra{\widetilde{\phi}_i})(\ket{\phi_j}-\ket{\widetilde{\phi}_j})$
+are more difficult to evaluate because the partial waves are centered
+at different sites. However, transforming these partial waves into
+reciprocal space using the spherical Bessel transform allows the
+overlap integrals to be evaluated using Equation (47) in Talman's
+NUMSBT paper.\cite{TALMAN}.
+
+\printbibliography
+
+\end{document}

@@ -27,15 +27,15 @@ if not "PAWPYCC" in os.environ:
 	elif subprocess.call("which gcc".split()) == 0:
 		os.environ["PAWPYCC"] = "gcc"
 	else:
-		raise PawpyBuildError("Can't find icc or gcc compiler!")
+		raise PawpyError("Can't find icc or gcc compiler!")
 
 status = subprocess.call('make tests'.split())
 if status != 0:
-	raise PawpyBuildError("Can't compile tpawpy.so! Check the C error output for details.")
+	raise PawpyError("Can't compile tpawpy.so! Check the C error output for details.")
 	status = subprocess.call('make tests'.split())
 status = subprocess.call('make memtest'.split())
 if status != 0:
-	raise PawpyBuildError("Can't compile memtest! Check the C error output for details.")
+	raise PawpyError("Can't compile memtest! Check the C error output for details.")
 os.chdir(currdir)
 
 MODULE_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -333,10 +333,11 @@ class TestMem:
 class TestPy:
 
 	def setup(self):
-		pass
+		self.currdir = os.getcwd()
+		os.chdir(os.path.join(MODULE_DIR, '../../../test_files'))
 
 	def teardown(self):
-		pass
+		os.chdir(self.currdir)
 
 	def test_init(self):
 		wf = Wavefunction.from_directory('.', True)
@@ -350,3 +351,32 @@ class TestPy:
 			'POTCAR', 'vasprun.xml', 'OUTCAR', False)
 		wf.free_all()
 		wf = Wavefunction()
+
+	def test_writestate(self):
+		wf = Wavefunction.from_directory('.')
+		fileprefix = ''
+		b, k, s = 10, 1, 0
+		state1 = wf.write_state_realspace(self, b, k, s, fileprefix = "", 
+			dim=np.array([30,30,30]), return_wf = True)
+		wf.free_all()
+		wf = Wavefunction.from_directory('.', False)
+		state2 = wf.write_state_realspace(self, b, k, s, fileprefix = "", 
+			dim=np.array([30,30,30]), return_wf = True)
+		wf.free_all()
+		assert_almost_equal(np.linalg.norm(state1-state2),0)
+		assert state1.shape[0] == 2*30*30*30
+		filename_base = "%sB%dK%dS%d" % (fileprefix, b, k, s)
+		filename1 = "%s_REAL" % filename_base
+		filename2 = "%s_IMAG" % filename_base
+		os.remove(filename1)
+		os.remove(filenmae2)
+
+	def test_density(self):
+		wf = Wavefunction.from_directory('.')
+		wf.write_density_realspace(dim=np.array([30,30,30]))
+		tstchg = Chgcar.from_file("AECCAR2")
+		chg = Chgcar.from_file("PYAECCAR")
+		reldiff = np.linalg.norm((chg-tstchg)/tstchg)
+		assert_almost_equal(reldiff, 0, decimal=3)
+		os.remove('PYAECCAR')
+

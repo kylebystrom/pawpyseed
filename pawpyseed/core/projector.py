@@ -1,3 +1,10 @@
+# coding: utf-8
+
+## @package pawpyseed.core.projector
+# Defines the Projector class, an extension
+# of the Wavefunction class for evaluating
+# AE projection operators.
+
 from pawpyseed.core.wavefunction import *
 
 class Projector(Wavefunction):
@@ -10,6 +17,22 @@ class Projector(Wavefunction):
 		Wavefunction, so a Projector is essentially
 		a Wavefunction object that is set up to be
 		projected onto basis.
+
+		Arguments:
+			wf (Wavefunction): The wavefunction objects whose
+				bands are to be projected onto basis
+			basis (Wavefunction): The wavefunction whose bands
+				serve as the basis set for projection
+			projector_list (c_void_p) (default None): pointer to a list of C
+				ppot_t objects. When manually calling the initializer,
+				this should generally be left as the default, in which
+				case the setup will be performed for wf and basis.
+				projector_list != None is used by setup_multiple_projections
+				for efficiency and memory management
+
+		Returns:
+			Projector object, containing all the same fields as
+				wf but set up for projections onto basis
 		"""
 		self.structure = wf.structure
 		self.pwf = wf.pwf
@@ -65,6 +88,51 @@ class Projector(Wavefunction):
 			filepaths.append(str(os.path.join(path, d)))
 		args = filepaths + [projector_list]
 		return Projector.from_files(*args)
+
+	def make_site_lists(self, basis):
+		"""
+		Organizes sites into sets for use in the projection scheme. M_R and M_S contain site indices
+		of sites which are identical in structures R (basis) and S (self). N_R and N_S contain all other
+		site indices, and N_RS contains pairs of indices in R and S with overlapping augmentation
+		spheres in the PAW formalism.
+
+		Arguments:
+			basis (Wavefunction object): Wavefunction in the same lattice as self.
+				The bands in self will be projected onto the bands in basis
+		Returns:
+			M_R (numpy array): Indices of sites in basis which have an identical site in
+				S (self) (same element and position to within tolerance of 0.02 Angstroms).
+			M_S (numpy array): Indices of sites in self which match sites in M_R
+				(i.e. M_R[i] is an identical site to M_S[i])
+			N_R (numpy array): Indices of sites in basis but not in M_R
+			N_S (numpy array): Indices of sites in self but not in M_S
+			N_RS (numpy array): Pairs of indices (one in basis and one in self) which
+				are not identical but have overlapping augmentation regions
+		"""
+		ref_sites = basis.structure.sites
+		sites = self.structure.sites
+		M_R = []
+		M_S = []
+		for i in range(len(ref_sites)):
+			for j in range(len(sites)):
+				if ref_sites[i].distance(sites[j]) <= 0.02 and el(ref_sites[i]) == el(sites[j]):
+					M_R.append(i)
+					M_S.append(j)
+		N_R = []
+		N_S = []
+		for i in range(len(ref_sites)):
+			if not i in M_R:
+				N_R.append(i)
+		for j in range(len(sites)):
+			if (not j in N_S) and (not j in M_S):
+				N_S.append(j)
+		
+		N_RS = []
+		for i in N_R:
+			for j in N_S:
+				if ref_sites[i].distance(sites[j]) < self.cr.pps[el(ref_sites[i])].rmax + self.cr.pps[el(sites[j])].rmax:
+					N_RS.append((i,j))
+		return M_R, M_S, N_R, N_S, N_RS
 
 	def setup_projection(self, basis, setup_basis=True):
 		"""
@@ -124,7 +192,7 @@ class Projector(Wavefunction):
 		Timer.overlap_time(end-start)
 		print('-------------\nran overlap_setup in %f seconds\n---------------' % (end-start))
 
-	def single_band_projection(self, band_num, basis):
+	def single_band_projection(self, band_num, pseudo=False):
 		"""
 		All electron projection of the band_num band of self
 		onto all the bands of basis. Returned as a numpy array,
@@ -142,9 +210,10 @@ class Projector(Wavefunction):
 				as described above
 		"""
 
-		nband = PAWC.get_nband(c_void_p(basis.pwf.wf_ptr))
-		nwk = PAWC.get_nwk(c_void_p(basis.pwf.wf_ptr))
-		nspin = PAWC.get_nspin(c_void_p(basis.pwf.wf_ptr))
+		basis = self.basis
+		nband = basis.nband
+		nwk = basis.nwk
+		nspin = basis.nspin
 		res = cfunc_call(PAWC.pseudoprojection, 2*nband*nwk*nspin,
 						basis.pwf.wf_ptr, self.pwf.wf_ptr, band_num)
 		print("datsa", nband, nwk, nspin)
@@ -179,62 +248,6 @@ class Projector(Wavefunction):
 		"""
 		res += ct
 		return res[::2] + 1j * res[1::2]
-
-	def get_c_projectors_from_pps(self, pps):
-		"""
-		Returns a point to a list of ppot_t objects in C,
-		to be used for high performance parts of the code
-
-		Args:
-			pps (dict of Pseudopotential objects): keys are integers,
-				values of Pseudopotential objects
-
-		Returns:
-			c_void_p object pointing to ppot_t list with each Pseudopotential,
-			ordered in the list by their numerical keys
-		"""
-
-		clabels = np.array([], np.int32)
-		ls = np.array([], np.int32)
-		projectors = np.array([], np.float64)
-		aewaves = np.array([], np.float64)
-		pswaves = np.array([], np.float64)
-		wgrids = np.array([], np.float64)
-		pgrids = np.array([], np.float64)
-		augs = np.array([], np.float64)
-		rmaxstrs = (c_char_p * len(pps))()
-		rmaxs = np.array([], np.float64)
-		num_els = 0
-
-		for num in sorted(pps.keys()):
-			print ("THIS IS THE NUM %d" % num)
-			pp = pps[num]
-			clabels = np.append(clabels, [num, len(pp.ls), pp.ndata, len(pp.grid)])
-			rmaxstrs[num_els] = pp.rmaxstr
-			rmaxs = np.append(rmaxs, pp.rmax)
-			ls = np.append(ls, pp.ls)
-			wgrids = np.append(wgrids, pp.grid)
-			pgrids = np.append(pgrids, pp.projgrid)
-			augs = np.append(augs, pp.augs)
-			num_els += 1
-			for i in range(len(pp.ls)):
-				proj = pp.realprojs[i]
-				aepw = pp.aewaves[i]
-				pspw = pp.pswaves[i]
-				projectors = np.append(projectors, proj)
-				aewaves = np.append(aewaves, aepw)
-				pswaves = np.append(pswaves, pspw)
-
-		#print (num_els, clabels, ls, pgrids, wgrids, rmaxs)
-		grid_encut = (2 * np.pi * self.dim / self.structure.lattice.abc)**2 / 0.262
-		#return PAWC.get_projector_list(num_els, numpy_to_cint(clabels),
-		#	numpy_to_cint(ls), numpy_to_cdouble(pgrids), numpy_to_cdouble(wgrids),
-		#	numpy_to_cdouble(projectors), numpy_to_cdouble(aewaves), numpy_to_cdouble(pswaves),
-		#	numpy_to_cdouble(rmaxs), max(grid_encut))
-		return cfunc_call(PAWC.get_projector_list, None,
-							num_els, clabels, ls, pgrids, wgrids,
-							projectors, aewaves, pswaves,
-							rmaxs, max(grid_encut))
 
 	@staticmethod
 	def setup_multiple_projections(basis_dir, wf_dirs, ignore_errors = False):
@@ -318,7 +331,7 @@ class Projector(Wavefunction):
 
 				pr = Projector(wf, basis, projector_list)
 
-				yield [wf_dir, basis, pr]
+				yield [wf_dir, pr]
 				wf.free_all()
 			except Exception as e:
 				if ignore_errors:
@@ -332,89 +345,32 @@ class Projector(Wavefunction):
 			raise PAWpyError("Could not generate any projector setups")
 		basis.free_all()
 		print("Number of errors:", errcount)
-			
 
-	def make_c_projectors(self, basis=None):
-		"""
-		Uses the CoreRegion objects in self and basis (if not None)
-		to construct C representations of the projectors and partial waves
-		for a structure. Also assigns numerical labels for each element and
-		returns a list of indices and positions which can be easily converted
-		to C lists for projection functions.
-
-		Arguments:
-			basis (None or Wavefunction): an additional structure from which
-				to include pseudopotentials. E.g. can be useful if a basis contains
-				some different elements than self.
-		Returns:
-			projector_list (C pointer): describes the pseudopotential data in C
-			selfnums (int32 numpy array): numerical element label for each site in
-				the structure
-			selfcoords (float64 numpy array): flattened list of coordinates of each site
-				in self
-			basisnums (if basis != None): same as selfnums, but for basis
-			basiscoords (if basis != None): same as selfcoords, but for basis
-		"""
-		pps = {}
-		labels = {}
-		label = 0
-		for e in self.cr.pps:
-			pps[label] = self.cr.pps[e]
-			labels[e] = label
-			label += 1
-		#print (pps, labels)
-		if basis != None:
-			for e in basis.cr.pps:
-				if not e in labels:
-					pps[label] = basis.cr.pps[e]
-					labels[e] = label
-					label += 1
-		
-		projector_list = self.get_c_projectors_from_pps(pps)
-
-		selfnums = np.array([labels[el(s)] for s in self.structure], dtype=np.int32)
-		selfcoords = np.array([], np.float64)
-		if basis != None:
-			basisnums = np.array([labels[el(s)] for s in basis.structure], dtype=np.int32)
-			basiscoords = np.array([], np.float64)
-
-		self.num_proj_els = len(pps)
-		if basis != None:
-			basis.num_proj_els = len(pps)
-		for s in self.structure:
-			selfcoords = np.append(selfcoords, s.frac_coords)
-		if basis != None:
-			for s in basis.structure:
-				basiscoords = np.append(basiscoords, s.frac_coords)
-			return projector_list, selfnums, selfcoords, basisnums, basiscoords
-		return projector_list, selfnums, selfcoords
-
-	def proportion_conduction(self, band_num, bulk, pseudo = False, spinpol = False):
+	def proportion_conduction(self, band_num, pseudo = False, spinpol = False):
 		"""
 		Calculates the proportion of band band_num in self
 		that projects onto the valence states and conduction
-		states of bulk. Designed for analysis of point defect
+		states of self.basis (should be the bulk structure).
+		Designed for analysis of point defect
 		wavefunctions.
 
 		Arguments:
 			band_num (int): number of defect band in self
-			bulk (Wavefunction): wavefunction of bulk crystal
-				with the same lattice and basis set as self
 
 		Returns:
 			v, c (int, int): The valence (v) and conduction (c)
 				proportion of band band_num
 		"""
-
-		nband = PAWC.get_nband(c_void_p(bulk.pwf.wf_ptr))
-		nwk = PAWC.get_nwk(c_void_p(bulk.pwf.wf_ptr))
-		nspin = PAWC.get_nspin(c_void_p(bulk.pwf.wf_ptr))
-		occs = cdouble_to_numpy(PAWC.get_occs(c_void_p(bulk.pwf.wf_ptr)), nband*nwk*nspin)
+		basis = self.basis
+		nband = basis.nband
+		nwk = basis.nwk
+		nspin = basis.nspin
+		occs = cdouble_to_numpy(PAWC.get_occs(c_void_p(basis.pwf.wf_ptr)), nband*nwk*nspin)
 
 		if pseudo:
-			res = self.pwf.pseudoprojection(band_num, bulk.pwf)
+			res = self.pwf.pseudoprojection(band_num, basis.pwf)
 		else:
-			res = self.single_band_projection(band_num, bulk)
+			res = self.single_band_projection(band_num)
 
 		if spinpol:
 			c, v = np.zeros(nspin), np.zeros(nspin)
@@ -442,7 +398,8 @@ class Projector(Wavefunction):
 			c = c.tolist()
 		return v, c
 
-	def defect_band_analysis(self, bulk, num_below_ef=20, num_above_ef=20, spinpol = False):
+	def defect_band_analysis(self, bulk, num_below_ef=20,
+		num_above_ef=20, pseudo = False, spinpol = False):
 		"""
 		Identifies a set of 'interesting' bands in a defect structure
 		to analyze by choosing any band that is more than bound conduction
@@ -456,18 +413,20 @@ class Projector(Wavefunction):
 			spinpol (bool, False): whether to return spin-polarized results (only allowed
 				for spin-polarized DFT output)
 		"""
-		nband = PAWC.get_nband(c_void_p(bulk.pwf.wf_ptr))
-		nwk = PAWC.get_nwk(c_void_p(bulk.pwf.wf_ptr))
-		nspin = PAWC.get_nspin(c_void_p(bulk.pwf.wf_ptr))
+		basis = self.basis
+		nband = basis.nband
+		nwk = basis.nwk
+		nspin = basis.nspin
 		#totest = set()
-		occs = cdouble_to_numpy(PAWC.get_occs(c_void_p(bulk.pwf.wf_ptr)), nband*nwk*nspin)
+		occs = cdouble_to_numpy(PAWC.get_occs(c_void_p(basis.pwf.wf_ptr)), nband*nwk*nspin)
 		vbm = 0
 		for i in range(nband):
 			if occs[i*nwk*nspin] > 0.5:
 				vbm = i
 		min_band, max_band = vbm - num_below_ef, vbm + num_above_ef
 		if min_band < 0 or max_band >= nband:
-			raise PAWpyError("The min or max band is too large/small with min_band=%d, max_band=%d, nband=%d" % (min_band, max_band, nband))
+			raise PAWpyError("The min or max band is too large/small with min_band=%d, max_band=%d, nband=%d" \
+				% (min_band, max_band, nband))
 		"""
 		for b in range(nband):
 			v, c = self.proportion_conduction(b, bulk, pseudo = True, spinpol = False)
@@ -481,16 +440,9 @@ class Projector(Wavefunction):
 
 		results = {}
 		for b in totest:
-			results[b] = self.proportion_conduction(b, bulk, pseudo = False, spinpol = spinpol)
+			results[b] = self.proportion_conduction(b, pseudo, spinpol = spinpol)
 
 		return results
-
-	def check_c_projectors(self):
-		"""
-		Check to see if the projector functions have been read in and set up.
-		If not, do so.
-		"""
-		pass
 
 	def free_all(self):
 		"""

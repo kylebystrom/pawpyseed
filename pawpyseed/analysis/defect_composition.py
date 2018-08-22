@@ -114,10 +114,10 @@ class BulkCharacter(PawpyData):
 
 		bcs = {}
 
-		for wf_dir, basis, wf in generator:
+		for wf_dir, wf in generator:
 			vr = Vasprun(os.path.join(wf_dir, 'vasprun.xml'))
 			dos = vr.tdos
-			data = wf.defect_band_analysis(basis, spinpol = True)
+			data = wf.defect_band_analysis(spinpol = True)
 			bcs[wf_dir] = BulkCharacter(dos, wf.structure, data)
 
 		return bcs
@@ -153,13 +153,14 @@ class BasisExpansion(PawpyData):
 
 		bes = {}
 
-		for wf_dir, basis, wf in generator:
+		for wf_dir, wf in generator:
 
 			vr = Vasprun(os.path.join(wf_dir, 'vasprun.xml'))
 			dos = vr.tdos
-			expansion = np.zeros((wf.nband, basis.nband * basis.nwk * basis.nspin), dtype=np.complex128)
+			expansion = np.zeros((wf.nband, basis.nband * basis.nwk * basis.nspin),
+				dtype=np.complex128)
 			for b in range(wf.nband):
-				expansion[b,:] = wf.single_band_projection(b, basis)
+				expansion[b,:] = wf.single_band_projection(b)
 			bes[wf_dir] = BasisExpansion(dos, wf.structure, expansion)
 
 		return bes

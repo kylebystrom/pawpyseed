@@ -15,6 +15,10 @@ examples of using PAWpySeed in the form of PawpyData subclasses.
 The PawpyData.makeit function takes a generator from the Wavefunction.setup_multiple_projections function and uses it to calculate different values, depending on the subclass. These
 subclasses cn serve as examples for how to calculate required values from a Wavefunction.
 
+List of Tutorials:
+1. [Memory Management in pawpyseed (Don't worry, it's not scary!)]({{ site.baseurl }}/tutorials/tutorial1.html)
+2. [AE overlap operators for wavefunctions in different structures: The core of pawpyseed]({{ site.baseurl }}/tutorials/tutorial2.html)
+
 List of Examples:
 1. [Overlap operators of pseudowavefunctions]({{ site.baseurl }}/examples/example1.html)
 2. [AE overlap operators using PawpyData subclasses]({{ site.baseurl }}/examples/example2.html)

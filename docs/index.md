@@ -22,7 +22,15 @@ read about the dependencies and set up your environment correctly!
 
 You can install PAWpySeed with `pip`.
 
-`pip install pawpyseed`
+```
+pip install pawpyseed
+cd <install directory>/pawpyseed/core
+export PAWPYCC=<C compiler>
+make pawpy
+```
+
+Work is being done to eliminate the need to manually compile the C code,
+but it is necessary for the time being.
 
 This has been tested on Scientific Linux 7 and Linux Mint 18,
 but should work for systems that have the appropriate

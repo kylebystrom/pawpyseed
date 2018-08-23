@@ -27,7 +27,7 @@ for wf_dir in def_lst:
         # which is much faster but less quantitatively informative
         # v + c = 1 for pseudo = True
         # v is the valence band character and c is the conduction band character
-        v, c = wf.proportion_conduction(i, basis, pseudo=True, spinpol=True)
+        v, c = wf.proportion_conduction(i, basis, spinpol=True)
         dat[wf_dir][i] = (v, c)
     print ('FINISHED DEFECT %s' % wf_dir)
     # Wavefunction objects use C code and memory, make sure to free it!
@@ -41,3 +41,5 @@ f.close()
 
 Now 'res.yaml' will contain the valence and conduction band characters for the selected bands
 and structures in a yaml-formatted dictionary.
+
+But we can make this even easier!

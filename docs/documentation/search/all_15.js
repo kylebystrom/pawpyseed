@@ -12,6 +12,7 @@ var searchData=
   ['wavefunction',['Wavefunction',['../classpawpyseed_1_1core_1_1wavefunction_1_1Wavefunction.html',1,'pawpyseed::core::wavefunction']]],
   ['wavefunction_2epy',['wavefunction.py',['../wavefunction_8py.html',1,'']]],
   ['weight',['weight',['../structkpoint.html#a88c15b92c9dbf47d29c9ade4aa36aef6',1,'kpoint']]],
+  ['wf',['wf',['../classpawpyseed_1_1core_1_1projector_1_1Projector.html#ad637aa795064de84b522c13aeb5add27',1,'pawpyseed::core::projector::Projector']]],
   ['wf_5fptr',['wf_ptr',['../classpawpyseed_1_1core_1_1wavefunction_1_1PseudoWavefunction.html#abbffb59e8179a9f539a0064acd378094',1,'pawpyseed::core::wavefunction::PseudoWavefunction']]],
   ['write_5fdensity_5fnoreturn',['write_density_noreturn',['../density_8h.html#a5dd2923a8d4748fe1bdfc2dab8054102',1,'density.h']]],
   ['write_5fdensity_5frealspace',['write_density_realspace',['../classpawpyseed_1_1core_1_1wavefunction_1_1Wavefunction.html#ab885d204ede9b21a8e4205a99234fda9',1,'pawpyseed::core::wavefunction::Wavefunction']]],

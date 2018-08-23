@@ -208,12 +208,12 @@ developed in the following paper:
 reader.c and reader.h, which read WAVECAR files from VASP output,
 are based on the Fortran program, WaveTrans, written by
 R. M. Feenstra and M. Widom from the Dept. of Physics at Carnegie
-Mellon University. To see the original work, please visit:
-<https://www.andrew.cmu.edu/user/feenstra/wavetrans/>
+Mellon University. To see the original work,
+please visit <https://www.andrew.cmu.edu/user/feenstra/wavetrans/>.
 5. **Doxygen**:
 Doxygen is a documentation generator from which I built the docs for PAWpySeed.
 It is an excellent tool that allows for clean, up-to-date documentaton
-that is easy to make and navigate. Check it out at <http://www.stack.nl/~dimitri/doxygen/>
+that is easy to make and navigate. Check it out at <http://www.stack.nl/~dimitri/doxygen/>.
 
 
 ## Questions and Comments

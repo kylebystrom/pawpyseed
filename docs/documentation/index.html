@@ -86,7 +86,7 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
 <h2>Installation</h2>
 <p><b>Note</b>: Before installing with pip or the setup script, please read about the dependencies and set up your environment correctly!</p>
 <p>You can install PAWpySeed with <code>pip</code>.</p>
-<p><code>pip install pawpyseed</code></p>
+<div class="fragment"><div class="line"><a name="l00001"></a><span class="lineno">    1</span>&#160;pip install pawpyseed</div><div class="line"><a name="l00002"></a><span class="lineno">    2</span>&#160;cd &lt;install directory&gt;/pawpyseed/core</div><div class="line"><a name="l00003"></a><span class="lineno">    3</span>&#160;export PAWPYCC=&lt;C compiler&gt;</div><div class="line"><a name="l00004"></a><span class="lineno">    4</span>&#160;make pawpy</div></div><!-- fragment --><p>Work is being done to eliminate the need to manually compile the C code, but it is necessary for the time being.</p>
 <p>This has been tested on Scientific Linux 7 and Linux Mint 18, but should work for systems that have the appropriate packages and environment variables defined as described below. Note that the setup script compiles and installs some C code as a shared object to be used by <code>ctypes</code> and places it in the package directory under <code>pawpyseed/core/</code>.</p>
 <p>Installation can also be performed by cloning this repository and running the <code>setup.py</code> script in the root directory of the repository.</p>
 <div class="fragment"><div class="line"><a name="l00001"></a><span class="lineno">    1</span>&#160;python setup.py build</div><div class="line"><a name="l00002"></a><span class="lineno">    2</span>&#160;python setup.py install</div></div><!-- fragment --><p>The <code>build</code> command, in addition to the standard distutils setup, compiles the C code in the <code><a class="el" href="namespacepawpyseed_1_1core.html">pawpyseed.core</a></code> module into a shared object in the core module, <code>pawpy.so</code>. See below for dependency details.</p>
@@ -143,6 +143,7 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
 <li>Talman, J. Computer Physics Communications 2009, 180, 332 –338.</li>
 </ul>
 </li>
+<li><b>WaveTrans</b>: reader.c and <a class="el" href="reader_8h.html">reader.h</a>, which read WAVECAR files from VASP output, are based on the Fortran program, WaveTrans, written by R. M. Feenstra and M. Widom from the Dept. of Physics at Carnegie Mellon University. To see the original work, please visit: <a href="https://www.andrew.cmu.edu/user/feenstra/wavetrans/">https://www.andrew.cmu.edu/user/feenstra/wavetrans/</a></li>
 <li><b>Doxygen</b>: Doxygen is a documentation generator from which I built the docs for PAWpySeed. It is an excellent tool that allows for clean, up-to-date documentaton that is easy to make and navigate. Check it out at <a href="http://www.stack.nl/~dimitri/doxygen/">http://www.stack.nl/~dimitri/doxygen/</a></li>
 </ol>
 <h2>Questions and Comments</h2>

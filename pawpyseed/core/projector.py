@@ -379,9 +379,9 @@ class Projector(Wavefunction):
 					for k in range(nwk):
 						i = b*nspin*nwk + s*nwk + k
 						if occs[i] > 0.5:
-							v += np.absolute(res[i]) ** 2 * self.pwf.kws[i%nwk] / nspin
+							v[s] += np.absolute(res[i]) ** 2 * self.pwf.kws[i%nwk]
 						else:
-							c += np.absolute(res[i]) ** 2 * self.pwf.kws[i%nwk] / nspin
+							c[s] += np.absolute(res[i]) ** 2 * self.pwf.kws[i%nwk]
 		else:
 			c, v = 0, 0
 			for i in range(nband*nwk*nspin):

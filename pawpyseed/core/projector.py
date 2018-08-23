@@ -339,11 +339,11 @@ class Projector(Wavefunction):
 				else:
 					raise PAWpyError('Unable to setup wavefunction in directory %s' % wf_dir\
 										+'\nGot the following error:\n'+str(e))
+		basis.free_all()
 		if pr:
 			pr.free_all()
 		else:
 			raise PAWpyError("Could not generate any projector setups")
-		basis.free_all()
 		print("Number of errors:", errcount)
 
 	def proportion_conduction(self, band_num, pseudo = False, spinpol = False):
@@ -398,7 +398,7 @@ class Projector(Wavefunction):
 			c = c.tolist()
 		return v, c
 
-	def defect_band_analysis(self, bulk, num_below_ef=20,
+	def defect_band_analysis(self, num_below_ef=20,
 		num_above_ef=20, pseudo = False, spinpol = False):
 		"""
 		Identifies a set of 'interesting' bands in a defect structure
@@ -407,7 +407,6 @@ class Projector(Wavefunction):
 		and then fully analyzing these bands using single_band_projection
 
 		Args:
-			bulk (Wavefunction object): bulk structure wavefunction
 			num_below_ef (int, 20): number of bands to analyze below the fermi level
 			num_above_ef (int, 20): number of bands to analyze above the fermi level
 			spinpol (bool, False): whether to return spin-polarized results (only allowed
@@ -429,7 +428,7 @@ class Projector(Wavefunction):
 				% (min_band, max_band, nband))
 		"""
 		for b in range(nband):
-			v, c = self.proportion_conduction(b, bulk, pseudo = True, spinpol = False)
+			v, c = self.proportion_conduction(b, basis, pseudo = True, spinpol = False)
 			if v > bound and c > bound:
 				totest.add(b)
 				totest.add(b-1)

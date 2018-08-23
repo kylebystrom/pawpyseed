@@ -157,6 +157,7 @@ class BasisExpansion(PawpyData):
 
 			vr = Vasprun(os.path.join(wf_dir, 'vasprun.xml'))
 			dos = vr.tdos
+			basis = wf.basis
 			expansion = np.zeros((wf.nband, basis.nband * basis.nwk * basis.nspin),
 				dtype=np.complex128)
 			for b in range(wf.nband):

@@ -6,6 +6,7 @@ var searchData=
   ['gaunt',['gaunt',['../namespacepawpyseed_1_1core_1_1gaunt.html',1,'pawpyseed::core']]],
   ['pawpyseed',['pawpyseed',['../namespacepawpyseed.html',1,'']]],
   ['plots',['plots',['../namespacepawpyseed_1_1analysis_1_1plots.html',1,'pawpyseed::analysis']]],
+  ['projector',['projector',['../namespacepawpyseed_1_1core_1_1projector.html',1,'pawpyseed::core']]],
   ['quad_5fcheck',['quad_check',['../namespacepawpyseed_1_1core_1_1quad__check.html',1,'pawpyseed::core']]],
   ['quadrature',['quadrature',['../namespacepawpyseed_1_1core_1_1quadrature.html',1,'pawpyseed::core']]],
   ['rayleigh',['rayleigh',['../namespacepawpyseed_1_1core_1_1rayleigh.html',1,'pawpyseed::core']]],

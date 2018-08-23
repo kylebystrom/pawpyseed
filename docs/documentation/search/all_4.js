@@ -2,7 +2,7 @@ var searchData=
 [
   ['data',['data',['../classpawpyseed_1_1analysis_1_1defect__composition_1_1PawpyData.html#a8bd06b827cf3f1c5bd7b40fc9e28328e',1,'pawpyseed.analysis.defect_composition.PawpyData.data()'],['../classpawpyseed_1_1analysis_1_1defect__composition_1_1BulkCharacter.html#a9056797ef21d2a5324eb2866d395c631',1,'pawpyseed.analysis.defect_composition.BulkCharacter.data()'],['../classpawpyseed_1_1analysis_1_1defect__composition_1_1BasisExpansion.html#aff5786b1e90dee067d5c41dba610606f',1,'pawpyseed.analysis.defect_composition.BasisExpansion.data()']]],
   ['dcoords',['dcoords',['../structpswf.html#a65c6a42ec9ca9bcd2d513b4bc8156b0a',1,'pswf']]],
-  ['defect_5fband_5fanalysis',['defect_band_analysis',['../classpawpyseed_1_1core_1_1wavefunction_1_1Wavefunction.html#a8e4beff82548f929a175b5fb8ef26e2b',1,'pawpyseed::core::wavefunction::Wavefunction']]],
+  ['defect_5fband_5fanalysis',['defect_band_analysis',['../classpawpyseed_1_1core_1_1projector_1_1Projector.html#a19dbdc118ca94246c1e176a9ffb842eb',1,'pawpyseed.core.projector.Projector.defect_band_analysis()'],['../classpawpyseed_1_1core_1_1wavefunction_1_1Wavefunction.html#a8e4beff82548f929a175b5fb8ef26e2b',1,'pawpyseed.core.wavefunction.Wavefunction.defect_band_analysis()']]],
   ['defect_5fcomposition_2epy',['defect_composition.py',['../defect__composition_8py.html',1,'']]],
   ['dense_5fkgrid',['dense_kgrid',['../structppot.html#aeb36a85ea11cb576bdb9172dd859f20c',1,'ppot']]],
   ['dense_5fkwave',['dense_kwave',['../structfuncset.html#a44f2e964fe5c8b77ba6bf61e804b7f8a',1,'funcset']]],
@@ -13,7 +13,7 @@ var searchData=
   ['diff_5foverlap_5fmatrix',['diff_overlap_matrix',['../structppot.html#a5013a7c2196707da205e9cc8bdc4def5',1,'ppot']]],
   ['diffwave',['diffwave',['../structfuncset.html#a99c9a2b5865446c4d2773ed48237642e',1,'funcset']]],
   ['diffwave_5fspline',['diffwave_spline',['../structfuncset.html#a5e093dcd02ccba7b6deaa4aade3e336f',1,'funcset']]],
-  ['dim',['dim',['../classpawpyseed_1_1core_1_1wavefunction_1_1Wavefunction.html#a199bacc42572bed61b7e59d30a00353a',1,'pawpyseed::core::wavefunction::Wavefunction']]],
+  ['dim',['dim',['../classpawpyseed_1_1core_1_1projector_1_1Projector.html#a4c701222e7865dcc89c637e67f6fcbb8',1,'pawpyseed.core.projector.Projector.dim()'],['../classpawpyseed_1_1core_1_1wavefunction_1_1Wavefunction.html#a199bacc42572bed61b7e59d30a00353a',1,'pawpyseed.core.wavefunction.Wavefunction.dim()']]],
   ['dist_5ffrom_5ffrac',['dist_from_frac',['../utils_8h.html#aec43e91b403f937e4628bd5b3bb7b86d',1,'utils.h']]],
   ['dot',['dot',['../utils_8h.html#a9e686fe27fdeb066d0dc584e73062d99',1,'utils.h']]],
   ['drho',['drho',['../structsbt__descriptor.html#ab13befdd4bab5fd70ecfc2e98c1d069c',1,'sbt_descriptor']]],

@@ -109,15 +109,15 @@ class BulkCharacter(PawpyData):
 	def makeit(generator):
 		#Example: 
 		#>>> def_lst = ['charge_1', 'charge_0', 'charge_-1']
-		#>>> generator = Wavefunction.setup_multiple_protections('bulk', def_lst)
+		#>>> generator = Projector.setup_multiple_protections('bulk', def_lst)
 		#>>> objs = BulkComposition.makeit()
 
 		bcs = {}
 
-		for wf_dir, basis, wf in generator:
+		for wf_dir, wf in generator:
 			vr = Vasprun(os.path.join(wf_dir, 'vasprun.xml'))
 			dos = vr.tdos
-			data = wf.defect_band_analysis(basis, spinpol = True)
+			data = wf.defect_band_analysis(spinpol = True)
 			bcs[wf_dir] = BulkCharacter(dos, wf.structure, data)
 
 		return bcs
@@ -145,21 +145,23 @@ class BasisExpansion(PawpyData):
 	def makeit(generator):
 		#Example: 
 		#>>> def_lst = ['charge_1', 'charge_0', 'charge_-1']
-		#>>> generator = Wavefunction.setup_multiple_protections('bulk', def_lst)
+		#>>> generator = Projector.setup_multiple_protections('bulk', def_lst)
 		#OR
-		#>>> generator = Wavefunction.setup_multiple_projections(*pycdt_dirs('.'))
+		#>>> generator = Projector.setup_multiple_projections(*pycdt_dirs('.'))
 		#
 		#>>> objs = BasisExpansion.makeit()
 
 		bes = {}
 
-		for wf_dir, basis, wf in generator:
+		for wf_dir, wf in generator:
 
 			vr = Vasprun(os.path.join(wf_dir, 'vasprun.xml'))
 			dos = vr.tdos
-			expansion = np.zeros((wf.nband, basis.nband * basis.nwk * basis.nspin), dtype=np.float64)
+			basis = wf.basis
+			expansion = np.zeros((wf.nband, basis.nband * basis.nwk * basis.nspin),
+				dtype=np.complex128)
 			for b in range(wf.nband):
-				expansion[b,:] = wf.single_band_projection(b, basis)
+				expansion[b,:] = wf.single_band_projection(b)
 			bes[wf_dir] = BasisExpansion(dos, wf.structure, expansion)
 
 		return bes

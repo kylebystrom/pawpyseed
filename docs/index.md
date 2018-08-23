@@ -22,7 +22,15 @@ read about the dependencies and set up your environment correctly!
 
 You can install PAWpySeed with `pip`.
 
-`pip install pawpyseed`
+```
+pip install pawpyseed
+cd <install directory>/pawpyseed/core
+export PAWPYCC=<C compiler>
+make pawpy
+```
+
+Work is being done to eliminate the need to manually compile the C code,
+but it is necessary for the time being.
 
 This has been tested on Scientific Linux 7 and Linux Mint 18,
 but should work for systems that have the appropriate
@@ -196,7 +204,13 @@ code.
 NUMSBT is distributed under the Standard CPC License, and the algorithm is
 developed in the following paper:
     * Talman, J. Computer Physics Communications 2009, 180, 332 –338.
-4. **Doxygen**:
+4. **WaveTrans**:
+reader.c and reader.h, which read WAVECAR files from VASP output,
+are based on the Fortran program, WaveTrans, written by
+R. M. Feenstra and M. Widom from the Dept. of Physics at Carnegie
+Mellon University. To see the original work, please visit:
+<https://www.andrew.cmu.edu/user/feenstra/wavetrans/>
+5. **Doxygen**:
 Doxygen is a documentation generator from which I built the docs for PAWpySeed.
 It is an excellent tool that allows for clean, up-to-date documentaton
 that is easy to make and navigate. Check it out at <http://www.stack.nl/~dimitri/doxygen/>

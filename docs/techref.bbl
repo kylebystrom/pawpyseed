@@ -1,0 +1,144 @@
+% $ biblatex auxiliary file $
+% $ biblatex version 2.6 $
+% Do not modify the above lines!
+%
+% This is an auxiliary file used by the 'biblatex' package.
+% This file may safely be deleted. It will be recreated as
+% required.
+%
+\begingroup
+\makeatletter
+\@ifundefined{ver@biblatex.sty}
+  {\@latex@error
+     {Missing 'biblatex' package}
+     {The bibliography requires the 'biblatex' package.}
+      \aftergroup\endinput}
+  {}
+\endgroup
+
+\entry{blochl}{article}{}
+  \name{author}{1}{}{%
+    {{}%
+     {Blochl}{B.}%
+     {P.~E.}{P.~E.}%
+     {}{}%
+     {}{}}%
+  }
+  \list{publisher}{1}{%
+    {American Physical Society}%
+  }
+  \strng{namehash}{BPE1}
+  \strng{fullhash}{BPE1}
+  \verb{doi}
+  \verb 10.1103/PhysRevB.50.17953
+  \endverb
+  \field{issue}{24}
+  \field{pages}{17953\bibrangedash 17979}
+  \field{title}{Projector augmented-wave method}
+  \verb{url}
+  \verb https://link.aps.org/doi/10.1103/PhysRevB.50.17953
+  \endverb
+  \field{volume}{50}
+  \field{journaltitle}{Phys. Rev. B}
+  \field{year}{1994}
+  \warn{\item Invalid format of field 'month'}
+\endentry
+
+\entry{vasp4}{article}{}
+  \name{author}{2}{}{%
+    {{}%
+     {Kresse}{K.}%
+     {G.}{G.}%
+     {}{}%
+     {}{}}%
+    {{}%
+     {Joubert}{J.}%
+     {D.}{D.}%
+     {}{}%
+     {}{}}%
+  }
+  \list{publisher}{1}{%
+    {American Physical Society}%
+  }
+  \strng{namehash}{KGJD1}
+  \strng{fullhash}{KGJD1}
+  \verb{doi}
+  \verb 10.1103/PhysRevB.59.1758
+  \endverb
+  \field{issue}{3}
+  \field{pages}{1758\bibrangedash 1775}
+  \field{title}{From ultrasoft pseudopotentials to the projector augmented-wave
+  method}
+  \verb{url}
+  \verb https://link.aps.org/doi/10.1103/PhysRevB.59.1758
+  \endverb
+  \field{volume}{59}
+  \field{journaltitle}{Phys. Rev. B}
+  \field{year}{1999}
+  \warn{\item Invalid format of field 'month'}
+\endentry
+
+\entry{vasp}{article}{}
+  \name{author}{2}{}{%
+    {{}%
+     {Kresse}{K.}%
+     {G.}{G.}%
+     {}{}%
+     {}{}}%
+    {{}%
+     {Hafner}{H.}%
+     {J.}{J.}%
+     {}{}%
+     {}{}}%
+  }
+  \list{publisher}{1}{%
+    {American Physical Society}%
+  }
+  \strng{namehash}{KGHJ1}
+  \strng{fullhash}{KGHJ1}
+  \verb{doi}
+  \verb 10.1103/PhysRevB.47.558
+  \endverb
+  \field{issue}{1}
+  \field{pages}{558\bibrangedash 561}
+  \field{title}{Ab initio molecular dynamics for liquid metals}
+  \verb{url}
+  \verb https://link.aps.org/doi/10.1103/PhysRevB.47.558
+  \endverb
+  \field{volume}{47}
+  \field{journaltitle}{Phys. Rev. B}
+  \field{year}{1993}
+  \warn{\item Invalid format of field 'month'}
+\endentry
+
+\entry{TALMAN}{article}{}
+  \name{author}{1}{}{%
+    {{}%
+     {Talman}{T.}%
+     {J.D.}{J.}%
+     {}{}%
+     {}{}}%
+  }
+  \keyw{Fourier transforms, Spherical Bessel functions, Hankel transforms}
+  \strng{namehash}{TJ1}
+  \strng{fullhash}{TJ1}
+  \verb{doi}
+  \verb https://doi.org/10.1016/j.cpc.2008.10.003
+  \endverb
+  \field{issn}{0010-4655}
+  \field{number}{2}
+  \field{pages}{332 \bibrangedash  338}
+  \field{title}{NumSBT: A subroutine for calculating spherical Bessel
+  transforms numerically}
+  \verb{url}
+  \verb http://www.sciencedirect.com/science/article/pii/S0010465508003329
+  \endverb
+  \field{volume}{180}
+  \field{journaltitle}{Computer Physics Communications}
+  \field{year}{2009}
+\endentry
+
+\lossort
+\endlossort
+
+\endinput

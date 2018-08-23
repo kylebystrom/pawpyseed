@@ -12,6 +12,33 @@
 
 #define PI 3.14159265359
 
+// THE FOLLOWING TWO FUNCTIONS ARE NOT YET IMPLEMENTED
+/*
+double* ncl_ae_state_density(int BAND_NUM, pswf_t* wf, ppot_t* pps, int* fftg, int* labels, double* coords) {
+	int gridsize = fftg[0] * fftg[1] * fftg[2];
+    double* P = mkl_calloc(gridsize, sizeof(double), 64);
+    int spin_mult = 2 / wf->nspin;
+    double complex* x = realspace_state(b, k, wf, pps, fftg, labels, coords);
+    for (int i = 0; i < gridsize; i++) {
+        P[i] += creal(x[i] * conj(x[i]));
+    }
+    mkl_free(x);
+    return P;	
+}
+
+double* ae_state_density(int BAND_NUM, pswf_t* wf, ppot_t* pps, int* fftg, int* labels, double* coords) {
+	int gridsize = fftg[0] * fftg[1] * fftg[2];
+	double* P = mkl_calloc(gridsize, sizeof(double), 64);
+	int spin_mult = 2 / wf->nspin;
+	double complex* x = realspace_state(b, k, wf, pps, fftg, labels, coords);
+	for (int i = 0; i < gridsize; i++) {
+		P[i] += creal(x[i] * conj(x[i]));
+	}
+	mkl_free(x);
+	return P;
+}
+*/
+
 double* ae_chg_density(pswf_t* wf, ppot_t* pps, int* fftg, int* labels, double* coords) {
 
 	int gridsize = fftg[0] * fftg[1] * fftg[2];
@@ -26,7 +53,8 @@ double* ae_chg_density(pswf_t* wf, ppot_t* pps, int* fftg, int* labels, double* 
 				#pragma omp critical
 				{
 					for (int i = 0; i < gridsize; i++) {
-						P[i] += creal(x[i] * conj(x[i])) * wf->kpts[k]->weight * wf->kpts[k]->bands[b]->occ * spin_mult;
+						P[i] += creal(x[i] * conj(x[i])) * wf->kpts[k]->weight
+								* wf->kpts[k]->bands[b]->occ * spin_mult;
 					}
 				}
 				mkl_free(x);

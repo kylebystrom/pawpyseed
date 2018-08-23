@@ -8,7 +8,8 @@ var searchData=
   ['proj_5fgridsize',['proj_gridsize',['../structppot.html#a09361297874596f77c923e5add09c036',1,'ppot']]],
   ['proj_5fspline',['proj_spline',['../structfuncset.html#a6e9d7d44c4439fd93bf745bdab45e596',1,'funcset']]],
   ['projections',['projections',['../structband.html#a7b4852a24f9ec6170cde01495f2085eb',1,'band']]],
-  ['projector_5flist',['projector_list',['../classpawpyseed_1_1core_1_1wavefunction_1_1Wavefunction.html#a92fd0fe196e8e71fc7959bd4074cd0e7',1,'pawpyseed::core::wavefunction::Wavefunction']]],
+  ['projector_5flist',['projector_list',['../classpawpyseed_1_1core_1_1projector_1_1Projector.html#a74c1e92883a5a1e73591c810692da0f6',1,'pawpyseed.core.projector.Projector.projector_list()'],['../classpawpyseed_1_1core_1_1wavefunction_1_1Wavefunction.html#a92fd0fe196e8e71fc7959bd4074cd0e7',1,'pawpyseed.core.wavefunction.Wavefunction.projector_list()']]],
+  ['projector_5fowner',['projector_owner',['../classpawpyseed_1_1core_1_1projector_1_1Projector.html#ac6a51c381ba05575722f942d2714487a',1,'pawpyseed.core.projector.Projector.projector_owner()'],['../classpawpyseed_1_1core_1_1wavefunction_1_1Wavefunction.html#afc1c81e945c2192ae31141b0a9d54fb6',1,'pawpyseed.core.wavefunction.Wavefunction.projector_owner()']]],
   ['projgrid',['projgrid',['../classpawpyseed_1_1core_1_1wavefunction_1_1Pseudopotential.html#a81cc5ee9a8d895ea4d37277eeedeb0aa',1,'pawpyseed::core::wavefunction::Pseudopotential']]],
   ['projs',['projs',['../structreal__proj__site.html#a85bbcf665d8d04d90c9df96c5a25e4fb',1,'real_proj_site']]],
   ['pscorecharge',['pscorecharge',['../classpawpyseed_1_1core_1_1wavefunction_1_1Pseudopotential.html#acd350db3a7a921b8af0a018e4e90e1f6',1,'pawpyseed::core::wavefunction::Pseudopotential']]],
@@ -18,5 +19,5 @@ var searchData=
   ['pswave_5fspline',['pswave_spline',['../structfuncset.html#a7f5d43986491237d8c42622a0902778c',1,'funcset']]],
   ['pswaves',['pswaves',['../classpawpyseed_1_1core_1_1wavefunction_1_1Pseudopotential.html#a82603d80da6c58feba40469c54a1980f',1,'pawpyseed::core::wavefunction::Pseudopotential']]],
   ['pts',['pts',['../namespacepawpyseed_1_1core_1_1quad__check.html#a53e482efc400bb78e27b4df968420529',1,'pawpyseed::core::quad_check']]],
-  ['pwf',['pwf',['../classpawpyseed_1_1core_1_1wavefunction_1_1Wavefunction.html#ab384b73d0719b03de6ff9345b65f4f84',1,'pawpyseed::core::wavefunction::Wavefunction']]]
+  ['pwf',['pwf',['../classpawpyseed_1_1core_1_1projector_1_1Projector.html#a45b945d40509844d795091e51bb1befc',1,'pawpyseed.core.projector.Projector.pwf()'],['../classpawpyseed_1_1core_1_1wavefunction_1_1Wavefunction.html#ab384b73d0719b03de6ff9345b65f4f84',1,'pawpyseed.core.wavefunction.Wavefunction.pwf()']]]
 ];

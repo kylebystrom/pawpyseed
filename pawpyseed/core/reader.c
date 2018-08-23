@@ -214,7 +214,7 @@ pswf_t* read_wavefunctions(char* filename, double* kpt_weights) {
 				}
 			}
 		}
-		if (ncnt != nplane - 1) printf("ERROR %lf %lf %lf %lf", kx,ky,kz, c);
+		if (ncnt != nplane - 1) printf("ERROR %d %d %lf %lf %lf %lf\n", ncnt, nplane, kx,ky,kz, c);
 		//if (ncnt > npmax) printf("BIG ERROR");
 		//printf("%d %d\n", ncnt, npmax);
 

@@ -184,7 +184,7 @@ class TestC:
 	def test_spline(self):
 		vr = self.vr
 		cr = self.cr
-		struct = Poscar.from_file("POSCAR").structure
+		struct = Poscar.from_file("CONTCAR").structure
 		grid = cr.pps['Ga'].projgrid
 		vals = cr.pps['Ga'].realprojs[0]
 		rmax = cr.pps['Ga'].rmax / 1.88973

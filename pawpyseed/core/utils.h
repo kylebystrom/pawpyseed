@@ -261,14 +261,16 @@ grid x, at radius r. rmax is the maximum radius of the projector.
 Uses spline interpolation, where proj_spline is the set of spline coefficients
 for proj set up by spline_coeff
 */
-double proj_interpolate(double r, double rmax, int size, double* x, double* proj, double** proj_spline);
+double proj_interpolate(double r, double rmax, int size, double* x,
+	double* proj, double** proj_spline);
 
 /**
 Interpolate the discretely defined partial wave f, defined on logarithmic radial grix x,
 at radius r. Uses spline interpolation, where wave_spline is the set of spline
 coefficients for f set up by spline_coeff
 */
-double wave_interpolate(double r, int size, double* x, double* f, double** wave_spline);
+double wave_interpolate(double r, int size, double* x, double* f,
+	double** wave_spline);
 
 /**
 Helper function for proj_value and smooth_wave_value

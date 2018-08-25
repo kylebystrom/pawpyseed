@@ -8,18 +8,20 @@ OBJ = utils.o gaunt.o radial.o sbt.o reader.o quadrature.o linalg.o density.c ps
 TST_SRC = utils.c gaunt.c radial.c sbt.c reader.c quadrature.c linalg.c density.c pseudoprojector.c projector.c tests.c
 TST_OBJ = utils.o gaunt.o radial.o sbt.o reader.o quadrature.o linalg.o density.c pseudoprojector.o projector.o tests.o
 
-pawpy:
-	rm -f $(PWD)/pawpy.so
+pawpyinst:
 	$(PAWPYCC) -shared -c $(SRC) $(FLAGS) $(INCS) $(LIBS)
 	$(PAWPYCC) -shared -o pawpy.so $(OBJ) $(FLAGS) $(INCS) $(LIBS)
 
-tests:
+testsuite:
 	$(PAWPYCC) -shared -c $(TST_SRC) $(FLAGS) $(INCS) $(LIBS)
-	$(PAWPYCC) -shared -o tpawpy.so $(TST_OBJ) $(FLAGS) $(INCS) $(LIBS)
+	$(PAWPYCC) -shared -o pawpy.so $(TST_OBJ) $(FLAGS) $(INCS) $(LIBS)
 
-memtest:
-	rm -f $(PWD)/memtest
-	$(PAWPYCC) -o memtest memtest.c gaunt.c pseudoprojector.c projector.c linalg.c quadrature.c reader.c tests.c utils.c radial.c sbt.c -mkl=sequential -L${MKLROOT}/lib/intel64 -lmkl_rt -lpthread -ldl -I${MKLROOT}/include -lm -std=c99 -O0 -fPIC -Wall -g
+mem:
+	$(PAWPYCC) -o memtest memtest.c gaunt.c pseudoprojector.c projector.c \
+	linalg.c quadrature.c reader.c tests.c utils.c radial.c sbt.c \
+	-L${MKLROOT}/lib/intel64 -lmkl_rt -lpthread \
+	-ldl -I${MKLROOT}/include -lm -std=c99 -O0 -fPIC -Wall -g \
+	-DMKL_Complex16="double complex" -DMKL_Complex8="float complex"
 
 lite:
 	rm -f $(PWD)/pawpy.so

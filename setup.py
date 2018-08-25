@@ -50,7 +50,7 @@ if len(sys.argv) > 1 and sys.argv[1] == 'build':
 		else:
 			raise PawpyBuildError("Can't find icc or gcc compiler!")
 
-	status = subprocess.call('make pawpy'.split())
+	status = subprocess.call('make pawpyinst'.split())
 	if status != 0:
 		raise PawpyBuildError("Can't compile pawpy.so! Check the C error output for details.")
 	os.chdir(currdir)

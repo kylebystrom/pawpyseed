@@ -9,37 +9,51 @@ import numpy as np
 from numpy.testing import assert_almost_equal
 
 from scipy.special import lpmn, sph_harm
+from nose import SkipTest
+from nose.tools import nottest
+
+COMPILE = False
+
+class PawpyTestError(Exception):
+	"""
+	Class for handling errors that occur during execution
+	of Python functions in pawpyseed
+	"""
+	def __init__(self, msg):
+		self.msg = msg
+
+if COMPILE:
+	currdir = os.getcwd()
+	MODULE_DIR = os.path.dirname(os.path.abspath(__file__))
+	os.chdir(MODULE_DIR+'/..')
+	if not "PAWPYCC" in os.environ:
+		if subprocess.call("which icc".split()) == 0:
+			os.environ["PAWPYCC"] = "icc"
+		elif subprocess.call("which gcc".split()) == 0:
+			os.environ["PAWPYCC"] = "gcc"
+		else:
+			raise PawpyTestError("Can't find icc or gcc compiler!")
+
+	status = subprocess.call('make testsuite'.split())
+	if status != 0:
+		raise PawpyTestError("Can't compile test pawpy.so! Check the C error output for details.")
+	status = subprocess.call('make mem'.split())
+	if status != 0:
+		raise PawpyTestError("Can't compile memtest! Check the C error output for details.")
+	os.chdir(currdir)
 
 from pymatgen.io.vasp.inputs import Poscar, Potcar
 from pymatgen.io.vasp.outputs import Vasprun
 from pymatgen.core.structure import Structure
 
-from pawpyseed.utils import *
-from pawpyseed.wavefunction import *
+from pawpyseed.core.utils import *
+from pawpyseed.core.wavefunction import *
+from pawpyseed.core.projector import Projector
 
 from ctypes import *
 
-currdir = os.getcwd()
-os.chdir('..')
-if not "PAWPYCC" in os.environ:
-	if subprocess.call("which icc".split()) == 0:
-		os.environ["PAWPYCC"] = "icc"
-	elif subprocess.call("which gcc".split()) == 0:
-		os.environ["PAWPYCC"] = "gcc"
-	else:
-		raise PawpyError("Can't find icc or gcc compiler!")
-
-status = subprocess.call('make tests'.split())
-if status != 0:
-	raise PawpyError("Can't compile tpawpy.so! Check the C error output for details.")
-	status = subprocess.call('make tests'.split())
-status = subprocess.call('make memtest'.split())
-if status != 0:
-	raise PawpyError("Can't compile memtest! Check the C error output for details.")
-os.chdir(currdir)
-
 MODULE_DIR = os.path.dirname(os.path.abspath(__file__))
-PAWC = CDLL(os.path.join(MODULE_DIR, "../tpawpy.so"))
+PAWC = CDLL(os.path.join(MODULE_DIR, "../pawpy.so"))
 PAWC.legendre.restype = c_double
 PAWC.Ylmr.restype = c_double
 PAWC.Ylmi.restype = c_double
@@ -93,10 +107,11 @@ def numpy_to_cint(arr):
 class TestC:
 
 	def setup(self):
-		pass
+		self.currdir = os.getcwd()
+		os.chdir(os.path.join(MODULE_DIR, '../../../test_files'))
 
 	def teardown(self):
-		pass
+		os.chdir(self.currdir)
 
 	def test_fac(self):
 		assert int(PAWC.fac(5)) == 120
@@ -171,7 +186,8 @@ class TestC:
 		cof = PAWC.spline_coeff(x, y, 100)
 		res2 = (c_double * tst.shape[0])()
 		for i in range(tst.shape[0]):
-			res2[i] = PAWC.proj_interpolate(c_double(tst[i]), c_double(rmax), x, y, cof)
+			res2[i] = PAWC.proj_interpolate(c_double(tst[i]), c_double(rmax),
+						100, x, y, cof)
 		res2 = cdouble_to_numpy(res2, tst.shape[0])
 		print ('Completed spline test')
 		print (res1)
@@ -179,15 +195,17 @@ class TestC:
 		print (res1-res2)
 		sys.stdout.flush()
 
-
+	@nottest
 	def test_fft3d(self):
 		vr = Vasprun("vasprun.xml")
 		weights = vr.actual_kpoints_weights
 		kws = (c_double * len(weights))()
 		for i in range(len(weights)):
 			kws[i] = weights[i]
-		PAWC.fft_check("WAVECAR", kws, numpy_to_cint(np.array([40,40,40])))
+		PAWC.fft_check("WAVECAR".encode('utf-8'), kws,
+			numpy_to_cint(np.array([40,40,40])))
 
+	@nottest
 	def test_sbt(self):
 		from scipy.special import spherical_jn as jn
 		k = 0.152
@@ -214,26 +232,19 @@ class TestC:
 		print (res[180*2])
 		print (res[180*2+1])
 
+	@nottest
 	def test_radial(self):
 		# test realspace radial overlap
 		# test recipspace radial overlap
 		pass
 
-	def test_pseudoprojector(self):
-		# test ps projections
-		pass
 
-	def test_projector(self):
-		# test ae projections
-		pass
-
-	def test_density(self):
-		# check the density utils
-		pass
-
+@nottest
 class TestMem:
 
 	def setup(self):
+		self.currdir = os.getcwd()
+		os.chdir(os.path.join(MODULE_DIR, '../../../test_files'))
 		structure = Poscar.from_file("CONTCAR").structure
 		cr = CoreRegion(Potcar.from_file("POTCAR"))
 		pps = {}
@@ -306,7 +317,8 @@ class TestMem:
 		f.close()
 
 	def teardown(self):
-		pass
+		os.remove('potholder.txt')
+		os.chdir(self.currdir)
 
 	def test_memory(self):
 		f = open('mtest.out', 'w')
@@ -330,6 +342,7 @@ class TestMem:
 		f.close()
 """
 
+
 class TestPy:
 
 	def setup(self):
@@ -344,25 +357,27 @@ class TestPy:
 		wf.free_all()
 		wf = Wavefunction.from_directory('.', False)
 		wf.free_all()
-		wf = Wavefunction.from_files('CONTCAR', 'OUTCAR', 'WAVECAR',
+		wf = Wavefunction.from_files('CONTCAR', 'WAVECAR',
 			'POTCAR', 'vasprun.xml', 'OUTCAR', True)
 		wf.free_all()
-		wf = Wavefunction.from_files('CONTCAR', 'OUTCAR', 'WAVECAR',
+		wf = Wavefunction.from_files('CONTCAR', 'WAVECAR',
 			'POTCAR', 'vasprun.xml', 'OUTCAR', False)
 		wf.free_all()
-		wf = Wavefunction()
 
 	def test_writestate(self):
 		wf = Wavefunction.from_directory('.')
 		fileprefix = ''
-		b, k, s = 10, 1, 0
-		state1 = wf.write_state_realspace(self, b, k, s, fileprefix = "", 
+		b, k, s = 0, 0, 0
+		print("NONE DONE")
+		state1 = wf.write_state_realspace(b, k, s, fileprefix = "", 
 			dim=np.array([30,30,30]), return_wf = True)
+		print("ONE DONE")
 		wf.free_all()
 		wf = Wavefunction.from_directory('.', False)
-		state2 = wf.write_state_realspace(self, b, k, s, fileprefix = "", 
+		state2 = wf.write_state_realspace(b, k, s, fileprefix = "", 
 			dim=np.array([30,30,30]), return_wf = True)
 		wf.free_all()
+		print("TWO DONE")
 		assert_almost_equal(np.linalg.norm(state1-state2),0)
 		assert state1.shape[0] == 2*30*30*30
 		filename_base = "%sB%dK%dS%d" % (fileprefix, b, k, s)
@@ -371,6 +386,7 @@ class TestPy:
 		os.remove(filename1)
 		os.remove(filenmae2)
 
+	@nottest
 	def test_density(self):
 		wf = Wavefunction.from_directory('.')
 		wf.write_density_realspace(dim=np.array([30,30,30]))
@@ -379,4 +395,38 @@ class TestPy:
 		reldiff = np.linalg.norm((chg-tstchg)/tstchg)
 		assert_almost_equal(reldiff, 0, decimal=3)
 		os.remove('PYAECCAR')
+
+	@nottest
+	def test_pseudoprojector(self):
+		# test ps projections
+		wf = Wavefunction.from_directory('.')
+		basis = Wavefunction.from_directory('.')
+		res = wf.single_band_projection(6, basis)
+		assert res.shape[0] == basis.nband * basis.nspin
+		res = wf.defect_band_analysis(basis, 10, 10, False)
+		assert len(res.keys) == 21
+		wf.free_all()
+		basis.free_all()
+
+	@nottest
+	def test_projector(self):
+		# test ae projections
+		wf1 = Wavefunction.from_directory('.', False)
+		basis = Wavefunction.from_directory('.', False)
+		pr = Projector(wf1, basis)
+		for b in range(wf1.nband):
+			v, c = pr.proportion_conduction(b)
+			if b < 12:
+				assert_almost_equal(v, 1, decimal=5)
+				assert_almost_equal(c, 0, decimal=5)
+			else:
+				assert_almost_equal(v, 1, decimal=5)
+				assert_almost_equal(c, 0, decimal=5)
+		basis.free_all()
+		wf1.free_all()
+		pr.free_all()
+
+		generator = Projector.setup_multiple_projections('.', ['.', '.'])
+		for wf_dir, wf in generator:
+			wf.defect_band_analysis(spinpol=True)
 

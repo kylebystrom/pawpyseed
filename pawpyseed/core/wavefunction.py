@@ -201,6 +201,7 @@ class PseudoWavefunction:
 		res = cdouble_to_numpy(res, 2*nband*nwk*nspin)
 		return res[::2] + 1j * res[1::2]
 
+
 class Wavefunction:
 	"""
 	Class for storing and manipulating all electron wave functions in the PAW
@@ -243,8 +244,6 @@ class Wavefunction:
 		self.nband = PAWC.get_nband(c_void_p(pwf.wf_ptr))
 		self.nwk = PAWC.get_nwk(c_void_p(pwf.wf_ptr))
 		self.nspin = PAWC.get_nspin(c_void_p(pwf.wf_ptr))
-		self.nums = None
-		self.coords = None
 		self.num_proj_els = None
 
 	@staticmethod
@@ -494,8 +493,9 @@ class Wavefunction:
 		Check to see if the projector functions have been read in and set up.
 		If not, do so.
 		"""
-
+		print(self.projector_list)
 		if not self.projector_list:
+			print("HERE")
 			self.projector_owner = True
 			self.projector_list, self.nums, self.coords = self.make_c_projectors()
 			cfunc_call(PAWC.setup_projections_no_rayleigh, None,
@@ -517,9 +517,9 @@ class Wavefunction:
 				imaginary part
 		"""
 
+		self.check_c_projectors()
 		if type(dim) == type(None):
 			dim = self.dim
-		self.check_c_projectors()
 		return cfunc_call(PAWC.realspace_state_ri, 2*dim[0]*dim[1]*dim[2], b, k+s*self.nwk,
 			self.pwf.wf_ptr, self.projector_list,
 			dim, self.nums, self.coords)
@@ -553,15 +553,19 @@ class Wavefunction:
 				imaginary part
 			The wavefunction is written with z the slow index.
 		"""
-
+		print("PARAMETERS", self.nums, self.coords, dim)
+		sys.stdout.flush()
+		self.check_c_projectors()
 		if type(dim) == type(None):
 			dim = self.dim
-		self.check_c_projectors()
 		filename_base = "%sB%dK%dS%d" % (fileprefix, b, k, s)
 		filename1 = "%s_REAL" % filename_base
 		filename2 = "%s_IMAG" % filename_base
+		print("PARAMETERS", self.nums, self.coords, dim)
+		sys.stdout.flush()
 		if return_wf:
-			res = cfunc_call(PAWC.write_realspace_state_ri_return, 2*dim[0]*dim[1]*dim[2], filename1, filename2,
+			res = cfunc_call(PAWC.write_realspace_state_ri_return, 2*dim[0]*dim[1]*dim[2],
+				filename1, filename2,
 				b, k+s*self.nwk,
 				self.pwf.wf_ptr, self.projector_list,
 				dim, self.nums, self.coords)
@@ -591,9 +595,9 @@ class Wavefunction:
 			The charge density is written with z the slow index.
 		"""
 
+		self.check_c_projectors()
 		if type(dim) == type(None):
 			dim = self.dim
-		self.check_c_projectors()
 		if return_wf:
 			res = cfunc_call(PAWC.write_density_return, dim[0]*dim[1]*dim[2], filename,
 				self.pwf.wf_ptr, self.projector_list, dim, self.nums, self.coords)

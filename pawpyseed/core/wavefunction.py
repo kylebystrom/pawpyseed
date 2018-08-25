@@ -237,10 +237,10 @@ class Wavefunction:
 		self.dim = np.array(self.dim).astype(np.int32) // 2
 		self.projector_owner = False
 		self.projector_list = None
+		self.nums = None
+		self.coords = None
 		if setup_projectors:
-			self.projector_owner = True
-			self.projector_list, self.nums,\
-				self.coords = self.make_c_projectors()
+			self.check_c_projectors()
 		self.nband = PAWC.get_nband(c_void_p(pwf.wf_ptr))
 		self.nwk = PAWC.get_nwk(c_void_p(pwf.wf_ptr))
 		self.nspin = PAWC.get_nspin(c_void_p(pwf.wf_ptr))
@@ -493,9 +493,7 @@ class Wavefunction:
 		Check to see if the projector functions have been read in and set up.
 		If not, do so.
 		"""
-		print(self.projector_list)
 		if not self.projector_list:
-			print("HERE")
 			self.projector_owner = True
 			self.projector_list, self.nums, self.coords = self.make_c_projectors()
 			cfunc_call(PAWC.setup_projections_no_rayleigh, None,

@@ -135,7 +135,7 @@ double complex* realspace_state(int BAND_NUM, int KPOINT_NUM, pswf_t* wf, ppot_t
 		int center1 = (int) round(coords[3*p+0] * fftg[0]);
 		int center2 = (int) round(coords[3*p+1] * fftg[1]);
 		int center3 = (int) round(coords[3*p+2] * fftg[2]);
-		printf("FINISH SETUP %d",p);
+		printf("FINISH SETUP %d\n",p);
 		for (int i = -grid1 + center1; i <= grid1 + center1; i++) {
 			double frac[3] = {0,0,0};
 			double testcoord[3] = {0,0,0};
@@ -158,7 +158,6 @@ double complex* realspace_state(int BAND_NUM, int KPOINT_NUM, pswf_t* wf, ppot_t
 						phasecoord[0] = coords[3*p+0] + ((ii-i) / fftg[0]);
 						phasecoord[1] = coords[3*p+1] + ((jj-j) / fftg[1]);
 						phasecoord[2] = coords[3*p+2] + ((kk-k) / fftg[2]);
-						phase = dot(wf->kpts[KPOINT_NUM]->k, phasecoord);
 						projection_t pros = wf->kpts[KPOINT_NUM]->bands[BAND_NUM]->projections[p];
 						for (int n = 0; n < pros.total_projs; n++) {
 							x[ii*fftg[1]*fftg[2] + jj*fftg[2] + kk] += wave_value(pp.funcs[pros.ns[n]],

@@ -12,7 +12,7 @@ from scipy.special import lpmn, sph_harm
 from nose import SkipTest
 from nose.tools import nottest
 
-COMPILE = False
+COMPILE = True
 
 class PawpyTestError(Exception):
 	"""
@@ -53,14 +53,19 @@ from pawpyseed.core.projector import Projector
 from ctypes import *
 
 MODULE_DIR = os.path.dirname(os.path.abspath(__file__))
-PAWC = CDLL(os.path.join(MODULE_DIR, "../pawpy.so"))
+#PAWC = CDLL(os.path.join(MODULE_DIR, "../pawpy.so"))
+PAWC.fac.restype = c_double
 PAWC.legendre.restype = c_double
 PAWC.Ylmr.restype = c_double
 PAWC.Ylmi.restype = c_double
 PAWC.spline_coeff.restype = POINTER(POINTER(c_double))
 PAWC.proj_interpolate.restype = c_double
 PAWC.spherical_bessel_transform_setup.restype = POINTER(None)
-PAWC.real_wave_spherical_bessel_transform.restype = POINTER(c_double)
+PAWC.wave_spherical_bessel_transform.argtypes = [c_void_p, POINTER(c_double), c_int]
+PAWC.wave_spherical_bessel_transform.restype = POINTER(c_double)
+PAWC.free_sbt_descriptor.argtypes = [c_void_p]
+PAWC.free_sbt_descriptor.restype = None
+PAWC.fft_check.argtypes = [c_char_p, c_double_p, c_int_p]
 
 def cdouble_to_numpy(arr, length):
 	arr = cast(arr, POINTER(c_double))
@@ -109,11 +114,14 @@ class TestC:
 	def setup(self):
 		self.currdir = os.getcwd()
 		os.chdir(os.path.join(MODULE_DIR, '../../../test_files'))
+		self.vr = Vasprun("vasprun.xml")
+		self.cr = CoreRegion(Potcar.from_file("POTCAR"))
 
 	def teardown(self):
 		os.chdir(self.currdir)
 
 	def test_fac(self):
+		print(int(PAWC.fac(5)))
 		assert int(PAWC.fac(5)) == 120
 
 	def test_legendre(self):
@@ -174,8 +182,8 @@ class TestC:
 			assert_almost_equal(np.linalg.norm(temp2-fcoord), 0.0)
 
 	def test_spline(self):
-		vr = Vasprun("vasprun.xml")
-		cr = CoreRegion(Potcar.from_file("POTCAR"))
+		vr = self.vr
+		cr = self.cr
 		struct = Poscar.from_file("POSCAR").structure
 		grid = cr.pps['Ga'].projgrid
 		vals = cr.pps['Ga'].realprojs[0]
@@ -195,9 +203,8 @@ class TestC:
 		print (res1-res2)
 		sys.stdout.flush()
 
-	@nottest
 	def test_fft3d(self):
-		vr = Vasprun("vasprun.xml")
+		vr = self.vr 
 		weights = vr.actual_kpoints_weights
 		kws = (c_double * len(weights))()
 		for i in range(len(weights)):
@@ -205,32 +212,30 @@ class TestC:
 		PAWC.fft_check("WAVECAR".encode('utf-8'), kws,
 			numpy_to_cint(np.array([40,40,40])))
 
-	@nottest
 	def test_sbt(self):
 		from scipy.special import spherical_jn as jn
-		k = 0.152
 		cr = CoreRegion(Potcar.from_file("POTCAR"))
 		r = cr.pps['Ga'].grid
+		ks = 0 * r
 		f = cr.pps['Ga'].aewaves[0] - cr.pps['Ga'].pswaves[0];
-		ks = (c_double * len(r))()
 		print ('yo')
 		print (len(r), len(numpy_to_cdouble(r)))
 		sys.stdout.flush()
-		sbtd = PAWC.spherical_bessel_transform_setup(c_double(520), c_double(5000), 2, len(r), numpy_to_cdouble(r))
+		sbtd = PAWC.spherical_bessel_transform_setup(c_double(520), c_double(5000),
+					2, len(r), numpy_to_cdouble(r), numpy_to_cdouble(ks))
 		print ('yo')
 		sys.stdout.flush()
-		res = PAWC.real_wave_spherical_bessel_transform(sbtd, numpy_to_cdouble(r),
-			numpy_to_cdouble(f), ks, 0)
+		res = PAWC.wave_spherical_bessel_transform(sbtd, numpy_to_cdouble(f), 0)
+		k = ks[180]
 		print ('hi')
-		sys.stdout.flush()
 		print (r, f)
 		vals = jn(0, r * k) * f * r
 		integral = np.trapz(vals, r)
 		#print (cdouble_to_numpy(ks, 388)[334])
 		print (integral)
 		print (ks[180])
-		print (res[180*2])
-		print (res[180*2+1])
+		print (res[180])
+		assert_almost_equal(integral, res[180], decimal=3)
 
 	@nottest
 	def test_radial(self):
@@ -342,7 +347,6 @@ class TestMem:
 		f.close()
 """
 
-
 class TestPy:
 
 	def setup(self):
@@ -367,24 +371,23 @@ class TestPy:
 	def test_writestate(self):
 		wf = Wavefunction.from_directory('.')
 		fileprefix = ''
-		b, k, s = 0, 0, 0
-		print("NONE DONE")
+		b, k, s = 10, 1, 0
+		print(PAWC.write_realspace_state_ri_return.argtypes, "LOOK HERE")
+		sys.stdout.flush()
 		state1 = wf.write_state_realspace(b, k, s, fileprefix = "", 
 			dim=np.array([30,30,30]), return_wf = True)
-		print("ONE DONE")
 		wf.free_all()
 		wf = Wavefunction.from_directory('.', False)
 		state2 = wf.write_state_realspace(b, k, s, fileprefix = "", 
 			dim=np.array([30,30,30]), return_wf = True)
 		wf.free_all()
-		print("TWO DONE")
 		assert_almost_equal(np.linalg.norm(state1-state2),0)
 		assert state1.shape[0] == 2*30*30*30
 		filename_base = "%sB%dK%dS%d" % (fileprefix, b, k, s)
 		filename1 = "%s_REAL" % filename_base
 		filename2 = "%s_IMAG" % filename_base
 		os.remove(filename1)
-		os.remove(filenmae2)
+		os.remove(filename2)
 
 	@nottest
 	def test_density(self):
@@ -396,19 +399,17 @@ class TestPy:
 		assert_almost_equal(reldiff, 0, decimal=3)
 		os.remove('PYAECCAR')
 
-	@nottest
 	def test_pseudoprojector(self):
 		# test ps projections
 		wf = Wavefunction.from_directory('.')
 		basis = Wavefunction.from_directory('.')
 		res = wf.single_band_projection(6, basis)
-		assert res.shape[0] == basis.nband * basis.nspin
-		res = wf.defect_band_analysis(basis, 10, 10, False)
-		assert len(res.keys) == 21
+		assert res.shape[0] == basis.nband * basis.nspin * basis.nwk
+		res = wf.defect_band_analysis(basis, 4, 10, False)
+		assert len(res.keys()) == 15
 		wf.free_all()
 		basis.free_all()
 
-	@nottest
 	def test_projector(self):
 		# test ae projections
 		wf1 = Wavefunction.from_directory('.', False)
@@ -416,17 +417,17 @@ class TestPy:
 		pr = Projector(wf1, basis)
 		for b in range(wf1.nband):
 			v, c = pr.proportion_conduction(b)
-			if b < 12:
-				assert_almost_equal(v, 1, decimal=5)
-				assert_almost_equal(c, 0, decimal=5)
+			if b < 6:
+				assert_almost_equal(v, 1, decimal=4)
+				assert_almost_equal(c, 0, decimal=8)
 			else:
-				assert_almost_equal(v, 1, decimal=5)
-				assert_almost_equal(c, 0, decimal=5)
+				assert_almost_equal(v, 0, decimal=8)
+				assert_almost_equal(c, 1, decimal=4)
 		basis.free_all()
 		wf1.free_all()
 		pr.free_all()
 
 		generator = Projector.setup_multiple_projections('.', ['.', '.'])
 		for wf_dir, wf in generator:
-			wf.defect_band_analysis(spinpol=True)
+			wf.defect_band_analysis(4, 10, spinpol=True)
 

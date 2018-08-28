@@ -281,7 +281,8 @@ void onto_projector(kpoint_t* kpt, int band_num, real_proj_site_t* sites, int nu
 	float complex* Cs = kpt->bands[band_num]->Cs;
 	int num_waves = kpt->num_waves;
 	
-	double complex* x = (double complex*) mkl_calloc(fftg[0]*fftg[1]*fftg[2], sizeof(double complex), 64);
+	double complex* x = (double complex*) mkl_calloc(fftg[0]*fftg[1]*fftg[2],
+		sizeof(double complex), 64);
 	CHECK_ALLOCATION(x);
 	fft3d(x, G_bounds, lattice, k, Gs, Cs, num_waves, fftg);
 
@@ -294,6 +295,34 @@ void onto_projector(kpoint_t* kpt, int band_num, real_proj_site_t* sites, int nu
 
 	//kpt->bands[band_num]->CRs = x;
 	mkl_free(x);
+}
+
+void onto_projector_ncl(kpoint_t* kpt, int band_num, real_proj_site_t* sites, int num_sites,
+	int* G_bounds, double* lattice, double* reclattice, ppot_t* pps, int* fftg) {
+
+	double* k = kpt->k;
+	int* Gs = kpt->Gs;
+	float complex* Cs = kpt->bands[band_num]->Cs;
+	int num_waves = kpt->num_waves;
+
+	double complex* xup = (double complex*) mkl_calloc(fftg[0]*fftg[1]*fftg[2],
+		sizeof(double complex), 64);
+	double complex* xdown = (double complex*) mkl_calloc(fftg[0]*fftg[1]*fftg[2],
+		sizeof(double complex), 64);
+	CHECK_ALLOCATION(xup);
+	CHECK_ALLOCATION(xdown);
+	fft3d(xup, G_bounds, lattice, k, Gs, Cs, num_waves/2, fftg);
+	fft3d(xdown, G_bounds, lattice, k, Gs, Cs+num_waves/2, num_waves/2, fftg);
+
+	band_t* band = kpt->bands[band_num];
+	band->up_projections =
+		(projection_t*) malloc(num_sites * sizeof(projection_t));
+	band->down_projections =
+		(projection_t*) malloc(num_sites * sizeof(projection_t));
+	onto_projector_helper(kpt->bands[band_num], xup, sites, num_sites,
+		lattice, reclattice, k, pps, fftg, band->up_projections);
+	onto_projector_helper(kpt->bands[band_num], xup, sites, num_sites,
+		lattice, reclattice, k, pps, fftg, band->down_projections);
 }
 
 void onto_smoothpw(kpoint_t* kpt, int band_num, real_proj_site_t* sites, int num_sites,
@@ -440,6 +469,10 @@ void setup_projections_no_rayleigh(pswf_t* wf, ppot_t* pps, int num_elems,
 		int band_num = w / NUM_KPTS;
 		onto_projector(kpt, band_num, sites, num_sites,
 			wf->G_bounds, wf->lattice, wf->reclattice, pps, fftg);
+		if (wf->is_ncl) {
+			onto_projector_ncl(kpt, band_num, sites, num_sites,
+				wf->G_bounds, wf->lattice, wf->reclattice, pps, fftg);
+		}
 	}
 	free_real_proj_site_list(sites, num_sites);	
 }

@@ -165,10 +165,18 @@ double complex* realspace_state(int BAND_NUM, int KPOINT_NUM, pswf_t* wf, ppot_t
 						phase = dot(phasecoord, wf->kpts[KPOINT_NUM]->k);
 						for (int n = 0; n < pros.total_projs; n++) {
 							x[ii*fftg[1]*fftg[2] + jj*fftg[2] + kk] +=
-								wave_value(pp.funcs[pros.ns[n]],
-								pp.wave_gridsize, pp.wave_grid,
-								pros.ms[n], coords+3*p, frac, lattice)
+								wave_value2(pp.wave_grid,
+								pp.funcs[pros.ns[n]].diffwave,
+								pp.funcs[pros.ns[n]].diffwave_spline,
+								pp.wave_gridsize,
+								pros.ls[n], pros.ms[n],
+								testcoord)
 								* pros.overlaps[n] * cexp(2*PI*I*phase);
+								
+							//	wave_value(pp.funcs[pros.ns[n]],
+							//	pp.wave_gridsize, pp.wave_grid,
+							//	pros.ms[n], coords+3*p, frac, lattice)
+							//	* pros.overlaps[n] * cexp(2*PI*I*phase);
 							//	* Ylm(thetaphi[0], thetaphi[1]);
 						}
 					}

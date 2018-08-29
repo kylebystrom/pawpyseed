@@ -152,6 +152,7 @@ double complex* realspace_state(int BAND_NUM, int KPOINT_NUM, pswf_t* wf, ppot_t
 					testcoord[2] = (double) k / fftg[2] - coords[3*p+2];
 					frac_to_cartesian(testcoord, lattice);
 					if (mag(testcoord) < rmax) {
+						
 						ii = (i%fftg[0] + fftg[0]) % fftg[0];
 						jj = (j%fftg[1] + fftg[1]) % fftg[1];
 						kk = (k%fftg[2] + fftg[2]) % fftg[2];
@@ -161,12 +162,14 @@ double complex* realspace_state(int BAND_NUM, int KPOINT_NUM, pswf_t* wf, ppot_t
 						phasecoord[0] = coords[3*p+0] + ((ii-i) / fftg[0]);
 						phasecoord[1] = coords[3*p+1] + ((jj-j) / fftg[1]);
 						phasecoord[2] = coords[3*p+2] + ((kk-k) / fftg[2]);
+						phase = dot(phasecoord, wf->kpts[KPOINT_NUM]->k);
 						for (int n = 0; n < pros.total_projs; n++) {
 							x[ii*fftg[1]*fftg[2] + jj*fftg[2] + kk] +=
 								wave_value(pp.funcs[pros.ns[n]],
 								pp.wave_gridsize, pp.wave_grid,
 								pros.ms[n], coords+3*p, frac, lattice)
 								* pros.overlaps[n] * cexp(2*PI*I*phase);
+							//	* Ylm(thetaphi[0], thetaphi[1]);
 						}
 					}
 				}
@@ -252,6 +255,7 @@ double complex* ncl_realspace_state(int BAND_NUM, int KPOINT_NUM,
 						phasecoord[0] = coords[3*p+0] + ((ii-i) / fftg[0]);
 						phasecoord[1] = coords[3*p+1] + ((jj-j) / fftg[1]);
 						phasecoord[2] = coords[3*p+2] + ((kk-k) / fftg[2]);
+						phase = dot(phasecoord, wf->kpts[KPOINT_NUM]->k);
 						for (int n = 0; n < up_pros.total_projs; n++) {
 							xup[ii*fftg[1]*fftg[2] + jj*fftg[2] + kk] +=
 								wave_value(pp.funcs[up_pros.ns[n]],
@@ -296,7 +300,7 @@ double* realspace_state_ncl_ri(int BAND_NUM, int KPOINT_NUM,
 	pswf_t* wf, ppot_t* pps, int* fftg,
 	int* labels, double* coords) {
 
-	double complex* x = realspace_state(BAND_NUM, KPOINT_NUM, wf, pps, fftg, labels, coords);
+	double complex* x = ncl_realspace_state(BAND_NUM, KPOINT_NUM, wf, pps, fftg, labels, coords);
 
 	int gridsize = 2*fftg[0]*fftg[1]*fftg[2];
 
@@ -339,7 +343,7 @@ void write_realspace_state_ncl_ri(char* filename1, char* filename2,
 	write_volumetric(filename1, x, fftg, 1);
 	write_volumetric(filename2, x+gridsize, fftg, 1);
 	write_volumetric(filename3, x+2*gridsize, fftg, 1);
-	write_volumetric(filename4, x+2*gridsize, fftg, 1);
+	write_volumetric(filename4, x+3*gridsize, fftg, 1);
 
 	free(x);
 }

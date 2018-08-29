@@ -321,7 +321,7 @@ void onto_projector_ncl(kpoint_t* kpt, int band_num, real_proj_site_t* sites, in
 		(projection_t*) malloc(num_sites * sizeof(projection_t));
 	onto_projector_helper(kpt->bands[band_num], xup, sites, num_sites,
 		lattice, reclattice, k, pps, fftg, band->up_projections);
-	onto_projector_helper(kpt->bands[band_num], xup, sites, num_sites,
+	onto_projector_helper(kpt->bands[band_num], xdown, sites, num_sites,
 		lattice, reclattice, k, pps, fftg, band->down_projections);
 }
 

@@ -1,6 +1,6 @@
-from pawpyseed.core.wavefunction import Wavefunction, PAWpyError
+from pawpyseed.core.wavefunction import *
 
-class NCLPseudoWavefunction(Pseudowavefunction):
+class NCLPseudoWavefunction(PseudoWavefunction):
 	"""
 	Class for storing noncollinear pseudowavefunction from WAVECAR file.
 	Most important attribute
@@ -21,11 +21,11 @@ class NCLPseudoWavefunction(Pseudowavefunction):
 		kws = numpy_to_cdouble(weights)
 		self.kws = weights
 		self.kpts = vr.actual_kpoints
-		self.wf_ptr = PAWC.read_ncl_wavefunctions(filename.encode('utf-8'), kws)
+		self.wf_ptr = PAWC.read_wavefunctions(filename.encode('utf-8'), kws)
 
 class NCLWavefunction(Wavefunction):
 
-		def __init__(self, struct, pwf, cr, outcar, setup_projectors=True):
+	def __init__(self, struct, pwf, cr, outcar, setup_projectors=True):
 		"""
 		Arguments:
 			struct (pymatgen.core.Structure): structure that the wavefunction describes
@@ -36,6 +36,7 @@ class NCLWavefunction(Wavefunction):
 		Returns:
 			Wavefunction object
 		"""
+		
 		if type(pwf) != NCLPseudoWavefunction:
 			raise PAWpyError("Need NCLPseudoWavefunction to initialize NCLWavefunction")
 		self.structure = struct
@@ -110,6 +111,7 @@ class NCLWavefunction(Wavefunction):
 		filename4 = "%s_DOWN_IMAG" % filename_base
 		print("PARAMETERS", self.nums, self.coords, dim)
 		sys.stdout.flush()
+		"""
 		if return_wf:
 			res = cfunc_call(PAWC.write_realspace_state_ri_return, 2*dim[0]*dim[1]*dim[2],
 				filename1, filename2,
@@ -121,6 +123,14 @@ class NCLWavefunction(Wavefunction):
 				b, k+s*self.nwk,
 				self.pwf.wf_ptr, self.projector_list,
 				dim, self.nums, self.coords)
+		"""
+		cfunc_call(PAWC.write_realspace_state_ncl_ri, None, filename1, filename2,
+			filename3, filename4,
+			b, k+s*self.nwk,
+			self.pwf.wf_ptr, self.projector_list,
+			dim, self.nums, self.coords)
 		self._convert_to_vasp_volumetric(filename1, dim)
 		self._convert_to_vasp_volumetric(filename2, dim)
-		return res
+		self._convert_to_vasp_volumetric(filename3, dim)
+		self._convert_to_vasp_volumetric(filename4, dim)
+

@@ -220,12 +220,12 @@ pswf_t* read_wavefunctions(char* filename, double* kpt_weights) {
 		ncnt++;
 
 		if (ncnt * 2 == nplane) {
-			printf("This is an NCL wavefunction!");
+			printf("This is an NCL wavefunction!\n");
 			wf->is_ncl = 1;
-			for (int iplane = 0; iplane < nplane; iplane++) {
-				igall[3*(nplane+iplane)+0] = igall[3*iplane+0];
-				igall[3*(nplane+iplane)+1] = igall[3*iplane+1];
-				igall[3*(nplane+iplane)+2] = igall[3*iplane+2];
+			for (int iplane = 0; iplane < nplane/2; iplane++) {
+				igall[3*(nplane/2+iplane)+0] = igall[3*iplane+0];
+				igall[3*(nplane/2+iplane)+1] = igall[3*iplane+1];
+				igall[3*(nplane/2+iplane)+2] = igall[3*iplane+2];
 			}
 		} else if (ncnt != nplane) {
 			printf("ERROR %d %d %lf %lf %lf %lf\n", ncnt, nplane, kx,ky,kz, c);

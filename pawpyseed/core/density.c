@@ -138,7 +138,7 @@ double complex* realspace_state(int BAND_NUM, int KPOINT_NUM, pswf_t* wf, ppot_t
 		int center1 = (int) round(coords[3*p+0] * fftg[0]);
 		int center2 = (int) round(coords[3*p+1] * fftg[1]);
 		int center3 = (int) round(coords[3*p+2] * fftg[2]);
-		printf("FINISH SETUP %d\n",p);
+		printf("FINISH SETUP %d\n%d %d %d\n%d %d %d\n",p, center1, center2, center3, grid1, grid2, grid3);
 		for (int i = -grid1 + center1; i <= grid1 + center1; i++) {
 			double frac[3] = {0,0,0};
 			double testcoord[3] = {0,0,0};
@@ -293,7 +293,7 @@ double* realspace_state_ri(int BAND_NUM, int KPOINT_NUM,
 
 	int gridsize = fftg[0]*fftg[1]*fftg[2];
 
-	double* rpip = (double*) malloc(2*gridsize * sizeof(double));
+	double* rpip = (double*) malloc(2 * gridsize * sizeof(double));
 
 	for (int i = 0; i < gridsize; i++) {
 		rpip[i] = creal(x[i]);
@@ -348,8 +348,8 @@ void write_realspace_state_ncl_ri(char* filename1, char* filename2,
 	int gridsize = fftg[0]*fftg[1]*fftg[2];
 
 	double* x = realspace_state_ncl_ri(BAND_NUM, KPOINT_NUM, wf, pps, fftg, labels, coords);
-	write_volumetric(filename1, x, fftg, 1);
-	write_volumetric(filename2, x+gridsize, fftg, 1);
+	write_volumetric(filename1, x+0*gridsize, fftg, 1);
+	write_volumetric(filename2, x+1*gridsize, fftg, 1);
 	write_volumetric(filename3, x+2*gridsize, fftg, 1);
 	write_volumetric(filename4, x+3*gridsize, fftg, 1);
 

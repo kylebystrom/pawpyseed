@@ -394,8 +394,11 @@ class TestPy:
 		wf.write_density_realspace(dim=np.array([40,40,40]))
 		tstchg = Chgcar.from_file("AECCAR2").data['total']# / wf.structure.volume
 		chg = Chgcar.from_file("PYAECCAR").data['total']
-		reldiff = np.linalg.norm((chg-tstchg)/tstchg/40**3)
-		assert_almost_equal(reldiff, 0, decimal=4)
+		reldiff = np.sqrt(np.mean(((chg-tstchg)/tstchg)**2))
+		newchg = chg-tstchg
+		Chgcar(Poscar(wf.structure), {'total': newchg}).write_file('DIFFCHGCAR.vasp')
+		print(np.sum(chg)/40**3, np.sum(tstchg)/40**3)
+		assert_almost_equal(reldiff, 0, decimal=3)
 		#os.remove('PYAECCAR')
 
 	def test_pseudoprojector(self):

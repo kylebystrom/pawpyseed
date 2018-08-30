@@ -129,6 +129,7 @@ pswf_t* read_wavefunctions(char* filename, double* kpt_weights) {
 	wf->nspin = nspin;
 	wf->nwk = nwk;
 	wf->nband = nband;
+	wf->is_ncl = 0;
 	wf->overlaps = NULL;
 
 	kpoint_t** kpts = (kpoint_t**) malloc(nwk*nspin*sizeof(kpoint_t*));
@@ -175,6 +176,8 @@ pswf_t* read_wavefunctions(char* filename, double* kpt_weights) {
 			band->energy = kptr[4+i*3];
 			band->occ = kptr[6+i*3];
 			band->projections = NULL;
+			band->up_projections = NULL;
+			band->down_projections = NULL;
 			band->wave_projections = NULL;
 			band->CRs = NULL;
 			kpt->bands[i] = band;
@@ -214,7 +217,19 @@ pswf_t* read_wavefunctions(char* filename, double* kpt_weights) {
 				}
 			}
 		}
-		if (ncnt != nplane - 1) printf("ERROR %d %d %lf %lf %lf %lf\n", ncnt, nplane, kx,ky,kz, c);
+		ncnt++;
+
+		if (ncnt * 2 == nplane) {
+			printf("This is an NCL wavefunction!\n");
+			wf->is_ncl = 1;
+			for (int iplane = 0; iplane < nplane/2; iplane++) {
+				igall[3*(nplane/2+iplane)+0] = igall[3*iplane+0];
+				igall[3*(nplane/2+iplane)+1] = igall[3*iplane+1];
+				igall[3*(nplane/2+iplane)+2] = igall[3*iplane+2];
+			}
+		} else if (ncnt != nplane) {
+			printf("ERROR %d %d %lf %lf %lf %lf\n", ncnt, nplane, kx,ky,kz, c);
+		}
 		//if (ncnt > npmax) printf("BIG ERROR");
 		//printf("%d %d\n", ncnt, npmax);
 

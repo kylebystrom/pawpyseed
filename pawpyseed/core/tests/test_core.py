@@ -43,7 +43,7 @@ if COMPILE:
 	os.chdir(currdir)
 
 from pymatgen.io.vasp.inputs import Poscar, Potcar
-from pymatgen.io.vasp.outputs import Vasprun
+from pymatgen.io.vasp.outputs import Vasprun, Chgcar
 from pymatgen.core.structure import Structure
 
 from pawpyseed.core.utils import *
@@ -389,15 +389,17 @@ class TestPy:
 		os.remove(filename1)
 		os.remove(filename2)
 
-	@nottest
 	def test_density(self):
 		wf = Wavefunction.from_directory('.')
-		wf.write_density_realspace(dim=np.array([30,30,30]))
-		tstchg = Chgcar.from_file("AECCAR2")
-		chg = Chgcar.from_file("PYAECCAR")
-		reldiff = np.linalg.norm((chg-tstchg)/tstchg)
+		wf.write_density_realspace(dim=np.array([40,40,40]))
+		tstchg = Chgcar.from_file("AECCAR2").data['total']# / wf.structure.volume
+		chg = Chgcar.from_file("PYAECCAR").data['total']
+		reldiff = np.sqrt(np.mean(((chg-tstchg)/tstchg)**2))
+		newchg = chg-tstchg
+		Chgcar(Poscar(wf.structure), {'total': newchg}).write_file('DIFFCHGCAR.vasp')
+		print(np.sum(chg)/40**3, np.sum(tstchg)/40**3)
 		assert_almost_equal(reldiff, 0, decimal=3)
-		os.remove('PYAECCAR')
+		#os.remove('PYAECCAR')
 
 	def test_pseudoprojector(self):
 		# test ps projections

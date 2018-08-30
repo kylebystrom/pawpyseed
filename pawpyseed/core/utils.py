@@ -38,9 +38,11 @@ PAWC.overlap_setup_real.restype = None
 PAWC.realspace_state_ri.argtypes = [c_int, c_int, c_void_p, c_void_p, c_int_p, c_int_p, c_double_p]
 PAWC.write_realspace_state_ri_return.argtypes = [c_char_p, c_char_p] + PAWC.realspace_state_ri.argtypes
 PAWC.write_realspace_state_ri_noreturn.argtypes = PAWC.write_realspace_state_ri_return.argtypes
+PAWC.write_realspace_state_ncl_ri.argtypes = [c_char_p, c_char_p] + PAWC.write_realspace_state_ri_return.argtypes
 PAWC.realspace_state_ri.restype = c_double_p
 PAWC.write_realspace_state_ri_return.restype = c_double_p
 PAWC.write_realspace_state_ri_noreturn.restype = None
+PAWC.write_realspace_state_ncl_ri.restype = None
 
 PAWC.write_density_return.argtypes = [c_char_p, c_void_p, c_void_p, c_int_p, c_int_p, c_double_p]
 PAWC.write_density_noreturn.argtypes = PAWC.write_density_return.argtypes

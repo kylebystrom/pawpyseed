@@ -523,15 +523,32 @@ class Wavefunction:
 			dim, self.nums, self.coords)
 
 	def _convert_to_vasp_volumetric(self, filename, dim):
+		
+
+		#from pymatgen VolumetricData class
+		p = Poscar(self.structure)
+		lines = filename + '\n'
+		lines += "   1.00000000000000\n"
+		latt = self.structure.lattice.matrix
+		lines += " %12.6f%12.6f%12.6f\n" % tuple(latt[0, :])
+		lines += " %12.6f%12.6f%12.6f\n" % tuple(latt[1, :])
+		lines += " %12.6f%12.6f%12.6f\n" % tuple(latt[2, :])
+		lines += "".join(["%5s" % s for s in p.site_symbols]) + "\n"
+		lines += "".join(["%6d" % x for x in p.natoms]) + "\n"
+		lines += "Direct\n"
+		for site in self.structure:
+			lines += "%10.6f%10.6f%10.6f\n" % tuple(site.frac_coords)
+		lines += " \n"
+	
 		f = open(filename, 'r')
 		nums = f.read()
 		f.close()
 		f = open(filename, 'w')
 		dimstr = '%d %d %d\n' % (dim[0], dim[1], dim[2])
-		posstr = Poscar(self.structure).get_string() + '\n'
-		f.write(posstr + dimstr + nums)
+		#pos = Poscar(self.structure, velocities = None)
+		#posstr = pos.get_string() + '\n'
+		f.write(lines + dimstr + nums)
 		f.close()
-		print ('wiped successfuly')
 
 	def write_state_realspace(self, b, k, s, fileprefix = "", dim=None, return_wf = False):
 		"""
@@ -551,6 +568,7 @@ class Wavefunction:
 				imaginary part
 			The wavefunction is written with z the slow index.
 		"""
+		res = None
 		print("PARAMETERS", self.nums, self.coords, dim)
 		sys.stdout.flush()
 		self.check_c_projectors()
@@ -593,6 +611,7 @@ class Wavefunction:
 			The charge density is written with z the slow index.
 		"""
 
+		res = None
 		self.check_c_projectors()
 		if type(dim) == type(None):
 			dim = self.dim

@@ -88,6 +88,8 @@ typedef struct band {
 	float complex* Cs; ///< plane wave coefficients (normalized to 1)
 	double complex* CRs; ///< wavefunction in real space
 	projection_t* projections; ///< length==number of sites in structure
+	projection_t* up_projections; ///< length==number of sites in structure
+	projection_t* down_projections; ///< length==number of sites in structure
 	projection_t* wave_projections; ///< length==number of sites in structure
 } band_t;
 
@@ -108,20 +110,23 @@ typedef struct kpoint {
 } kpoint_t;
 
 typedef struct pswf {
-	int num_elems;
-	int num_sites;
-	ppot_t* pps;
-	int* G_bounds;
-	kpoint_t** kpts;
-	int nspin;
-	int nband;
-	int nwk;
-	double* lattice;
-	double* reclattice;
-	int* fftg;
-	int num_aug_overlap_sites;
-	double* dcoords;
-	double complex** overlaps;
+	int num_elems; ///< number of elements in the structure
+	int num_sites; ///< number of sites in the structure
+	ppot_t* pps; ///< list of ppot_t objects, one for each element
+	int* G_bounds; ///< highest-frequency plane-waves in basis set (xmin, xmax, ymin, ymax, zmin, zmax)
+	kpoint_t** kpts; ///< list of kpoint_t objects for the structure
+	int nspin; ///< 1 for non-spin-polarized/noncollinear, 2 for spin-polarized
+	int nband; ///< number of bands
+	int nwk; ///< number of kpoints
+	double* lattice; ///< lattice (length 9, each row is a lattice, vector, row major)
+	double* reclattice; ///< reciprocal lattice (with 2pi factor!), formatted like lattice
+	int* fftg; ///< FFT grid dimensions
+
+	int is_ncl; ///< 1 if noncollinear, 0 otherwise
+
+	int num_aug_overlap_sites; ///< used for Projector operations
+	double* dcoords; ///< used for Projector operations
+	double complex** overlaps; ///< used for Projector operations
 } pswf_t;
 
 typedef struct projgrid {

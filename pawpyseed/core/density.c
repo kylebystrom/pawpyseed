@@ -25,19 +25,22 @@ double* ncl_ae_state_density(int BAND_NUM, pswf_t* wf, ppot_t* pps, int* fftg, i
     mkl_free(x);
     return P;	
 }
+*/
 
-double* ae_state_density(int BAND_NUM, pswf_t* wf, ppot_t* pps, int* fftg, int* labels, double* coords) {
+double* ae_state_density(int BAND_NUM, int KPOINT_NUM, pswf_t* wf, ppot_t* pps,
+	int* fftg, int* labels, double* coords) {
+
 	int gridsize = fftg[0] * fftg[1] * fftg[2];
 	double* P = mkl_calloc(gridsize, sizeof(double), 64);
 	int spin_mult = 2 / wf->nspin;
-	double complex* x = realspace_state(b, k, wf, pps, fftg, labels, coords);
+	double complex* x = realspace_state(BAND_NUM, KPOINT_NUM,
+		wf, pps, fftg, labels, coords);
 	for (int i = 0; i < gridsize; i++) {
 		P[i] += creal(x[i] * conj(x[i]));
 	}
 	mkl_free(x);
 	return P;
 }
-*/
 
 double* ae_chg_density(pswf_t* wf, ppot_t* pps, int* fftg, int* labels, double* coords) {
 
@@ -135,6 +138,108 @@ double complex* realspace_state(int BAND_NUM, int KPOINT_NUM, pswf_t* wf, ppot_t
 		int center1 = (int) round(coords[3*p+0] * fftg[0]);
 		int center2 = (int) round(coords[3*p+1] * fftg[1]);
 		int center3 = (int) round(coords[3*p+2] * fftg[2]);
+		printf("FINISH SETUP %d\n%d %d %d\n%d %d %d\n",p, center1, center2, center3, grid1, grid2, grid3);
+		for (int i = -grid1 + center1; i <= grid1 + center1; i++) {
+			double frac[3] = {0,0,0};
+			double testcoord[3] = {0,0,0};
+			int ii=0, jj=0, kk=0;
+			double phasecoord[3] = {0,0,0};
+			double phase = 0;
+			for (int j = -grid2 + center2; j <= grid2 + center2; j++) {
+				for (int k = -grid3 + center3; k <= grid3 + center3; k++) {
+					testcoord[0] = (double) i / fftg[0] - coords[3*p+0];
+					testcoord[1] = (double) j / fftg[1] - coords[3*p+1];
+					testcoord[2] = (double) k / fftg[2] - coords[3*p+2];
+					frac_to_cartesian(testcoord, lattice);
+					if (mag(testcoord) < rmax) {
+						
+						ii = (i%fftg[0] + fftg[0]) % fftg[0];
+						jj = (j%fftg[1] + fftg[1]) % fftg[1];
+						kk = (k%fftg[2] + fftg[2]) % fftg[2];
+						frac[0] = (double) ii / fftg[0];
+						frac[1] = (double) jj / fftg[1];
+						frac[2] = (double) kk / fftg[2];
+						phasecoord[0] = coords[3*p+0] + ((ii-i) / fftg[0]);
+						phasecoord[1] = coords[3*p+1] + ((jj-j) / fftg[1]);
+						phasecoord[2] = coords[3*p+2] + ((kk-k) / fftg[2]);
+						phase = dot(phasecoord, wf->kpts[KPOINT_NUM]->k);
+						for (int n = 0; n < pros.total_projs; n++) {
+							x[ii*fftg[1]*fftg[2] + jj*fftg[2] + kk] +=
+								wave_value2(pp.wave_grid,
+								pp.funcs[pros.ns[n]].diffwave,
+								pp.funcs[pros.ns[n]].diffwave_spline,
+								pp.wave_gridsize,
+								pros.ls[n], pros.ms[n],
+								testcoord)
+								* pros.overlaps[n] * cexp(2*PI*I*phase);
+								
+							//	wave_value(pp.funcs[pros.ns[n]],
+							//	pp.wave_gridsize, pp.wave_grid,
+							//	pros.ms[n], coords+3*p, frac, lattice)
+							//	* pros.overlaps[n] * cexp(2*PI*I*phase);
+							//	* Ylm(thetaphi[0], thetaphi[1]);
+						}
+					}
+				}
+			}
+		}
+	}
+
+	return x;
+}
+
+double complex* ncl_realspace_state(int BAND_NUM, int KPOINT_NUM,
+	pswf_t* wf, ppot_t* pps, int* fftg,
+	int* labels, double* coords) {
+
+	double complex* xup = mkl_calloc(2*fftg[0]*fftg[1]*fftg[2], sizeof(double complex), 64);
+	double complex* xdown = xup + fftg[0]*fftg[1]*fftg[2];
+	printf("START FT\n");
+	int num_waves = wf->kpts[KPOINT_NUM]->bands[BAND_NUM]->num_waves / 2;
+	fft3d(xup, wf->G_bounds, wf->lattice, wf->kpts[KPOINT_NUM]->k,
+		wf->kpts[KPOINT_NUM]->Gs, wf->kpts[KPOINT_NUM]->bands[BAND_NUM]->Cs,
+		num_waves, fftg);
+	fft3d(xdown, wf->G_bounds, wf->lattice, wf->kpts[KPOINT_NUM]->k,
+		wf->kpts[KPOINT_NUM]->Gs, wf->kpts[KPOINT_NUM]->bands[BAND_NUM]->Cs + num_waves,
+		num_waves, fftg);
+	printf("FINISH FT\n");
+	double* lattice = wf->lattice;
+	double vol = determinant(lattice);
+	for (int i = 0; i < fftg[0]; i++) {
+		double frac[3] = {0,0,0};
+		double kdotr = 0;
+		for (int j = 0; j < fftg[1]; j++) {
+			for (int k = 0; k < fftg[2]; k++) {
+				frac[0] = (double) i / fftg[0];
+				frac[1] = (double) j / fftg[1];
+				frac[2] = (double) k / fftg[2];
+				kdotr = dot(wf->kpts[KPOINT_NUM]->k, frac);
+				xup[i*fftg[1]*fftg[2] + j*fftg[2] + k] *= cexp(2*PI*I*kdotr);
+				xdown[i*fftg[1]*fftg[2] + j*fftg[2] + k] *= cexp(2*PI*I*kdotr);
+			}
+		}
+	}
+
+	int num_sites = wf->num_sites;
+	#pragma omp parallel for
+	for (int p = 0; p < num_sites; p++) {
+		projection_t up_pros =
+			wf->kpts[KPOINT_NUM]->bands[BAND_NUM]->up_projections[p];
+		projection_t down_pros =
+			wf->kpts[KPOINT_NUM]->bands[BAND_NUM]->down_projections[p];
+		printf("READ PROJECTIONS\n");
+		ppot_t pp = pps[labels[p]];
+		double rmax = pp.wave_grid[pp.wave_gridsize-1];
+		double res[3] = {0,0,0};
+		vcross(res, lattice+3, lattice+6);
+		int grid1 = (int) (mag(res) * rmax / vol * fftg[0]) + 1;
+		vcross(res, lattice+0, lattice+6);
+		int grid2 = (int) (mag(res) * rmax / vol * fftg[1]) + 1;
+		vcross(res, lattice+0, lattice+3);
+		int grid3 = (int) (mag(res) * rmax / vol * fftg[2]) + 1;
+		int center1 = (int) round(coords[3*p+0] * fftg[0]);
+		int center2 = (int) round(coords[3*p+1] * fftg[1]);
+		int center3 = (int) round(coords[3*p+2] * fftg[2]);
 		printf("FINISH SETUP %d\n",p);
 		for (int i = -grid1 + center1; i <= grid1 + center1; i++) {
 			double frac[3] = {0,0,0};
@@ -158,12 +263,18 @@ double complex* realspace_state(int BAND_NUM, int KPOINT_NUM, pswf_t* wf, ppot_t
 						phasecoord[0] = coords[3*p+0] + ((ii-i) / fftg[0]);
 						phasecoord[1] = coords[3*p+1] + ((jj-j) / fftg[1]);
 						phasecoord[2] = coords[3*p+2] + ((kk-k) / fftg[2]);
-						projection_t pros = wf->kpts[KPOINT_NUM]->bands[BAND_NUM]->projections[p];
-						for (int n = 0; n < pros.total_projs; n++) {
-							x[ii*fftg[1]*fftg[2] + jj*fftg[2] + kk] += wave_value(pp.funcs[pros.ns[n]],
+						phase = dot(phasecoord, wf->kpts[KPOINT_NUM]->k);
+						for (int n = 0; n < up_pros.total_projs; n++) {
+							xup[ii*fftg[1]*fftg[2] + jj*fftg[2] + kk] +=
+								wave_value(pp.funcs[up_pros.ns[n]],
 								pp.wave_gridsize, pp.wave_grid,
-								pros.ms[n], coords+3*p, frac, lattice)
-								* pros.overlaps[n] * cexp(2*PI*I*phase);
+								up_pros.ms[n], coords+3*p, frac, lattice)
+								* up_pros.overlaps[n] * cexp(2*PI*I*phase);
+							xdown[ii*fftg[1]*fftg[2] + jj*fftg[2] + kk] +=
+								wave_value(pp.funcs[down_pros.ns[n]],
+								pp.wave_gridsize, pp.wave_grid,
+								down_pros.ms[n], coords+3*p, frac, lattice)
+								* down_pros.overlaps[n] * cexp(2*PI*I*phase);
 						}
 					}
 				}
@@ -171,15 +282,35 @@ double complex* realspace_state(int BAND_NUM, int KPOINT_NUM, pswf_t* wf, ppot_t
 		}
 	}
 
-	return x;
+	return xup;
 }
 
-double* realspace_state_ri(int BAND_NUM, int KPOINT_NUM, pswf_t* wf, ppot_t* pps, int* fftg,
-		int* labels, double* coords) {
+double* realspace_state_ri(int BAND_NUM, int KPOINT_NUM,
+	pswf_t* wf, ppot_t* pps, int* fftg,
+	int* labels, double* coords) {
 
 	double complex* x = realspace_state(BAND_NUM, KPOINT_NUM, wf, pps, fftg, labels, coords);
 
 	int gridsize = fftg[0]*fftg[1]*fftg[2];
+
+	double* rpip = (double*) malloc(2 * gridsize * sizeof(double));
+
+	for (int i = 0; i < gridsize; i++) {
+		rpip[i] = creal(x[i]);
+		rpip[i+gridsize] = cimag(x[i]);
+	}
+	mkl_free(x);
+
+	return rpip;
+}
+
+double* realspace_state_ncl_ri(int BAND_NUM, int KPOINT_NUM,
+	pswf_t* wf, ppot_t* pps, int* fftg,
+	int* labels, double* coords) {
+
+	double complex* x = ncl_realspace_state(BAND_NUM, KPOINT_NUM, wf, pps, fftg, labels, coords);
+
+	int gridsize = 2*fftg[0]*fftg[1]*fftg[2];
 
 	double* rpip = (double*) malloc(2*gridsize * sizeof(double));
 
@@ -208,7 +339,25 @@ void write_volumetric(char* filename, double* x, int* fftg, double scale) {
 	fclose(fp);
 }
 
-double* write_realspace_state_ri_return(char* filename1, char* filename2, int BAND_NUM, int KPOINT_NUM,
+void write_realspace_state_ncl_ri(char* filename1, char* filename2,
+	char* filename3, char* filename4,
+	int BAND_NUM, int KPOINT_NUM,
+	pswf_t* wf, ppot_t* pps, int* fftg,
+	int* labels, double* coords) {
+
+	int gridsize = fftg[0]*fftg[1]*fftg[2];
+
+	double* x = realspace_state_ncl_ri(BAND_NUM, KPOINT_NUM, wf, pps, fftg, labels, coords);
+	write_volumetric(filename1, x+0*gridsize, fftg, 1);
+	write_volumetric(filename2, x+1*gridsize, fftg, 1);
+	write_volumetric(filename3, x+2*gridsize, fftg, 1);
+	write_volumetric(filename4, x+3*gridsize, fftg, 1);
+
+	free(x);
+}
+
+double* write_realspace_state_ri_return(char* filename1, char* filename2,
+	int BAND_NUM, int KPOINT_NUM,
 	pswf_t* wf, ppot_t* pps, int* fftg,
 	int* labels, double* coords) {
 

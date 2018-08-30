@@ -48,6 +48,9 @@ Calculates <p_i|psit_nk> for all i={R,epsilon,l,m} in the structure for one band
 void onto_projector(kpoint_t* kpt, int band_num, real_proj_site_t* sites, int num_sites,
 	int* G_bounds, double* lattice, double* reclattice, ppot_t* pps, int* fftg);
 
+void onto_projector_ncl(kpoint_t* kpt, int band_num, real_proj_site_t* sites, int num_sites,
+	int* G_bounds, double* lattice, double* reclattice, ppot_t* pps, int* fftg);
+
 /**
 Calculates <(phi_i-phit_i)|psit_nk> for all i={R,epsilon,l,m} in the structure for one band
 */

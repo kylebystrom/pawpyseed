@@ -18,11 +18,9 @@ double Ylmr(int l, int m, double theta, double phi) { return creal(Ylm(l, m, the
 
 double Ylmi(int l, int m, double theta, double phi) { return cimag(Ylm(l, m, theta, phi)); }
 
-double* real_wave_spherical_bessel_transform(sbt_descriptor_t* d,
-        double* r, double* f, double* ks, int l) {
+double* get_sbtd_ks(sbt_descriptor_t* d) {
 
-	double* vals = wave_spherical_bessel_transform(d, f, l);
-	return vals;
+	return d->ks;
 }
 
 int fft_check(char* wavecar, double* kpt_weights, int* fftg) {

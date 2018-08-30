@@ -7,6 +7,6 @@ var searchData=
   ['wave_5frmax',['wave_rmax',['../structppot.html#a1e28c596eacf066f9a8307dc1bad8686',1,'ppot']]],
   ['weight',['weight',['../structkpoint.html#a88c15b92c9dbf47d29c9ade4aa36aef6',1,'kpoint']]],
   ['wf',['wf',['../classpawpyseed_1_1core_1_1projector_1_1Projector.html#ad637aa795064de84b522c13aeb5add27',1,'pawpyseed::core::projector::Projector']]],
-  ['wf_5fptr',['wf_ptr',['../classpawpyseed_1_1core_1_1wavefunction_1_1PseudoWavefunction.html#abbffb59e8179a9f539a0064acd378094',1,'pawpyseed::core::wavefunction::PseudoWavefunction']]],
+  ['wf_5fptr',['wf_ptr',['../classpawpyseed_1_1core_1_1noncollinear_1_1NCLPseudoWavefunction.html#a76be67f26a6a834ca66373f101f71149',1,'pawpyseed.core.noncollinear.NCLPseudoWavefunction.wf_ptr()'],['../classpawpyseed_1_1core_1_1wavefunction_1_1PseudoWavefunction.html#abbffb59e8179a9f539a0064acd378094',1,'pawpyseed.core.wavefunction.PseudoWavefunction.wf_ptr()']]],
   ['wts',['wts',['../namespacepawpyseed_1_1core_1_1quad__check.html#a4ce3bc92dfb697c16675e21c0ca246d5',1,'pawpyseed::core::quad_check']]]
 ];

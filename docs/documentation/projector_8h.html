@@ -115,6 +115,8 @@ Functions</h2></td></tr>
 <tr class="separator:a8eaa45a84bc03bcc47f808f2763747c9"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a067f474d3cb5d3b25666e0405aa34806"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="projector_8h.html#a067f474d3cb5d3b25666e0405aa34806">onto_projector</a> (<a class="el" href="utils_8h.html#a8cafed6b50bb2761b72f06bf2281bcc5">kpoint_t</a> *kpt, int band_num, <a class="el" href="utils_8h.html#ab775d07eb4baee2c78eafabc65e07f9e">real_proj_site_t</a> *sites, int num_sites, int *G_bounds, double *lattice, double *reclattice, <a class="el" href="utils_8h.html#aa248479b99172bb8a57435eceaf6cd54">ppot_t</a> *pps, int *fftg)</td></tr>
 <tr class="separator:a067f474d3cb5d3b25666e0405aa34806"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a5e3d750aa1486e9a01530da68f7fc3b8"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="projector_8h.html#a5e3d750aa1486e9a01530da68f7fc3b8">onto_projector_ncl</a> (<a class="el" href="utils_8h.html#a8cafed6b50bb2761b72f06bf2281bcc5">kpoint_t</a> *kpt, int band_num, <a class="el" href="utils_8h.html#ab775d07eb4baee2c78eafabc65e07f9e">real_proj_site_t</a> *sites, int num_sites, int *G_bounds, double *lattice, double *reclattice, <a class="el" href="utils_8h.html#aa248479b99172bb8a57435eceaf6cd54">ppot_t</a> *pps, int *fftg)</td></tr>
+<tr class="separator:a5e3d750aa1486e9a01530da68f7fc3b8"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:af96b78f2e07e12f218ae9b87c845d4b9"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="projector_8h.html#af96b78f2e07e12f218ae9b87c845d4b9">onto_smoothpw</a> (<a class="el" href="utils_8h.html#a8cafed6b50bb2761b72f06bf2281bcc5">kpoint_t</a> *kpt, int band_num, <a class="el" href="utils_8h.html#ab775d07eb4baee2c78eafabc65e07f9e">real_proj_site_t</a> *sites, int num_sites, int *G_bounds, double *lattice, double *reclattice, <a class="el" href="utils_8h.html#aa248479b99172bb8a57435eceaf6cd54">ppot_t</a> *pps, int *fftg)</td></tr>
 <tr class="separator:af96b78f2e07e12f218ae9b87c845d4b9"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:afe21e5608c3d8091f569a205c9ee7a3b"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="projector_8h.html#afe21e5608c3d8091f569a205c9ee7a3b">add_num_cart_gridpts</a> (<a class="el" href="utils_8h.html#aa248479b99172bb8a57435eceaf6cd54">ppot_t</a> *pp_ptr, double *lattice, int *fftg)</td></tr>
@@ -590,6 +592,74 @@ Functions</h2></td></tr>
       </table>
 </div><div class="memdoc">
 <p>Helper function for onto_projector, which performs the FFT of the wavefunction into real space and calculates from &lt;p_i|psit_nk&gt; from the grid points found in projector_values. </p>
+
+</div>
+</div>
+<a class="anchor" id="a5e3d750aa1486e9a01530da68f7fc3b8"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void onto_projector_ncl </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="utils_8h.html#a8cafed6b50bb2761b72f06bf2281bcc5">kpoint_t</a> *&#160;</td>
+          <td class="paramname"><em>kpt</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">int&#160;</td>
+          <td class="paramname"><em>band_num</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="utils_8h.html#ab775d07eb4baee2c78eafabc65e07f9e">real_proj_site_t</a> *&#160;</td>
+          <td class="paramname"><em>sites</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">int&#160;</td>
+          <td class="paramname"><em>num_sites</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">int *&#160;</td>
+          <td class="paramname"><em>G_bounds</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">double *&#160;</td>
+          <td class="paramname"><em>lattice</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">double *&#160;</td>
+          <td class="paramname"><em>reclattice</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="utils_8h.html#aa248479b99172bb8a57435eceaf6cd54">ppot_t</a> *&#160;</td>
+          <td class="paramname"><em>pps</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">int *&#160;</td>
+          <td class="paramname"><em>fftg</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
 
 </div>
 </div>

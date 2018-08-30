@@ -4,6 +4,7 @@ var searchData=
   ['core',['core',['../namespacepawpyseed_1_1core.html',1,'pawpyseed']]],
   ['defect_5fcomposition',['defect_composition',['../namespacepawpyseed_1_1analysis_1_1defect__composition.html',1,'pawpyseed::analysis']]],
   ['gaunt',['gaunt',['../namespacepawpyseed_1_1core_1_1gaunt.html',1,'pawpyseed::core']]],
+  ['noncollinear',['noncollinear',['../namespacepawpyseed_1_1core_1_1noncollinear.html',1,'pawpyseed::core']]],
   ['pawpyseed',['pawpyseed',['../namespacepawpyseed.html',1,'']]],
   ['plots',['plots',['../namespacepawpyseed_1_1analysis_1_1plots.html',1,'pawpyseed::analysis']]],
   ['projector',['projector',['../namespacepawpyseed_1_1core_1_1projector.html',1,'pawpyseed::core']]],

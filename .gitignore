@@ -6,3 +6,6 @@ docs/dox.config.*
 *.out
 *.xml
 *.aux
+*POTCAR
+*/POTCAR
+test_files/POTCAR

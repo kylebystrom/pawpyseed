@@ -81,7 +81,7 @@ state, for a structure
 */
 typedef struct band {
 	int n; ///< band number
-	int num_waves; ///< number of plane waves
+	int num_waves; ///< number of plane waves 
 	double occ; ///< occupancy of the band
 	double N;
 	double complex energy; ///< energy of the band
@@ -111,6 +111,7 @@ typedef struct kpoint {
 
 typedef struct pswf {
 	int num_elems; ///< number of elements in the structure
+	int* num_projs; ///< number of projectors for each element
 	int num_sites; ///< number of sites in the structure
 	ppot_t* pps; ///< list of ppot_t objects, one for each element
 	int* G_bounds; ///< highest-frequency plane-waves in basis set (xmin, xmax, ymin, ymax, zmin, zmax)

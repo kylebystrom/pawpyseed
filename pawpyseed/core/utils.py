@@ -63,6 +63,9 @@ PAWC.compensation_terms.argtypes = [c_int] + [c_void_p]*3 + [c_int]*5 + [c_int_p
 									+ [c_int_p, c_double_p]*2 + [c_int_p]
 PAWC.compensation_terms.restype = c_double_p
 
+PAWC.expand_symm_wf.argtypes = [c_void_p, c_int, c_int_p, c_double_p]
+PAWC.expand_symm_wf.restype = c_void_p
+
 PAWC.get_occs.restype = c_double_p
 PAWC.get_nband.restype = c_int
 PAWC.get_nwk.restype = c_int

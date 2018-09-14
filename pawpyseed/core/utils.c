@@ -10,6 +10,18 @@
 #include "utils.h"
 
 #define PI 3.14159265358979323846
+#define OPSIZE 16
+
+void affine_transform(double* out, double* op, double* inv) {
+	//0 1 2 3
+	//4 5 6 7
+	//8 9 10 11
+	//12 13 14 15
+	double in[4] = {inv[0], inv[1], inv[2], 1};
+	out[0] = op[0]*in[0] + op[1]*in[1] + op[2]*in[2] + op[3]*in[3];
+	out[1] = op[4]*in[0] + op[5]*in[1] + op[6]*in[2] + op[7]*in[3];
+	out[2] = op[8]*in[0] + op[9]*in[1] + op[10]*in[2] + op[11]*in[3];
+}
 
 void vcross(double* res, double* top, double* bottom) {
 	res[0] = top[1] * bottom[2] - top[2] * bottom[1];
@@ -741,6 +753,97 @@ void copy_rayleigh_expansion_terms(pswf_t* wf, ppot_t* pps, int num_elems, pswf_
 			}
 		}
 	}
+}
+
+pswf_t* expand_symm_wf(pswf_t* rwf, int num_kpts, int* maps, double* ops) {
+
+	double* lattice = rwf->lattice;
+	double* reclattice = rwf->reclattice;
+
+	pswf_t* wf = (pswf_t*) malloc(sizeof(pswf_t));
+
+	wf->num_elems = rwf->num_elems;
+	wf->num_sites = rwf->num_sites;
+	wf->pps = rwf->pps;
+	wf->G_bounds = (int*) malloc(6*sizeof(int));
+	wf->kpts = (kpoint_t**) malloc(num_kpts * rwf->nspin * sizeof(kpoint_t*));
+	wf->nspin = rwf->nspin;
+	wf->nband = rwf->nband;
+	wf->nwk = num_kpts;
+	wf->lattice = (double*) malloc(9*sizeof(double));
+	wf->reclattice = (double*) malloc(9*sizeof(double));
+	for (int i = 0; i < 9; i++) {
+		wf->lattice[i] = lattice[i];
+		wf->reclattice[i] = reclattice[i];
+	}
+	wf->fftg = NULL; // TODO MAKE FFTG
+
+	wf->is_ncl = rwf->is_ncl;
+
+	wf->num_aug_overlap_sites = rwf->num_aug_overlap_sites; // TODO MAYBE FIX?
+	wf->dcoords = NULL; // TODO FIX THIS
+	wf->overlaps = NULL; // TODO FIX THIS
+
+	for (int knum = 0; knum < num_kpts * wf->nspin; knum++) {
+		wf->kpts[knum] = (kpoint_t*) malloc(sizeof(kpoint_t));
+
+		double pw[3] = {0,0,0};
+		int rnum = maps[knum];
+
+		kpoint_t* kpt = wf->kpts[knum];
+		kpoint_t* rkpt = rwf->kpts[rnum];
+
+		kpt->up = rkpt->up;
+		kpt->num_waves = rkpt->num_waves;
+		kpt->k = (double*) malloc(3 * sizeof(double));
+		affine_transform(kpt->k, ops+OPSIZE*knum, rkpt->k);
+		kpt->Gs = (int*) malloc(3 * kpt->num_waves * sizeof(int));
+
+		kpt->weight = rkpt->weight;
+		kpt->num_bands = rkpt->num_bands;
+		kpt->bands = (band_t**) malloc(kpt->num_bands * sizeof(band_t*));
+		kpt->expansion = NULL; // TODO
+
+		for (int g = 0; g < kpt->num_waves; g++) {
+
+			pw[0] = rkpt->k[0] + rkpt->Gs[3*g+0];
+			pw[1] = rkpt->k[1] + rkpt->Gs[3*g+1];
+			pw[2] = rkpt->k[2] + rkpt->Gs[3*g+2];
+
+			affine_transform(pw, ops+OPSIZE*knum, pw);
+
+			pw[0] -= kpt->k[0];
+			pw[1] -= kpt->k[1];
+			pw[2] -= kpt->k[2];
+
+			kpt->Gs[3*g+0] = (int) round(pw[0]);
+			kpt->Gs[3*g+1] = (int) round(pw[1]);
+			kpt->Gs[3*g+2] = (int) round(pw[2]);
+
+		}
+
+		for (int b = 0; b < kpt->num_bands; b++) {
+			kpt->bands[b] = (band_t*) malloc(sizeof(band_t));
+			kpt->bands[b]->n = rkpt->bands[b]->n;
+			kpt->bands[b]->num_waves = rkpt->bands[b]->num_waves;
+			kpt->bands[b]->occ = rkpt->bands[b]->occ;
+			kpt->bands[b]->energy = rkpt->bands[b]->energy;
+			kpt->bands[b]->Cs = (float complex*) malloc(
+				kpt->num_waves * sizeof(float complex));
+			kpt->bands[b]->CRs = NULL;
+			kpt->bands[b]->projections = NULL;
+			kpt->bands[b]->up_projections = NULL;
+			kpt->bands[b]->down_projections = NULL;
+			kpt->bands[b]->wave_projections = NULL;
+			for (int w = 0; w < kpt->num_waves; w++) {
+				kpt->bands[b]->Cs[w] = rkpt->bands[b]->Cs[w];
+			}
+
+		}
+
+	}
+
+	return wf;
 }
 
 void CHECK_ALLOCATION(void* ptr) {

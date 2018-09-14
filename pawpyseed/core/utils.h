@@ -155,6 +155,8 @@ typedef struct real_proj_site {
 	real_proj_t* projs;
 } real_proj_site_t;
 
+void affine_transform(double* out, double* op, double* inv);
+
 /**
 Minimum of a and b
 */
@@ -370,6 +372,8 @@ void generate_rayleigh_expansion_terms(pswf_t* wf, ppot_t* pps, int num_elems);
 Copy the Rayleigh expansion terms from wf_R to wf.
 */
 void copy_rayleigh_expansion_terms(pswf_t* wf, ppot_t* pps, int num_elems, pswf_t* wf_R);
+
+pswf_t* expand_symm_wf(pswf_t* rwf, int num_kpts, int* maps, double* ops);
 
 /**
 Called after a malloc or calloc call to check that

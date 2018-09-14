@@ -8,6 +8,7 @@
 from pymatgen.io.vasp.inputs import Potcar, Poscar
 from pymatgen.io.vasp.outputs import Vasprun, Outcar
 from pymatgen.core.structure import Structure
+from pymatgen.symmetry.analyzer import SpacegroupAnalyzer
 import numpy as np
 from ctypes import *
 from pawpyseed.core.utils import *
@@ -233,7 +234,11 @@ class Wavefunction:
 		self.structure = struct
 		self.pwf = pwf
 		self.cr = cr
-		self.dim = outcar.ngf
+		if type(outcar) == Outcar:
+			self.dim = outcar.ngf
+		else:
+			#assume outcar is actually ngf, will fix later
+			self.dim = outcar
 		self.dim = np.array(self.dim).astype(np.int32) // 2
 		self.projector_owner = False
 		self.projector_list = None
@@ -624,6 +629,56 @@ class Wavefunction:
 			res = None
 		self._convert_to_vasp_volumetric(filename, dim)
 		return res
+
+	def get_nosym_kpoints(self, symprec=1e-3):
+		kpts = np.array(self.pwf.kpts)
+		allkpts = []
+		orig_kptnums = []
+		op_nums = []
+		sga = SpacegroupAnalyzer(self.structure, symprec)
+		symmops = sga.get_symmetry_operations()
+		for k, kpt in enumerate(kpts):
+			for i, op in enumerate(symmops):
+				newkpt = op.operate(kpt)
+				unique = True
+				for nkpt in allkpts:
+					if np.linalg.norm(newkpt-nkpt) < 1e-10 \
+							and (np.abs(newkpt) < 1).all():
+						unique = False
+						break
+				if unique:
+					allkpts.append(newkpt)
+					orig_kptnums.append(k)
+					op_nums.append(i)
+		self.nosym_kpts = allkpts
+		self.orig_kptnums = orig_kptnums
+		self.op_nums = op_nums
+		self.symmops = symmops
+		return allkpts, orig_kptnums, op_nums, symmops
+
+	def get_kpt_mapping(self, allkpts, symprec=1e-3):
+		sga = SpacegroupAnalyzer(self.structure, symprec)
+		symmops = sga.get_symmetry_operations()
+		kpts = np.array(self.pwf.kpts)
+		orig_kptnums = []
+		op_nums = []
+		for nkpt in allkpts:
+			match = False
+			for k, kpt in enumerate(kpts):
+				for i, op in enumerate(symmops):
+					newkpt = op.operate(kpt)
+					if np.linalg.norm(newkpt-nkpt) < 1e-10:
+						match = True
+						orig_kptnums.append(k)
+						op_nums.append(i)
+						break
+				if match:
+					break
+			if not match:
+				raise PAWpyError("Could not find kpoint mapping")
+		return orig_kptnums, op_nums, symmops
+
+
 
 	def free_all(self):
 		"""

@@ -654,6 +654,8 @@ class Wavefunction:
 		self.orig_kptnums = orig_kptnums
 		self.op_nums = op_nums
 		self.symmops = symmops
+		print("NUMBER OF KPTS", len(allkpts))
+		print("KPTS", allkpts)
 		return allkpts, orig_kptnums, op_nums, symmops
 
 	def get_kpt_mapping(self, allkpts, symprec=1e-3):
@@ -675,7 +677,7 @@ class Wavefunction:
 				if match:
 					break
 			if not match:
-				raise PAWpyError("Could not find kpoint mapping")
+				raise PAWpyError("Could not find kpoint mapping to %s" % str(nkpt))
 		return orig_kptnums, op_nums, symmops
 
 

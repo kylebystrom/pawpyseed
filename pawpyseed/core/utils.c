@@ -766,6 +766,9 @@ pswf_t* expand_symm_wf(pswf_t* rwf, int num_kpts, int* maps, double* ops) {
 	wf->num_sites = rwf->num_sites;
 	wf->pps = rwf->pps;
 	wf->G_bounds = (int*) malloc(6*sizeof(int));
+	for (int i = 0; i < 6; i++) {
+		wf->G_bounds[i] = rwf->G_bounds[i];
+	}
 	wf->kpts = (kpoint_t**) malloc(num_kpts * rwf->nspin * sizeof(kpoint_t*));
 	wf->nspin = rwf->nspin;
 	wf->nband = rwf->nband;

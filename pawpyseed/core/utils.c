@@ -788,6 +788,7 @@ pswf_t* expand_symm_wf(pswf_t* rwf, int num_kpts, int* maps, double* ops) {
 		wf->kpts[knum] = (kpoint_t*) malloc(sizeof(kpoint_t));
 
 		double pw[3] = {0,0,0};
+		double tmppw[3] = {0,0,0};
 		int rnum = maps[knum];
 
 		kpoint_t* kpt = wf->kpts[knum];
@@ -806,11 +807,11 @@ pswf_t* expand_symm_wf(pswf_t* rwf, int num_kpts, int* maps, double* ops) {
 
 		for (int g = 0; g < kpt->num_waves; g++) {
 
-			pw[0] = rkpt->k[0] + rkpt->Gs[3*g+0];
-			pw[1] = rkpt->k[1] + rkpt->Gs[3*g+1];
-			pw[2] = rkpt->k[2] + rkpt->Gs[3*g+2];
+			tmppw[0] = rkpt->k[0] + rkpt->Gs[3*g+0];
+			tmppw[1] = rkpt->k[1] + rkpt->Gs[3*g+1];
+			tmppw[2] = rkpt->k[2] + rkpt->Gs[3*g+2];
 
-			affine_transform(pw, ops+OPSIZE*knum, pw);
+			affine_transform(pw, ops+OPSIZE*knum, tmppw);
 
 			pw[0] -= kpt->k[0];
 			pw[1] -= kpt->k[1];

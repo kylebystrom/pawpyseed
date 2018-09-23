@@ -110,6 +110,7 @@ typedef struct kpoint {
 } kpoint_t;
 
 typedef struct pswf {
+	double encut;
 	int num_elems; ///< number of elements in the structure
 	int* num_projs; ///< number of projectors for each element
 	int num_sites; ///< number of sites in the structure

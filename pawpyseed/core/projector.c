@@ -759,7 +759,7 @@ double* compensation_terms(int BAND_NUM, pswf_t* wf_S, pswf_t* wf_R, ppot_t* pps
 	printf("%d %d %d %d %d %d\n", BAND_NUM, num_elems, num_M, num_N_R, num_N_S, num_N_RS);
 	printf("%d %lf %d %lf %d\n", proj_labels[0], proj_coords[0], ref_labels[0], ref_coords[0], fft_grid[1]);
 	
-	int NUM_KPTS = wf_R->nwk * wf_S->nspin;
+	int NUM_KPTS = wf_R->nwk * wf_R->nspin;
 	int NUM_BANDS = wf_R->nband;
 
 	double* overlap = (double*) calloc(2 * NUM_KPTS * NUM_BANDS, sizeof(double));

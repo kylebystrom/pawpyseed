@@ -771,14 +771,6 @@ pswf_t* expand_symm_wf(pswf_t* rwf, int num_kpts, int* maps, double* ops) {
 		wf->G_bounds[i] = rwf->G_bounds[i];
 	}
 
-	int ngx = wf->G_bounds[1] - wf->G_bounds[0] + 1;
-	int gxmin = wf->G_bounds[0];
-	int ngy = wf->G_bounds[3] - wf->G_bounds[2] + 1;
-	int gymin = wf->G_bounds[2];
-	int ngz = wf->G_bounds[5] - wf->G_bounds[4] + 1;
-	int gzmin = wf->G_bounds[4];
-	int* kptinds = (int*) malloc(ngx*ngy*ngz * sizeof(int));
-
 	wf->kpts = (kpoint_t**) malloc(num_kpts * rwf->nspin * sizeof(kpoint_t*));
 	wf->nspin = rwf->nspin;
 	wf->nband = rwf->nband;
@@ -824,9 +816,9 @@ pswf_t* expand_symm_wf(pswf_t* rwf, int num_kpts, int* maps, double* ops) {
 		if (igall == NULL) {
 		    	ALLOCATION_FAILED();
 		}
-		int nb1max = ngx + 2;
-		int nb2max = ngy + 2;
-		int nb3max = ngz + 2;
+		int nb1max = rwf->G_bounds[1] - rwf->G_bounds[0] + 2;
+		int nb2max = rwf->G_bounds[3] - rwf->G_bounds[2] + 2;
+		int nb3max = rwf->G_bounds[5] - rwf->G_bounds[4] + 2;
 		double encut = rwf->encut;
 		double* b1 = reclattice;
 		double* b2 = reclattice+3;
@@ -880,6 +872,14 @@ pswf_t* expand_symm_wf(pswf_t* rwf, int num_kpts, int* maps, double* ops) {
 				kpt->k[0], kpt->k[1], kpt->k[2], CCONST);
 		}
 		kpt->Gs = igall;
+
+		int ngx = wf->G_bounds[1] - wf->G_bounds[0] + 1;
+		int gxmin = wf->G_bounds[0];
+		int ngy = wf->G_bounds[3] - wf->G_bounds[2] + 1;
+		int gymin = wf->G_bounds[2];
+		int ngz = wf->G_bounds[5] - wf->G_bounds[4] + 1;
+		int gzmin = wf->G_bounds[4];
+		int* kptinds = (int*) malloc(ngx*ngy*ngz * sizeof(int));
 
 		int gx, gy, gz;
 		int* gmaps = (int*) malloc(rkpt->num_waves * sizeof(int));

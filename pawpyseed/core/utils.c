@@ -791,7 +791,8 @@ pswf_t* expand_symm_wf(pswf_t* rwf, int num_kpts, int* maps, double* ops) {
 		wf->kpts[knum] = (kpoint_t*) malloc(sizeof(kpoint_t));
 
 		double pw[3] = {0,0,0};
-		int rnum = maps[knum];
+		int rnum = maps[knum%num_kpts];
+		if (knum >= num_kpts) rnum += rwf->nwk;
 
 		kpoint_t* kpt = wf->kpts[knum];
 		kpoint_t* rkpt = rwf->kpts[rnum];
@@ -799,7 +800,9 @@ pswf_t* expand_symm_wf(pswf_t* rwf, int num_kpts, int* maps, double* ops) {
 		kpt->up = rkpt->up;
 		kpt->num_waves = rkpt->num_waves;
 		kpt->k = (double*) malloc(3 * sizeof(double));
-		affine_transform(kpt->k, ops+OPSIZE*knum, rkpt->k);
+		affine_transform(kpt->k, ops+OPSIZE*(knum%num_kpts), rkpt->k);
+		printf("OLD KPT %lf %lf %lf\n", rkpt->k[0], rkpt->k[1], rkpt->k[2]);
+		printf("NEW KPT %lf %lf %lf\n", kpt->k[0], kpt->k[1], kpt->k[2]);
 		kpt->Gs = (int*) malloc(3 * kpt->num_waves * sizeof(int));
 
 		kpt->weight = rkpt->weight;
@@ -813,7 +816,7 @@ pswf_t* expand_symm_wf(pswf_t* rwf, int num_kpts, int* maps, double* ops) {
 			pw[1] = rkpt->k[1] + rkpt->Gs[3*g+1];
 			pw[2] = rkpt->k[2] + rkpt->Gs[3*g+2];
 
-			affine_transform(pw, ops+OPSIZE*knum, pw);
+			affine_transform(pw, ops+OPSIZE*(knum%num_kpts), pw);
 
 			pw[0] -= kpt->k[0];
 			pw[1] -= kpt->k[1];
@@ -822,6 +825,9 @@ pswf_t* expand_symm_wf(pswf_t* rwf, int num_kpts, int* maps, double* ops) {
 			kpt->Gs[3*g+0] = (int) round(pw[0]);
 			kpt->Gs[3*g+1] = (int) round(pw[1]);
 			kpt->Gs[3*g+2] = (int) round(pw[2]);
+
+			printf("OLD G %d %d %d\n", rkpt->Gs[3*g+0], rkpt->Gs[3*g+1], rkpt->Gs[3*g+2]);
+			printf("NEW G %d %d %d\n", kpt->Gs[3*g+0],  kpt->Gs[3*g+1],  kpt->Gs[3*g+2]);
 
 		}
 

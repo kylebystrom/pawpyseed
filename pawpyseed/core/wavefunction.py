@@ -1,4 +1,4 @@
-# coding: utf-8
+
 
 ## @package pawpyseed.core.wavefunction
 # Base class containing Python classes for parsing files
@@ -660,7 +660,7 @@ class Wavefunction:
 
 	def get_kpt_mapping(self, allkpts, symprec=1e-3):
 		sga = SpacegroupAnalyzer(self.structure, symprec)
-		symmops = sga.get_symmetry_operations()
+		symmops = sga.get_point_group_operations()
 		kpts = np.array(self.pwf.kpts)
 		orig_kptnums = []
 		op_nums = []

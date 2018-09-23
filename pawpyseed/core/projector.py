@@ -8,6 +8,7 @@
 from pawpyseed.core.wavefunction import *
 
 def make_c_ops(op_nums, symmops):
+	print(op_nums)
 	ops = np.zeros(16*len(op_nums))
 	for i in range(len(op_nums)):
 		ops[16*i:16*(i+1)] = symmops[op_nums[i]].affine_matrix.flatten()
@@ -81,6 +82,8 @@ class Projector(Wavefunction):
 				raise PAWpyError("Need allkpts when only removing symmetry from one Wavefunction!")
 			borig_kptnums, bop_nums, bsymmops = basis.get_kpt_mapping(allkpts)
 			bops = make_c_ops(bop_nums, bsymmops)
+			print(borig_kptnums)
+			print(bops)
 			bptr = cfunc_call(PAWC.expand_symm_wf, None, basis.pwf.wf_ptr,
 				len(borig_kptnums), borig_kptnums, bops)
 			basis = copy_wf(basis, bptr, allkpts, False)
@@ -213,13 +216,14 @@ class Projector(Wavefunction):
 		print ("TYPETHING", basis.pwf.wf_ptr, type(basis.pwf.wf_ptr))
 		
 		if setup_basis:
-			cfunc_call(PAWC.setup_projections, None,
+			cfunc_call(PAWC.setup_projections_no_rayleigh, None,
 						basis.pwf.wf_ptr, projector_list,
 						self.num_proj_els, len(basis.structure), self.dim,
 						basisnums, basiscoords)
 		start = time.monotonic()
-		cfunc_call(PAWC.setup_projections_copy_rayleigh, None,
-					self.pwf.wf_ptr, basis.pwf.wf_ptr,
+		#basis.pwf.wf_ptr
+		cfunc_call(PAWC.setup_projections_no_rayleigh, None,
+					self.pwf.wf_ptr,
 					projector_list, self.num_proj_els, len(self.structure),
 					self.dim, selfnums, selfcoords)
 		end = time.monotonic()

@@ -10,6 +10,7 @@
 #include "utils.h"
 
 #define PI 3.14159265358979323846
+#define CCONST 0.262465831
 #define OPSIZE 16
 
 void affine_transform(double* out, double* op, double* inv) {
@@ -806,27 +807,88 @@ pswf_t* expand_symm_wf(pswf_t* rwf, int num_kpts, int* maps, double* ops) {
 		kpoint_t* kpt = wf->kpts[knum];
 		kpoint_t* rkpt = rwf->kpts[rnum];
 
-		int gx, gy, gz;
-		int* gmaps = (int*) malloc(rkpt->num_waves * sizeof(int));
-		for (int w = 0; w < rkpt->num_waves; w++) {
-			gx = rkpt->Gs[3*w+0];
-			gy = rkpt->Gs[3*w+1];
-			gz = rkpt->Gs[3*w+2];
-			kptinds[(gx-gxmin)*ngy*ngz + (gy-gymin)*ngz + (gz-gymin)] = w;
-		}
-
 		kpt->up = rkpt->up;
 		kpt->num_waves = rkpt->num_waves;
 		kpt->k = (double*) malloc(3 * sizeof(double));
 		affine_transform(kpt->k, ops+OPSIZE*(knum%num_kpts), rkpt->k);
 		printf("OLD KPT %lf %lf %lf\n", rkpt->k[0], rkpt->k[1], rkpt->k[2]);
 		printf("NEW KPT %lf %lf %lf\n", kpt->k[0], kpt->k[1], kpt->k[2]);
-		kpt->Gs = (int*) malloc(3 * kpt->num_waves * sizeof(int));
+		//kpt->Gs = (int*) malloc(3 * kpt->num_waves * sizeof(int));
 
 		kpt->weight = rkpt->weight;
 		kpt->num_bands = rkpt->num_bands;
 		kpt->bands = (band_t**) malloc(kpt->num_bands * sizeof(band_t*));
 		kpt->expansion = NULL; // TODO
+
+		int* igall = malloc(3*kpt->num_waves*sizeof(int));
+		if (igall == NULL) {
+		    	ALLOCATION_FAILED();
+		}
+		int nb1max = ngx + 2;
+		int nb2max = ngy + 2;
+		int nb3max = ngz + 2;
+		double encut = rwf->encut;
+		double* b1 = reclattice;
+		double* b2 = reclattice+3;
+		double* b3 = reclattice+6;
+		int ncnt = -1;
+		for (int ig3 = 0; ig3 <= 2 * nb3max; ig3++) {
+			int ig3p = ig3;
+			if (ig3 > nb3max) ig3p = ig3 - 2 * nb3max - 1;
+			for (int ig2 = 0; ig2 <= 2 * nb2max; ig2++) {
+				int ig2p = ig2;
+				if (ig2 > nb2max) ig2p = ig2 - 2 * nb2max - 1;
+				for (int ig1 = 0; ig1 <= 2 * nb1max; ig1++) {
+					int ig1p = ig1;
+					if (ig1 > nb1max) ig1p = ig1 - 2 * nb1max - 1;
+					double sumkg[3];
+					for (int j = 0; j < 3; j++) {
+						sumkg[j] = (kpt->k[0]+ig1p) * b1[j]
+									+ (kpt->k[1]+ig2p) * b2[j]
+									+ (kpt->k[2]+ig3p) * b3[j];
+					}
+					double gtot = mag(sumkg);
+					double etot = pow(gtot,2.0) / CCONST;
+					//printf("%lf %lf\n", etot, gtot);
+					if (etot <= encut) {
+						ncnt++;
+						igall[ncnt*3+0] = ig1p;
+						igall[ncnt*3+1] = ig2p;
+						igall[ncnt*3+2] = ig3p;
+						if (ig1p < wf->G_bounds[0]) wf->G_bounds[0] = ig1p;
+						else if (ig1p > wf->G_bounds[1]) wf->G_bounds[1] = ig1p;
+						if (ig2p < wf->G_bounds[2]) wf->G_bounds[2] = ig2p;
+						else if (ig2p > wf->G_bounds[3]) wf->G_bounds[3] = ig2p;
+						if (ig3p < wf->G_bounds[4]) wf->G_bounds[4] = ig3p;
+						else if (ig3p > wf->G_bounds[5]) wf->G_bounds[5] = ig3p;
+					}
+				}
+			}
+		}
+		ncnt++;
+
+		if (ncnt * 2 == rkpt->num_waves) {
+			printf("This is an NCL wavefunction!\n");
+			wf->is_ncl = 1;
+			for (int iplane = 0; iplane < rkpt->num_waves/2; iplane++) {
+				igall[3*(rkpt->num_waves/2+iplane)+0] = igall[3*iplane+0];
+				igall[3*(rkpt->num_waves/2+iplane)+1] = igall[3*iplane+1];
+				igall[3*(rkpt->num_waves/2+iplane)+2] = igall[3*iplane+2];
+			}
+		} else if (ncnt != rkpt->num_waves) {
+			printf("ERROR %d %d %lf %lf %lf %lf\n", ncnt, kpt->num_waves,
+				kpt->k[0], kpt->k[1], kpt->k[2], CCONST);
+		}
+		kpt->Gs = igall;
+
+		int gx, gy, gz;
+		int* gmaps = (int*) malloc(rkpt->num_waves * sizeof(int));
+		for (int w = 0; w < rkpt->num_waves; w++) {
+			gx = kpt->Gs[3*w+0];
+			gy = kpt->Gs[3*w+1];
+			gz = kpt->Gs[3*w+2];
+			kptinds[(gx-gxmin)*ngy*ngz + (gy-gymin)*ngz + (gz-gymin)] = w;
+		}
 
 		int w = 0;
 		for (int g = 0; g < kpt->num_waves; g++) {
@@ -846,9 +908,9 @@ pswf_t* expand_symm_wf(pswf_t* rwf, int num_kpts, int* maps, double* ops) {
 			gz = (int) round(pw[2]);
 			gmaps[g] = kptinds[(gx-gxmin)*ngy*ngz + (gy-gymin)*ngz + (gz-gzmin)];
 
-			kpt->Gs[3*g+0] = rkpt->Gs[3*g+0];
-			kpt->Gs[3*g+1] = rkpt->Gs[3*g+1];
-			kpt->Gs[3*g+2] = rkpt->Gs[3*g+2];
+			//kpt->Gs[3*g+0] = rkpt->Gs[3*g+0];
+			//kpt->Gs[3*g+1] = rkpt->Gs[3*g+1];
+			//kpt->Gs[3*g+2] = rkpt->Gs[3*g+2];
 
 			printf("OLD G %d %d %d\n", rkpt->Gs[3*g+0], rkpt->Gs[3*g+1], rkpt->Gs[3*g+2]);
 			printf("NEW G %d %d %d\n", kpt->Gs[3*g+0],  kpt->Gs[3*g+1],  kpt->Gs[3*g+2]);
@@ -878,6 +940,7 @@ pswf_t* expand_symm_wf(pswf_t* rwf, int num_kpts, int* maps, double* ops) {
 
 	}
 
+	wf->encut = rwf->encut;
 	return wf;
 }
 

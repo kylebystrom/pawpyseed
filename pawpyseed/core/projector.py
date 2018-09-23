@@ -85,7 +85,7 @@ class Projector(Wavefunction):
 			print(borig_kptnums)
 			print(bops)
 			bptr = cfunc_call(PAWC.expand_symm_wf, None, basis.pwf.wf_ptr,
-				len(borig_kptnums), borig_kptnums, bops)
+				len(borig_kptnums), borig_kptnums, bops, wf.pwf.wf_ptr)
 			basis = copy_wf(basis, bptr, allkpts, False)
 
 		self.structure = wf.structure

@@ -756,7 +756,7 @@ void copy_rayleigh_expansion_terms(pswf_t* wf, ppot_t* pps, int num_elems, pswf_
 	}
 }
 
-pswf_t* expand_symm_wf(pswf_t* rwf, int num_kpts, int* maps, double* ops) {
+pswf_t* expand_symm_wf(pswf_t* rwf, int num_kpts, int* maps, double* ops, double* drs) {
 
 	double* lattice = rwf->lattice;
 	double* reclattice = rwf->reclattice;
@@ -768,7 +768,7 @@ pswf_t* expand_symm_wf(pswf_t* rwf, int num_kpts, int* maps, double* ops) {
 	wf->pps = rwf->pps;
 	wf->G_bounds = (int*) malloc(6*sizeof(int));
 	for (int i = 0; i < 6; i++) {
-		wf->G_bounds[i] = rwf->G_bounds[i];
+		wf->G_bounds[i] = 0;//rwf->G_bounds[i];
 	}
 
 	wf->kpts = (kpoint_t**) malloc(num_kpts * rwf->nspin * sizeof(kpoint_t*));
@@ -799,11 +799,14 @@ pswf_t* expand_symm_wf(pswf_t* rwf, int num_kpts, int* maps, double* ops) {
 		kpoint_t* kpt = wf->kpts[knum];
 		kpoint_t* rkpt = rwf->kpts[rnum];
 
+		//TEST
+		//kpoint_t* okpt = owf->kpts[knum];
+
 		kpt->up = rkpt->up;
 		kpt->num_waves = rkpt->num_waves;
 		kpt->k = (double*) malloc(3 * sizeof(double));
 		affine_transform(kpt->k, ops+OPSIZE*(knum%num_kpts), rkpt->k);
-		printf("OLD KPT %lf %lf %lf\n", rkpt->k[0], rkpt->k[1], rkpt->k[2]);
+		printf("OLD KPT %lf %lf %lf\n", okpt->k[0], okpt->k[1], okpt->k[2]);
 		printf("NEW KPT %lf %lf %lf\n", kpt->k[0], kpt->k[1], kpt->k[2]);
 		//kpt->Gs = (int*) malloc(3 * kpt->num_waves * sizeof(int));
 
@@ -880,15 +883,21 @@ pswf_t* expand_symm_wf(pswf_t* rwf, int num_kpts, int* maps, double* ops) {
 		int ngz = wf->G_bounds[5] - wf->G_bounds[4] + 1;
 		int gzmin = wf->G_bounds[4];
 		int* kptinds = (int*) malloc(ngx*ngy*ngz * sizeof(int));
+		for (int w = 0; w < ngx*ngy*ngz; w++) kptinds[w] = -1;
 
 		int gx, gy, gz;
-		int* gmaps = (int*) malloc(rkpt->num_waves * sizeof(int));
+		int* gmaps = (int*) malloc(kpt->num_waves * sizeof(int));
+		float complex* factors = (float complex*) malloc(
+			kpt->num_waves * sizeof(float complex));
+		for (int w = 0; w < kpt->num_waves; w++) gmaps[w] = -1;
 		for (int w = 0; w < rkpt->num_waves; w++) {
 			gx = kpt->Gs[3*w+0];
 			gy = kpt->Gs[3*w+1];
 			gz = kpt->Gs[3*w+2];
-			kptinds[(gx-gxmin)*ngy*ngz + (gy-gymin)*ngz + (gz-gymin)] = w;
+			kptinds[(gx-gxmin)*ngy*ngz + (gy-gymin)*ngz + (gz-gzmin)] = w;
 		}
+
+		double* dr = drs + 3 * (knum%num_kpts);
 
 		int w = 0;
 		for (int g = 0; g < kpt->num_waves; g++) {
@@ -906,14 +915,20 @@ pswf_t* expand_symm_wf(pswf_t* rwf, int num_kpts, int* maps, double* ops) {
 			gx = (int) round(pw[0]);
 			gy = (int) round(pw[1]);
 			gz = (int) round(pw[2]);
-			gmaps[g] = kptinds[(gx-gxmin)*ngy*ngz + (gy-gymin)*ngz + (gz-gzmin)];
+			gmaps[kptinds[(gx-gxmin)*ngy*ngz + (gy-gymin)*ngz + (gz-gzmin)]] = g;
+			facotrs[kptinds[(gx-gxmin)*ngy*ngz + (gy-gymin)*ngz + (gz-gzmin)]] = cexpf(
+				I * 2 * PI * (dot(kpt->k, dr) + dot(pw, dr)) );
+
+			if (kptinds[(gx-gxmin)*ngy*ngz + (gy-gymin)*ngz + (gz-gzmin)] < 0) {
+				printf("ERROR, BAD PLANE WAVE MAPPING\n");
+			}
 
 			//kpt->Gs[3*g+0] = rkpt->Gs[3*g+0];
 			//kpt->Gs[3*g+1] = rkpt->Gs[3*g+1];
 			//kpt->Gs[3*g+2] = rkpt->Gs[3*g+2];
 
-			printf("OLD G %d %d %d\n", rkpt->Gs[3*g+0], rkpt->Gs[3*g+1], rkpt->Gs[3*g+2]);
-			printf("NEW G %d %d %d\n", kpt->Gs[3*g+0],  kpt->Gs[3*g+1],  kpt->Gs[3*g+2]);
+			//printf("OLD G %d %d %d\n", okpt->Gs[3*g+0], okpt->Gs[3*g+1], okpt->Gs[3*g+2]);
+			//printf("NEW G %d %d %d\n", kpt->Gs[3*g+0],  kpt->Gs[3*g+1],  kpt->Gs[3*g+2]);
 
 		}
 
@@ -930,14 +945,20 @@ pswf_t* expand_symm_wf(pswf_t* rwf, int num_kpts, int* maps, double* ops) {
 			kpt->bands[b]->up_projections = NULL;
 			kpt->bands[b]->down_projections = NULL;
 			kpt->bands[b]->wave_projections = NULL;
+			//double total = 0;
 			for (int w = 0; w < kpt->num_waves; w++) {
-				kpt->bands[b]->Cs[gmaps[w]] = rkpt->bands[b]->Cs[w];
+				if (gmaps[w] < 0) {
+					printf("ERROR, INCOMPLETE PLANE WAVE MAPPING\n");
+				}
+				kpt->bands[b]->Cs[w] = factors[w] * rkpt->bands[b]->Cs[gmaps[w]];
+				//total += cabs(cabs(kpt->bands[b]->Cs[w]) - cabs(okpt->bands[b]->Cs[w]));
 			}
-
+			//printf("energies %lf %lf %e\n", kpt->bands[b]->energy, okpt->bands[b]->energy, total);
 		}
 	
 		free(gmaps);
-
+		free(kptinds);
+		free(factors);
 	}
 
 	wf->encut = rwf->encut;

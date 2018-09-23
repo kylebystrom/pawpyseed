@@ -78,7 +78,7 @@ class PawpyData:
 
 	@classmethod
 	def from_dict(cls, data):
-		return cls(data['energies'], [data['densities'], data['efermi']],
+		return cls([data['energies'], data['densities'], data['efermi']],
 			data['structure'], data['data'])
 
 	@classmethod
@@ -93,7 +93,6 @@ class BulkCharacter(PawpyData):
 
 	def __init__(self, dos, structure, band_dict):
 
-		self.energies = dos.energies
 		if type(dos) == list:
 			self.energies = dos[0]
 			self.densities = dos[1]
@@ -104,6 +103,44 @@ class BulkCharacter(PawpyData):
 			self.efermi = dos.efermi
 		self.structure = structure
 		self.data = band_dict
+
+	def plot(self, name):
+		bs = []
+		vs = []
+		cs = []
+		for b in self.data:
+			bs.append(b)
+			vs.append(self.data[b][0][0])
+			vs.append(self.data[b][0][1])
+			cs.append(self.data[b][1][0])
+			cs.append(self.data[b][1][1])
+
+		bs = np.array(bs) - np.mean(bs)
+		cs = np.array(cs)
+		vs = np.array(vs)
+		fig, (ax1, ax3) = plt.subplots(2, 1, gridspec_kw = {'height_ratios':[3, 1]},
+			figsize=[6.4,6.4])
+		ax1.set_xlabel('band')
+		ax1.set_ylabel('valence', color='b')
+		ax1.bar(bs-0.2, vs[::2], width=0.4, color='b')
+		ax1.bar(bs+0.2, vs[1::2], width=0.4, color='b')
+		ax1.set_ylim(0,1)
+		ax2 = ax1.twinx()
+		ax2.set_ylabel('conduction', color='r')
+		ax2.bar(bs-0.2, cs[::2], width=0.4, color='r')
+		ax2.bar(bs+0.2, cs[1::2], width=0.4, color='r')
+		ax2.set_ylim(0,1)
+		ax2.invert_yaxis()
+		plt.title(name + ' band character')
+		#plt.savefig('BAND_'+name)
+
+		ax3.plot(self.energies - self.efermi, self.densities)
+		ax3.set_xlabel('Energy (eV)')
+		ax3.set_ylabel('Totla DOS')
+		ax3.set_xlim(-2,2)
+		ax3.set_ylim(0,max(self.densities))
+		#plt.savefig('DOS_'+name)
+		plt.savefig(name)
 
 	@staticmethod
 	def makeit(generator):

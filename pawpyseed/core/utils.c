@@ -813,7 +813,7 @@ pswf_t* expand_symm_wf(pswf_t* rwf, int num_kpts, int* maps, double* ops, double
 		kpt->num_waves = rkpt->num_waves;
 		kpt->k = (double*) malloc(3 * sizeof(double));
 		rotation_transform(kpt->k, ops+OPSIZE*(knum%num_kpts), rkpt->k);
-		printf("OLD KPT %lf %lf %lf\n", okpt->k[0], okpt->k[1], okpt->k[2]);
+		//printf("OLD KPT %lf %lf %lf\n", okpt->k[0], okpt->k[1], okpt->k[2]);
 		printf("NEW KPT %lf %lf %lf\n", kpt->k[0], kpt->k[1], kpt->k[2]);
 		//kpt->Gs = (int*) malloc(3 * kpt->num_waves * sizeof(int));
 
@@ -924,7 +924,7 @@ pswf_t* expand_symm_wf(pswf_t* rwf, int num_kpts, int* maps, double* ops, double
 			gz = (int) round(pw[2]);
 			gmaps[kptinds[(gx-gxmin)*ngy*ngz + (gy-gymin)*ngz + (gz-gzmin)]] = g;
 			factors[kptinds[(gx-gxmin)*ngy*ngz + (gy-gymin)*ngz + (gz-gzmin)]] = cexpf(
-				I * 2 * PI * (dot(kpt->k, dr) + dot(pw, dr)) );
+				-I * 2 * PI * (dot(kpt->k, dr) + dot(pw, dr)) );
 
 			if (kptinds[(gx-gxmin)*ngy*ngz + (gy-gymin)*ngz + (gz-gzmin)] < 0) {
 				printf("ERROR, BAD PLANE WAVE MAPPING\n");

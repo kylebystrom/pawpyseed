@@ -16,7 +16,7 @@ def make_c_ops(op_nums, symmops):
 		ops[OPSIZE*i:OPSIZE*(i+1)] = symmops[op_nums[i]].rotation_matrix.flatten()
 	drs = np.zeros(3*len(op_nums))
 	for i in range(len(op_nums)):
-		ops[3*i:3*(i+1)] = symmops[op_nums[i]].translation_vector
+		drs[3*i:3*(i+1)] = symmops[op_nums[i]].translation_vector
 	return ops, drs
 
 class CopyPseudoWavefunction(PseudoWavefunction):

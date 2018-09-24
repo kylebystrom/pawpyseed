@@ -11,7 +11,7 @@
 
 #define PI 3.14159265358979323846
 #define CCONST 0.262465831
-#define OPSIZE 16
+#define OPSIZE 9
 
 void affine_transform(double* out, double* op, double* inv) {
 	//0 1 2 3
@@ -22,6 +22,13 @@ void affine_transform(double* out, double* op, double* inv) {
 	out[0] = op[0]*in[0] + op[1]*in[1] + op[2]*in[2] + op[3]*in[3];
 	out[1] = op[4]*in[0] + op[5]*in[1] + op[6]*in[2] + op[7]*in[3];
 	out[2] = op[8]*in[0] + op[9]*in[1] + op[10]*in[2] + op[11]*in[3];
+}
+
+void rotation_transform(double* out, double* op, double* inv) {
+	double in[3] = {inv[0], inv[1], inv[2]};
+	out[0] = op[0]*in[0] + op[1]*in[1] + op[2]*in[2];
+	out[1] = op[3]*in[0] + op[4]*in[1] + op[5]*in[2];
+	out[2] = op[6]*in[0] + op[7]*in[1] + op[8]*in[2];
 }
 
 void vcross(double* res, double* top, double* bottom) {
@@ -805,7 +812,7 @@ pswf_t* expand_symm_wf(pswf_t* rwf, int num_kpts, int* maps, double* ops, double
 		kpt->up = rkpt->up;
 		kpt->num_waves = rkpt->num_waves;
 		kpt->k = (double*) malloc(3 * sizeof(double));
-		affine_transform(kpt->k, ops+OPSIZE*(knum%num_kpts), rkpt->k);
+		rotation_transform(kpt->k, ops+OPSIZE*(knum%num_kpts), rkpt->k);
 		printf("OLD KPT %lf %lf %lf\n", okpt->k[0], okpt->k[1], okpt->k[2]);
 		printf("NEW KPT %lf %lf %lf\n", kpt->k[0], kpt->k[1], kpt->k[2]);
 		//kpt->Gs = (int*) malloc(3 * kpt->num_waves * sizeof(int));
@@ -906,7 +913,7 @@ pswf_t* expand_symm_wf(pswf_t* rwf, int num_kpts, int* maps, double* ops, double
 			pw[1] = rkpt->k[1] + rkpt->Gs[3*g+1];
 			pw[2] = rkpt->k[2] + rkpt->Gs[3*g+2];
 
-			affine_transform(pw, ops+OPSIZE*(knum%num_kpts), pw);
+			rotation_transform(pw, ops+OPSIZE*(knum%num_kpts), pw);
 
 			pw[0] -= kpt->k[0];
 			pw[1] -= kpt->k[1];
@@ -916,7 +923,7 @@ pswf_t* expand_symm_wf(pswf_t* rwf, int num_kpts, int* maps, double* ops, double
 			gy = (int) round(pw[1]);
 			gz = (int) round(pw[2]);
 			gmaps[kptinds[(gx-gxmin)*ngy*ngz + (gy-gymin)*ngz + (gz-gzmin)]] = g;
-			facotrs[kptinds[(gx-gxmin)*ngy*ngz + (gy-gymin)*ngz + (gz-gzmin)]] = cexpf(
+			factors[kptinds[(gx-gxmin)*ngy*ngz + (gy-gymin)*ngz + (gz-gzmin)]] = cexpf(
 				I * 2 * PI * (dot(kpt->k, dr) + dot(pw, dr)) );
 
 			if (kptinds[(gx-gxmin)*ngy*ngz + (gy-gymin)*ngz + (gz-gzmin)] < 0) {

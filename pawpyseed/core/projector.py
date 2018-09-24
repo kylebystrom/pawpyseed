@@ -7,12 +7,17 @@
 
 from pawpyseed.core.wavefunction import *
 
+OPSIZE = 9
+
 def make_c_ops(op_nums, symmops):
 	print(op_nums)
-	ops = np.zeros(16*len(op_nums))
+	ops = np.zeros(OPSIZE*len(op_nums))
 	for i in range(len(op_nums)):
-		ops[16*i:16*(i+1)] = symmops[op_nums[i]].affine_matrix.flatten()
-	return ops
+		ops[OPSIZE*i:OPSIZE*(i+1)] = symmops[op_nums[i]].rotation_matrix.flatten()
+	drs = np.zeros(3*len(op_nums))
+	for i in range(len(op_nums)):
+		ops[3*i:3*(i+1)] = symmops[op_nums[i]].translation_vector
+	return ops, drs
 
 class CopyPseudoWavefunction(PseudoWavefunction):
 	def __init__(self, wf_ptr, kpts, kws):
@@ -61,31 +66,31 @@ class Projector(Wavefunction):
 			else:
 				borig_kptnums, bop_nums, bsymmops = basis.get_kpt_mapping(allkpts)
 			worig_kptnums, wop_nums, wsymmops = wf.get_kpt_mapping(allkpts)
-			bops = make_c_ops(bop_nums, bsymmops)
-			wops = make_c_ops(wop_nums, wsymmops)
+			bops, bdrs = make_c_ops(bop_nums, bsymmops)
+			wops, wdrs = make_c_ops(wop_nums, wsymmops)
 			bptr = cfunc_call(PAWC.expand_symm_wf, None, basis.pwf.wf_ptr,
-				len(borig_kptnums), borig_kptnums, bops)
+				len(borig_kptnums), borig_kptnums, bops, bdrs)
 			wptr = cfunc_call(PAWC.expand_symm_wf, None, wf.pwf.wf_ptr,
-				len(worig_kptnums), worig_kptnums, wops)
+				len(worig_kptnums), worig_kptnums, wops, wdrs)
 			basis = copy_wf(basis, bptr, allkpts, False)
 			wf = copy_wf(wf, wptr, allkpts, False)
 		elif unsym_wf and not unsym_basis:
 			if allkpts == None:
 				raise PAWpyError("Need allkpts when only removing symmetry from one Wavefunction!")
 			worig_kptnums, wop_nums, wsymmops = wf.get_kpt_mapping(allkpts)
-			wops = make_c_ops(wop_nums, wsymmops)
+			wops, wdrs = make_c_ops(wop_nums, wsymmops)
 			wptr = cfunc_call(PAWC.expand_symm_wf, None, wf.pwf.wf_ptr,
-				len(worig_kptnums), worig_kptnums, wops)
+				len(worig_kptnums), worig_kptnums, wops, wdrs)
 			wf = copy_wf(wf, wptr, allkpts, False)
 		elif unsym_basis and not unsym_wf:
 			if allkpts == None:
 				raise PAWpyError("Need allkpts when only removing symmetry from one Wavefunction!")
 			borig_kptnums, bop_nums, bsymmops = basis.get_kpt_mapping(allkpts)
-			bops = make_c_ops(bop_nums, bsymmops)
+			bops, bdrs = make_c_ops(bop_nums, bsymmops)
 			print(borig_kptnums)
 			print(bops)
 			bptr = cfunc_call(PAWC.expand_symm_wf, None, basis.pwf.wf_ptr,
-				len(borig_kptnums), borig_kptnums, bops, wf.pwf.wf_ptr)
+				len(borig_kptnums), borig_kptnums, bops, bdrs)
 			basis = copy_wf(basis, bptr, allkpts, False)
 
 		self.structure = wf.structure

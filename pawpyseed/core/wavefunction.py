@@ -639,7 +639,7 @@ class Wavefunction:
 		symmops = sga.get_symmetry_operations()
 		for k, kpt in enumerate(kpts):
 			for i, op in enumerate(symmops):
-				newkpt = op.operate(kpt)
+				newkpt = np.dot(op.rotation_matrix, kpt)
 				unique = True
 				for nkpt in allkpts:
 					if np.linalg.norm(newkpt-nkpt) < 1e-10 \
@@ -660,7 +660,7 @@ class Wavefunction:
 
 	def get_kpt_mapping(self, allkpts, symprec=1e-3):
 		sga = SpacegroupAnalyzer(self.structure, symprec)
-		symmops = sga.get_point_group_operations()
+		symmops = sga.get_symmetry_operations()
 		kpts = np.array(self.pwf.kpts)
 		orig_kptnums = []
 		op_nums = []
@@ -668,7 +668,7 @@ class Wavefunction:
 			match = False
 			for k, kpt in enumerate(kpts):
 				for i, op in enumerate(symmops):
-					newkpt = op.operate(kpt)
+					newkpt = np.dot(op.rotation_matrix, kpt)
 					if np.linalg.norm(newkpt-nkpt) < 1e-10:
 						match = True
 						orig_kptnums.append(k)
@@ -679,8 +679,6 @@ class Wavefunction:
 			if not match:
 				raise PAWpyError("Could not find kpoint mapping to %s" % str(nkpt))
 		return orig_kptnums, op_nums, symmops
-
-
 
 	def free_all(self):
 		"""

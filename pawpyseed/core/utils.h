@@ -158,6 +158,8 @@ typedef struct real_proj_site {
 
 void affine_transform(double* out, double* op, double* inv);
 
+void rotation_transform(double* out, double* op, double* inv);
+
 /**
 Minimum of a and b
 */

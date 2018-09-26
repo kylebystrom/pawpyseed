@@ -246,6 +246,8 @@ int get_nwk(pswf_t* wf);
 /** Return the number of spins in the wavefunction. */
 int get_nspin(pswf_t* wf);
 
+double get_energy(pswf_t* wf, int band, int kpt, int spin);
+
 /** Sets the numer of sites in the structure for the wavefunction. */
 void set_num_sites(pswf_t* wf, int nsites);
 

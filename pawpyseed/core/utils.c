@@ -286,6 +286,10 @@ int get_nspin(pswf_t* wf) {
 	return wf->nspin;
 }
 
+double get_energy(pswf_t* wf, int band, int kpt, int spin) {
+	return wf->kpts[kpt+spin*wf->nwk]->bands[band]->energy;
+}
+
 void set_num_sites(pswf_t* wf, int nsites) {
 	wf->num_sites = nsites;
 }

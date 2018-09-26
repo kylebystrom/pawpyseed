@@ -459,7 +459,7 @@ class Projector(Wavefunction):
 		return v, c
 
 	def defect_band_analysis(self, num_below_ef=20,
-		num_above_ef=20, pseudo = False, spinpol = False):
+		num_above_ef=20, pseudo = False, spinpol = False, return_energies = False):
 		"""
 		Identifies a set of 'interesting' bands in a defect structure
 		to analyze by choosing any band that is more than bound conduction
@@ -498,9 +498,17 @@ class Projector(Wavefunction):
 		print("NUM TO TEST", len(totest))
 
 		results = {}
+		energies = {}
 		for b in totest:
 			results[b] = self.proportion_conduction(b, pseudo, spinpol = spinpol)
+			energies[b] = 0
+			for k in range(self.nwk):
+				for s in range(self.nspin):
+					energies[b] += cfunc_call(PAWC.get_energy, None, self.pwf.wf_ptr, b, k, s) * self.pwf.kws[k]
+			energies[b] /= np.sum(self.pwf.kws) * self.nspin 
 
+		if return_energies:
+			return results, energies
 		return results
 
 	def free_all(self):

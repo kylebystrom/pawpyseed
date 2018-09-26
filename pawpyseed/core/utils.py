@@ -21,6 +21,9 @@ c_double_p = POINTER(c_double)
 MODULE_DIR = os.path.dirname(os.path.abspath(__file__))
 PAWC = CDLL(os.path.join(MODULE_DIR, "pawpy.so"))
 
+PAWC.get_energy.argtypes = [c_void_p, c_int, c_int, c_int]
+PAWC.get_energy.restype = c_double
+
 PAWC.read_wavefunctions.argtypes = (c_char_p, c_double_p)
 PAWC.read_wavefunctions.restype = c_void_p
 

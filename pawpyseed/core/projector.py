@@ -53,6 +53,8 @@ class Projector(Wavefunction):
 				case the setup will be performed for wf and basis.
 				projector_list != None is used by setup_multiple_projections
 				for efficiency and memory management
+			allkpts (2D numpy array) (default None): List of fractional
+				coordinate k-points to map onto
 
 		Returns:
 			Projector object, containing all the same fields as

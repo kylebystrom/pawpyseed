@@ -303,6 +303,49 @@ double legendre(int l, int m, double x) {
 	return total * pow(-1, m) * pow(1 - x * x, m/2.0) / pow(2, l);
 }
 
+void legendre_coeff(double* ptr, int l, int mwsign) {
+	// assumes ptr is cleared
+	double prefac = pow(-1, m) / pow(2, l);
+	if (m < 0) {
+		prefac *= pow(-1.0, m) * fac(l+m) / fac(l-m);
+	}
+	m = abs(m);
+	for (int n = l; n >= 0 && 2*n-l-m >= 0; n--) {
+		ptr[n] = fac(2*n) / fac(2*n-l-m) / fac(n) / fac(l-n) * pow(-1, l-n) * prefac;
+	}
+}
+
+double* legendre_product(int l2, int l2, int m1, int m2) {
+	int m = m2 - m1;
+	int maxl = l1 + l2;
+	double* lp1 = (double*) calloc((l1+1), sizeof(double));
+	double* lp2 = (double*) calloc((l2+1), sizeof(double));
+	double* polynomial = (double*) calloc((maxl+1), sizeof(double));
+	double* test = (double*) calloc((maxl+1), sizeof(double));
+	double* coeff = (double*) calloc((maxl+1), sizeof(double));
+	legendre_coeff(lp1, l1, m1);
+	legendre_coeff(lp2, l2, m2);
+	for (int n1 = 0; n1 <= l1; n1++) {
+		for (int n2 = 0; n2 <= l2; n2++) {
+			polynomial[n1+n2] += lp1[n1] * lp2[n2];
+		}
+	}
+	int fac;
+	for (int l = maxl; l >= abs(m); l--) {
+		legendre_coeff(test, l, m);
+		coeff[l] = polynomial[l] / test[l];
+		for (int lp = abs(m); lp <= maxl; lp++) {
+			polynomial[lp] -= coeff[l] * test[lp];
+			test[lp] = 0;
+		}
+	}
+	free(lp1);
+	free(lp2);
+	free(polynomial);
+	free(test);
+	return coeff;
+}
+
 double fac(int n) {
 	int m = 1;
 	int t = 1;

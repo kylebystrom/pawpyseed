@@ -176,3 +176,17 @@ double complex reciprocal_offsite_wave_overlap(double* dcoord,
 	free(ifunc);
 	return total;
 }
+
+/*double complex charge_in_sphere(double* dcoord,
+	double* k, double* psf1, double* aef1, int l1, int m1,
+	double* psf2, double* aef2, int l2, int m2,
+	int size, double rcut) {
+	return 0;
+}*/
+
+//(sin(k*R)-k*R*cos(k*R))/k^3
+//-(k*R*sin(k*R)+2*cos(k*R)-2)/k^3
+//double complex reciprocal_offsite_wave_overlap(double* dcoord,
+//	double* k1, double* f1, double** s1, int size1,
+//	double* k2, double* f2, double** s2, int size2,
+//	double* lattice, int l1, int m1, int l2, int m2)

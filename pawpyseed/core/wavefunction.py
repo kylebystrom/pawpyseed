@@ -180,7 +180,7 @@ class PseudoWavefunction:
 		weights = vr.actual_kpoints_weights
 		kws = numpy_to_cdouble(weights)
 		self.kws = weights
-		self.kpts = vr.actual_kpoints
+		self.kpts = np.array(vr.actual_kpoints, dtype=np.float64)
 		self.wf_ptr = PAWC.read_wavefunctions(filename.encode('utf-8'), kws)
 
 	def pseudoprojection(self, band_num, basis):

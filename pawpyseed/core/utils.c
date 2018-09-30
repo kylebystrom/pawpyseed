@@ -146,7 +146,7 @@ void free_rayleigh_set_list(rayleigh_set_t* sets, int num_projs) {
 	free(sets);
 }
 
-void free_kpoint(kpoint_t* kpt, int num_elems, ppot_t* pps) {
+void free_kpoint(kpoint_t* kpt, int num_elems, int* num_projs) {
 	for (int b = 0; b < kpt->num_bands; b++) {
 		band_t* curr_band = kpt->bands[b];
 		free(curr_band->Cs);
@@ -163,7 +163,7 @@ void free_kpoint(kpoint_t* kpt, int num_elems, ppot_t* pps) {
 	}
 	if (kpt->expansion != NULL) {
 		for (int i = 0; i < num_elems; i++)
-			free_rayleigh_set_list(kpt->expansion[i], pps[i].num_projs);
+			free_rayleigh_set_list(kpt->expansion[i], num_projs[i]);
 		free(kpt->expansion);
 	}
 	free(kpt->Gs);
@@ -207,7 +207,7 @@ void free_real_proj(real_proj_t* proj) {
 
 void free_pswf(pswf_t* wf) {
 	for (int i = 0; i < wf->nwk * wf->nspin; i++)
-		free_kpoint(wf->kpts[i], wf->num_elems, wf->pps);
+		free_kpoint(wf->kpts[i], wf->num_elems, wf->num_projs);
 	if (wf->overlaps != NULL) {
 		for (int i = 0; i < wf->num_aug_overlap_sites; i++)
 			free(wf->overlaps[i]);
@@ -284,6 +284,10 @@ int get_nwk(pswf_t* wf) {
 
 int get_nspin(pswf_t* wf) {
 	return wf->nspin;
+}
+
+int is_ncl(pswf_t* wf) {
+	return wf->is_ncl;
 }
 
 double get_energy(pswf_t* wf, int band, int kpt, int spin) {
@@ -752,6 +756,13 @@ double complex* rayexp_terms(double* kpt, int* Gs, int num_waves,
 }
 
 void generate_rayleigh_expansion_terms(pswf_t* wf, ppot_t* pps, int num_elems) {
+
+	int* num_projs = (int*) malloc(num_elems * sizeof(int));
+	for (int i = 0; i < num_elems; i++) {
+		num_projs[i] = pps[i].num_projs;
+	}
+	wf->num_projs = num_projs;
+
 	#pragma omp parallel for
 	for (int k_num = 0; k_num < wf->nwk; k_num++) {
 		kpoint_t* kpt = wf->kpts[k_num];
@@ -810,7 +821,8 @@ void copy_rayleigh_expansion_terms(pswf_t* wf, ppot_t* pps, int num_elems, pswf_
 	}
 }
 
-pswf_t* expand_symm_wf(pswf_t* rwf, int num_kpts, int* maps, double* ops, double* drs) {
+pswf_t* expand_symm_wf(pswf_t* rwf, int num_kpts, int* maps,
+	double* ops, double* drs, double* kws) {
 
 	double* lattice = rwf->lattice;
 	double* reclattice = rwf->reclattice;
@@ -864,10 +876,10 @@ pswf_t* expand_symm_wf(pswf_t* rwf, int num_kpts, int* maps, double* ops, double
 		printf("NEW KPT %lf %lf %lf\n", kpt->k[0], kpt->k[1], kpt->k[2]);
 		//kpt->Gs = (int*) malloc(3 * kpt->num_waves * sizeof(int));
 
-		kpt->weight = rkpt->weight;
+		kpt->weight = kws[knum%num_kpts];
 		kpt->num_bands = rkpt->num_bands;
 		kpt->bands = (band_t**) malloc(kpt->num_bands * sizeof(band_t*));
-		kpt->expansion = NULL; // TODO
+		kpt->expansion = NULL;
 
 		int* igall = malloc(3*kpt->num_waves*sizeof(int));
 		if (igall == NULL) {

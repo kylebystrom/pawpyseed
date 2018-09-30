@@ -95,7 +95,8 @@ typedef struct band {
 
 typedef struct rayleigh_set {
 	int l; ///< angular momentum quantum number
-	double complex* terms; ///< rayleigh epansion terms
+	int 
+	double complex* terms; ///< rayleigh expansion terms
 } rayleigh_set_t;
 
 typedef struct kpoint {
@@ -212,7 +213,7 @@ void min_cart_path(double* coord, double* center, double* lattice, double* path,
 
 double complex trilinear_interpolate(double complex* c, double* frac, int* fftg);
 
-void free_kpoint(kpoint_t* kpt, int num_elems, ppot_t* pps);
+void free_kpoint(kpoint_t* kpt, int num_elems, int* num_projs);
 
 void free_ppot(ppot_t* pp);
 
@@ -378,7 +379,13 @@ Copy the Rayleigh expansion terms from wf_R to wf.
 */
 void copy_rayleigh_expansion_terms(pswf_t* wf, ppot_t* pps, int num_elems, pswf_t* wf_R);
 
-pswf_t* expand_symm_wf(pswf_t* rwf, int num_kpts, int* maps, double* ops, double* drs);
+/**
+Takes a reference wavefunction and a list of symmetry operations
+to new kpoints, and calculates a new wavefunction that has the
+additional kpoints.
+*/
+pswf_t* expand_symm_wf(pswf_t* rwf, int num_kpts, int* maps,
+	double* ops, double* drs, double* kws);
 
 /**
 Called after a malloc or calloc call to check that

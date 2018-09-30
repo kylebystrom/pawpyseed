@@ -280,26 +280,6 @@ class Wavefunction:
 		args = filepaths + [setup_projectors]
 		return Wavefunction.from_files(*args)
 
-	def single_band_projection(self, band_num, basis):
-		"""
-		All electron projection of the band_num band of self
-		onto all the bands of basis. Returned as a numpy array,
-		with the overlap operator matrix elements ordered as follows:
-		loop over band
-			loop over spin
-				loop over kpoint
-
-		Arguments:
-			band_num (int): band which is projected onto basis
-			basis (Wavefunction): basis Wavefunction object
-
-		Returns:
-			res (np.array): overlap operator expectation values
-				as described above
-		"""
-
-		return self.pwf.pseudoprojection(band_num, basis.pwf)
-
 	def get_c_projectors_from_pps(self, pps):
 		"""
 		Returns a point to a list of ppot_t objects in C,
@@ -407,91 +387,6 @@ class Wavefunction:
 				basiscoords = np.append(basiscoords, s.frac_coords)
 			return projector_list, selfnums, selfcoords, basisnums, basiscoords
 		return projector_list, selfnums, selfcoords
-
-	def proportion_conduction(self, band_num, bulk, spinpol = False):
-		"""
-		Calculates the proportion of band band_num in self
-		that projects onto the valence states and conduction
-		states of bulk. Designed for analysis of point defect
-		wavefunctions.
-
-		Arguments:
-			band_num (int): number of defect band in self
-			bulk (Wavefunction): wavefunction of bulk crystal
-				with the same lattice and basis set as self
-
-		Returns:
-			v, c (int, int): The valence (v) and conduction (c)
-				proportion of band band_num
-		"""
-
-		nband = PAWC.get_nband(c_void_p(bulk.pwf.wf_ptr))
-		nwk = PAWC.get_nwk(c_void_p(bulk.pwf.wf_ptr))
-		nspin = PAWC.get_nspin(c_void_p(bulk.pwf.wf_ptr))
-		occs = cdouble_to_numpy(PAWC.get_occs(c_void_p(bulk.pwf.wf_ptr)), nband*nwk*nspin)
-
-		res = self.pwf.pseudoprojection(band_num, bulk.pwf)
-
-		if spinpol:
-			c, v = np.zeros(nspin), np.zeros(nspin)
-			for b in range(nband):
-				for s in range(nspin):
-					for k in range(nwk):
-						i = b*nspin*nwk + s*nwk + k
-						if occs[i] > 0.5:
-							v[s] += np.absolute(res[i]) ** 2 * self.pwf.kws[i%nwk]
-						else:
-							c[s] += np.absolute(res[i]) ** 2 * self.pwf.kws[i%nwk]
-		else:
-			c, v = 0, 0
-			for i in range(nband*nwk*nspin):
-				if occs[i] > 0.5:
-					v += np.absolute(res[i]) ** 2 * self.pwf.kws[i%nwk] / nspin
-				else:
-					c += np.absolute(res[i]) ** 2 * self.pwf.kws[i%nwk] / nspin
-		t = v+c
-		v /= t
-		c /= t
-		if spinpol:
-			v = v.tolist()
-			c = c.tolist()
-		return v, c
-
-	def defect_band_analysis(self, bulk, num_below_ef=20, num_above_ef=20, spinpol = False):
-		"""
-		Identifies a set of 'interesting' bands in a defect structure
-		to analyze by choosing any band that is more than bound conduction
-		and more than bound valence in the pseudoprojection scheme,
-		and then fully analyzing these bands using single_band_projection
-
-		Args:
-			bulk (Wavefunction object): bulk structure wavefunction
-			num_below_ef (int, 20): number of bands to analyze below the fermi level
-			num_above_ef (int, 20): number of bands to analyze above the fermi level
-			spinpol (bool, False): whether to return spin-polarized results (only allowed
-				for spin-polarized DFT output)
-		"""
-		nband = PAWC.get_nband(c_void_p(bulk.pwf.wf_ptr))
-		nwk = PAWC.get_nwk(c_void_p(bulk.pwf.wf_ptr))
-		nspin = PAWC.get_nspin(c_void_p(bulk.pwf.wf_ptr))
-		
-		occs = cdouble_to_numpy(PAWC.get_occs(c_void_p(bulk.pwf.wf_ptr)), nband*nwk*nspin)
-		vbm = 0
-		for i in range(nband):
-			if occs[i*nwk*nspin] > 0.5:
-				vbm = i
-		min_band, max_band = vbm - num_below_ef, vbm + num_above_ef
-		if min_band < 0 or max_band >= nband:
-			raise PAWpyError("The min or max band is too large/small with min_band=%d, max_band=%d, nband=%d" % (min_band, max_band, nband))
-
-		totest = [i for i in range(min_band,max_band+1)]
-		print("NUM TO TEST", len(totest))
-
-		results = {}
-		for b in totest:
-			results[b] = self.proportion_conduction(b, bulk, spinpol = spinpol)
-
-		return results
 
 	def check_c_projectors(self):
 		"""
@@ -636,7 +531,7 @@ class Wavefunction:
 		orig_kptnums = []
 		op_nums = []
 		sga = SpacegroupAnalyzer(self.structure, symprec)
-		symmops = sga.get_symmetry_operations()
+		symmops = sga.get_point_group_operations()
 		for k, kpt in enumerate(kpts):
 			for i, op in enumerate(symmops):
 				newkpt = np.dot(op.rotation_matrix, kpt)

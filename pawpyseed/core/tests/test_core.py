@@ -109,6 +109,78 @@ def numpy_to_cint(arr):
 		newarr[i] = int(arr[i])
 	return newarr
 
+def debug_setup_projection(self, basis, setup_basis=True):
+	"""
+	DEBUG VERSION OF THE setup_projection METHOD IN THE
+	Projector CLASS
+	"""
+	if setup_basis:
+		self.projector_list, self.nums, self.coords,\
+			basis.nums, basis.coords = self.make_c_projectors(basis)
+	projector_list = self.projector_list
+	basisnums = basis.nums
+	basiscoords = basis.coords
+	selfnums = self.nums
+	selfcoords = self.coords
+
+	sys.stdout.flush()
+	
+	if setup_basis:
+		cfunc_call(PAWC.setup_projections_no_rayleigh, None,
+					basis.pwf.wf_ptr, projector_list,
+					self.num_proj_els, len(basis.structure), self.dim,
+					basisnums, basiscoords)
+	
+	cfunc_call(PAWC.setup_projections_no_rayleigh, None,
+				self.pwf.wf_ptr,
+				projector_list, self.num_proj_els, len(self.structure),
+				self.dim, selfnums, selfcoords)
+	M_R, M_S, N_R, N_S, N_RS = self.make_site_lists(basis)
+	num_N_RS = len(N_RS)
+	if num_N_RS > 0:
+		N_RS_R, N_RS_S = zip(*N_RS)
+	else:
+		N_RS_R, N_RS_S = [], []
+	self.site_cat = [M_R, M_S, N_R, N_S, N_RS_R, N_RS_S]
+	cfunc_call(PAWC.overlap_setup_real, None, basis.pwf.wf_ptr, self.pwf.wf_ptr,
+				projector_list, basisnums, selfnums, basiscoords, selfcoords,
+				M_R, M_S, M_R, M_S, len(M_R), len(M_R), len(M_R))
+
+def debug_single_band_projection(self, band_num):
+	"""
+	DEBUG VERSION OF THE single_band_projection METHOD IN THE
+	Projector CLASS
+	"""
+
+	if self.pseudo:
+		return self.pwf.pseudoprojection(band_num, basis.pwf)
+
+	basis = self.basis
+	nband = basis.nband
+	nwk = basis.nwk
+	nspin = basis.nspin
+	res = cfunc_call(PAWC.pseudoprojection, 2*nband*nwk*nspin,
+					basis.pwf.wf_ptr, self.pwf.wf_ptr, band_num)
+	print("datsa", nband, nwk, nspin)
+	sys.stdout.flush()
+	projector_list = self.projector_list
+	basisnums = basis.nums
+	basiscoords = basis.coords
+	selfnums = self.nums
+	selfcoords = self.coords
+
+	M_R, M_S, N_R, N_S, N_RS_R, N_RS_S = self.site_cat
+	
+	ct = cfunc_call(PAWC.compensation_terms, 2*nband*nwk*nspin,
+					band_num, self.pwf.wf_ptr, basis.pwf.wf_ptr,
+					projector_list, len(self.cr.pps),
+					0, len(M_R), len(M_S), len(M_S),
+					np.array([]), np.array([]), M_R, M_S, M_R, M_S,
+					selfnums, selfcoords, basisnums, basiscoords,
+					self.dim)
+	res += ct
+	return res[::2] + 1j * res[1::2]
+
 class TestC:
 
 	def setup(self):
@@ -405,9 +477,10 @@ class TestPy:
 		# test ps projections
 		wf = Wavefunction.from_directory('.')
 		basis = Wavefunction.from_directory('.')
-		res = wf.single_band_projection(6, basis)
+		pr = Projector(wf1, basis, pseudo = True)
+		res = pr.single_band_projection(6, basis)
 		assert res.shape[0] == basis.nband * basis.nspin * basis.nwk
-		res = wf.defect_band_analysis(basis, 4, 10, False)
+		res = pr.defect_band_analysis(basis, 4, 10, False)
 		assert len(res.keys()) == 15
 		wf.free_all()
 		basis.free_all()
@@ -433,3 +506,24 @@ class TestPy:
 		for wf_dir, wf in generator:
 			wf.defect_band_analysis(4, 10, spinpol=True)
 
+	def test_offsite(self):
+		wf1 = Wavefunction.from_directory('.', False)
+		basis = Wavefunction.from_directory('.', False)
+		pr = Projector(wf1, basis)
+		pr.setup_projection = debug_setup_projection
+		pr.single_band_projection = debug_single_band_projection
+		for b in range(wf1.nband):
+			v, c = pr.proportion_conduction(b)
+			if b < 6:
+				assert_almost_equal(v, 1, decimal=4)
+				assert_almost_equal(c, 0, decimal=8)
+			else:
+				assert_almost_equal(v, 0, decimal=8)
+				assert_almost_equal(c, 1, decimal=4)
+		basis.free_all()
+		wf1.free_all()
+		pr.free_all()
+
+		generator = Projector.setup_multiple_projections('.', ['.', '.'])
+		for wf_dir, wf in generator:
+			wf.defect_band_analysis(4, 10, spinpol=True)

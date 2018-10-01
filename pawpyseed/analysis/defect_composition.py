@@ -230,7 +230,7 @@ def pycdt_dirs(top_dir):
 	bulk = os.path.join(top_dir, 'bulk')
 	wfdirs = []
 	for root, dirs, files in os.walk(top_dir):
-		if 'bulk' in root:
+		if 'bulk' in root or 'dielectric' in root:
 			continue
 		if 'OUTCAR' in files:
 			wfdirs.append(root)

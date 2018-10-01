@@ -307,7 +307,7 @@ double legendre(int l, int m, double x) {
 	return total * pow(-1, m) * pow(1 - x * x, m/2.0) / pow(2, l);
 }
 
-void legendre_coeff(double* ptr, int l, int mwsign) {
+void legendre_coeff(double* ptr, int l, int m) {
 	// assumes ptr is cleared
 	double prefac = pow(-1, m) / pow(2, l);
 	if (m < 0) {
@@ -319,7 +319,7 @@ void legendre_coeff(double* ptr, int l, int mwsign) {
 	}
 }
 
-double* legendre_product(int l2, int l2, int m1, int m2) {
+double* legendre_product(int l1, int l2, int m1, int m2) {
 	int m = m2 - m1;
 	int maxl = l1 + l2;
 	double* lp1 = (double*) calloc((l1+1), sizeof(double));

@@ -179,7 +179,7 @@ class PseudoWavefunction:
 			vr = Vasprun(vr)
 		weights = vr.actual_kpoints_weights
 		kws = numpy_to_cdouble(weights)
-		self.kws = weights
+		self.kws = np.array(weights)
 		self.kpts = np.array(vr.actual_kpoints, dtype=np.float64)
 		self.wf_ptr = PAWC.read_wavefunctions(filename.encode('utf-8'), kws)
 
@@ -525,19 +525,23 @@ class Wavefunction:
 		self._convert_to_vasp_volumetric(filename, dim)
 		return res
 
-	def get_nosym_kpoints(self, symprec=1e-3):
+	def get_nosym_kpoints(self, init_kpts = None, symprec=1e-3, invsym = True):
 		kpts = np.array(self.pwf.kpts)
-		allkpts = []
+		allkpts = [] if init_kpts == None else [kpt for kpt in init_kpts]
 		orig_kptnums = []
 		op_nums = []
 		sga = SpacegroupAnalyzer(self.structure, symprec)
 		symmops = sga.get_point_group_operations()
-		for k, kpt in enumerate(kpts):
-			for i, op in enumerate(symmops):
+		for i, op in enumerate(symmops):
+			for k, kpt in enumerate(kpts):
 				newkpt = np.dot(op.rotation_matrix, kpt)
+				if invsym:
+					if newkpt[2] < -1e-10 or \
+						(abs(newkpt[2]) < 1e-10 and newkpt[1] < -1e-10):
+						continue
 				unique = True
 				for nkpt in allkpts:
-					if np.linalg.norm(newkpt-nkpt) < 1e-10 \
+					if ( np.linalg.norm(newkpt-nkpt) < 1e-10 ) \
 							and (np.abs(newkpt) < 1).all():
 						unique = False
 						break
@@ -551,7 +555,7 @@ class Wavefunction:
 		self.symmops = symmops
 		print("NUMBER OF KPTS", len(allkpts))
 		print("KPTS", allkpts)
-		return allkpts, orig_kptnums, op_nums, symmops
+		return np.array(allkpts), orig_kptnums, op_nums, symmops
 
 	def get_kpt_mapping(self, allkpts, symprec=1e-3):
 		sga = SpacegroupAnalyzer(self.structure, symprec)
@@ -574,6 +578,14 @@ class Wavefunction:
 			if not match:
 				raise PAWpyError("Could not find kpoint mapping to %s" % str(nkpt))
 		return orig_kptnums, op_nums, symmops
+
+	@property
+	def kpts(self):
+		return self.pwf.kpts
+
+	@property
+	def kws(self):
+		return self.pwf.kws
 
 	def free_all(self):
 		"""

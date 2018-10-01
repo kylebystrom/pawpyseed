@@ -95,7 +95,6 @@ typedef struct band {
 
 typedef struct rayleigh_set {
 	int l; ///< angular momentum quantum number
-	int 
 	double complex* terms; ///< rayleigh expansion terms
 } rayleigh_set_t;
 
@@ -254,6 +253,8 @@ void set_num_sites(pswf_t* wf, int nsites);
 
 /** Associated legendre polynomial P_lm(x) */
 double legendre(int l, int m, double x);
+void legendre_coeff(double* ptr, int l, int m);
+double* legendre_product(int l1, int l2, int m1, int m2);
 
 /** factorial */
 double fac(int n);

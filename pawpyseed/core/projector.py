@@ -554,10 +554,11 @@ class Projector(Wavefunction):
 		nwk = basis.nwk
 		nspin = basis.nspin
 		#totest = set()
-		occs = cdouble_to_numpy(PAWC.get_occs(c_void_p(basis.pwf.wf_ptr)), nband*nwk*nspin)
+		occs = cdouble_to_numpy(PAWC.get_occs(c_void_p(self.pwf.wf_ptr)), self.nband*self.nwk*self.nspin)
 		vbm = 0
-		for i in range(nband):
-			if occs[i*nwk*nspin] > 0.5:
+		print(occs)
+		for i in range(self.nband):
+			if occs[i*self.nwk*self.nspin] > 0.5:
 				vbm = i
 		min_band, max_band = vbm - num_below_ef, vbm + num_above_ef
 		if min_band < 0 or max_band >= nband:
@@ -588,9 +589,24 @@ class Projector(Wavefunction):
 			return results, energies
 		return results
 
+	@staticmethod
+	def free_projector_list(projector_list, num_elems):
+		"""
+		If you generate a projector_list using the setup_bases method,
+		you can free it easily by calling
+
+		>>> Projector.free_projector_list(projector_list, basis.num_proj_els)
+		
+		where basis is one of the Wavefunction objects returned by setup_bases
+		and projector_list is the C pointer of the same name returned by setup_bases
+		"""
+		
+		PAWC.free_ppot_list(c_void_p(projector_list), len(self.cr.pps))
+
 	def free_all(self):
 		"""
 		Frees all of the C structures associated with the Wavefunction object.
 		After being called, this object is not usable.
 		"""
 		PAWC.free_ppot_list(c_void_p(self.projector_list), len(self.cr.pps))
+

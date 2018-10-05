@@ -126,11 +126,13 @@ pswf_t* read_wavefunctions(char* filename, double* kpt_weights) {
 
 	pswf_t* wf = (pswf_t*) malloc(sizeof(pswf_t));
 
+	wf->num_sites = 0;
 	wf->nspin = nspin;
 	wf->nwk = nwk;
 	wf->nband = nband;
 	wf->is_ncl = 0;
 	wf->overlaps = NULL;
+	wf->num_projs = NULL;
 
 	kpoint_t** kpts = (kpoint_t**) malloc(nwk*nspin*sizeof(kpoint_t*));
 	if (kpts == NULL) {

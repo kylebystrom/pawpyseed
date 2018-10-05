@@ -82,14 +82,14 @@ class PawpyData:
 	def from_dict(cls, data):
 		if 'energy_levels' in data:
 			return cls([data['energies'], data['densities'], data['efermi']],
-				data['structure'], data['data'], data['energies'])
+				data['structure'], data['data'], data['energy_levels'])
 		return cls([data['energies'], data['densities'], data['efermi']],
 			data['structure'], data['data'])
 
 	@classmethod
 	def from_yaml(cls, filename):
 		f = open(filename, 'r')
-		data = yaml.load(f)
+		data = yaml.load(f.read().encode('utf-8'))
 		return cls.from_dict(data)
 
 
@@ -124,7 +124,7 @@ class BulkCharacter(PawpyData):
 		bs = np.array(bs) - np.mean(bs)
 		cs = np.array(cs)
 		vs = np.array(vs)
-		if self.energies == None:
+		if self.energy_levels == None:
 			fig, (ax1, ax3) = plt.subplots(2, 1, gridspec_kw = {'height_ratios':[3, 1]},
 				figsize=[6.4,6.4])
 		else:
@@ -144,7 +144,7 @@ class BulkCharacter(PawpyData):
 		plt.title(name + ' band character')
 		#plt.savefig('BAND_'+name)
 
-		if self.energies == None:
+		if self.energy_levels == None:
 			ax3.plot(self.energies - self.efermi, self.densities)
 			ax3.set_xlabel('Energy (eV)')
 			ax3.set_ylabel('Total DOS')
@@ -152,16 +152,16 @@ class BulkCharacter(PawpyData):
 			ax3.set_ylim(0,max(self.densities))
 		else:
 			bs, es = [], []
-			for b in data['energy_levels']:
+			for b in self.energy_levels:
 				bs.append(b)
-				es.append(bs[b])
+				es.append(self.energy_levels[b])
 			bs = np.array(bs) - np.mean(bs)
 			es = np.array(es)
 			ax3.bar(bs, es - self.efermi)
-			ax3.xlabel('band')
-			ax3.ylabel('Energy (eV)')
+			ax3.set_xlabel('band')
+			ax3.set_ylabel('Energy (eV)')
 		#plt.savefig('DOS_'+name)
-		plt.savefig(name)
+		plt.savefig(name.replace(' ', '_'))
 
 	@staticmethod
 	def makeit(generator):
@@ -230,7 +230,7 @@ def pycdt_dirs(top_dir):
 	bulk = os.path.join(top_dir, 'bulk')
 	wfdirs = []
 	for root, dirs, files in os.walk(top_dir):
-		if 'bulk' in root:
+		if 'bulk' in root or 'dielectric' in root:
 			continue
 		if 'OUTCAR' in files:
 			wfdirs.append(root)

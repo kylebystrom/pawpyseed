@@ -67,32 +67,32 @@ class Projector(Wavefunction):
 		#__init__(self, filename="WAVECAR", vr="vasprun.xml")
 
 		if unsym_basis and unsym_wf:
-			allkpts, borig_kptnums, bop_nums, bsymmops = basis.get_nosym_kpoints()
+			allkpts, borig_kptnums, bop_nums, bsymmops, btrs = basis.get_nosym_kpoints()
 			weights = np.ones(allkpts.shape[0]) / allkpts.shape[0]
-			worig_kptnums, wop_nums, wsymmops = wf.get_kpt_mapping(allkpts)
+			worig_kptnums, wop_nums, wsymmops, wtrs = wf.get_kpt_mapping(allkpts)
 			bops, bdrs = make_c_ops(bop_nums, bsymmops)
 			wops, wdrs = make_c_ops(wop_nums, wsymmops)
 			bptr = cfunc_call(PAWC.expand_symm_wf, None, basis.pwf.wf_ptr,
-				len(borig_kptnums), borig_kptnums, bops, bdrs, weights)
+				len(borig_kptnums), borig_kptnums, bops, bdrs, weights, btrs)
 			wptr = cfunc_call(PAWC.expand_symm_wf, None, wf.pwf.wf_ptr,
-				len(worig_kptnums), worig_kptnums, wops, wdrs, weights)
+				len(worig_kptnums), worig_kptnums, wops, wdrs, weights, wtrs)
 			basis = copy_wf(basis, bptr, allkpts, weights, False, True)
 			wf = copy_wf(wf, wptr, allkpts, weights, False, True)
 		elif unsym_wf and not unsym_basis:
 			allkpts = basis.pwf.kpts
 			weights = basis.pwf.kws
-			worig_kptnums, wop_nums, wsymmops = wf.get_kpt_mapping(allkpts)
+			worig_kptnums, wop_nums, wsymmops, trs = wf.get_kpt_mapping(allkpts)
 			wops, wdrs = make_c_ops(wop_nums, wsymmops)
 			wptr = cfunc_call(PAWC.expand_symm_wf, None, wf.pwf.wf_ptr,
-				len(worig_kptnums), worig_kptnums, wops, wdrs, weights)
+				len(worig_kptnums), worig_kptnums, wops, wdrs, weights, trs)
 			wf = copy_wf(wf, wptr, allkpts, weights, False, True)
 		elif unsym_basis and not unsym_wf:
 			allkpts = wf.pwf.kpts
 			weights = wf.pwf.kws
-			borig_kptnums, bop_nums, bsymmops = basis.get_kpt_mapping(allkpts)
+			borig_kptnums, bop_nums, bsymmops, trs = basis.get_kpt_mapping(allkpts)
 			bops, bdrs = make_c_ops(bop_nums, bsymmops)
 			bptr = cfunc_call(PAWC.expand_symm_wf, None, basis.pwf.wf_ptr,
-				len(borig_kptnums), borig_kptnums, bops, bdrs, weights)
+				len(borig_kptnums), borig_kptnums, bops, bdrs, weights, trs)
 			basis = copy_wf(basis, bptr, allkpts, weights, False, True)
 
 		if np.linalg.norm(basis.kpts - wf.kpts) > 1e-10:
@@ -337,11 +337,11 @@ class Projector(Wavefunction):
 			basis = Wavefunction.from_directory(bdir)
 
 			if desymmetrize:
-				allkpts, borig_kptnums, bop_nums, bsymmops = basis.get_nosym_kpoints()
+				allkpts, borig_kptnums, bop_nums, bsymmops, trs = basis.get_nosym_kpoints()
 				weights = np.ones(allkpts.shape[0]) / allkpts.shape[0]
 				bops, bdrs = make_c_ops(bop_nums, bsymmops)
 				bptr = cfunc_call(PAWC.expand_symm_wf, None, basis.pwf.wf_ptr,
-					len(borig_kptnums), borig_kptnums, bops, bdrs, weights)
+					len(borig_kptnums), borig_kptnums, bops, bdrs, weights, trs)
 				basis = copy_wf(basis, bptr, allkpts, weights, False, True)
 
 			crs.append(basis.cr)
@@ -404,11 +404,11 @@ class Projector(Wavefunction):
 
 		basis = Wavefunction.from_directory(basis_dir, False)
 		if desymmetrize:
-			allkpts, borig_kptnums, bop_nums, bsymmops = basis.get_nosym_kpoints()
+			allkpts, borig_kptnums, bop_nums, bsymmops, trs = basis.get_nosym_kpoints()
 			weights = np.ones(allkpts.shape[0]) / allkpts.shape[0]
 			bops, bdrs = make_c_ops(bop_nums, bsymmops)
 			bptr = cfunc_call(PAWC.expand_symm_wf, None, basis.pwf.wf_ptr,
-				len(borig_kptnums), borig_kptnums, bops, bdrs, weights)
+				len(borig_kptnums), borig_kptnums, bops, bdrs, weights, trs)
 			basis = copy_wf(basis, bptr, allkpts, weights, False, True)
 		
 		crs = [basis.cr] + [CoreRegion(Potcar.from_file(os.path.join(wf_dir, 'POTCAR'))) \

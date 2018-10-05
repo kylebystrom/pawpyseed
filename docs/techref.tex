@@ -44,8 +44,8 @@ The equation of a PAW wavefunction is\cite{blochl}
 \label{eq:1}
 \end{equation}
 where the sum is over the sites $a$ in the structure and a set of
-angular and radial quantum nubers $l$, $m$, and $\epsilon$ at each site.
-The conventional overlap operator used for these wavefunctions is
+angular and radial quantum numbers $l$, $m$, and $\epsilon$ at each site.
+Local and semilocal operators in PAW can be expressed as
 \begin{equation}
 \widetilde{A}=A+\sum_i\sum_j\ket{\widetilde{p}_i}(\bra{\phi_i}A\ket{\phi_j}
 -\bra{\widetilde{\phi_i}}A\ket{\widetilde{\phi_j}})\bra{\widetilde{p}_j}
@@ -61,7 +61,7 @@ in different structures.
 This section procedes first by deriving the main formula for calculating
 the overlap operator for KS states in different structures, and then
 presents a runtime scaling table for each operation involved in evaluating
-the formula. The algorithm for each operation is then discussed
+the formula. The algorithm for each operation is then discussed.
 
 \subsection{Derivation of Formula}
 

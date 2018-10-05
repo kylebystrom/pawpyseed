@@ -388,7 +388,7 @@ to new kpoints, and calculates a new wavefunction that has the
 additional kpoints.
 */
 pswf_t* expand_symm_wf(pswf_t* rwf, int num_kpts, int* maps,
-	double* ops, double* drs, double* kws);
+	double* ops, double* drs, double* kws, int* trs);
 
 /**
 Called after a malloc or calloc call to check that

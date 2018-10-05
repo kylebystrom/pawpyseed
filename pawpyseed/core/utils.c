@@ -848,7 +848,7 @@ void copy_rayleigh_expansion_terms(pswf_t* wf, ppot_t* pps, int num_elems, pswf_
 }
 
 pswf_t* expand_symm_wf(pswf_t* rwf, int num_kpts, int* maps,
-	double* ops, double* drs, double* kws) {
+	double* ops, double* drs, double* kws, int* trs) {
 
 	double* lattice = rwf->lattice;
 	double* reclattice = rwf->reclattice;
@@ -898,7 +898,13 @@ pswf_t* expand_symm_wf(pswf_t* rwf, int num_kpts, int* maps,
 		kpt->up = rkpt->up;
 		kpt->num_waves = rkpt->num_waves;
 		kpt->k = (double*) malloc(3 * sizeof(double));
+		int tr = trs[knum%num_kpts];
 		rotation_transform(kpt->k, ops+OPSIZE*(knum%num_kpts), rkpt->k);
+		if (tr == 1) {
+			kpt->k[0] *= -1;
+			kpt->k[1] *= -1;
+			kpt->k[2] *= -1;
+		}
 		//printf("OLD KPT %lf %lf %lf\n", okpt->k[0], okpt->k[1], okpt->k[2]);
 		printf("NEW KPT %lf %lf %lf\n", kpt->k[0], kpt->k[1], kpt->k[2]);
 		//kpt->Gs = (int*) malloc(3 * kpt->num_waves * sizeof(int));
@@ -1000,6 +1006,11 @@ pswf_t* expand_symm_wf(pswf_t* rwf, int num_kpts, int* maps,
 			pw[2] = rkpt->k[2] + rkpt->Gs[3*g+2];
 
 			rotation_transform(pw, ops+OPSIZE*(knum%num_kpts), pw);
+			if (tr == 1) {
+				pw[0] *= -1;
+				pw[1] *= -1;
+				pw[2] *= -1;
+			}
 
 			pw[0] -= kpt->k[0];
 			pw[1] -= kpt->k[1];
@@ -1044,6 +1055,9 @@ pswf_t* expand_symm_wf(pswf_t* rwf, int num_kpts, int* maps,
 					printf("ERROR, INCOMPLETE PLANE WAVE MAPPING\n");
 				}
 				kpt->bands[b]->Cs[w] = factors[w] * rkpt->bands[b]->Cs[gmaps[w]];
+				if (tr == 1) {
+					kpt->bands[b]->Cs[w] = conj(kpt->bands[b]->Cs[w]);
+				}
 				//total += cabs(cabs(kpt->bands[b]->Cs[w]) - cabs(okpt->bands[b]->Cs[w]));
 			}
 			//printf("energies %lf %lf %e\n", kpt->bands[b]->energy, okpt->bands[b]->energy, total);

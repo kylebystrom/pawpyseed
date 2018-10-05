@@ -444,6 +444,7 @@ void make_pwave_overlap_matrices(ppot_t* pp_ptr) {
 void setup_projections_no_rayleigh(pswf_t* wf, ppot_t* pps, int num_elems,
 	int num_sites, int* fftg, int* labels, double* coords) {
 
+	wf->num_sites = num_sites;
 	wf->fftg = (int*) malloc(3*sizeof(int));
 	wf->fftg[0] = fftg[0];
 	wf->fftg[1] = fftg[1];

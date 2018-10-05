@@ -146,16 +146,32 @@ void free_rayleigh_set_list(rayleigh_set_t* sets, int num_projs) {
 	free(sets);
 }
 
-void free_kpoint(kpoint_t* kpt, int num_elems, int* num_projs) {
+void free_projection_list(projection_t* projlist, int num) {
+	for (int i = 0; i < num; i++) {
+		free(projlist[i].ms);
+		free(projlist[i].ls);
+		free(projlist[i].ns);
+		free(projlist[i].overlaps);
+	}
+	free(projlist);
+}
+
+void free_kpoint(kpoint_t* kpt, int num_elems, int num_sites, int* num_projs) {
 	for (int b = 0; b < kpt->num_bands; b++) {
 		band_t* curr_band = kpt->bands[b];
 		free(curr_band->Cs);
-		//if (curr_band->projections != NULL) {
-		//	free(curr_band->projections);
-		//}
+		if (curr_band->projections != NULL) {
+			free_projection_list(curr_band->projections, num_sites);
+		}
 		//if (curr_band->wave_projections != NULL) {
-		//	free(curr_band->wave_projections);
+		//	free_projection_list(curr_band->wave_projections, num_sites);
 		//}
+		if (curr_band->up_projections != NULL) {
+			free_projection_list(curr_band->up_projections, num_sites);
+		}
+		if (curr_band->down_projections != NULL) {
+			free_projection_list(curr_band->down_projections, num_sites);
+		}
 		if (curr_band->CRs != NULL) {
 			mkl_free(curr_band->CRs);
 		}
@@ -207,11 +223,14 @@ void free_real_proj(real_proj_t* proj) {
 
 void free_pswf(pswf_t* wf) {
 	for (int i = 0; i < wf->nwk * wf->nspin; i++)
-		free_kpoint(wf->kpts[i], wf->num_elems, wf->num_projs);
+		free_kpoint(wf->kpts[i], wf->num_elems, wf->num_sites, wf->num_projs);
 	if (wf->overlaps != NULL) {
 		for (int i = 0; i < wf->num_aug_overlap_sites; i++)
 			free(wf->overlaps[i]);
 		free(wf->overlaps);
+	}
+	if (wf->num_projs != NULL) {
+		free(wf->num_projs);
 	}
 	free(wf->kpts);
 	free(wf->G_bounds);
@@ -800,6 +819,13 @@ void generate_rayleigh_expansion_terms(pswf_t* wf, ppot_t* pps, int num_elems) {
 }
 
 void copy_rayleigh_expansion_terms(pswf_t* wf, ppot_t* pps, int num_elems, pswf_t* wf_R) {
+	
+	int* num_projs = (int*) malloc(num_elems * sizeof(int));
+	for (int i = 0; i < num_elems; i++) {
+		num_projs[i] = pps[i].num_projs;
+	}
+	wf->num_projs = num_projs;
+
 	#pragma omp parallel for 
 	for (int k_num = 0; k_num < wf->nwk * wf->nspin; k_num++) {
 		kpoint_t* kpt = wf->kpts[k_num];
@@ -851,9 +877,10 @@ pswf_t* expand_symm_wf(pswf_t* rwf, int num_kpts, int* maps,
 
 	wf->is_ncl = rwf->is_ncl;
 
-	wf->num_aug_overlap_sites = rwf->num_aug_overlap_sites; // TODO MAYBE FIX?
-	wf->dcoords = NULL; // TODO FIX THIS
-	wf->overlaps = NULL; // TODO FIX THIS
+	wf->num_aug_overlap_sites = 0;
+	wf->dcoords = NULL;
+	wf->overlaps = NULL;
+	wf->num_projs = NULL;
 
 	for (int knum = 0; knum < num_kpts * wf->nspin; knum++) {
 		wf->kpts[knum] = (kpoint_t*) malloc(sizeof(kpoint_t));

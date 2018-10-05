@@ -212,7 +212,9 @@ void min_cart_path(double* coord, double* center, double* lattice, double* path,
 
 double complex trilinear_interpolate(double complex* c, double* frac, int* fftg);
 
-void free_kpoint(kpoint_t* kpt, int num_elems, int* num_projs);
+void free_projection_list(projection_t* projlist, int num);
+
+void free_kpoint(kpoint_t* kpt, int num_elems, int num_sites, int* num_projs);
 
 void free_ppot(ppot_t* pp);
 

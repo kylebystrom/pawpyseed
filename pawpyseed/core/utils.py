@@ -75,8 +75,13 @@ PAWC.get_nband.restype = c_int
 PAWC.get_nwk.restype = c_int
 PAWC.get_nspin.restype = c_int
 
+PAWC.free_ptr.argtypes = [c_void_p]
 PAWC.free_ptr.restype = None
+
+PAWC.free_ppot_list.argtypes = [c_void_p, c_int]
 PAWC.free_ppot_list.restype = None
+
+PAWC.free_pswf.argtypes = [c_void_p]
 PAWC.free_pswf.restype = None
 
 class PAWpyError(Exception):

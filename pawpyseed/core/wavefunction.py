@@ -4,11 +4,11 @@
 # Base class containing Python classes for parsing files
 # and storing and analyzing wavefunction data.
 
-
 from pymatgen.io.vasp.inputs import Potcar, Poscar
 from pymatgen.io.vasp.outputs import Vasprun, Outcar
 from pymatgen.core.structure import Structure
 from pymatgen.symmetry.analyzer import SpacegroupAnalyzer
+from pymatgen.core.operations import SymmOp
 import numpy as np
 from ctypes import *
 from pawpyseed.core.utils import *
@@ -557,16 +557,22 @@ class Wavefunction:
 		print("KPTS", allkpts)
 		return np.array(allkpts), orig_kptnums, op_nums, symmops
 
-	def get_kpt_mapping(self, allkpts, symprec=1e-3):
+	def get_kpt_mapping(self, allkpts, symprec=1e-3, invsym = True):
 		sga = SpacegroupAnalyzer(self.structure, symprec)
 		symmops = sga.get_symmetry_operations()
+		newops = []
+		if invsym:
+			for op in symmops:
+				newops.append(SymmOp.from_rotation_and_translation(
+					op.rotation_matrix*-1, op.translation_vector*-1))
+		symmops += newops
 		kpts = np.array(self.pwf.kpts)
 		orig_kptnums = []
 		op_nums = []
 		for nkpt in allkpts:
 			match = False
-			for k, kpt in enumerate(kpts):
-				for i, op in enumerate(symmops):
+			for i, op in enumerate(symmops):
+				for k, kpt in enumerate(kpts):
 					newkpt = np.dot(op.rotation_matrix, kpt)
 					if np.linalg.norm(newkpt-nkpt) < 1e-10:
 						match = True

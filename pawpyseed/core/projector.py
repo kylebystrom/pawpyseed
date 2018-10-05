@@ -601,7 +601,7 @@ class Projector(Wavefunction):
 		and projector_list is the C pointer of the same name returned by setup_bases
 		"""
 		
-		PAWC.free_ppot_list(c_void_p(projector_list), len(self.cr.pps))
+		PAWC.free_ppot_list(c_void_p(projector_list), num_elems)
 
 	def free_all(self):
 		"""

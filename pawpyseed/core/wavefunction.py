@@ -584,10 +584,6 @@ class Wavefunction:
 		sga = SpacegroupAnalyzer(self.structure, symprec)
 		symmops = sga.get_symmetry_operations()
 		newops = []
-		if invsym:
-			for op in symmops:
-				newops.append(SymmOp.from_rotation_and_translation(
-					op.rotation_matrix*-1, op.translation_vector*-1))
 		symmops += newops
 		kpts = np.array(self.pwf.kpts)
 		orig_kptnums = []

@@ -525,17 +525,20 @@ class Wavefunction:
 		self._convert_to_vasp_volumetric(filename, dim)
 		return res
 
-	def get_nosym_kpoints(self, init_kpts = None, symprec=1e-3, invsym = True):
+	def get_nosym_kpoints(self, init_kpts = None, symprec=1e-3,
+		gen_trsym = True, fil_trsym = True):
+
 		kpts = np.array(self.pwf.kpts)
 		allkpts = [] if init_kpts == None else [kpt for kpt in init_kpts]
 		orig_kptnums = []
 		op_nums = []
 		sga = SpacegroupAnalyzer(self.structure, symprec)
 		symmops = sga.get_point_group_operations()
+		trs = []
 		for i, op in enumerate(symmops):
 			for k, kpt in enumerate(kpts):
 				newkpt = np.dot(op.rotation_matrix, kpt)
-				if invsym:
+				if fil_trsym:
 					if newkpt[2] < -1e-10 or \
 						(abs(newkpt[2]) < 1e-10 and newkpt[1] < -1e-10):
 						continue
@@ -549,26 +552,43 @@ class Wavefunction:
 					allkpts.append(newkpt)
 					orig_kptnums.append(k)
 					op_nums.append(i)
+					trs.append(0)
+		if gen_trsym:
+			for i, op in enumerate(symmops):
+				for k, kpt in enumerate(kpts):
+					newkpt = np.dot(op.rotation_matrix, kpt) * -1
+					if fil_trsym:
+						if newkpt[2] < -1e-10 or \
+							(abs(newkpt[2]) < 1e-10 and newkpt[1] < -1e-10):
+							continue
+					unique = True
+					for nkpt in allkpts:
+						if ( np.linalg.norm(newkpt-nkpt) < 1e-10 ) \
+								and (np.abs(newkpt) < 1).all():
+							unique = False
+							break
+					if unique:
+						allkpts.append(newkpt)
+						orig_kptnums.append(k)
+						op_nums.append(i)
+						trs.append(1)
 		self.nosym_kpts = allkpts
 		self.orig_kptnums = orig_kptnums
 		self.op_nums = op_nums
 		self.symmops = symmops
 		print("NUMBER OF KPTS", len(allkpts))
 		print("KPTS", allkpts)
-		return np.array(allkpts), orig_kptnums, op_nums, symmops
+		return np.array(allkpts), orig_kptnums, op_nums, symmops, trs
 
-	def get_kpt_mapping(self, allkpts, symprec=1e-3, invsym = True):
+	def get_kpt_mapping(self, allkpts, symprec=1e-3, gen_trsym = True):
 		sga = SpacegroupAnalyzer(self.structure, symprec)
 		symmops = sga.get_symmetry_operations()
 		newops = []
-		if invsym:
-			for op in symmops:
-				newops.append(SymmOp.from_rotation_and_translation(
-					op.rotation_matrix*-1, op.translation_vector*-1))
 		symmops += newops
 		kpts = np.array(self.pwf.kpts)
 		orig_kptnums = []
 		op_nums = []
+		trs = []
 		for nkpt in allkpts:
 			match = False
 			for i, op in enumerate(symmops):
@@ -578,12 +598,24 @@ class Wavefunction:
 						match = True
 						orig_kptnums.append(k)
 						op_nums.append(i)
+						trs.append(0)
+						break
+				if match:
+					break
+			for i, op in enumerate(symmops):
+				for k, kpt in enumerate(kpts):
+					newkpt = np.dot(op.rotation_matrix, kpt) * -1
+					if np.linalg.norm(newkpt-nkpt) < 1e-10:
+						match = True
+						orig_kptnums.append(k)
+						op_nums.append(i)
+						trs.append(1)
 						break
 				if match:
 					break
 			if not match:
 				raise PAWpyError("Could not find kpoint mapping to %s" % str(nkpt))
-		return orig_kptnums, op_nums, symmops
+		return orig_kptnums, op_nums, symmops, trs
 
 	@property
 	def kpts(self):

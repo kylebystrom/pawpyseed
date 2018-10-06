@@ -7,9 +7,36 @@
 
 from pawpyseed.core.wavefunction import *
 
+OPSIZE = 9
+
+def make_c_ops(op_nums, symmops):
+	print(op_nums)
+	ops = np.zeros(OPSIZE*len(op_nums))
+	for i in range(len(op_nums)):
+		ops[OPSIZE*i:OPSIZE*(i+1)] = symmops[op_nums[i]].rotation_matrix.flatten()
+	drs = np.zeros(3*len(op_nums))
+	for i in range(len(op_nums)):
+		drs[3*i:3*(i+1)] = symmops[op_nums[i]].translation_vector
+	return ops, drs
+
+class CopyPseudoWavefunction(PseudoWavefunction):
+	def __init__(self, wf_ptr, kpts, kws):
+		self.wf_ptr = wf_ptr
+		self.kpts = kpts
+		self.kws = kws
+
+def copy_wf(rwf, wf_ptr, allkpts, weights, setup_projectors = True, free_ref = False):
+	pwf = CopyPseudoWavefunction(wf_ptr, allkpts, weights)
+	wf = Wavefunction(rwf.structure, pwf, rwf.cr, rwf.dim,
+		setup_projectors)
+	if free_ref:
+		rwf.free_all()
+	return wf
+
 class Projector(Wavefunction):
 
-	def __init__(self, wf, basis, projector_list = None):
+	def __init__(self, wf, basis, projector_list = None,
+		unsym_basis = False, unsym_wf = False, pseudo = False):
 		"""
 		Projector is a class to projector KS states
 		from wf onto the KS states of basis
@@ -29,11 +56,59 @@ class Projector(Wavefunction):
 				case the setup will be performed for wf and basis.
 				projector_list != None is used by setup_multiple_projections
 				for efficiency and memory management
+			allkpts (2D numpy array) (default None): List of fractional
+				coordinate k-points to map onto
 
 		Returns:
 			Projector object, containing all the same fields as
 				wf but set up for projections onto basis
 		"""
+		#__init__(self, struct, pwf, cr, outcar, setup_projectors=True)
+		#__init__(self, filename="WAVECAR", vr="vasprun.xml")
+
+		if unsym_basis and unsym_wf:
+			allkpts, borig_kptnums, bop_nums, bsymmops, btrs = basis.get_nosym_kpoints()
+			weights = np.ones(allkpts.shape[0]) / allkpts.shape[0]
+			worig_kptnums, wop_nums, wsymmops, wtrs = wf.get_kpt_mapping(allkpts)
+			bops, bdrs = make_c_ops(bop_nums, bsymmops)
+			wops, wdrs = make_c_ops(wop_nums, wsymmops)
+			bptr = cfunc_call(PAWC.expand_symm_wf, None, basis.pwf.wf_ptr,
+				len(borig_kptnums), borig_kptnums, bops, bdrs, weights, btrs)
+			wptr = cfunc_call(PAWC.expand_symm_wf, None, wf.pwf.wf_ptr,
+				len(worig_kptnums), worig_kptnums, wops, wdrs, weights, wtrs)
+			basis = copy_wf(basis, bptr, allkpts, weights, False, True)
+			wf = copy_wf(wf, wptr, allkpts, weights, False, True)
+		elif unsym_wf and not unsym_basis:
+			allkpts = basis.pwf.kpts
+			weights = basis.pwf.kws
+			worig_kptnums, wop_nums, wsymmops, trs = wf.get_kpt_mapping(allkpts)
+			wops, wdrs = make_c_ops(wop_nums, wsymmops)
+			wptr = cfunc_call(PAWC.expand_symm_wf, None, wf.pwf.wf_ptr,
+				len(worig_kptnums), worig_kptnums, wops, wdrs, weights, trs)
+			wf = copy_wf(wf, wptr, allkpts, weights, False, True)
+		elif unsym_basis and not unsym_wf:
+			allkpts = wf.pwf.kpts
+			weights = wf.pwf.kws
+			borig_kptnums, bop_nums, bsymmops, trs = basis.get_kpt_mapping(allkpts)
+			bops, bdrs = make_c_ops(bop_nums, bsymmops)
+			bptr = cfunc_call(PAWC.expand_symm_wf, None, basis.pwf.wf_ptr,
+				len(borig_kptnums), borig_kptnums, bops, bdrs, weights, trs)
+			basis = copy_wf(basis, bptr, allkpts, weights, False, True)
+
+		if np.linalg.norm(basis.kpts - wf.kpts) > 1e-10:
+			raise PAWpyError("k-point grids for projection are not matched.")
+		if np.linalg.norm(basis.kws - wf.kws) > 1e-10:
+			raise PAWpyError("k-point weights for projection are not matched.")
+		
+		if (wf.nums is None) and (not pseudo) and (not projector_list is None):
+			selfnums = np.array([basis.labels[el(s)] for s in wf.structure], dtype=np.int32)
+			selfcoords = np.array([], np.float64)
+			for s in wf.structure:
+				selfcoords = np.append(selfcoords, s.frac_coords)
+			wf.nums = selfnums
+			wf.coords = selfcoords
+			wf.num_proj_els = basis.num_proj_els
+
 		self.structure = wf.structure
 		self.pwf = wf.pwf
 		self.cr = wf.cr
@@ -49,11 +124,14 @@ class Projector(Wavefunction):
 		self.wf = wf
 		self.num_proj_els = wf.num_proj_els
 
-		self.setup_projection(basis, projector_list == None)
+		if not pseudo:
+			self.setup_projection(basis, projector_list == None)
+		self.pseudo=pseudo
 
 	@staticmethod
 	def from_files(basis, struct="CONTCAR", pwf="WAVECAR", cr="POTCAR",
-		vr="vasprun.xml", outcar="OUTCAR", projector_list = None):
+		vr="vasprun.xml", outcar="OUTCAR", projector_list = None,
+		unsym_basis = False, unsym_wf = False, pseudo = False):
 		"""
 		Construct a Projector object from file paths.
 		Arguments:
@@ -66,13 +144,16 @@ class Projector(Wavefunction):
 		Returns:
 			Projector object
 		"""
-		return Projector(Poscar.from_file(struct).structure,
+		wf = Wavefunction(Poscar.from_file(struct).structure,
 			PseudoWavefunction(pwf, vr),
 			CoreRegion(Potcar.from_file(cr)),
 			Outcar(outcar), projector_list)
+		return Projector(wf, basis, projector_list,
+			unsym_basis, unsym_wf, pseudo)
 
 	@staticmethod
-	def from_directory(basis, path, projector_list = None):
+	def from_directory(basis, path, projector_list = None,
+		unsym_basis = False, unsym_wf = False, pseudo = False):
 		"""
 		Assumes VASP output has the default filenames and is located
 		in the directory specificed by path.
@@ -86,7 +167,7 @@ class Projector(Wavefunction):
 		filepaths = []
 		for d in ["CONTCAR", "WAVECAR", "POTCAR", "vasprun.xml", "OUTCAR"]:
 			filepaths.append(str(os.path.join(path, d)))
-		args = filepaths + [projector_list]
+		args = [basis] + filepaths + [projector_list, unsym_basis, unsym_wf, pseudo]
 		return Projector.from_files(*args)
 
 	def make_site_lists(self, basis):
@@ -162,13 +243,14 @@ class Projector(Wavefunction):
 		print ("TYPETHING", basis.pwf.wf_ptr, type(basis.pwf.wf_ptr))
 		
 		if setup_basis:
-			cfunc_call(PAWC.setup_projections, None,
+			cfunc_call(PAWC.setup_projections_no_rayleigh, None,
 						basis.pwf.wf_ptr, projector_list,
 						self.num_proj_els, len(basis.structure), self.dim,
 						basisnums, basiscoords)
 		start = time.monotonic()
-		cfunc_call(PAWC.setup_projections_copy_rayleigh, None,
-					self.pwf.wf_ptr, basis.pwf.wf_ptr,
+		#basis.pwf.wf_ptr
+		cfunc_call(PAWC.setup_projections_no_rayleigh, None,
+					self.pwf.wf_ptr,
 					projector_list, self.num_proj_els, len(self.structure),
 					self.dim, selfnums, selfcoords)
 		end = time.monotonic()
@@ -185,14 +267,11 @@ class Projector(Wavefunction):
 		cfunc_call(PAWC.overlap_setup_real, None, basis.pwf.wf_ptr, self.pwf.wf_ptr,
 					projector_list, basisnums, selfnums, basiscoords, selfcoords,
 					N_R, N_S, N_RS_R, N_RS_S, len(N_R), len(N_S), len(N_RS_R))
-		#cfunc_call(PAWC.overlap_setup_real, None, basis.pwf.wf_ptr, self.pwf.wf_ptr,
-		#			projector_list, basisnums, selfnums, basiscoords, selfcoords,
-		#			M_R, M_S, M_R, M_S, len(M_R), len(M_R), len(M_R))
 		end = time.monotonic()
 		Timer.overlap_time(end-start)
 		print('-------------\nran overlap_setup in %f seconds\n---------------' % (end-start))
 
-	def single_band_projection(self, band_num, pseudo=False):
+	def single_band_projection(self, band_num):
 		"""
 		All electron projection of the band_num band of self
 		onto all the bands of basis. Returned as a numpy array,
@@ -203,12 +282,14 @@ class Projector(Wavefunction):
 
 		Arguments:
 			band_num (int): band which is projected onto basis
-			basis (Wavefunction): basis Wavefunction object
 
 		Returns:
 			res (np.array): overlap operator expectation values
 				as described above
 		"""
+
+		if self.pseudo:
+			return self.pwf.pseudoprojection(band_num, self.basis.pwf)
 
 		basis = self.basis
 		nband = basis.nband
@@ -237,20 +318,68 @@ class Projector(Wavefunction):
 		end = time.monotonic()
 		Timer.augmentation_time(end-start)
 		print('---------\nran compensation_terms in %f seconds\n-----------' % (end-start))
-		"""
-		ct = cfunc_call(PAWC.compensation_terms, 2*nband*nwk*nspin,
-						band_num, self.pwf.wf_ptr, basis.pwf.wf_ptr,
-						projector_list, len(self.cr.pps),
-						0, len(M_R), len(M_S), len(M_S),
-						np.array([]), np.array([]), M_R, M_S, M_R, M_S,
-						selfnums, selfcoords, basisnums, basiscoords,
-						self.dim)
-		"""
 		res += ct
 		return res[::2] + 1j * res[1::2]
 
 	@staticmethod
-	def setup_multiple_projections(basis_dir, wf_dirs, ignore_errors = False):
+	def setup_bases(basis_dirs, wf_dirs, desymmetrize = True):
+		"""
+		This function performs the setup of all the bases in the basis_dirs.
+		After this function is called, pass the returned projector_list
+		each time you call Projector with one of the wavefunctions in the
+		basis_dirs list. Free projector_list after you are fully finished
+		using the wavefunctions in basis_dirs for projections.
+		"""
+
+		bases = []
+		crs = []
+		for bdir in basis_dirs:
+			basis = Wavefunction.from_directory(bdir)
+
+			if desymmetrize:
+				allkpts, borig_kptnums, bop_nums, bsymmops, trs = basis.get_nosym_kpoints()
+				weights = np.ones(allkpts.shape[0]) / allkpts.shape[0]
+				bops, bdrs = make_c_ops(bop_nums, bsymmops)
+				bptr = cfunc_call(PAWC.expand_symm_wf, None, basis.pwf.wf_ptr,
+					len(borig_kptnums), borig_kptnums, bops, bdrs, weights, trs)
+				basis = copy_wf(basis, bptr, allkpts, weights, False, True)
+
+			crs.append(basis.cr)
+			bases.append(basis)
+
+		crs += [CoreRegion(Potcar.from_file(os.path.join(wf_dir, 'POTCAR'))) \
+			for wf_dir in wf_dirs]
+
+		pps = {}
+		labels = {}
+		label = 0
+		for cr in crs:
+			for e in cr.pps:
+				if not e in labels:
+					pps[label] = cr.pps[e]
+					labels[e] = label
+					label = label + 1
+
+		projector_list = basis.get_c_projectors_from_pps(pps)
+		for basis in bases:
+			basisnums = np.array([labels[el(s)] for s in basis.structure], dtype=np.int32)
+			basiscoords = np.array([], np.float64)
+			for s in basis.structure:
+				basiscoords = np.append(basiscoords, s.frac_coords)
+			basis.labels = labels
+			basis.nums = basisnums
+			basis.coords = basiscoords
+			basis.num_proj_els = len(pps)
+
+			cfunc_call(PAWC.setup_projections, None,
+					basis.pwf.wf_ptr, projector_list, label,
+					len(basis.structure), basis.dim, basisnums, basiscoords)
+
+		return projector_list, bases
+
+	@staticmethod
+	def setup_multiple_projections(basis_dir, wf_dirs, pseudo = False, ignore_errors = False,
+									desymmetrize = False):
 		"""
 		A convenient generator function for processing the Kohn-Sham wavefunctions
 		of multiple structures with respect to one structure used as the basis.
@@ -274,6 +403,14 @@ class Projector(Wavefunction):
 		"""
 
 		basis = Wavefunction.from_directory(basis_dir, False)
+		if desymmetrize:
+			allkpts, borig_kptnums, bop_nums, bsymmops, trs = basis.get_nosym_kpoints()
+			weights = np.ones(allkpts.shape[0]) / allkpts.shape[0]
+			bops, bdrs = make_c_ops(bop_nums, bsymmops)
+			bptr = cfunc_call(PAWC.expand_symm_wf, None, basis.pwf.wf_ptr,
+				len(borig_kptnums), borig_kptnums, bops, bdrs, weights, trs)
+			basis = copy_wf(basis, bptr, allkpts, weights, False, True)
+		
 		crs = [basis.cr] + [CoreRegion(Potcar.from_file(os.path.join(wf_dir, 'POTCAR'))) \
 			for wf_dir in wf_dirs]
 
@@ -329,7 +466,10 @@ class Projector(Wavefunction):
 				wf.coords = selfcoords
 				wf.num_proj_els = len(pps)
 
-				pr = Projector(wf, basis, projector_list)
+				if desymmetrize:
+					pr = Projector(wf, basis, projector_list, pseudo = pseudo, unsym_wf = True)
+				else:
+					pr = Projector(wf, basis, projector_list, pseudo = pseudo)
 
 				yield [wf_dir, pr]
 				wf.free_all()
@@ -346,7 +486,7 @@ class Projector(Wavefunction):
 			raise PAWpyError("Could not generate any projector setups")
 		print("Number of errors:", errcount)
 
-	def proportion_conduction(self, band_num, pseudo = False, spinpol = False):
+	def proportion_conduction(self, band_num, spinpol = False):
 		"""
 		Calculates the proportion of band band_num in self
 		that projects onto the valence states and conduction
@@ -367,10 +507,7 @@ class Projector(Wavefunction):
 		nspin = basis.nspin
 		occs = cdouble_to_numpy(PAWC.get_occs(c_void_p(basis.pwf.wf_ptr)), nband*nwk*nspin)
 
-		if pseudo:
-			res = self.pwf.pseudoprojection(band_num, basis.pwf)
-		else:
-			res = self.single_band_projection(band_num)
+		res = self.single_band_projection(band_num)
 
 		if spinpol:
 			c, v = np.zeros(nspin), np.zeros(nspin)
@@ -389,7 +526,7 @@ class Projector(Wavefunction):
 					v += np.absolute(res[i]) ** 2 * self.pwf.kws[i%nwk] / nspin
 				else:
 					c += np.absolute(res[i]) ** 2 * self.pwf.kws[i%nwk] / nspin
-		if pseudo:
+		if self.pseudo:
 			t = v+c
 			v /= t
 			c /= t
@@ -399,7 +536,7 @@ class Projector(Wavefunction):
 		return v, c
 
 	def defect_band_analysis(self, num_below_ef=20,
-		num_above_ef=20, pseudo = False, spinpol = False):
+		num_above_ef=20, spinpol = False, return_energies = False):
 		"""
 		Identifies a set of 'interesting' bands in a defect structure
 		to analyze by choosing any band that is more than bound conduction
@@ -417,10 +554,11 @@ class Projector(Wavefunction):
 		nwk = basis.nwk
 		nspin = basis.nspin
 		#totest = set()
-		occs = cdouble_to_numpy(PAWC.get_occs(c_void_p(basis.pwf.wf_ptr)), nband*nwk*nspin)
+		occs = cdouble_to_numpy(PAWC.get_occs(c_void_p(self.pwf.wf_ptr)), self.nband*self.nwk*self.nspin)
 		vbm = 0
-		for i in range(nband):
-			if occs[i*nwk*nspin] > 0.5:
+		print(occs)
+		for i in range(self.nband):
+			if occs[i*self.nwk*self.nspin] > 0.5:
 				vbm = i
 		min_band, max_band = vbm - num_below_ef, vbm + num_above_ef
 		if min_band < 0 or max_band >= nband:
@@ -428,7 +566,7 @@ class Projector(Wavefunction):
 				% (min_band, max_band, nband))
 		"""
 		for b in range(nband):
-			v, c = self.proportion_conduction(b, basis, pseudo = True, spinpol = False)
+			v, c = self.proportion_conduction(b, basis, spinpol = False)
 			if v > bound and c > bound:
 				totest.add(b)
 				totest.add(b-1)
@@ -438,10 +576,32 @@ class Projector(Wavefunction):
 		print("NUM TO TEST", len(totest))
 
 		results = {}
+		energies = {}
 		for b in totest:
-			results[b] = self.proportion_conduction(b, pseudo, spinpol = spinpol)
+			results[b] = self.proportion_conduction(b, spinpol = spinpol)
+			energies[b] = 0
+			for k in range(self.nwk):
+				for s in range(self.nspin):
+					energies[b] += cfunc_call(PAWC.get_energy, None, self.pwf.wf_ptr, b, k, s) * self.pwf.kws[k]
+			energies[b] /= np.sum(self.pwf.kws) * self.nspin 
 
+		if return_energies:
+			return results, energies
 		return results
+
+	@staticmethod
+	def free_projector_list(projector_list, num_elems):
+		"""
+		If you generate a projector_list using the setup_bases method,
+		you can free it easily by calling
+
+		>>> Projector.free_projector_list(projector_list, basis.num_proj_els)
+		
+		where basis is one of the Wavefunction objects returned by setup_bases
+		and projector_list is the C pointer of the same name returned by setup_bases
+		"""
+		
+		PAWC.free_ppot_list(c_void_p(projector_list), num_elems)
 
 	def free_all(self):
 		"""
@@ -449,3 +609,4 @@ class Projector(Wavefunction):
 		After being called, this object is not usable.
 		"""
 		PAWC.free_ppot_list(c_void_p(self.projector_list), len(self.cr.pps))
+

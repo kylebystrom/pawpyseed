@@ -10,6 +10,26 @@
 #include "utils.h"
 
 #define PI 3.14159265358979323846
+#define CCONST 0.262465831
+#define OPSIZE 9
+
+void affine_transform(double* out, double* op, double* inv) {
+	//0 1 2 3
+	//4 5 6 7
+	//8 9 10 11
+	//12 13 14 15
+	double in[4] = {inv[0], inv[1], inv[2], 1};
+	out[0] = op[0]*in[0] + op[1]*in[1] + op[2]*in[2] + op[3]*in[3];
+	out[1] = op[4]*in[0] + op[5]*in[1] + op[6]*in[2] + op[7]*in[3];
+	out[2] = op[8]*in[0] + op[9]*in[1] + op[10]*in[2] + op[11]*in[3];
+}
+
+void rotation_transform(double* out, double* op, double* inv) {
+	double in[3] = {inv[0], inv[1], inv[2]};
+	out[0] = op[0]*in[0] + op[1]*in[1] + op[2]*in[2];
+	out[1] = op[3]*in[0] + op[4]*in[1] + op[5]*in[2];
+	out[2] = op[6]*in[0] + op[7]*in[1] + op[8]*in[2];
+}
 
 void vcross(double* res, double* top, double* bottom) {
 	res[0] = top[1] * bottom[2] - top[2] * bottom[1];
@@ -126,16 +146,45 @@ void free_rayleigh_set_list(rayleigh_set_t* sets, int num_projs) {
 	free(sets);
 }
 
-void free_kpoint(kpoint_t* kpt, int num_elems, ppot_t* pps) {
+void free_projection_list(projection_t* projlist, int num) {
+	for (int i = 0; i < num; i++) {
+		free(projlist[i].ms);
+		free(projlist[i].ls);
+		free(projlist[i].ns);
+		free(projlist[i].overlaps);
+	}
+	free(projlist);
+}
+
+void clean_wave_projections(pswf_t* wf) {
+
+	for (int i = 0; i < wf->nwk * wf->nspin; i++) {
+		kpoint_t* kpt = wf->kpts[i];
+		for (int b = 0; b < kpt->num_bands; b++) {
+			if (kpt->bands[b]->wave_projections != NULL) {
+				free_projection_list(kpt->bands[b]->wave_projections, wf->wp_num);
+			}
+		}
+	}
+
+}
+
+void free_kpoint(kpoint_t* kpt, int num_elems, int num_sites, int wp_num, int* num_projs) {
 	for (int b = 0; b < kpt->num_bands; b++) {
 		band_t* curr_band = kpt->bands[b];
 		free(curr_band->Cs);
-		//if (curr_band->projections != NULL) {
-		//	free(curr_band->projections);
-		//}
-		//if (curr_band->wave_projections != NULL) {
-		//	free(curr_band->wave_projections);
-		//}
+		if (curr_band->projections != NULL) {
+			free_projection_list(curr_band->projections, num_sites);
+		}
+		if (curr_band->wave_projections != NULL) {
+			free_projection_list(curr_band->wave_projections, wp_num);
+		}
+		if (curr_band->up_projections != NULL) {
+			free_projection_list(curr_band->up_projections, num_sites);
+		}
+		if (curr_band->down_projections != NULL) {
+			free_projection_list(curr_band->down_projections, num_sites);
+		}
 		if (curr_band->CRs != NULL) {
 			mkl_free(curr_band->CRs);
 		}
@@ -143,7 +192,7 @@ void free_kpoint(kpoint_t* kpt, int num_elems, ppot_t* pps) {
 	}
 	if (kpt->expansion != NULL) {
 		for (int i = 0; i < num_elems; i++)
-			free_rayleigh_set_list(kpt->expansion[i], pps[i].num_projs);
+			free_rayleigh_set_list(kpt->expansion[i], num_projs[i]);
 		free(kpt->expansion);
 	}
 	free(kpt->Gs);
@@ -187,11 +236,14 @@ void free_real_proj(real_proj_t* proj) {
 
 void free_pswf(pswf_t* wf) {
 	for (int i = 0; i < wf->nwk * wf->nspin; i++)
-		free_kpoint(wf->kpts[i], wf->num_elems, wf->pps);
+		free_kpoint(wf->kpts[i], wf->num_elems, wf->num_sites, wf->wp_num, wf->num_projs);
 	if (wf->overlaps != NULL) {
 		for (int i = 0; i < wf->num_aug_overlap_sites; i++)
 			free(wf->overlaps[i]);
 		free(wf->overlaps);
+	}
+	if (wf->num_projs != NULL) {
+		free(wf->num_projs);
 	}
 	free(wf->kpts);
 	free(wf->G_bounds);
@@ -266,6 +318,14 @@ int get_nspin(pswf_t* wf) {
 	return wf->nspin;
 }
 
+int is_ncl(pswf_t* wf) {
+	return wf->is_ncl;
+}
+
+double get_energy(pswf_t* wf, int band, int kpt, int spin) {
+	return wf->kpts[kpt+spin*wf->nwk]->bands[band]->energy;
+}
+
 void set_num_sites(pswf_t* wf, int nsites) {
 	wf->num_sites = nsites;
 }
@@ -277,6 +337,49 @@ double legendre(int l, int m, double x) {
 		total += pow(x, 2*n-l-m) * fac(2*n) / fac(2*n-l-m) / fac(n) / fac(l-n) * pow(-1, l-n);
 	}
 	return total * pow(-1, m) * pow(1 - x * x, m/2.0) / pow(2, l);
+}
+
+void legendre_coeff(double* ptr, int l, int m) {
+	// assumes ptr is cleared
+	double prefac = pow(-1, m) / pow(2, l);
+	if (m < 0) {
+		prefac *= pow(-1.0, m) * fac(l+m) / fac(l-m);
+	}
+	m = abs(m);
+	for (int n = l; n >= 0 && 2*n-l-m >= 0; n--) {
+		ptr[n] = fac(2*n) / fac(2*n-l-m) / fac(n) / fac(l-n) * pow(-1, l-n) * prefac;
+	}
+}
+
+double* legendre_product(int l1, int l2, int m1, int m2) {
+	int m = m2 - m1;
+	int maxl = l1 + l2;
+	double* lp1 = (double*) calloc((l1+1), sizeof(double));
+	double* lp2 = (double*) calloc((l2+1), sizeof(double));
+	double* polynomial = (double*) calloc((maxl+1), sizeof(double));
+	double* test = (double*) calloc((maxl+1), sizeof(double));
+	double* coeff = (double*) calloc((maxl+1), sizeof(double));
+	legendre_coeff(lp1, l1, m1);
+	legendre_coeff(lp2, l2, m2);
+	for (int n1 = 0; n1 <= l1; n1++) {
+		for (int n2 = 0; n2 <= l2; n2++) {
+			polynomial[n1+n2] += lp1[n1] * lp2[n2];
+		}
+	}
+	int fac;
+	for (int l = maxl; l >= abs(m); l--) {
+		legendre_coeff(test, l, m);
+		coeff[l] = polynomial[l] / test[l];
+		for (int lp = abs(m); lp <= maxl; lp++) {
+			polynomial[lp] -= coeff[l] * test[lp];
+			test[lp] = 0;
+		}
+	}
+	free(lp1);
+	free(lp2);
+	free(polynomial);
+	free(test);
+	return coeff;
 }
 
 double fac(int n) {
@@ -685,6 +788,13 @@ double complex* rayexp_terms(double* kpt, int* Gs, int num_waves,
 }
 
 void generate_rayleigh_expansion_terms(pswf_t* wf, ppot_t* pps, int num_elems) {
+
+	int* num_projs = (int*) malloc(num_elems * sizeof(int));
+	for (int i = 0; i < num_elems; i++) {
+		num_projs[i] = pps[i].num_projs;
+	}
+	wf->num_projs = num_projs;
+
 	#pragma omp parallel for
 	for (int k_num = 0; k_num < wf->nwk; k_num++) {
 		kpoint_t* kpt = wf->kpts[k_num];
@@ -722,6 +832,13 @@ void generate_rayleigh_expansion_terms(pswf_t* wf, ppot_t* pps, int num_elems) {
 }
 
 void copy_rayleigh_expansion_terms(pswf_t* wf, ppot_t* pps, int num_elems, pswf_t* wf_R) {
+	
+	int* num_projs = (int*) malloc(num_elems * sizeof(int));
+	for (int i = 0; i < num_elems; i++) {
+		num_projs[i] = pps[i].num_projs;
+	}
+	wf->num_projs = num_projs;
+
 	#pragma omp parallel for 
 	for (int k_num = 0; k_num < wf->nwk * wf->nspin; k_num++) {
 		kpoint_t* kpt = wf->kpts[k_num];
@@ -741,6 +858,232 @@ void copy_rayleigh_expansion_terms(pswf_t* wf, ppot_t* pps, int num_elems, pswf_
 			}
 		}
 	}
+}
+
+pswf_t* expand_symm_wf(pswf_t* rwf, int num_kpts, int* maps,
+	double* ops, double* drs, double* kws, int* trs) {
+
+	double* lattice = rwf->lattice;
+	double* reclattice = rwf->reclattice;
+
+	pswf_t* wf = (pswf_t*) malloc(sizeof(pswf_t));
+
+	wf->num_elems = rwf->num_elems;
+	wf->num_sites = rwf->num_sites;
+	wf->pps = rwf->pps;
+	wf->G_bounds = (int*) malloc(6*sizeof(int));
+	for (int i = 0; i < 6; i++) {
+		wf->G_bounds[i] = 0;//rwf->G_bounds[i];
+	}
+
+	wf->kpts = (kpoint_t**) malloc(num_kpts * rwf->nspin * sizeof(kpoint_t*));
+	wf->nspin = rwf->nspin;
+	wf->nband = rwf->nband;
+	wf->nwk = num_kpts;
+	wf->lattice = (double*) malloc(9*sizeof(double));
+	wf->reclattice = (double*) malloc(9*sizeof(double));
+	for (int i = 0; i < 9; i++) {
+		wf->lattice[i] = lattice[i];
+		wf->reclattice[i] = reclattice[i];
+	}
+	wf->fftg = NULL; // TODO MAKE FFTG
+
+	wf->is_ncl = rwf->is_ncl;
+
+	wf->num_aug_overlap_sites = 0;
+	wf->dcoords = NULL;
+	wf->overlaps = NULL;
+	wf->num_projs = NULL;
+	wf->wp_num = 0;
+
+	for (int knum = 0; knum < num_kpts * wf->nspin; knum++) {
+		wf->kpts[knum] = (kpoint_t*) malloc(sizeof(kpoint_t));
+
+		double pw[3] = {0,0,0};
+		int rnum = maps[knum%num_kpts];
+		if (knum >= num_kpts) rnum += rwf->nwk;
+
+		kpoint_t* kpt = wf->kpts[knum];
+		kpoint_t* rkpt = rwf->kpts[rnum];
+
+		//TEST
+		//kpoint_t* okpt = owf->kpts[knum];
+
+		kpt->up = rkpt->up;
+		kpt->num_waves = rkpt->num_waves;
+		kpt->k = (double*) malloc(3 * sizeof(double));
+		int tr = trs[knum%num_kpts];
+		rotation_transform(kpt->k, ops+OPSIZE*(knum%num_kpts), rkpt->k);
+		if (tr == 1) {
+			kpt->k[0] *= -1;
+			kpt->k[1] *= -1;
+			kpt->k[2] *= -1;
+		}
+		//printf("OLD KPT %lf %lf %lf\n", okpt->k[0], okpt->k[1], okpt->k[2]);
+		printf("NEW KPT %lf %lf %lf\n", kpt->k[0], kpt->k[1], kpt->k[2]);
+		//kpt->Gs = (int*) malloc(3 * kpt->num_waves * sizeof(int));
+
+		kpt->weight = kws[knum%num_kpts];
+		kpt->num_bands = rkpt->num_bands;
+		kpt->bands = (band_t**) malloc(kpt->num_bands * sizeof(band_t*));
+		kpt->expansion = NULL;
+
+		int* igall = malloc(3*kpt->num_waves*sizeof(int));
+		if (igall == NULL) {
+		    	ALLOCATION_FAILED();
+		}
+		int nb1max = rwf->G_bounds[1] - rwf->G_bounds[0] + 2;
+		int nb2max = rwf->G_bounds[3] - rwf->G_bounds[2] + 2;
+		int nb3max = rwf->G_bounds[5] - rwf->G_bounds[4] + 2;
+		double encut = rwf->encut;
+		double* b1 = reclattice;
+		double* b2 = reclattice+3;
+		double* b3 = reclattice+6;
+		int ncnt = -1;
+		for (int ig3 = 0; ig3 <= 2 * nb3max; ig3++) {
+			int ig3p = ig3;
+			if (ig3 > nb3max) ig3p = ig3 - 2 * nb3max - 1;
+			for (int ig2 = 0; ig2 <= 2 * nb2max; ig2++) {
+				int ig2p = ig2;
+				if (ig2 > nb2max) ig2p = ig2 - 2 * nb2max - 1;
+				for (int ig1 = 0; ig1 <= 2 * nb1max; ig1++) {
+					int ig1p = ig1;
+					if (ig1 > nb1max) ig1p = ig1 - 2 * nb1max - 1;
+					double sumkg[3];
+					for (int j = 0; j < 3; j++) {
+						sumkg[j] = (kpt->k[0]+ig1p) * b1[j]
+									+ (kpt->k[1]+ig2p) * b2[j]
+									+ (kpt->k[2]+ig3p) * b3[j];
+					}
+					double gtot = mag(sumkg);
+					double etot = pow(gtot,2.0) / CCONST;
+					//printf("%lf %lf\n", etot, gtot);
+					if (etot <= encut) {
+						ncnt++;
+						igall[ncnt*3+0] = ig1p;
+						igall[ncnt*3+1] = ig2p;
+						igall[ncnt*3+2] = ig3p;
+						if (ig1p < wf->G_bounds[0]) wf->G_bounds[0] = ig1p;
+						else if (ig1p > wf->G_bounds[1]) wf->G_bounds[1] = ig1p;
+						if (ig2p < wf->G_bounds[2]) wf->G_bounds[2] = ig2p;
+						else if (ig2p > wf->G_bounds[3]) wf->G_bounds[3] = ig2p;
+						if (ig3p < wf->G_bounds[4]) wf->G_bounds[4] = ig3p;
+						else if (ig3p > wf->G_bounds[5]) wf->G_bounds[5] = ig3p;
+					}
+				}
+			}
+		}
+		ncnt++;
+
+		if (ncnt * 2 == rkpt->num_waves) {
+			printf("This is an NCL wavefunction!\n");
+			wf->is_ncl = 1;
+			for (int iplane = 0; iplane < rkpt->num_waves/2; iplane++) {
+				igall[3*(rkpt->num_waves/2+iplane)+0] = igall[3*iplane+0];
+				igall[3*(rkpt->num_waves/2+iplane)+1] = igall[3*iplane+1];
+				igall[3*(rkpt->num_waves/2+iplane)+2] = igall[3*iplane+2];
+			}
+		} else if (ncnt != rkpt->num_waves) {
+			printf("ERROR %d %d %lf %lf %lf %lf\n", ncnt, kpt->num_waves,
+				kpt->k[0], kpt->k[1], kpt->k[2], CCONST);
+		}
+		kpt->Gs = igall;
+
+		int ngx = wf->G_bounds[1] - wf->G_bounds[0] + 1;
+		int gxmin = wf->G_bounds[0];
+		int ngy = wf->G_bounds[3] - wf->G_bounds[2] + 1;
+		int gymin = wf->G_bounds[2];
+		int ngz = wf->G_bounds[5] - wf->G_bounds[4] + 1;
+		int gzmin = wf->G_bounds[4];
+		int* kptinds = (int*) malloc(ngx*ngy*ngz * sizeof(int));
+		for (int w = 0; w < ngx*ngy*ngz; w++) kptinds[w] = -1;
+
+		int gx, gy, gz;
+		int* gmaps = (int*) malloc(kpt->num_waves * sizeof(int));
+		float complex* factors = (float complex*) malloc(
+			kpt->num_waves * sizeof(float complex));
+		for (int w = 0; w < kpt->num_waves; w++) gmaps[w] = -1;
+		for (int w = 0; w < rkpt->num_waves; w++) {
+			gx = kpt->Gs[3*w+0];
+			gy = kpt->Gs[3*w+1];
+			gz = kpt->Gs[3*w+2];
+			kptinds[(gx-gxmin)*ngy*ngz + (gy-gymin)*ngz + (gz-gzmin)] = w;
+		}
+
+		double* dr = drs + 3 * (knum%num_kpts);
+
+		int w = 0;
+		for (int g = 0; g < kpt->num_waves; g++) {
+
+			pw[0] = rkpt->k[0] + rkpt->Gs[3*g+0];
+			pw[1] = rkpt->k[1] + rkpt->Gs[3*g+1];
+			pw[2] = rkpt->k[2] + rkpt->Gs[3*g+2];
+
+			rotation_transform(pw, ops+OPSIZE*(knum%num_kpts), pw);
+			if (tr == 1) {
+				pw[0] *= -1;
+				pw[1] *= -1;
+				pw[2] *= -1;
+			}
+
+			pw[0] -= kpt->k[0];
+			pw[1] -= kpt->k[1];
+			pw[2] -= kpt->k[2];
+
+			gx = (int) round(pw[0]);
+			gy = (int) round(pw[1]);
+			gz = (int) round(pw[2]);
+			gmaps[kptinds[(gx-gxmin)*ngy*ngz + (gy-gymin)*ngz + (gz-gzmin)]] = g;
+			factors[kptinds[(gx-gxmin)*ngy*ngz + (gy-gymin)*ngz + (gz-gzmin)]] = cexpf(
+				-I * 2 * PI * (dot(kpt->k, dr) + dot(pw, dr)) );
+
+			if (kptinds[(gx-gxmin)*ngy*ngz + (gy-gymin)*ngz + (gz-gzmin)] < 0) {
+				printf("ERROR, BAD PLANE WAVE MAPPING\n");
+			}
+
+			//kpt->Gs[3*g+0] = rkpt->Gs[3*g+0];
+			//kpt->Gs[3*g+1] = rkpt->Gs[3*g+1];
+			//kpt->Gs[3*g+2] = rkpt->Gs[3*g+2];
+
+			//printf("OLD G %d %d %d\n", okpt->Gs[3*g+0], okpt->Gs[3*g+1], okpt->Gs[3*g+2]);
+			//printf("NEW G %d %d %d\n", kpt->Gs[3*g+0],  kpt->Gs[3*g+1],  kpt->Gs[3*g+2]);
+
+		}
+
+		for (int b = 0; b < kpt->num_bands; b++) {
+			kpt->bands[b] = (band_t*) malloc(sizeof(band_t));
+			kpt->bands[b]->n = rkpt->bands[b]->n;
+			kpt->bands[b]->num_waves = rkpt->bands[b]->num_waves;
+			kpt->bands[b]->occ = rkpt->bands[b]->occ;
+			kpt->bands[b]->energy = rkpt->bands[b]->energy;
+			kpt->bands[b]->Cs = (float complex*) malloc(
+				kpt->num_waves * sizeof(float complex));
+			kpt->bands[b]->CRs = NULL;
+			kpt->bands[b]->projections = NULL;
+			kpt->bands[b]->up_projections = NULL;
+			kpt->bands[b]->down_projections = NULL;
+			kpt->bands[b]->wave_projections = NULL;
+			//double total = 0;
+			for (int w = 0; w < kpt->num_waves; w++) {
+				if (gmaps[w] < 0) {
+					printf("ERROR, INCOMPLETE PLANE WAVE MAPPING\n");
+				}
+				kpt->bands[b]->Cs[w] = factors[w] * rkpt->bands[b]->Cs[gmaps[w]];
+				if (tr == 1) {
+					kpt->bands[b]->Cs[w] = conj(kpt->bands[b]->Cs[w]);
+				}
+				//total += cabs(cabs(kpt->bands[b]->Cs[w]) - cabs(okpt->bands[b]->Cs[w]));
+			}
+			//printf("energies %lf %lf %e\n", kpt->bands[b]->energy, okpt->bands[b]->energy, total);
+		}
+	
+		free(gmaps);
+		free(kptinds);
+		free(factors);
+	}
+
+	wf->encut = rwf->encut;
+	return wf;
 }
 
 void CHECK_ALLOCATION(void* ptr) {

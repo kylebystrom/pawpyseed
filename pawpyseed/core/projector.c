@@ -444,6 +444,7 @@ void make_pwave_overlap_matrices(ppot_t* pp_ptr) {
 void setup_projections_no_rayleigh(pswf_t* wf, ppot_t* pps, int num_elems,
 	int num_sites, int* fftg, int* labels, double* coords) {
 
+	wf->num_sites = num_sites;
 	wf->fftg = (int*) malloc(3*sizeof(int));
 	wf->fftg[0] = fftg[0];
 	wf->fftg[1] = fftg[1];
@@ -640,6 +641,12 @@ void overlap_setup_real(pswf_t* wf_R, pswf_t* wf_S, ppot_t* pps,
 	int* labels_R, int* labels_S, double* coords_R, double* coords_S,
 	int* N_R, int* N_S, int* N_RS_R, int* N_RS_S, int num_N_R, int num_N_S, int num_N_RS) {
 
+	clean_wave_projections(wf_R);
+	clean_wave_projections(wf_S);
+
+	wf_R->wp_num = num_N_S;
+	wf_S->wp_num = num_N_R;
+
 	double complex** overlaps = NULL;
 	if (num_N_RS > 0) {
 		overlaps = (double complex**) malloc(num_N_RS * sizeof(double complex*));
@@ -693,7 +700,7 @@ void overlap_setup_real(pswf_t* wf_R, pswf_t* wf_S, ppot_t* pps,
 		ppot_t pp1 = pps[labels_R[s1]];
 		ppot_t pp2 = pps[labels_S[s2]];
 		// CALCULATE THE DIFF COORD HERE, PASS TO offsite_wave_overlap AND SAVE IT FOR USE IN compensation_terms
-		overlaps[i] = calloc(pp1.total_projs * pp2.total_projs, sizeof(double complex));
+		overlaps[i] = (double complex*) calloc(pp1.total_projs * pp2.total_projs, sizeof(double complex));
 		CHECK_ALLOCATION(overlaps[i]);
 		double* coord1 = coords_R + 3 * s1;
 		double* coord2 = coords_S + 3 * s2;
@@ -759,7 +766,7 @@ double* compensation_terms(int BAND_NUM, pswf_t* wf_S, pswf_t* wf_R, ppot_t* pps
 	printf("%d %d %d %d %d %d\n", BAND_NUM, num_elems, num_M, num_N_R, num_N_S, num_N_RS);
 	printf("%d %lf %d %lf %d\n", proj_labels[0], proj_coords[0], ref_labels[0], ref_coords[0], fft_grid[1]);
 	
-	int NUM_KPTS = wf_R->nwk * wf_S->nspin;
+	int NUM_KPTS = wf_R->nwk * wf_R->nspin;
 	int NUM_BANDS = wf_R->nband;
 
 	double* overlap = (double*) calloc(2 * NUM_KPTS * NUM_BANDS, sizeof(double));
@@ -790,13 +797,12 @@ double* compensation_terms(int BAND_NUM, pswf_t* wf_S, pswf_t* wf_R, ppot_t* pps
 			for (int i = 0; i < pron.total_projs; i++) {
 				for (int j = 0; j < ppron.total_projs; j++) {
 					if (pron.ls[i] == ppron.ls[j]  && pron.ms[i] == ppron.ms[j]) {
-						nj = pron.ns[j];
-						ni = ppron.ns[i];
-						temp += conj(pron.overlaps[j])
-							//* (mymat[pron.num_projs*ni+nj])
+						nj = ppron.ns[j];
+						ni = pron.ns[i];
+						temp += conj(pron.overlaps[i])
 							* (pp.aepw_overlap_matrix[pp.num_projs*ni+nj]
 							- pp.pspw_overlap_matrix[pp.num_projs*ni+nj])
-							* ppron.overlaps[i];
+							* ppron.overlaps[j];
 					}
 				}
 			}
@@ -845,9 +851,9 @@ double* compensation_terms(int BAND_NUM, pswf_t* wf_S, pswf_t* wf_R, ppot_t* pps
 			projection_t ppron = band_S->projections[site_num2];
 			for (int i = 0; i < pron.total_projs; i++) {
 				for (int j = 0; j < ppron.total_projs; j++) {
-					temp += conj(pron.overlaps[j])
+					temp += conj(pron.overlaps[i])
 						* (N_RS_overlaps[s][i*ppron.total_projs+j])
-						* ppron.overlaps[i] * cexp(2*I*PI *
+						* ppron.overlaps[j] * cexp(2*I*PI *
 						dot(kpt_R->k, wf_S->dcoords + 3*s));
 				}
 			}

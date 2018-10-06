@@ -81,21 +81,21 @@ state, for a structure
 */
 typedef struct band {
 	int n; ///< band number
-	int num_waves; ///< number of plane waves
+	int num_waves; ///< number of plane waves 
 	double occ; ///< occupancy of the band
 	double N;
-	double complex energy; ///< energy of the band
+	double energy; ///< energy of the band
 	float complex* Cs; ///< plane wave coefficients (normalized to 1)
 	double complex* CRs; ///< wavefunction in real space
 	projection_t* projections; ///< length==number of sites in structure
 	projection_t* up_projections; ///< length==number of sites in structure
 	projection_t* down_projections; ///< length==number of sites in structure
-	projection_t* wave_projections; ///< length==number of sites in structure
+	projection_t* wave_projections; ///< used for offsite compensation terms
 } band_t;
 
 typedef struct rayleigh_set {
 	int l; ///< angular momentum quantum number
-	double complex* terms; ///< rayleigh epansion terms
+	double complex* terms; ///< rayleigh expansion terms
 } rayleigh_set_t;
 
 typedef struct kpoint {
@@ -110,7 +110,9 @@ typedef struct kpoint {
 } kpoint_t;
 
 typedef struct pswf {
+	double encut;
 	int num_elems; ///< number of elements in the structure
+	int* num_projs; ///< number of projectors for each element
 	int num_sites; ///< number of sites in the structure
 	ppot_t* pps; ///< list of ppot_t objects, one for each element
 	int* G_bounds; ///< highest-frequency plane-waves in basis set (xmin, xmax, ymin, ymax, zmin, zmax)
@@ -124,6 +126,7 @@ typedef struct pswf {
 
 	int is_ncl; ///< 1 if noncollinear, 0 otherwise
 
+	int wp_num; ///< length==size of wave_projections in each band
 	int num_aug_overlap_sites; ///< used for Projector operations
 	double* dcoords; ///< used for Projector operations
 	double complex** overlaps; ///< used for Projector operations
@@ -153,6 +156,10 @@ typedef struct real_proj_site {
 	int* indices;
 	real_proj_t* projs;
 } real_proj_site_t;
+
+void affine_transform(double* out, double* op, double* inv);
+
+void rotation_transform(double* out, double* op, double* inv);
 
 /**
 Minimum of a and b
@@ -206,7 +213,11 @@ void min_cart_path(double* coord, double* center, double* lattice, double* path,
 
 double complex trilinear_interpolate(double complex* c, double* frac, int* fftg);
 
-void free_kpoint(kpoint_t* kpt, int num_elems, ppot_t* pps);
+void free_projection_list(projection_t* projlist, int num);
+
+void clean_wave_projections(pswf_t* wf);
+
+void free_kpoint(kpoint_t* kpt, int num_elems, int num_sites, int wp_num, int* num_projs);
 
 void free_ppot(ppot_t* pp);
 
@@ -240,11 +251,15 @@ int get_nwk(pswf_t* wf);
 /** Return the number of spins in the wavefunction. */
 int get_nspin(pswf_t* wf);
 
+double get_energy(pswf_t* wf, int band, int kpt, int spin);
+
 /** Sets the numer of sites in the structure for the wavefunction. */
 void set_num_sites(pswf_t* wf, int nsites);
 
 /** Associated legendre polynomial P_lm(x) */
 double legendre(int l, int m, double x);
+void legendre_coeff(double* ptr, int l, int m);
+double* legendre_product(int l1, int l2, int m1, int m2);
 
 /** factorial */
 double fac(int n);
@@ -369,6 +384,14 @@ void generate_rayleigh_expansion_terms(pswf_t* wf, ppot_t* pps, int num_elems);
 Copy the Rayleigh expansion terms from wf_R to wf.
 */
 void copy_rayleigh_expansion_terms(pswf_t* wf, ppot_t* pps, int num_elems, pswf_t* wf_R);
+
+/**
+Takes a reference wavefunction and a list of symmetry operations
+to new kpoints, and calculates a new wavefunction that has the
+additional kpoints.
+*/
+pswf_t* expand_symm_wf(pswf_t* rwf, int num_kpts, int* maps,
+	double* ops, double* drs, double* kws, int* trs);
 
 /**
 Called after a malloc or calloc call to check that

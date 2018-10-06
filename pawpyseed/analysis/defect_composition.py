@@ -67,6 +67,8 @@ class PawpyData:
 		data['densities'] = self.densities
 		data['efermi'] = self.efermi
 		data['data'] = self.data
+		if self.energy_levels:
+			data['energy_levels'] = self.energy_levels
 		return data
 
 	def write_yaml(self, filename):
@@ -78,22 +80,24 @@ class PawpyData:
 
 	@classmethod
 	def from_dict(cls, data):
-		return cls(data['energies'], [data['densities'], data['efermi']],
+		if 'energy_levels' in data:
+			return cls([data['energies'], data['densities'], data['efermi']],
+				data['structure'], data['data'], data['energy_levels'])
+		return cls([data['energies'], data['densities'], data['efermi']],
 			data['structure'], data['data'])
 
 	@classmethod
 	def from_yaml(cls, filename):
 		f = open(filename, 'r')
-		data = yaml.load(f)
+		data = yaml.load(f.read().encode('utf-8'))
 		return cls.from_dict(data)
 
 
 
 class BulkCharacter(PawpyData):
 
-	def __init__(self, dos, structure, band_dict):
+	def __init__(self, dos, structure, band_dict, energy_levels = None):
 
-		self.energies = dos.energies
 		if type(dos) == list:
 			self.energies = dos[0]
 			self.densities = dos[1]
@@ -104,6 +108,60 @@ class BulkCharacter(PawpyData):
 			self.efermi = dos.efermi
 		self.structure = structure
 		self.data = band_dict
+		self.energy_levels = energy_levels
+
+	def plot(self, name):
+		bs = []
+		vs = []
+		cs = []
+		for b in self.data:
+			bs.append(b)
+			vs.append(self.data[b][0][0])
+			vs.append(self.data[b][0][1])
+			cs.append(self.data[b][1][0])
+			cs.append(self.data[b][1][1])
+
+		bs = np.array(bs) - np.mean(bs)
+		cs = np.array(cs)
+		vs = np.array(vs)
+		if self.energy_levels == None:
+			fig, (ax1, ax3) = plt.subplots(2, 1, gridspec_kw = {'height_ratios':[3, 1]},
+				figsize=[6.4,6.4])
+		else:
+			fig, (ax1, ax3) = plt.subplots(2, 1, gridspec_kw = {'height_ratios':[1, 1]},
+				figsize=[6.4,8])
+		ax1.set_xlabel('band')
+		ax1.set_ylabel('valence', color='b')
+		ax1.bar(bs-0.2, vs[::2], width=0.4, color='b')
+		ax1.bar(bs+0.2, vs[1::2], width=0.4, color='b')
+		ax1.set_ylim(0,1)
+		ax2 = ax1.twinx()
+		ax2.set_ylabel('conduction', color='r')
+		ax2.bar(bs-0.2, cs[::2], width=0.4, color='r')
+		ax2.bar(bs+0.2, cs[1::2], width=0.4, color='r')
+		ax2.set_ylim(0,1)
+		ax2.invert_yaxis()
+		plt.title(name + ' band character')
+		#plt.savefig('BAND_'+name)
+
+		if self.energy_levels == None:
+			ax3.plot(self.energies - self.efermi, self.densities)
+			ax3.set_xlabel('Energy (eV)')
+			ax3.set_ylabel('Total DOS')
+			ax3.set_xlim(-2,2)
+			ax3.set_ylim(0,max(self.densities))
+		else:
+			bs, es = [], []
+			for b in self.energy_levels:
+				bs.append(b)
+				es.append(self.energy_levels[b])
+			bs = np.array(bs) - np.mean(bs)
+			es = np.array(es)
+			ax3.bar(bs, es - self.efermi)
+			ax3.set_xlabel('band')
+			ax3.set_ylabel('Energy (eV)')
+		#plt.savefig('DOS_'+name)
+		plt.savefig(name.replace(' ', '_'))
 
 	@staticmethod
 	def makeit(generator):
@@ -117,8 +175,9 @@ class BulkCharacter(PawpyData):
 		for wf_dir, wf in generator:
 			vr = Vasprun(os.path.join(wf_dir, 'vasprun.xml'))
 			dos = vr.tdos
-			data = wf.defect_band_analysis(spinpol = True)
-			bcs[wf_dir] = BulkCharacter(dos, wf.structure, data)
+			data, energy_levels = wf.defect_band_analysis(num_above_ef=5, num_below_ef=5,
+				spinpol = True, return_energies=True)
+			bcs[wf_dir] = BulkCharacter(dos, wf.structure, data, energy_levels)
 
 		return bcs
 
@@ -171,7 +230,7 @@ def pycdt_dirs(top_dir):
 	bulk = os.path.join(top_dir, 'bulk')
 	wfdirs = []
 	for root, dirs, files in os.walk(top_dir):
-		if 'bulk' in root:
+		if 'bulk' in root or 'dielectric' in root:
 			continue
 		if 'OUTCAR' in files:
 			wfdirs.append(root)

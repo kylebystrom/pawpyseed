@@ -90,7 +90,7 @@ typedef struct band {
 	projection_t* projections; ///< length==number of sites in structure
 	projection_t* up_projections; ///< length==number of sites in structure
 	projection_t* down_projections; ///< length==number of sites in structure
-	projection_t* wave_projections; ///< length==number of sites in structure
+	projection_t* wave_projections; ///< used for offsite compensation terms
 } band_t;
 
 typedef struct rayleigh_set {
@@ -126,6 +126,7 @@ typedef struct pswf {
 
 	int is_ncl; ///< 1 if noncollinear, 0 otherwise
 
+	int wp_num; ///< length==size of wave_projections in each band
 	int num_aug_overlap_sites; ///< used for Projector operations
 	double* dcoords; ///< used for Projector operations
 	double complex** overlaps; ///< used for Projector operations
@@ -214,7 +215,9 @@ double complex trilinear_interpolate(double complex* c, double* frac, int* fftg)
 
 void free_projection_list(projection_t* projlist, int num);
 
-void free_kpoint(kpoint_t* kpt, int num_elems, int num_sites, int* num_projs);
+void clean_wave_projections(pswf_t* wf);
+
+void free_kpoint(kpoint_t* kpt, int num_elems, int num_sites, int wp_num, int* num_projs);
 
 void free_ppot(ppot_t* pp);
 

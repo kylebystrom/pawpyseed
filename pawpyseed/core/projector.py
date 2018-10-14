@@ -334,7 +334,7 @@ class Projector(Wavefunction):
 		bases = []
 		crs = []
 		for bdir in basis_dirs:
-			basis = Wavefunction.from_directory(bdir)
+			basis = Wavefunction.from_directory(bdir, False)
 
 			if desymmetrize:
 				allkpts, borig_kptnums, bop_nums, bsymmops, trs = basis.get_nosym_kpoints()

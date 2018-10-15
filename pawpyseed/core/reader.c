@@ -10,31 +10,52 @@
 #define PI 3.14159265358979323846
 #define c 0.262465831
 
-void setup(char* filename, int* pnrecl, int* pnspin, int* pnwk, int* pnband,
-	double* nb1, double* nb2, double* nb3, double* ecut,
-	double* lattice, double* reclattice) {
-	
-	double readin[3];
-	FILE* fp = fopen(filename, "rb");
-	double* ptr = readin;
-	fread(ptr,24,1,fp);
-	int nrecl = (int) round(readin[0]);
-	int nspin = (int) round(readin[1]);
-	int nprec = (int) round(readin[2]);
-	fclose(fp);
-	fp = fopen(filename, "rb");
-	double readarr[nrecl/8];
-	ptr = readarr;
-	FILE* fp0 = fp;
-	fseek(fp0,1*nrecl,0);
-	fread(ptr,nrecl,1,fp0);
-	int nwk = (int) round(readarr[0]);
-	int nband = (int) round(readarr[1]);
-	double encut = readarr[2];
-	printf("encut %lf\n", encut);
-	for (int i = 0; i < 9; i++) {
-		lattice[i] = readarr[i+3];
+WAVECAR* wcopen(char* f, int type) {
+	WAVECAR* wc = (WAVECAR*) malloc(sizeof(WAVECAR));
+	if (type == 0) {
+		wc->type = 0;
+		wc->fp = fopen(f, "rb");
+		wc->start = NULL;
+		wc->curr = NULL;
+	} else {
+		wc->type = 1;
+		wc->fp = NULL;
+		wc->start = f;
+		wc->curr = f;
 	}
+	return wc;
+}
+
+void wcseek(WAVECAR* wc, long loc) {
+	if (wc->type == 0) {
+		fseek(wc->fp, loc, SEEK_SET);
+	} else {
+		wc->curr = wc->start + loc;
+	}
+}
+
+void wcread(void* ptr0, long size, long nmemb, WAVECAR* wc) {
+	if (wc->type == 0) {
+		fread(ptr0, size, nmemb, wc->fp);
+	} else {
+		char* ptr = (char*) ptr0;
+		for (int i = 0; i < size * nmemb; i++) {
+			ptr[i] = wc->curr[i];
+		}
+	}
+}
+
+void wcclose(WAVECAR* wc) {
+	if (wc->type == 0) {
+		fclose(wc->fp);
+	}
+	free(wc);
+}
+
+void setup(int nrecl, int nprec, int nspin, int nwk, int nband,
+	double* nb1, double* nb2, double* nb3, double encut,
+	double* lattice, double* reclattice) {
+
 	vcross(reclattice+0, lattice+3, lattice+6);
 	vcross(reclattice+3, lattice+6, lattice+0);
 	vcross(reclattice+6, lattice+0, lattice+3);
@@ -99,30 +120,44 @@ void setup(char* filename, int* pnrecl, int* pnspin, int* pnwk, int* pnband,
 	printf(" %lf %lf %lf\n", reclattice[6], reclattice[7], reclattice[8]);
 	printf("\n %lf %lf %lf %d %d %d\n", nb1max, nb2max, nb3max, npmaxA, npmaxB, npmaxC);
 
-	*pnrecl = nrecl;
-	*pnspin = nspin;
-	*pnwk = nwk;
-	*pnband = nband;
 	*nb1 = nb1max;
 	*nb2 = nb2max;
 	*nb3 = nb3max;
-	*ecut = encut;
-
-	fclose(fp);
 }
 
-pswf_t* read_wavefunctions(char* filename, double* kpt_weights) {
-	int nrecli, nspin, nwk, nband;
+pswf_t* read_wavecar(WAVECAR* wc, double* kpt_weights) {
+
+	int nrecli, nspin, nwk, nband, nprec;
 	double nb1max, nb2max, nb3max, encut;
 	double* lattice = (double*) malloc(9*sizeof(double));
 	double* reclattice = (double*) malloc(9*sizeof(double));
-	setup(filename, &nrecli, &nspin, &nwk, &nband, &nb1max, &nb2max, &nb3max,
-		&encut, lattice, reclattice);
+
+	double readin[3];
+	double* ptr = readin;
+	wcread(ptr,24,1,wc);
+	//fread(ptr,24,1,wc->fp);
+	nrecli = (int) round(readin[0]);
+	nspin = (int) round(readin[1]);
+	nprec = (int) round(readin[2]);
+	long nrecl = (long)nrecli;
+	double readarr[nrecl/8];
+	ptr = readarr;
+	wcseek(wc,1*nrecl);
+	wcread(ptr,nrecl,1,wc);
+	//fseek(wc->fp,1*nrecl,0);
+	//fread(ptr,nrecl,1,wc->fp);
+	nwk = (int) round(readarr[0]);
+	nband = (int) round(readarr[1]);
+	encut = readarr[2];
+	for (int i = 0; i < 9; i++) {
+		lattice[i] = readarr[i+3];
+	}
+
+	setup(nrecli, nprec, nspin, nwk, nband, &nb1max, &nb2max, &nb3max,
+		encut, lattice, reclattice);
 	double* b1 = reclattice;
 	double* b2 = reclattice+3;
 	double* b3 = reclattice+6;
-
-	long nrecl = (long)nrecli;
 
 	pswf_t* wf = (pswf_t*) malloc(sizeof(pswf_t));
 
@@ -149,23 +184,25 @@ pswf_t* read_wavefunctions(char* filename, double* kpt_weights) {
 	//#pragma omp parallel for
 	for (int iwk = 0; iwk < nwk * nspin; iwk++) {
 		long irec = iwk * (long)(1 + nband);
-		FILE* pfp = fopen(filename, "rb");
+
 		kpoint_t* kpt = (kpoint_t*) malloc(sizeof(kpoint_t));
 		kpt->expansion = NULL;
 		kpt->num_bands = nband;
 		band_t** bands = (band_t**) malloc(nband*sizeof(band_t*));
 		kpt->bands = bands;
 		if (kpt == NULL || bands == NULL) {
-		    	ALLOCATION_FAILED();
+		    ALLOCATION_FAILED();
 		}
-		fseek(pfp, irec*nrecl+2*nrecl, SEEK_SET);
-		fread(kptr, 8, nrecl/8, pfp);
+		wcseek(wc, irec*nrecl+2*nrecl);
+		wcread(kptr, 8, nrecl/8, wc);
+		//fseek(wc->fp, irec*nrecl+2*nrecl, SEEK_SET);
+		//fread(kptr, 8, nrecl/8, wc->fp);
 		
 		int nplane = (int) round(kptr[0]);
 		kpt->num_waves = nplane;
 		int* igall = malloc(3*nplane*sizeof(int));
 		if (igall == NULL) {
-		    	ALLOCATION_FAILED();
+		    ALLOCATION_FAILED();
 		}
 		kpt->k = (double*) malloc(3*sizeof(double));
 		kpt->k[0] = kptr[1];
@@ -237,8 +274,10 @@ pswf_t* read_wavefunctions(char* filename, double* kpt_weights) {
 
 		for (int iband = 0; iband < nband; iband++) {
 			irec++;
-			fseek(pfp, (long)irec*nrecl+2*(long)nrecl, SEEK_SET);
-			fread(cptr, 8, nrecl/8, pfp);
+			wcseek(wc, (long)irec*nrecl+2*(long)nrecl);
+			wcread(cptr, 8, nrecl/8, wc);
+			//fseek(wc->fp, (long)irec*nrecl+2*(long)nrecl, SEEK_SET);
+			//fread(cptr, 8, nrecl/8, wc->fp);
 			float complex* coeff = malloc(nplane*sizeof(float complex));
 			for (int iplane = 0; iplane < nplane; iplane++) {
 				coeff[iplane] = cptr[iplane];
@@ -250,7 +289,6 @@ pswf_t* read_wavefunctions(char* filename, double* kpt_weights) {
 		kpt->weight = kpt_weights[iwk%nwk];
 		kpt->Gs = igall;
 		kpts[iwk] = kpt;
-		fclose(pfp);
 	}
 
 	free(kptr);
@@ -262,6 +300,22 @@ pswf_t* read_wavefunctions(char* filename, double* kpt_weights) {
 	return wf;
 }
 
+pswf_t* read_wavefunctions(char* filename, double* kpt_weights) {
+	setbuf(stdout,NULL);
+	WAVECAR* f = wcopen(filename, 0);
+	pswf_t* wf = read_wavecar(f, kpt_weights);
+	wcclose(f);
+	return wf;
+}
+
+pswf_t* read_wavefunctions_from_str(char* start, double* kpt_weights) {
+	WAVECAR* f = wcopen(start, 1);
+	pswf_t* wf = read_wavecar(f, kpt_weights);
+	wcclose(f);
+	return wf;
+}
+
+/*
 kpoint_t** read_one_band(int* G_bounds, double* kpt_weights, int* ns, int* nk, int* nb, int BAND_NUM, char* filename) {
 	clock_t start = clock();
 
@@ -307,15 +361,6 @@ kpoint_t** read_one_band(int* G_bounds, double* kpt_weights, int* ns, int* nk, i
 		band->occ = kptr[6+BAND_NUM*3];
 		kpt->bands[0] = band;
 
-		//printf("nplane %d %d\n", nplane, npmax);
-		/*#pragma omp critical
-		{
-		printf("hm %lf %lf %lf\n", kptr[6+BAND_NUM*3], kptr[7+BAND_NUM*3], band->occ);
-		printf("eek,iwk nrecl np e o kpt %d %d %d %lf %lf %lf %lf\n", iwk, nrecl, nplane, kx,ky,kz, band->energy);
-		
-		printf("got some max %lf %lf %lf\n\n", nb1max, nb2max, nb3max);
-		}
-		continue;*/
 		int ncnt = -1;
 		for (int ig3 = 0; ig3 <= 2 * nb3max; ig3++) {
 			int ig3p = ig3;
@@ -366,3 +411,4 @@ kpoint_t** read_one_band(int* G_bounds, double* kpt_weights, int* ns, int* nk, i
 
 	return kpts;
 }
+*/

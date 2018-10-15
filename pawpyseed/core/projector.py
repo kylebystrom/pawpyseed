@@ -122,6 +122,7 @@ class Projector(Wavefunction):
 		self.coords = wf.coords
 		self.basis = basis
 		self.wf = wf
+		self.encut = wf.encut
 		self.num_proj_els = wf.num_proj_els
 
 		if not pseudo:

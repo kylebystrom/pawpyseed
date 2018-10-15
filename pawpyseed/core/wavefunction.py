@@ -15,6 +15,7 @@ from pawpyseed.core.utils import *
 import os, time
 import numpy as np
 import json
+from monty.io import zopen
 
 import sys
 
@@ -181,7 +182,14 @@ class PseudoWavefunction:
 		kws = numpy_to_cdouble(weights)
 		self.kws = np.array(weights)
 		self.kpts = np.array(vr.actual_kpoints, dtype=np.float64)
-		self.wf_ptr = PAWC.read_wavefunctions(filename.encode('utf-8'), kws)
+		if '.gz' in filename or '.bz2' in filename:
+			f = zopen(filename, 'rb')
+			contents = f.read()
+			f.close()
+			self.wf_ptr = PAWC.read_wavefunctions_from_str(
+				contents, kws)
+		else:
+			self.wf_ptr = PAWC.read_wavefunctions(filename.encode('utf-8'), kws)
 
 	def pseudoprojection(self, band_num, basis):
 		"""
@@ -244,11 +252,12 @@ class Wavefunction:
 		self.projector_list = None
 		self.nums = None
 		self.coords = None
-		if setup_projectors:
-			self.check_c_projectors()
 		self.nband = PAWC.get_nband(c_void_p(pwf.wf_ptr))
 		self.nwk = PAWC.get_nwk(c_void_p(pwf.wf_ptr))
 		self.nspin = PAWC.get_nspin(c_void_p(pwf.wf_ptr))
+		self.encut = PAWC.get_encut(c_void_p(pwf.wf_ptr))
+		if setup_projectors:
+			self.check_c_projectors()
 		self.num_proj_els = None
 
 	@staticmethod
@@ -327,6 +336,7 @@ class Wavefunction:
 
 		#print (num_els, clabels, ls, pgrids, wgrids, rmaxs)
 		grid_encut = (2 * np.pi * self.dim / self.structure.lattice.abc)**2 / 0.262
+		print("GRID_ENCUT", grid_encut)
 		return cfunc_call(PAWC.get_projector_list, None,
 							num_els, clabels, ls, pgrids, wgrids,
 							projectors, aewaves, pswaves,

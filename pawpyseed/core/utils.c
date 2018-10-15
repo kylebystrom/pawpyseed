@@ -318,6 +318,10 @@ int get_nspin(pswf_t* wf) {
 	return wf->nspin;
 }
 
+double get_encut(pswf_t* wf) {
+	return wf->encut;
+}
+
 int is_ncl(pswf_t* wf) {
 	return wf->is_ncl;
 }
@@ -901,7 +905,15 @@ pswf_t* expand_symm_wf(pswf_t* rwf, int num_kpts, int* maps,
 
 		double pw[3] = {0,0,0};
 		int rnum = maps[knum%num_kpts];
+		int tr = trs[knum%num_kpts];
 		if (knum >= num_kpts) rnum += rwf->nwk;
+		if (rwf->nspin == 2 && tr) {
+			if (rnum < rwf->nwk) {
+				rnum += rwf->nwk;
+			} else{
+				rnum -= rwf->nwk;
+			}
+		}
 
 		kpoint_t* kpt = wf->kpts[knum];
 		kpoint_t* rkpt = rwf->kpts[rnum];
@@ -912,7 +924,6 @@ pswf_t* expand_symm_wf(pswf_t* rwf, int num_kpts, int* maps,
 		kpt->up = rkpt->up;
 		kpt->num_waves = rkpt->num_waves;
 		kpt->k = (double*) malloc(3 * sizeof(double));
-		int tr = trs[knum%num_kpts];
 		rotation_transform(kpt->k, ops+OPSIZE*(knum%num_kpts), rkpt->k);
 		if (tr == 1) {
 			kpt->k[0] *= -1;

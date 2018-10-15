@@ -24,6 +24,9 @@ PAWC = CDLL(os.path.join(MODULE_DIR, "pawpy.so"))
 PAWC.get_energy.argtypes = [c_void_p, c_int, c_int, c_int]
 PAWC.get_energy.restype = c_double
 
+PAWC.read_wavefunctions_from_str.argtypes = (c_char_p, c_double_p)
+PAWC.read_wavefunctions_from_str.restype = c_void_p
+
 PAWC.read_wavefunctions.argtypes = (c_char_p, c_double_p)
 PAWC.read_wavefunctions.restype = c_void_p
 
@@ -72,9 +75,14 @@ PAWC.expand_symm_wf.restype = c_void_p
 
 PAWC.get_occs.argtypes = [c_void_p]
 PAWC.get_occs.restype = c_double_p
+PAWC.get_nband.argtypes = [c_void_p]
+PAWC.get_nwk.argtypes = [c_void_p]
+PAWC.get_nspin.argtypes = [c_void_p]
+PAWC.get_encut.argtypes = [c_void_p]
 PAWC.get_nband.restype = c_int
 PAWC.get_nwk.restype = c_int
 PAWC.get_nspin.restype = c_int
+PAWC.get_encut.restype = c_double
 
 PAWC.free_ptr.argtypes = [c_void_p]
 PAWC.free_ptr.restype = None

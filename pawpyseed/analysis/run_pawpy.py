@@ -1,3 +1,4 @@
+# coding: utf-8
 
 import os
 import shutil
@@ -9,16 +10,15 @@ from pymatgen.io.vasp import Vasprun
 from pawpyseed.core.wavefunction import Wavefunction
 from pawpyseed.core.projector import Projector
 
+class PathHolder():
+	def __init__(self, path):
+		self.launch_dir = path
+
 class DummyFirework():
-    class PathHolder():
-        def __init__(self, path):
-            self.launch_dir = path
     def __init__(self, path):
         self.launches = [PathHolder(path)]
 
-Wavefunction.from_directory = from_atomate_directory
-
-def from_atomate_directory(self, path, setup_projectors = True):
+def from_atomate_directory(path, setup_projectors = True):
 
     files = ['CONTCAR','OUTCAR','POTCAR',
             'WAVECAR','vasprun.xml']
@@ -28,11 +28,11 @@ def from_atomate_directory(self, path, setup_projectors = True):
         filepat = os.path.join( path, file +'.relax2.gz')
         if not os.path.exists( filepat):
             filepat = os.path.join( path, file +'.relax1.gz')
-        elif not os.path.exists( filepat):
+        if not os.path.exists( filepat):
             filepat = os.path.join( path, file +'.gz')
-        elif not os.path.exists( filepat):
+        if not os.path.exists( filepat):
             filepat = os.path.join( path, file)
-        elif not os.path.exists( filepat):
+        if not os.path.exists( filepat):
             print('Could not find {}! Skipping this defect...'.format(file))
             return False
 
@@ -43,6 +43,7 @@ def from_atomate_directory(self, path, setup_projectors = True):
 
     return wf
 
+Wavefunction.from_directory = from_atomate_directory
 
 class DefectWorkflowWavefunctionHandle(object):
     """
@@ -123,6 +124,7 @@ class DefectWorkflowWavefunctionHandle(object):
         Container for running pawpyseed on all defects in this workflow
         """
 
+        vbm = None
         bulk_dirs, wf_dirs = [], []
         bulk_sizes, wf_sizes = [], []
         for sc_size, bulk_fw in self.bulk_fw_sets.items():
@@ -141,7 +143,6 @@ class DefectWorkflowWavefunctionHandle(object):
         projector_list, bases = Projector.setup_bases(bulk_dirs, wf_dirs, True)
         store_all_data = {}
         basis_sets = {}
-        vbm = None
         for i, sc_size in enumerate(bulk_sizes):
             basis_sets[sc_size] = bases[i]
 
@@ -182,7 +183,7 @@ class DefectWorkflowWavefunctionHandle(object):
                     wf.free_all()
 
                     store_all_data[fw.fw_id] = band_dict
-                except Exception, e:
+                except Exception as e:
                     print("___&*$#&(*#@&$)(*&@#)($----\n--> ERROR OCCURED. "
                           "Skipping this defect.\n-------------^#$^*&^#$&*^#@^$#-------------")
                     print(repr(e))

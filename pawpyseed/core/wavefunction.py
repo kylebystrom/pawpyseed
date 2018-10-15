@@ -289,6 +289,32 @@ class Wavefunction:
 		args = filepaths + [setup_projectors]
 		return Wavefunction.from_files(*args)
 
+	@staticmethod
+	def from_atomate_directory(path, setup_projectors = True):
+
+	    files = ['CONTCAR','OUTCAR','POTCAR',
+	            'WAVECAR','vasprun.xml']
+	    paths = []
+
+	    for file in files:
+	        filepat = os.path.join( path, file +'.relax2.gz')
+	        if not os.path.exists( filepat):
+	            filepat = os.path.join( path, file +'.relax1.gz')
+	        if not os.path.exists( filepat):
+	            filepat = os.path.join( path, file +'.gz')
+	        if not os.path.exists( filepat):
+	            filepat = os.path.join( path, file)
+	        if not os.path.exists( filepat):
+	            print('Could not find {}! Skipping this defect...'.format(file))
+	            return False
+
+	        paths.append(filepat)
+
+	    args = paths + [setup_projectors]
+	    wf = Wavefunction.from_files(*args)
+
+	    return wf
+
 	def get_c_projectors_from_pps(self, pps):
 		"""
 		Returns a point to a list of ppot_t objects in C,

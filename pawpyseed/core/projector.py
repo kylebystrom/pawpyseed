@@ -323,7 +323,8 @@ class Projector(Wavefunction):
 		return res[::2] + 1j * res[1::2]
 
 	@staticmethod
-	def setup_bases(basis_dirs, wf_dirs, desymmetrize = True):
+	def setup_bases(basis_dirs, wf_dirs, desymmetrize = True,
+		atomate_compatible = True):
 		"""
 		This function performs the setup of all the bases in the basis_dirs.
 		After this function is called, pass the returned projector_list
@@ -335,7 +336,10 @@ class Projector(Wavefunction):
 		bases = []
 		crs = []
 		for bdir in basis_dirs:
-			basis = Wavefunction.from_directory(bdir, False)
+			if atomate_compatible:
+				basis = Wavefunction.from_atomate_directory(bdir, False)
+			else:
+				basis = Wavefunction.from_directory(bdir, False)
 
 			if desymmetrize:
 				allkpts, borig_kptnums, bop_nums, bsymmops, trs = basis.get_nosym_kpoints()
@@ -380,7 +384,7 @@ class Projector(Wavefunction):
 
 	@staticmethod
 	def setup_multiple_projections(basis_dir, wf_dirs, pseudo = False, ignore_errors = False,
-									desymmetrize = False):
+									desymmetrize = False, atomate_compatible = True):
 		"""
 		A convenient generator function for processing the Kohn-Sham wavefunctions
 		of multiple structures with respect to one structure used as the basis.
@@ -403,7 +407,11 @@ class Projector(Wavefunction):
 			onto bands of basis.
 		"""
 
-		basis = Wavefunction.from_directory(basis_dir, False)
+		if atomate_compatible:
+			basis = Wavefunction.from_atomate_directory(basis_dir, False)
+		else:
+			basis = Wavefunction.from_directory(basis_dir, False)
+		
 		if desymmetrize:
 			allkpts, borig_kptnums, bop_nums, bsymmops, trs = basis.get_nosym_kpoints()
 			weights = np.ones(allkpts.shape[0]) / allkpts.shape[0]

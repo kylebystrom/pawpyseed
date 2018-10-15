@@ -18,33 +18,6 @@ class DummyFirework():
     def __init__(self, path):
         self.launches = [PathHolder(path)]
 
-def from_atomate_directory(path, setup_projectors = True):
-
-    files = ['CONTCAR','OUTCAR','POTCAR',
-            'WAVECAR','vasprun.xml']
-    paths = []
-
-    for file in files:
-        filepat = os.path.join( path, file +'.relax2.gz')
-        if not os.path.exists( filepat):
-            filepat = os.path.join( path, file +'.relax1.gz')
-        if not os.path.exists( filepat):
-            filepat = os.path.join( path, file +'.gz')
-        if not os.path.exists( filepat):
-            filepat = os.path.join( path, file)
-        if not os.path.exists( filepat):
-            print('Could not find {}! Skipping this defect...'.format(file))
-            return False
-
-        paths.append(filepat)
-
-    args = paths + [setup_projectors]
-    wf = Wavefunction.from_files(*args)
-
-    return wf
-
-Wavefunction.from_directory = from_atomate_directory
-
 class DefectWorkflowWavefunctionHandle(object):
     """
     This class is made to run Kyle's
@@ -165,7 +138,7 @@ class DefectWorkflowWavefunctionHandle(object):
 
                     #setup defect wavefunction
                     print('\tmerging wf from dir')
-                    wf = Wavefunction.from_directory( launch_dir, setup_projectors=False)
+                    wf = Wavefunction.from_atomate_directory( launch_dir, setup_projectors=False)
 
                     # loop over band projections around band edge and store results
                     print('\tperforming projections')

@@ -52,8 +52,9 @@ class DefectWorkflowWavefunctionHandle(object):
     bulk_fw_sets is a dict that has bulk fireworks with supercell size as key
     wf_job_run is a string which says if it is "normal" (=gga) or "scan" or "hse"
     """
-    def __init__(self, bulk_fw_sets):
+    def __init__(self, bulk_fw_sets, dwo):
         self.bulk_fw_sets = bulk_fw_sets
+        self.dwo = dwo
 
     def _setup_file_for_parsing(self, path):
         #make a "kyle_file" for parsing out relevant data
@@ -139,6 +140,7 @@ class DefectWorkflowWavefunctionHandle(object):
                 wf_sizes.append(sc_size)
                 wf_dirs.append(fw.launches[-1].launch_dir)
         projector_list, bases = Projector.setup_bases(bulk_dirs, wf_dirs, True)
+        num_proj_els = bases[0].num_proj_els
         store_all_data = {}
         basis_sets = {}
         vbm = None
@@ -190,5 +192,7 @@ class DefectWorkflowWavefunctionHandle(object):
         #now release all bulk basis memory
         for bulk_basis in basis_sets.values():
             bulk_basis.free_all()
+
+        Projector.free_projector_list(projector_list, num_proj_els)
 
         return store_all_data

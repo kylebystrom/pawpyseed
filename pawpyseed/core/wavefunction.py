@@ -292,8 +292,7 @@ class Wavefunction:
 	@staticmethod
 	def from_atomate_directory(path, setup_projectors = True):
 
-	    files = ['CONTCAR','OUTCAR','POTCAR',
-	            'WAVECAR','vasprun.xml']
+	    files = ["CONTCAR", "WAVECAR", "POTCAR", "vasprun.xml", "OUTCAR"]
 	    paths = []
 
 	    for file in files:

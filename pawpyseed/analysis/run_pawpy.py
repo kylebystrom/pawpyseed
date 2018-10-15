@@ -17,6 +17,8 @@ class PathHolder():
 class DummyFirework():
     def __init__(self, path):
         self.launches = [PathHolder(path)]
+        self.name = path
+        self.fw_id = path
 
 class DefectWorkflowWavefunctionHandle(object):
     """
@@ -26,7 +28,7 @@ class DefectWorkflowWavefunctionHandle(object):
     bulk_fw_sets is a dict that has bulk fireworks with supercell size as key
     wf_job_run is a string which says if it is "normal" (=gga) or "scan" or "hse"
     """
-    def __init__(self, bulk_fw_sets, dwo):
+    def __init__(self, bulk_fw_sets, dwo = None):
         self.bulk_fw_sets = bulk_fw_sets
         self.dwo = dwo
 
@@ -145,7 +147,7 @@ class DefectWorkflowWavefunctionHandle(object):
                     pr = Projector(wf, basis_sets[sc_size],
                         projector_list = projector_list, unsym_wf = True)
                     for bandnum in band_dict.keys():
-                        v,c = pr.proportion_conduction( bandnum, pseudo=False, spinpol=spinpol)
+                        v,c = pr.proportion_conduction( bandnum, spinpol=spinpol)
                         band_dict[bandnum]['VB_projection'] = v[:]
                         band_dict[bandnum]['CB_projection'] = c[:]
                         print(bandnum, band_dict[bandnum])
@@ -155,7 +157,7 @@ class DefectWorkflowWavefunctionHandle(object):
                     rmtree(os.path.join( launch_dir, 'kyle_file'))
 
                     #release defect memory
-                    wf.free_all()
+                    pr.wf.free_all()
 
                     store_all_data[fw.fw_id] = band_dict
                 except Exception as e:

@@ -1,4 +1,4 @@
-
+# coding: utf-8
 
 ## @package pawpyseed.core.wavefunction
 # Base class containing Python classes for parsing files

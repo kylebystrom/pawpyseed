@@ -24,6 +24,7 @@ class CopyPseudoWavefunction(PseudoWavefunction):
 		self.wf_ptr = wf_ptr
 		self.kpts = kpts
 		self.kws = kws
+		self.ncl = PAWC.is_ncl(self.wf_ptr) > 0
 
 def copy_wf(rwf, wf_ptr, allkpts, weights, setup_projectors = True, free_ref = False):
 	pwf = CopyPseudoWavefunction(wf_ptr, allkpts, weights)
@@ -66,6 +67,12 @@ class Projector(Wavefunction):
 		#__init__(self, struct, pwf, cr, outcar, setup_projectors=True)
 		#__init__(self, filename="WAVECAR", vr="vasprun.xml")
 
+		if wf.freed or basis.freed:
+			raise PAWpyError("Input has been freed, no longer usable!")
+
+		if wf.pwf.ncl or basis.pwf.ncl:
+			raise PAWpyError("Projection not supported for noncollinear case!")
+
 		if unsym_basis and unsym_wf:
 			allkpts, borig_kptnums, bop_nums, bsymmops, btrs = basis.get_nosym_kpoints()
 			weights = np.ones(allkpts.shape[0]) / allkpts.shape[0]
@@ -99,8 +106,10 @@ class Projector(Wavefunction):
 			raise PAWpyError("k-point grids for projection are not matched.")
 		if np.linalg.norm(basis.kws - wf.kws) > 1e-10:
 			raise PAWpyError("k-point weights for projection are not matched.")
+		if wf.structure.lattice != basis.structure.lattice:
+			raise PAWpyError("Need the lattice to be the same for projections and they aren't!")
 		
-		if (wf.nums is None) and (not pseudo) and (not projector_list is None):
+		if (not pseudo) and (not (projector_list is None)):
 			selfnums = np.array([basis.labels[el(s)] for s in wf.structure], dtype=np.int32)
 			selfcoords = np.array([], np.float64)
 			for s in wf.structure:
@@ -124,6 +133,7 @@ class Projector(Wavefunction):
 		self.wf = wf
 		self.encut = wf.encut
 		self.num_proj_els = wf.num_proj_els
+		self.freed = False
 
 		if not pseudo:
 			self.setup_projection(basis, projector_list == None)
@@ -238,21 +248,17 @@ class Projector(Wavefunction):
 		basiscoords = basis.coords
 		selfnums = self.nums
 		selfcoords = self.coords
-
-		print(hex(projector_list), hex(self.pwf.wf_ptr))
-		sys.stdout.flush()
-		print ("TYPETHING", basis.pwf.wf_ptr, type(basis.pwf.wf_ptr))
 		
 		if setup_basis:
 			cfunc_call(PAWC.setup_projections_no_rayleigh, None,
 						basis.pwf.wf_ptr, projector_list,
-						self.num_proj_els, len(basis.structure), self.dim,
+						basis.num_proj_els, len(basis.structure), self.dim,
 						basisnums, basiscoords)
 		start = time.monotonic()
-		#basis.pwf.wf_ptr
+		
 		cfunc_call(PAWC.setup_projections_no_rayleigh, None,
-					self.pwf.wf_ptr,
-					projector_list, self.num_proj_els, len(self.structure),
+					self.pwf.wf_ptr, projector_list,
+					self.num_proj_els, len(self.structure),
 					self.dim, selfnums, selfcoords)
 		end = time.monotonic()
 		print('--------------\nran setup_projections in %f seconds\n---------------' % (end-start))

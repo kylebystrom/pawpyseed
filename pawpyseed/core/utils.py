@@ -74,15 +74,17 @@ PAWC.expand_symm_wf.argtypes = [c_void_p, c_int, c_int_p, c_double_p,\
 PAWC.expand_symm_wf.restype = c_void_p
 
 PAWC.get_occs.argtypes = [c_void_p]
-PAWC.get_occs.restype = c_double_p
 PAWC.get_nband.argtypes = [c_void_p]
 PAWC.get_nwk.argtypes = [c_void_p]
 PAWC.get_nspin.argtypes = [c_void_p]
 PAWC.get_encut.argtypes = [c_void_p]
+PAWC.is_ncl.argtypes = [c_void_p]
+PAWC.get_occs.restype = c_double_p
 PAWC.get_nband.restype = c_int
 PAWC.get_nwk.restype = c_int
 PAWC.get_nspin.restype = c_int
 PAWC.get_encut.restype = c_double
+PAWC.is_ncl.restype = c_int
 
 PAWC.free_ptr.argtypes = [c_void_p]
 PAWC.free_ptr.restype = None

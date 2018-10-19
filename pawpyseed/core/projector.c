@@ -472,6 +472,7 @@ void setup_projections_no_rayleigh(pswf_t* wf, ppot_t* pps, int num_elems,
 				wf->G_bounds, wf->lattice, wf->reclattice, pps, fftg);
 		}
 	}
+	printf("Done \n");
 	free_real_proj_site_list(sites, num_sites);	
 }
 

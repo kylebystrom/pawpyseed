@@ -122,9 +122,11 @@ void test_compensation_terms() {
 	fclose(fp);
 
 	char* rm[1] = {"2.1042"};
+	double rmm = 0;
+	sscanf(rm[0], "%lf", &rmm);
 	printf("pps\n");
 	ppot_t* pps = get_projector_list(num_els, labels, ls, pgrids, wgrids,
-		projectors, aewaves, pswaves, rm, 7000);
+		projectors, aewaves, pswaves, &rmm, 7000);
 
 	free(labels);
 	free(pgrids);
@@ -139,7 +141,17 @@ void test_compensation_terms() {
 	double kws[NUM_KPTS] = {0};
 
 	pswf_t* wf_ref = read_wavefunctions("WAVECAR", kws);
-	pswf_t* wf_proj = read_wavefunctions("WAVECAR", kws);
+	//pswf_t* wf_proj = read_wavefunctions("WAVECAR", kws);
+	double ops[18] = {1,0,0,
+					0,1,0,
+					0,0,1,
+					1,0,0,
+					0,1,0,
+					0,0,1};
+	int maps[2] = {0,0};
+	double drs[6] = {0,0,0,0,0,0};
+	int trs[2] = {0,0};
+	pswf_t* wf_proj = expand_symm_wf(wf_ref, 2, maps, ops, drs, kws, trs);
 
 	printf("terms\n");
 	setup_projections(wf_proj, pps, num_els, 4, fftg, selfnums, selfcoords);

@@ -890,7 +890,7 @@ pswf_t* expand_symm_wf(pswf_t* rwf, int num_kpts, int* maps,
 		wf->lattice[i] = lattice[i];
 		wf->reclattice[i] = reclattice[i];
 	}
-	wf->fftg = NULL; // TODO MAKE FFTG
+	wf->fftg = NULL;
 
 	wf->is_ncl = rwf->is_ncl;
 
@@ -906,7 +906,9 @@ pswf_t* expand_symm_wf(pswf_t* rwf, int num_kpts, int* maps,
 		double pw[3] = {0,0,0};
 		int rnum = maps[knum%num_kpts];
 		int tr = trs[knum%num_kpts];
-		if (knum >= num_kpts) rnum += rwf->nwk;
+		if (knum >= num_kpts && rwf->nspin ==2) {
+			rnum += rwf->nwk;
+		}
 		if (rwf->nspin == 2 && tr) {
 			if (rnum < rwf->nwk) {
 				rnum += rwf->nwk;

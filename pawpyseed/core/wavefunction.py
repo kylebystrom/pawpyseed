@@ -190,6 +190,7 @@ class PseudoWavefunction:
 				contents, kws)
 		else:
 			self.wf_ptr = PAWC.read_wavefunctions(filename.encode('utf-8'), kws)
+		self.ncl = PAWC.is_ncl(self.wf_ptr) > 0
 
 	def pseudoprojection(self, band_num, basis):
 		"""
@@ -239,15 +240,19 @@ class Wavefunction:
 		Returns:
 			Wavefunction object
 		"""
+
+		if pwf.ncl:
+			raise PAWpyError("Pseudowavefunction is noncollinear! Call NCLWavefunction(...) instead")
 		self.structure = struct
 		self.pwf = pwf
 		self.cr = cr
 		if type(outcar) == Outcar:
 			self.dim = outcar.ngf
+			self.dim = np.array(self.dim).astype(np.int32) // 2
 		else:
 			#assume outcar is actually ngf, will fix later
 			self.dim = outcar
-		self.dim = np.array(self.dim).astype(np.int32) // 2
+			self.dim = np.array(self.dim).astype(np.int32)
 		self.projector_owner = False
 		self.projector_list = None
 		self.nums = None
@@ -259,6 +264,7 @@ class Wavefunction:
 		if setup_projectors:
 			self.check_c_projectors()
 		self.num_proj_els = None
+		self.freed = False
 
 	@staticmethod
 	def from_files(struct="CONTCAR", pwf="WAVECAR", cr="POTCAR",
@@ -396,7 +402,6 @@ class Wavefunction:
 			pps[label] = self.cr.pps[e]
 			labels[e] = label
 			label += 1
-		#print (pps, labels)
 		if basis != None:
 			for e in basis.cr.pps:
 				if not e in labels:
@@ -560,7 +565,7 @@ class Wavefunction:
 		self._convert_to_vasp_volumetric(filename, dim)
 		return res
 
-	def get_nosym_kpoints(self, init_kpts = None, symprec=1e-3,
+	def get_nosym_kpoints(self, init_kpts = None, symprec=1e-5,
 		gen_trsym = True, fil_trsym = True):
 
 		kpts = np.array(self.pwf.kpts)
@@ -579,8 +584,7 @@ class Wavefunction:
 						continue
 				unique = True
 				for nkpt in allkpts:
-					if ( np.linalg.norm(newkpt-nkpt) < 1e-10 ) \
-							and (np.abs(newkpt) < 1).all():
+					if ( np.linalg.norm(newkpt-nkpt) < 1e-10 ):
 						unique = False
 						break
 				if unique:
@@ -598,8 +602,7 @@ class Wavefunction:
 							continue
 					unique = True
 					for nkpt in allkpts:
-						if ( np.linalg.norm(newkpt-nkpt) < 1e-10 ) \
-								and (np.abs(newkpt) < 1).all():
+						if ( np.linalg.norm(newkpt-nkpt) < 1e-10 ):
 							unique = False
 							break
 					if unique:
@@ -611,11 +614,9 @@ class Wavefunction:
 		self.orig_kptnums = orig_kptnums
 		self.op_nums = op_nums
 		self.symmops = symmops
-		print("NUMBER OF KPTS", len(allkpts))
-		print("KPTS", allkpts)
 		return np.array(allkpts), orig_kptnums, op_nums, symmops, trs
 
-	def get_kpt_mapping(self, allkpts, symprec=1e-3, gen_trsym = True):
+	def get_kpt_mapping(self, allkpts, symprec=1e-5, gen_trsym = True):
 		sga = SpacegroupAnalyzer(self.structure, symprec)
 		symmops = sga.get_symmetry_operations()
 		newops = []
@@ -668,4 +669,5 @@ class Wavefunction:
 		PAWC.free_pswf(c_void_p(self.pwf.wf_ptr))
 		if self.projector_owner:
 			PAWC.free_ppot_list(c_void_p(self.projector_list), len(self.cr.pps))
+		self.freed = True
 

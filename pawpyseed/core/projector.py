@@ -10,7 +10,6 @@ from pawpyseed.core.wavefunction import *
 OPSIZE = 9
 
 def make_c_ops(op_nums, symmops):
-	print(op_nums)
 	ops = np.zeros(OPSIZE*len(op_nums))
 	for i in range(len(op_nums)):
 		ops[OPSIZE*i:OPSIZE*(i+1)] = symmops[op_nums[i]].rotation_matrix.flatten()
@@ -79,6 +78,8 @@ class Projector(Wavefunction):
 			worig_kptnums, wop_nums, wsymmops, wtrs = wf.get_kpt_mapping(allkpts)
 			bops, bdrs = make_c_ops(bop_nums, bsymmops)
 			wops, wdrs = make_c_ops(wop_nums, wsymmops)
+			print ("BOPS", bops, bdrs, btrs, bop_nums, borig_kptnums)
+			print ("WOPS", wops, wdrs, wtrs, wop_nums, worig_kptnums)
 			bptr = cfunc_call(PAWC.expand_symm_wf, None, basis.pwf.wf_ptr,
 				len(borig_kptnums), borig_kptnums, bops, bdrs, weights, btrs)
 			wptr = cfunc_call(PAWC.expand_symm_wf, None, wf.pwf.wf_ptr,
@@ -90,6 +91,7 @@ class Projector(Wavefunction):
 			weights = basis.pwf.kws
 			worig_kptnums, wop_nums, wsymmops, trs = wf.get_kpt_mapping(allkpts)
 			wops, wdrs = make_c_ops(wop_nums, wsymmops)
+			print ("WOPS", wops, wdrs, trs, wop_nums, worig_kptnums)
 			wptr = cfunc_call(PAWC.expand_symm_wf, None, wf.pwf.wf_ptr,
 				len(worig_kptnums), worig_kptnums, wops, wdrs, weights, trs)
 			wf = copy_wf(wf, wptr, allkpts, weights, False, True)
@@ -98,6 +100,7 @@ class Projector(Wavefunction):
 			weights = wf.pwf.kws
 			borig_kptnums, bop_nums, bsymmops, trs = basis.get_kpt_mapping(allkpts)
 			bops, bdrs = make_c_ops(bop_nums, bsymmops)
+			print ("BOPS", bops, bdrs, trs, bop_nums, borig_kptnums)
 			bptr = cfunc_call(PAWC.expand_symm_wf, None, basis.pwf.wf_ptr,
 				len(borig_kptnums), borig_kptnums, bops, bdrs, weights, trs)
 			basis = copy_wf(basis, bptr, allkpts, weights, False, True)

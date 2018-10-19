@@ -573,7 +573,7 @@ class Wavefunction:
 		orig_kptnums = []
 		op_nums = []
 		sga = SpacegroupAnalyzer(self.structure, symprec)
-		symmops = sga.get_point_group_operations()
+		symmops = sga.get_symmetry_operations()
 		trs = []
 		for i, op in enumerate(symmops):
 			for k, kpt in enumerate(kpts):

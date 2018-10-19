@@ -1052,7 +1052,7 @@ pswf_t* expand_symm_wf(pswf_t* rwf, int num_kpts, int* maps,
 					-I * 2 * PI * (dot(kpt->k, dr) + dot(pw, dr)) );
 			} else {
 				factors[kptinds[(gx-gxmin)*ngy*ngz + (gy-gymin)*ngz + (gz-gzmin)]] = cexpf(
-					-I * 2 * PI * (dot(kpt->k, dr) - dot(pw, dr)) );
+					I * 2 * PI * (dot(kpt->k, dr) + dot(pw, dr)) );
 			}
 
 			if (kptinds[(gx-gxmin)*ngy*ngz + (gy-gymin)*ngz + (gz-gzmin)] < 0) {

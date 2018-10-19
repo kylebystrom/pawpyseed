@@ -1047,8 +1047,13 @@ pswf_t* expand_symm_wf(pswf_t* rwf, int num_kpts, int* maps,
 			gy = (int) round(pw[1]);
 			gz = (int) round(pw[2]);
 			gmaps[kptinds[(gx-gxmin)*ngy*ngz + (gy-gymin)*ngz + (gz-gzmin)]] = g;
-			factors[kptinds[(gx-gxmin)*ngy*ngz + (gy-gymin)*ngz + (gz-gzmin)]] = cexpf(
-				-I * 2 * PI * (dot(kpt->k, dr) + dot(pw, dr)) );
+			if (tr == 0) {
+				factors[kptinds[(gx-gxmin)*ngy*ngz + (gy-gymin)*ngz + (gz-gzmin)]] = cexpf(
+					-I * 2 * PI * (dot(kpt->k, dr) + dot(pw, dr)) );
+			} else {
+				factors[kptinds[(gx-gxmin)*ngy*ngz + (gy-gymin)*ngz + (gz-gzmin)]] = cexpf(
+					-I * 2 * PI * (dot(kpt->k, dr) - dot(pw, dr)) );
+			}
 
 			if (kptinds[(gx-gxmin)*ngy*ngz + (gy-gymin)*ngz + (gz-gzmin)] < 0) {
 				printf("ERROR, BAD PLANE WAVE MAPPING\n");

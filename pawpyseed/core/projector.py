@@ -73,7 +73,7 @@ class Projector(Wavefunction):
 			raise PAWpyError("Projection not supported for noncollinear case!")
 
 		if unsym_basis and unsym_wf:
-			allkpts, borig_kptnums, bop_nums, bsymmops, btrs = basis.get_nosym_kpoints()
+			allkpts, borig_kptnums, bop_nums, bsymmops, btrs = basis.get_nosym_kpoints(fil_trsym=False)
 			weights = np.ones(allkpts.shape[0]) / allkpts.shape[0]
 			worig_kptnums, wop_nums, wsymmops, wtrs = wf.get_kpt_mapping(allkpts)
 			bops, bdrs = make_c_ops(bop_nums, bsymmops)

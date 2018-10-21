@@ -638,6 +638,8 @@ class Wavefunction:
 						break
 				if match:
 					break
+			if match:
+				continue
 			for i, op in enumerate(symmops):
 				for k, kpt in enumerate(kpts):
 					newkpt = np.dot(op.rotation_matrix, kpt) * -1

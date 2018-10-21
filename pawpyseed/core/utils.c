@@ -909,13 +909,6 @@ pswf_t* expand_symm_wf(pswf_t* rwf, int num_kpts, int* maps,
 		if (knum >= num_kpts && rwf->nspin ==2) {
 			rnum += rwf->nwk;
 		}
-		if (rwf->nspin == 2 && tr) {
-			if (rnum < rwf->nwk) {
-				rnum += rwf->nwk;
-			} else{
-				rnum -= rwf->nwk;
-			}
-		}
 
 		kpoint_t* kpt = wf->kpts[knum];
 		kpoint_t* rkpt = rwf->kpts[rnum];

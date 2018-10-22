@@ -1,5 +1,5 @@
 var searchData=
 [
-  ['vc_5fpseudoprojection',['vc_pseudoprojection',['../pseudoprojector_8h.html#a65f2e93da8be90fdc933c927632e5bf8',1,'pseudoprojector.h']]],
-  ['vcross',['vcross',['../utils_8h.html#a3767b4508bb47809fdf7b9698079082f',1,'utils.h']]]
+  ['trilinear_5finterpolate',['trilinear_interpolate',['../utils_8h.html#a76720ba20c2a989fc6e67eaf10d56ccb',1,'utils.h']]],
+  ['trilinear_5finterpolate_5fvalues',['trilinear_interpolate_values',['../linalg_8h.html#aadc6ea2869b2bd8cc1c595e7081068cf',1,'linalg.h']]]
 ];

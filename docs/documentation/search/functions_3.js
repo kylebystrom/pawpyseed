@@ -7,6 +7,8 @@ var searchData=
   ['check_5fallocation',['CHECK_ALLOCATION',['../utils_8h.html#a5f2829e97ca50110c8845615aa29db64',1,'utils.h']]],
   ['check_5fc_5fprojectors',['check_c_projectors',['../classpawpyseed_1_1core_1_1wavefunction_1_1Wavefunction.html#ad2f010d34ede122561eb1771a518d268',1,'pawpyseed::core::wavefunction::Wavefunction']]],
   ['check_5fspin',['check_spin',['../namespacepawpyseed_1_1core_1_1utils.html#afa1b721f5310c6f529459eb35321408e',1,'pawpyseed::core::utils']]],
+  ['clean_5fwave_5fprojections',['clean_wave_projections',['../utils_8h.html#a51022ddcb19e8a386fa80c688fae2aee',1,'utils.h']]],
   ['compensation_5fterms',['compensation_terms',['../projector_8h.html#a678465777989a71f7d34390a369992c7',1,'projector.h']]],
-  ['copy_5frayleigh_5fexpansion_5fterms',['copy_rayleigh_expansion_terms',['../utils_8h.html#af8deaa2e91c3d859ad692dbdeaade6c0',1,'utils.h']]]
+  ['copy_5frayleigh_5fexpansion_5fterms',['copy_rayleigh_expansion_terms',['../utils_8h.html#af8deaa2e91c3d859ad692dbdeaade6c0',1,'utils.h']]],
+  ['copy_5fwf',['copy_wf',['../namespacepawpyseed_1_1core_1_1projector.html#aa813d0e55acb403dc3d5cb1898be1e5c',1,'pawpyseed::core::projector']]]
 ];

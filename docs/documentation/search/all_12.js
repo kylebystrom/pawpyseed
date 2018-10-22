@@ -10,5 +10,6 @@ var searchData=
   ['total',['total',['../namespacepawpyseed_1_1core_1_1quad__check.html#a72bac036ead93f16ffc746b21787036c',1,'pawpyseed::core::quad_check']]],
   ['total_5fprojs',['total_projs',['../structppot.html#a9f5cd6c6cf37bf5db2d1cc7ef60556f0',1,'ppot::total_projs()'],['../structprojection.html#a3b24a44891d6a448b8a2b2c858d9a3ca',1,'projection::total_projs()'],['../structreal__proj__site.html#aeb5be77d198fea1d107efca7a33d66b9',1,'real_proj_site::total_projs()']]],
   ['trilinear_5finterpolate',['trilinear_interpolate',['../utils_8h.html#a76720ba20c2a989fc6e67eaf10d56ccb',1,'utils.h']]],
-  ['trilinear_5finterpolate_5fvalues',['trilinear_interpolate_values',['../linalg_8h.html#aadc6ea2869b2bd8cc1c595e7081068cf',1,'linalg.h']]]
+  ['trilinear_5finterpolate_5fvalues',['trilinear_interpolate_values',['../linalg_8h.html#aadc6ea2869b2bd8cc1c595e7081068cf',1,'linalg.h']]],
+  ['type',['type',['../structWAVECAR__FILE.html#aabf8a0b4b4bbfb3304480c9b906aaa4c',1,'WAVECAR_FILE']]]
 ];

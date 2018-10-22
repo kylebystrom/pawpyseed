@@ -1,5 +1,20 @@
 var searchData=
 [
-  ['trilinear_5finterpolate',['trilinear_interpolate',['../utils_8h.html#a76720ba20c2a989fc6e67eaf10d56ccb',1,'utils.h']]],
-  ['trilinear_5finterpolate_5fvalues',['trilinear_interpolate_values',['../linalg_8h.html#aadc6ea2869b2bd8cc1c595e7081068cf',1,'linalg.h']]]
+  ['sbf',['sbf',['../utils_8h.html#a077aba25691fa7291917e3243ee4a7df',1,'utils.h']]],
+  ['set_5fnum_5fsites',['set_num_sites',['../utils_8h.html#a0a97b4e7300b7aa28cda13f62abff296',1,'utils.h']]],
+  ['setup',['setup',['../reader_8h.html#aa33bbe96c9e588b2f964f62e31d4ee4e',1,'reader.h']]],
+  ['setup_5fbases',['setup_bases',['../classpawpyseed_1_1core_1_1projector_1_1Projector.html#a664e46961147f4198152cd3446b53640',1,'pawpyseed::core::projector::Projector']]],
+  ['setup_5fmultiple_5fprojections',['setup_multiple_projections',['../classpawpyseed_1_1core_1_1projector_1_1Projector.html#a886d581f20138e5f9f4c10161a2b8593',1,'pawpyseed::core::projector::Projector']]],
+  ['setup_5fprojection',['setup_projection',['../classpawpyseed_1_1core_1_1projector_1_1Projector.html#a5e5b1710aef078a6fbedbece27fe0e43',1,'pawpyseed::core::projector::Projector']]],
+  ['setup_5fprojections',['setup_projections',['../projector_8h.html#ad97a2375a049eab1e3de0a0bb0cd9cb6',1,'projector.h']]],
+  ['setup_5fprojections_5fcopy_5frayleigh',['setup_projections_copy_rayleigh',['../projector_8h.html#adb27a5c4875e2a4833b9ca87dc04fada',1,'projector.h']]],
+  ['setup_5fsite',['setup_site',['../utils_8h.html#a925c7cd813df922b92acc3dfe9b7141d',1,'utils.h']]],
+  ['setup_5ftime',['setup_time',['../classpawpyseed_1_1core_1_1wavefunction_1_1Timer.html#abb74c4ad85347c31b6c215736e891da2',1,'pawpyseed::core::wavefunction::Timer']]],
+  ['single_5fband_5fprojection',['single_band_projection',['../classpawpyseed_1_1core_1_1projector_1_1Projector.html#af28874342aa82105624b4c12f76d4c37',1,'pawpyseed::core::projector::Projector']]],
+  ['smooth_5fpw_5fvalues',['smooth_pw_values',['../projector_8h.html#a2207fe8fd8c04b81f052b7adf485e220',1,'projector.h']]],
+  ['smooth_5fwave_5fvalue',['smooth_wave_value',['../utils_8h.html#af6ba8223b9c90b7dc4084289a3679c95',1,'utils.h']]],
+  ['sph_5fbessel',['sph_bessel',['../utils_8h.html#a01a8b15bb5441b6c7b4dde6dcfbc6e28',1,'utils.h']]],
+  ['spherical_5fbessel_5ftransform_5fsetup',['spherical_bessel_transform_setup',['../sbt_8h.html#a452912e299eea941e455a8a1fae00230',1,'sbt.h']]],
+  ['spline_5fcoeff',['spline_coeff',['../utils_8h.html#ae81f454dd306c4e17e90edc884aa90d5',1,'utils.h']]],
+  ['spline_5fintegral',['spline_integral',['../utils_8h.html#abc7aef60adcc3294d6f3120f1aba8a65',1,'utils.h']]]
 ];

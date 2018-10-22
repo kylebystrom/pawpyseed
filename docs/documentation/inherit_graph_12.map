@@ -1,3 +1,5 @@
 <map id="Graphical Class Hierarchy" name="Graphical Class Hierarchy">
-<area shape="rect" id="node1" href="$structprojgrid.html" title="projgrid" alt="" coords="5,5,69,32"/>
+<area shape="rect" id="node1" href="$classpawpyseed_1_1core_1_1wavefunction_1_1Wavefunction.html" title="pawpyseed.core.wavefunction.\lWavefunction" alt="" coords="5,39,208,80"/>
+<area shape="rect" id="node2" href="$classpawpyseed_1_1core_1_1noncollinear_1_1NCLWavefunction.html" title="pawpyseed.core.noncollinear.\lNCLWavefunction" alt="" coords="256,5,451,47"/>
+<area shape="rect" id="node3" href="$classpawpyseed_1_1core_1_1projector_1_1Projector.html" title="pawpyseed.core.projector.\lProjector" alt="" coords="266,71,441,112"/>
 </map>

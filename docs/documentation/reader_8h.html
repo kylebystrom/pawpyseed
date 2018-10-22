@@ -86,6 +86,8 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
 </div><!-- top -->
 <div class="header">
   <div class="summary">
+<a href="#nested-classes">Classes</a> &#124;
+<a href="#typedef-members">Typedefs</a> &#124;
 <a href="#func-members">Functions</a>  </div>
   <div class="headertitle">
 <div class="title">reader.h File Reference</div>  </div>
@@ -103,18 +105,53 @@ Include dependency graph for reader.h:</div>
 </div>
 <p><a href="reader_8h_source.html">Go to the source code of this file.</a></p>
 <table class="memberdecls">
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="nested-classes"></a>
+Classes</h2></td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structWAVECAR__FILE.html">WAVECAR_FILE</a></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+</table><table class="memberdecls">
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="typedef-members"></a>
+Typedefs</h2></td></tr>
+<tr class="memitem:a8160ade3fdc58a0952793833e9daada4"><td class="memItemLeft" align="right" valign="top">typedef struct <a class="el" href="structWAVECAR__FILE.html">WAVECAR_FILE</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="reader_8h.html#a8160ade3fdc58a0952793833e9daada4">WAVECAR</a></td></tr>
+<tr class="separator:a8160ade3fdc58a0952793833e9daada4"><td class="memSeparator" colspan="2">&#160;</td></tr>
+</table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="func-members"></a>
 Functions</h2></td></tr>
-<tr class="memitem:a6801df818da10a6cf823a148c05f1a8f"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="reader_8h.html#a6801df818da10a6cf823a148c05f1a8f">setup</a> (char *filename, int *pnrecl, int *pnspin, int *pnwk, int *pnband, double *nb1, double *nb2, double *nb3, double *ecut, double *lattice, double *reclattice)</td></tr>
-<tr class="separator:a6801df818da10a6cf823a148c05f1a8f"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ace1c2460da5c220221fb880a2d7ac2f9"><td class="memItemLeft" align="right" valign="top"><a class="el" href="reader_8h.html#a8160ade3fdc58a0952793833e9daada4">WAVECAR</a> *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="reader_8h.html#ace1c2460da5c220221fb880a2d7ac2f9">wcopen</a> (char *f, int type)</td></tr>
+<tr class="separator:ace1c2460da5c220221fb880a2d7ac2f9"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a6b5af17bca6e450fc5c58d40c2f82e5d"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="reader_8h.html#a6b5af17bca6e450fc5c58d40c2f82e5d">wcseek</a> (<a class="el" href="reader_8h.html#a8160ade3fdc58a0952793833e9daada4">WAVECAR</a> *wc, long loc)</td></tr>
+<tr class="separator:a6b5af17bca6e450fc5c58d40c2f82e5d"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:afb1721460239960f9878b4aa698f2528"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="reader_8h.html#afb1721460239960f9878b4aa698f2528">wcread</a> (void *ptr0, long size, long nmemb, <a class="el" href="reader_8h.html#a8160ade3fdc58a0952793833e9daada4">WAVECAR</a> *wc)</td></tr>
+<tr class="separator:afb1721460239960f9878b4aa698f2528"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a244c80ed46808322e740e2aa255e58ce"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="reader_8h.html#a244c80ed46808322e740e2aa255e58ce">wcclose</a> (<a class="el" href="reader_8h.html#a8160ade3fdc58a0952793833e9daada4">WAVECAR</a> *wc)</td></tr>
+<tr class="separator:a244c80ed46808322e740e2aa255e58ce"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aa33bbe96c9e588b2f964f62e31d4ee4e"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="reader_8h.html#aa33bbe96c9e588b2f964f62e31d4ee4e">setup</a> (int nrecl, int nprec, int nspin, int nwk, int nband, double *nb1, double *nb2, double *nb3, double ecut, double *lattice, double *reclattice)</td></tr>
+<tr class="separator:aa33bbe96c9e588b2f964f62e31d4ee4e"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aa6500159c84b1af9645c8d0ecef9f1d4"><td class="memItemLeft" align="right" valign="top"><a class="el" href="utils_8h.html#a0d83785e53b058055dd3a6b963dda7e0">pswf_t</a> *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="reader_8h.html#aa6500159c84b1af9645c8d0ecef9f1d4">read_wavecar</a> (<a class="el" href="reader_8h.html#a8160ade3fdc58a0952793833e9daada4">WAVECAR</a> *wc, double *kpt_weights)</td></tr>
+<tr class="separator:aa6500159c84b1af9645c8d0ecef9f1d4"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:af42fe870fdde3e44e0647913ab0fd836"><td class="memItemLeft" align="right" valign="top"><a class="el" href="utils_8h.html#a0d83785e53b058055dd3a6b963dda7e0">pswf_t</a> *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="reader_8h.html#af42fe870fdde3e44e0647913ab0fd836">read_wavefunctions</a> (char *filename, double *kpt_weights)</td></tr>
 <tr class="separator:af42fe870fdde3e44e0647913ab0fd836"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aa92e723d18aa99daa9fb0621d7af76a4"><td class="memItemLeft" align="right" valign="top"><a class="el" href="utils_8h.html#a0d83785e53b058055dd3a6b963dda7e0">pswf_t</a> *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="reader_8h.html#aa92e723d18aa99daa9fb0621d7af76a4">read_wavefunctions_from_str</a> (char *start, double *kpt_weights)</td></tr>
+<tr class="separator:aa92e723d18aa99daa9fb0621d7af76a4"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a2b1ca1c6f6884c8d3ddfb25e6495f18b"><td class="memItemLeft" align="right" valign="top"><a class="el" href="utils_8h.html#a8cafed6b50bb2761b72f06bf2281bcc5">kpoint_t</a> **&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="reader_8h.html#a2b1ca1c6f6884c8d3ddfb25e6495f18b">read_one_band</a> (int *G_bounds, double *kpt_weights, int *ns, int *nk, int *nb, int BAND_NUM, char *filename)</td></tr>
 <tr class="separator:a2b1ca1c6f6884c8d3ddfb25e6495f18b"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p>Functions used to read pswf_t structs from WAVECAR files (VASP output). This code is based upon the Fortran program, WaveTrans, written by R. M. Feenstra and M. Widom from the Dept. of Physics at Carnegie Mellon University. To see the original work, please visit: <a href="https://www.andrew.cmu.edu/user/feenstra/wavetrans/">https://www.andrew.cmu.edu/user/feenstra/wavetrans/</a> </p>
-</div><h2 class="groupheader">Function Documentation</h2>
+</div><h2 class="groupheader">Typedef Documentation</h2>
+<a class="anchor" id="a8160ade3fdc58a0952793833e9daada4"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">typedef struct <a class="el" href="structWAVECAR__FILE.html">WAVECAR_FILE</a>  <a class="el" href="reader_8h.html#a8160ade3fdc58a0952793833e9daada4">WAVECAR</a></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<h2 class="groupheader">Function Documentation</h2>
 <a class="anchor" id="a2b1ca1c6f6884c8d3ddfb25e6495f18b"></a>
 <div class="memitem">
 <div class="memproto">
@@ -172,6 +209,33 @@ Functions</h2></td></tr>
 
 </div>
 </div>
+<a class="anchor" id="aa6500159c84b1af9645c8d0ecef9f1d4"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="utils_8h.html#a0d83785e53b058055dd3a6b963dda7e0">pswf_t</a>* read_wavecar </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="reader_8h.html#a8160ade3fdc58a0952793833e9daada4">WAVECAR</a> *&#160;</td>
+          <td class="paramname"><em>wc</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">double *&#160;</td>
+          <td class="paramname"><em>kpt_weights</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+<p>Handles reading WAVECAR objects, called by read_wavefunctions and read_wavefunctions_from_str </p>
+
+</div>
+</div>
 <a class="anchor" id="af42fe870fdde3e44e0647913ab0fd836"></a>
 <div class="memitem">
 <div class="memproto">
@@ -199,39 +263,66 @@ Functions</h2></td></tr>
 
 </div>
 </div>
-<a class="anchor" id="a6801df818da10a6cf823a148c05f1a8f"></a>
+<a class="anchor" id="aa92e723d18aa99daa9fb0621d7af76a4"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="utils_8h.html#a0d83785e53b058055dd3a6b963dda7e0">pswf_t</a>* read_wavefunctions_from_str </td>
+          <td>(</td>
+          <td class="paramtype">char *&#160;</td>
+          <td class="paramname"><em>start</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">double *&#160;</td>
+          <td class="paramname"><em>kpt_weights</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+<p>Read wavefunctions from a string. This is useful if the binary WAVECAR object is opened from a .gz or .bz2 format by monty </p>
+
+</div>
+</div>
+<a class="anchor" id="aa33bbe96c9e588b2f964f62e31d4ee4e"></a>
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
         <tr>
           <td class="memname">void setup </td>
           <td>(</td>
-          <td class="paramtype">char *&#160;</td>
-          <td class="paramname"><em>filename</em>, </td>
+          <td class="paramtype">int&#160;</td>
+          <td class="paramname"><em>nrecl</em>, </td>
         </tr>
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype">int *&#160;</td>
-          <td class="paramname"><em>pnrecl</em>, </td>
+          <td class="paramtype">int&#160;</td>
+          <td class="paramname"><em>nprec</em>, </td>
         </tr>
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype">int *&#160;</td>
-          <td class="paramname"><em>pnspin</em>, </td>
+          <td class="paramtype">int&#160;</td>
+          <td class="paramname"><em>nspin</em>, </td>
         </tr>
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype">int *&#160;</td>
-          <td class="paramname"><em>pnwk</em>, </td>
+          <td class="paramtype">int&#160;</td>
+          <td class="paramname"><em>nwk</em>, </td>
         </tr>
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype">int *&#160;</td>
-          <td class="paramname"><em>pnband</em>, </td>
+          <td class="paramtype">int&#160;</td>
+          <td class="paramname"><em>nband</em>, </td>
         </tr>
         <tr>
           <td class="paramkey"></td>
@@ -254,7 +345,7 @@ Functions</h2></td></tr>
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype">double *&#160;</td>
+          <td class="paramtype">double&#160;</td>
           <td class="paramname"><em>ecut</em>, </td>
         </tr>
         <tr>
@@ -277,6 +368,112 @@ Functions</h2></td></tr>
       </table>
 </div><div class="memdoc">
 <p>Sets up variables to be used to read the pseudowavefunctions from WAVECAR </p>
+
+</div>
+</div>
+<a class="anchor" id="a244c80ed46808322e740e2aa255e58ce"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void wcclose </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="reader_8h.html#a8160ade3fdc58a0952793833e9daada4">WAVECAR</a> *&#160;</td>
+          <td class="paramname"><em>wc</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a class="anchor" id="ace1c2460da5c220221fb880a2d7ac2f9"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="reader_8h.html#a8160ade3fdc58a0952793833e9daada4">WAVECAR</a>* wcopen </td>
+          <td>(</td>
+          <td class="paramtype">char *&#160;</td>
+          <td class="paramname"><em>f</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">int&#160;</td>
+          <td class="paramname"><em>type</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a class="anchor" id="afb1721460239960f9878b4aa698f2528"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void wcread </td>
+          <td>(</td>
+          <td class="paramtype">void *&#160;</td>
+          <td class="paramname"><em>ptr0</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">long&#160;</td>
+          <td class="paramname"><em>size</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">long&#160;</td>
+          <td class="paramname"><em>nmemb</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="reader_8h.html#a8160ade3fdc58a0952793833e9daada4">WAVECAR</a> *&#160;</td>
+          <td class="paramname"><em>wc</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a class="anchor" id="a6b5af17bca6e450fc5c58d40c2f82e5d"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void wcseek </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="reader_8h.html#a8160ade3fdc58a0952793833e9daada4">WAVECAR</a> *&#160;</td>
+          <td class="paramname"><em>wc</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">long&#160;</td>
+          <td class="paramname"><em>loc</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
 
 </div>
 </div>

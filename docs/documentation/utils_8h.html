@@ -162,6 +162,10 @@ Typedefs</h2></td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="func-members"></a>
 Functions</h2></td></tr>
+<tr class="memitem:a3438f4e9765829050cb09683504c01d5"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="utils_8h.html#a3438f4e9765829050cb09683504c01d5">affine_transform</a> (double *out, double *op, double *inv)</td></tr>
+<tr class="separator:a3438f4e9765829050cb09683504c01d5"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ab97aa3c92fc5c79b3ee46bf1a54e6842"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="utils_8h.html#ab97aa3c92fc5c79b3ee46bf1a54e6842">rotation_transform</a> (double *out, double *op, double *inv)</td></tr>
+<tr class="separator:ab97aa3c92fc5c79b3ee46bf1a54e6842"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:abd8bbcfabb3ddef2ccaafb9928a37b95"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="utils_8h.html#abd8bbcfabb3ddef2ccaafb9928a37b95">min</a> (int a, int b)</td></tr>
 <tr class="separator:abd8bbcfabb3ddef2ccaafb9928a37b95"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:af082905f7eac6d03e92015146bbc1925"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="utils_8h.html#af082905f7eac6d03e92015146bbc1925">max</a> (int a, int b)</td></tr>
@@ -184,8 +188,12 @@ Functions</h2></td></tr>
 <tr class="separator:a6af345cb085c86faf28ff37002e461bf"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a76720ba20c2a989fc6e67eaf10d56ccb"><td class="memItemLeft" align="right" valign="top">double complex&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="utils_8h.html#a76720ba20c2a989fc6e67eaf10d56ccb">trilinear_interpolate</a> (double complex *c, double *frac, int *fftg)</td></tr>
 <tr class="separator:a76720ba20c2a989fc6e67eaf10d56ccb"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a5332ed6ca56a011cf971bad7ad56a50c"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="utils_8h.html#a5332ed6ca56a011cf971bad7ad56a50c">free_kpoint</a> (<a class="el" href="utils_8h.html#a8cafed6b50bb2761b72f06bf2281bcc5">kpoint_t</a> *kpt, int num_elems, <a class="el" href="utils_8h.html#aa248479b99172bb8a57435eceaf6cd54">ppot_t</a> *pps)</td></tr>
-<tr class="separator:a5332ed6ca56a011cf971bad7ad56a50c"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a8a11bbcbd221ff4ca69fd198acf9795c"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="utils_8h.html#a8a11bbcbd221ff4ca69fd198acf9795c">free_projection_list</a> (<a class="el" href="utils_8h.html#a11a6b972b58950fd98974b5ed5011e65">projection_t</a> *projlist, int num)</td></tr>
+<tr class="separator:a8a11bbcbd221ff4ca69fd198acf9795c"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a51022ddcb19e8a386fa80c688fae2aee"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="utils_8h.html#a51022ddcb19e8a386fa80c688fae2aee">clean_wave_projections</a> (<a class="el" href="utils_8h.html#a0d83785e53b058055dd3a6b963dda7e0">pswf_t</a> *wf)</td></tr>
+<tr class="separator:a51022ddcb19e8a386fa80c688fae2aee"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aa0317ebd22458911233269eadd542067"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="utils_8h.html#aa0317ebd22458911233269eadd542067">free_kpoint</a> (<a class="el" href="utils_8h.html#a8cafed6b50bb2761b72f06bf2281bcc5">kpoint_t</a> *kpt, int num_elems, int num_sites, int wp_num, int *num_projs)</td></tr>
+<tr class="separator:aa0317ebd22458911233269eadd542067"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a8041baaaaf886622505e8ac26e4356d4"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="utils_8h.html#a8041baaaaf886622505e8ac26e4356d4">free_ppot</a> (<a class="el" href="utils_8h.html#aa248479b99172bb8a57435eceaf6cd54">ppot_t</a> *pp)</td></tr>
 <tr class="separator:a8041baaaaf886622505e8ac26e4356d4"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ac4531732a94bfbf1793f93cf3133211d"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="utils_8h.html#ac4531732a94bfbf1793f93cf3133211d">free_real_proj</a> (<a class="el" href="utils_8h.html#a041bce1c881914be5c903c178185aa9e">real_proj_t</a> *proj)</td></tr>
@@ -208,10 +216,18 @@ Functions</h2></td></tr>
 <tr class="separator:a9bcd1a9fc9c393bcae4ac93025fe7d82"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aadf2ad6487546bb1ddf6abca8fdd2e7c"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="utils_8h.html#aadf2ad6487546bb1ddf6abca8fdd2e7c">get_nspin</a> (<a class="el" href="utils_8h.html#a0d83785e53b058055dd3a6b963dda7e0">pswf_t</a> *wf)</td></tr>
 <tr class="separator:aadf2ad6487546bb1ddf6abca8fdd2e7c"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ab9620c8506dfaa134aac668d48e6d78e"><td class="memItemLeft" align="right" valign="top">double&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="utils_8h.html#ab9620c8506dfaa134aac668d48e6d78e">get_encut</a> (<a class="el" href="utils_8h.html#a0d83785e53b058055dd3a6b963dda7e0">pswf_t</a> *wf)</td></tr>
+<tr class="separator:ab9620c8506dfaa134aac668d48e6d78e"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a97f3622fdb711ca9b5a7b36d3cde8310"><td class="memItemLeft" align="right" valign="top">double&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="utils_8h.html#a97f3622fdb711ca9b5a7b36d3cde8310">get_energy</a> (<a class="el" href="utils_8h.html#a0d83785e53b058055dd3a6b963dda7e0">pswf_t</a> *wf, int <a class="el" href="structband.html">band</a>, int kpt, int spin)</td></tr>
+<tr class="separator:a97f3622fdb711ca9b5a7b36d3cde8310"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a0a97b4e7300b7aa28cda13f62abff296"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="utils_8h.html#a0a97b4e7300b7aa28cda13f62abff296">set_num_sites</a> (<a class="el" href="utils_8h.html#a0d83785e53b058055dd3a6b963dda7e0">pswf_t</a> *wf, int nsites)</td></tr>
 <tr class="separator:a0a97b4e7300b7aa28cda13f62abff296"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a8ea41329e3326d2b03c68b610e241691"><td class="memItemLeft" align="right" valign="top">double&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="utils_8h.html#a8ea41329e3326d2b03c68b610e241691">legendre</a> (int l, int m, double x)</td></tr>
 <tr class="separator:a8ea41329e3326d2b03c68b610e241691"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a95a5b5c641c60c379cd8c66e702183d0"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="utils_8h.html#a95a5b5c641c60c379cd8c66e702183d0">legendre_coeff</a> (double *ptr, int l, int m)</td></tr>
+<tr class="separator:a95a5b5c641c60c379cd8c66e702183d0"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a1ca90ea673c0bec4a58e84a660fcf3c4"><td class="memItemLeft" align="right" valign="top">double *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="utils_8h.html#a1ca90ea673c0bec4a58e84a660fcf3c4">legendre_product</a> (int l1, int l2, int m1, int m2)</td></tr>
+<tr class="separator:a1ca90ea673c0bec4a58e84a660fcf3c4"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a75fe42379006bcd22259df3b5f20b770"><td class="memItemLeft" align="right" valign="top">double&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="utils_8h.html#a75fe42379006bcd22259df3b5f20b770">fac</a> (int n)</td></tr>
 <tr class="separator:a75fe42379006bcd22259df3b5f20b770"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ae8156dcec36c011904a87a98c735eb80"><td class="memItemLeft" align="right" valign="top">double complex&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="utils_8h.html#ae8156dcec36c011904a87a98c735eb80">Ylm</a> (int l, int m, double theta, double phi)</td></tr>
@@ -252,6 +268,8 @@ Functions</h2></td></tr>
 <tr class="separator:aa9b77ca501da4934d3ccda82a5b45e7e"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:af8deaa2e91c3d859ad692dbdeaade6c0"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="utils_8h.html#af8deaa2e91c3d859ad692dbdeaade6c0">copy_rayleigh_expansion_terms</a> (<a class="el" href="utils_8h.html#a0d83785e53b058055dd3a6b963dda7e0">pswf_t</a> *wf, <a class="el" href="utils_8h.html#aa248479b99172bb8a57435eceaf6cd54">ppot_t</a> *pps, int num_elems, <a class="el" href="utils_8h.html#a0d83785e53b058055dd3a6b963dda7e0">pswf_t</a> *wf_R)</td></tr>
 <tr class="separator:af8deaa2e91c3d859ad692dbdeaade6c0"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a51cf472c36dbfb208aece68863301b14"><td class="memItemLeft" align="right" valign="top"><a class="el" href="utils_8h.html#a0d83785e53b058055dd3a6b963dda7e0">pswf_t</a> *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="utils_8h.html#a51cf472c36dbfb208aece68863301b14">expand_symm_wf</a> (<a class="el" href="utils_8h.html#a0d83785e53b058055dd3a6b963dda7e0">pswf_t</a> *rwf, int num_kpts, int *maps, double *ops, double *drs, double *kws, int *trs)</td></tr>
+<tr class="separator:a51cf472c36dbfb208aece68863301b14"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a5f2829e97ca50110c8845615aa29db64"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="utils_8h.html#a5f2829e97ca50110c8845615aa29db64">CHECK_ALLOCATION</a> (void *ptr)</td></tr>
 <tr class="separator:a5f2829e97ca50110c8845615aa29db64"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a412984889bbdcd15ba821118ce3db863"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="utils_8h.html#a412984889bbdcd15ba821118ce3db863">ALLOCATION_FAILED</a> ()</td></tr>
@@ -386,6 +404,38 @@ Functions</h2></td></tr>
 </div>
 </div>
 <h2 class="groupheader">Function Documentation</h2>
+<a class="anchor" id="a3438f4e9765829050cb09683504c01d5"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void affine_transform </td>
+          <td>(</td>
+          <td class="paramtype">double *&#160;</td>
+          <td class="paramname"><em>out</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">double *&#160;</td>
+          <td class="paramname"><em>op</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">double *&#160;</td>
+          <td class="paramname"><em>inv</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+</div>
+</div>
 <a class="anchor" id="a412984889bbdcd15ba821118ce3db863"></a>
 <div class="memitem">
 <div class="memproto">
@@ -442,6 +492,22 @@ Functions</h2></td></tr>
       </table>
 </div><div class="memdoc">
 <p>Called after a malloc or calloc call to check that the allocation was successful. </p>
+
+</div>
+</div>
+<a class="anchor" id="a51022ddcb19e8a386fa80c688fae2aee"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void clean_wave_projections </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="utils_8h.html#a0d83785e53b058055dd3a6b963dda7e0">pswf_t</a> *&#160;</td>
+          <td class="paramname"><em>wf</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
 
 </div>
 </div>
@@ -561,6 +627,63 @@ Functions</h2></td></tr>
 
 </div>
 </div>
+<a class="anchor" id="a51cf472c36dbfb208aece68863301b14"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="utils_8h.html#a0d83785e53b058055dd3a6b963dda7e0">pswf_t</a>* expand_symm_wf </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="utils_8h.html#a0d83785e53b058055dd3a6b963dda7e0">pswf_t</a> *&#160;</td>
+          <td class="paramname"><em>rwf</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">int&#160;</td>
+          <td class="paramname"><em>num_kpts</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">int *&#160;</td>
+          <td class="paramname"><em>maps</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">double *&#160;</td>
+          <td class="paramname"><em>ops</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">double *&#160;</td>
+          <td class="paramname"><em>drs</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">double *&#160;</td>
+          <td class="paramname"><em>kws</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">int *&#160;</td>
+          <td class="paramname"><em>trs</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+<p>Takes a reference wavefunction and a list of symmetry operations to new kpoints, and calculates a new wavefunction that has the additional kpoints. </p>
+
+</div>
+</div>
 <a class="anchor" id="a75fe42379006bcd22259df3b5f20b770"></a>
 <div class="memitem">
 <div class="memproto">
@@ -636,7 +759,7 @@ Functions</h2></td></tr>
 
 </div>
 </div>
-<a class="anchor" id="a5332ed6ca56a011cf971bad7ad56a50c"></a>
+<a class="anchor" id="aa0317ebd22458911233269eadd542067"></a>
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
@@ -655,8 +778,20 @@ Functions</h2></td></tr>
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype"><a class="el" href="utils_8h.html#aa248479b99172bb8a57435eceaf6cd54">ppot_t</a> *&#160;</td>
-          <td class="paramname"><em>pps</em>&#160;</td>
+          <td class="paramtype">int&#160;</td>
+          <td class="paramname"><em>num_sites</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">int&#160;</td>
+          <td class="paramname"><em>wp_num</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">int *&#160;</td>
+          <td class="paramname"><em>num_projs</em>&#160;</td>
         </tr>
         <tr>
           <td></td>
@@ -699,6 +834,32 @@ Functions</h2></td></tr>
           <td></td>
           <td class="paramtype">int&#160;</td>
           <td class="paramname"><em>length</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a class="anchor" id="a8a11bbcbd221ff4ca69fd198acf9795c"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void free_projection_list </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="utils_8h.html#a11a6b972b58950fd98974b5ed5011e65">projection_t</a> *&#160;</td>
+          <td class="paramname"><em>projlist</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">int&#160;</td>
+          <td class="paramname"><em>num</em>&#160;</td>
         </tr>
         <tr>
           <td></td>
@@ -833,6 +994,61 @@ Functions</h2></td></tr>
 
 </div>
 </div>
+<a class="anchor" id="ab9620c8506dfaa134aac668d48e6d78e"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">double get_encut </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="utils_8h.html#a0d83785e53b058055dd3a6b963dda7e0">pswf_t</a> *&#160;</td>
+          <td class="paramname"><em>wf</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+<p>Return the encut of the plane-wave basis of the wavefunction. </p>
+
+</div>
+</div>
+<a class="anchor" id="a97f3622fdb711ca9b5a7b36d3cde8310"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">double get_energy </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="utils_8h.html#a0d83785e53b058055dd3a6b963dda7e0">pswf_t</a> *&#160;</td>
+          <td class="paramname"><em>wf</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">int&#160;</td>
+          <td class="paramname"><em>band</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">int&#160;</td>
+          <td class="paramname"><em>kpt</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">int&#160;</td>
+          <td class="paramname"><em>spin</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+</div>
+</div>
 <a class="anchor" id="a15b9061bb716b2369929860ae3ef7164"></a>
 <div class="memitem">
 <div class="memproto">
@@ -931,6 +1147,76 @@ Functions</h2></td></tr>
       </table>
 </div><div class="memdoc">
 <p>Associated legendre polynomial P_lm(x) </p>
+
+</div>
+</div>
+<a class="anchor" id="a95a5b5c641c60c379cd8c66e702183d0"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void legendre_coeff </td>
+          <td>(</td>
+          <td class="paramtype">double *&#160;</td>
+          <td class="paramname"><em>ptr</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">int&#160;</td>
+          <td class="paramname"><em>l</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">int&#160;</td>
+          <td class="paramname"><em>m</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a class="anchor" id="a1ca90ea673c0bec4a58e84a660fcf3c4"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">double* legendre_product </td>
+          <td>(</td>
+          <td class="paramtype">int&#160;</td>
+          <td class="paramname"><em>l1</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">int&#160;</td>
+          <td class="paramname"><em>l2</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">int&#160;</td>
+          <td class="paramname"><em>m1</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">int&#160;</td>
+          <td class="paramname"><em>m2</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
 
 </div>
 </div>
@@ -1361,6 +1647,38 @@ Functions</h2></td></tr>
       </table>
 </div><div class="memdoc">
 <p>Calculates &lt;(phi_i-phit_i)|(k+G)&gt; for a specific index i by using the Rayleigh expansion of a plane wave. </p>
+
+</div>
+</div>
+<a class="anchor" id="ab97aa3c92fc5c79b3ee46bf1a54e6842"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void rotation_transform </td>
+          <td>(</td>
+          <td class="paramtype">double *&#160;</td>
+          <td class="paramname"><em>out</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">double *&#160;</td>
+          <td class="paramname"><em>op</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">double *&#160;</td>
+          <td class="paramname"><em>inv</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
 
 </div>
 </div>

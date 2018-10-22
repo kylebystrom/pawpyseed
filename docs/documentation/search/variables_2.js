@@ -9,5 +9,6 @@ var searchData=
   ['cr',['cr',['../classpawpyseed_1_1core_1_1noncollinear_1_1NCLWavefunction.html#a98c4b30488194ffb28cabe9afd865283',1,'pawpyseed.core.noncollinear.NCLWavefunction.cr()'],['../classpawpyseed_1_1core_1_1projector_1_1Projector.html#a4f4b23f6964fba01b2f648eee0383cb0',1,'pawpyseed.core.projector.Projector.cr()'],['../classpawpyseed_1_1core_1_1wavefunction_1_1Wavefunction.html#af110a16ecb06ab6b2d500643cc937a81',1,'pawpyseed.core.wavefunction.Wavefunction.cr()']]],
   ['crs',['CRs',['../structband.html#ad51275300eed04ddeb1b7990db9c50cc',1,'band']]],
   ['cs',['Cs',['../structband.html#ad0bbde9be7a77a2f8da05a898a3efb1d',1,'band']]],
+  ['curr',['curr',['../structWAVECAR__FILE.html#a27adf13fa64b8f90036abf1eec4316ce',1,'WAVECAR_FILE']]],
   ['currstr',['currstr',['../namespacepawpyseed_1_1core_1_1quadrature.html#a9a64370698475cc3706eb3b77d25e805',1,'pawpyseed::core::quadrature']]]
 ];

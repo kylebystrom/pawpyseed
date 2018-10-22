@@ -9,7 +9,9 @@ var searchData=
   ['rayleigh_5fset',['rayleigh_set',['../structrayleigh__set.html',1,'']]],
   ['rayleigh_5fset_5ft',['rayleigh_set_t',['../utils_8h.html#a8ac470a429d8899852e7282927001df1',1,'utils.h']]],
   ['read_5fone_5fband',['read_one_band',['../reader_8h.html#a2b1ca1c6f6884c8d3ddfb25e6495f18b',1,'reader.h']]],
+  ['read_5fwavecar',['read_wavecar',['../reader_8h.html#aa6500159c84b1af9645c8d0ecef9f1d4',1,'reader.h']]],
   ['read_5fwavefunctions',['read_wavefunctions',['../reader_8h.html#af42fe870fdde3e44e0647913ab0fd836',1,'reader.h']]],
+  ['read_5fwavefunctions_5ffrom_5fstr',['read_wavefunctions_from_str',['../reader_8h.html#aa92e723d18aa99daa9fb0621d7af76a4',1,'reader.h']]],
   ['reader_2eh',['reader.h',['../reader_8h.html',1,'']]],
   ['readme_2emd',['README.md',['../README_8md.html',1,'']]],
   ['real_5fproj',['real_proj',['../structreal__proj.html',1,'']]],
@@ -28,5 +30,8 @@ var searchData=
   ['rmaxstr',['rmaxstr',['../classpawpyseed_1_1core_1_1wavefunction_1_1Pseudopotential.html#a0f72ebf690ce00d3e61345c4aab5d30b',1,'pawpyseed::core::wavefunction::Pseudopotential']]],
   ['rmaxstrs',['rmaxstrs',['../classpawpyseed_1_1core_1_1wavefunction_1_1Pseudopotential.html#a0ff34bee9c663f1505e232c941aa14e4',1,'pawpyseed::core::wavefunction::Pseudopotential']]],
   ['rmin',['rmin',['../structsbt__descriptor.html#a9fc1844c1b2e1513ddeac8ecd15ef47d',1,'sbt_descriptor']]],
-  ['rs',['rs',['../structsbt__descriptor.html#af35d9dda2dc51c23ae1713f94d3b27fa',1,'sbt_descriptor']]]
+  ['rotation_5ftransform',['rotation_transform',['../utils_8h.html#ab97aa3c92fc5c79b3ee46bf1a54e6842',1,'utils.h']]],
+  ['rs',['rs',['../structsbt__descriptor.html#af35d9dda2dc51c23ae1713f94d3b27fa',1,'sbt_descriptor']]],
+  ['run_5fpawpy',['run_pawpy',['../classpawpyseed_1_1analysis_1_1run__pawpy_1_1DefectWorkflowWavefunctionHandle.html#a4a751b7b86ad021d06f59b83821a3da4',1,'pawpyseed::analysis::run_pawpy::DefectWorkflowWavefunctionHandle']]],
+  ['run_5fpawpy_2epy',['run_pawpy.py',['../run__pawpy_8py.html',1,'']]]
 ];

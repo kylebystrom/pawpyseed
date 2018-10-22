@@ -12,5 +12,6 @@ var searchData=
   ['dim',['dim',['../classpawpyseed_1_1core_1_1noncollinear_1_1NCLWavefunction.html#a76e513e2b7de7772d967892e5e7ebee8',1,'pawpyseed.core.noncollinear.NCLWavefunction.dim()'],['../classpawpyseed_1_1core_1_1projector_1_1Projector.html#a4c701222e7865dcc89c637e67f6fcbb8',1,'pawpyseed.core.projector.Projector.dim()'],['../classpawpyseed_1_1core_1_1wavefunction_1_1Wavefunction.html#a199bacc42572bed61b7e59d30a00353a',1,'pawpyseed.core.wavefunction.Wavefunction.dim()']]],
   ['down_5fprojections',['down_projections',['../structband.html#a1ce820f9c4cfa877bf5f6a10289f81f5',1,'band']]],
   ['drho',['drho',['../structsbt__descriptor.html#ab13befdd4bab5fd70ecfc2e98c1d069c',1,'sbt_descriptor']]],
-  ['dt',['dt',['../structsbt__descriptor.html#a4c71c1d68e6d76f404d3b9afd16b0cea',1,'sbt_descriptor']]]
+  ['dt',['dt',['../structsbt__descriptor.html#a4c71c1d68e6d76f404d3b9afd16b0cea',1,'sbt_descriptor']]],
+  ['dwo',['dwo',['../classpawpyseed_1_1analysis_1_1run__pawpy_1_1DefectWorkflowWavefunctionHandle.html#a2102f51e91cbee1ea337de793c33ade4',1,'pawpyseed::analysis::run_pawpy::DefectWorkflowWavefunctionHandle']]]
 ];

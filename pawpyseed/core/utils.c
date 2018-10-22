@@ -318,6 +318,10 @@ int get_nspin(pswf_t* wf) {
 	return wf->nspin;
 }
 
+double get_encut(pswf_t* wf) {
+	return wf->encut;
+}
+
 int is_ncl(pswf_t* wf) {
 	return wf->is_ncl;
 }
@@ -886,7 +890,7 @@ pswf_t* expand_symm_wf(pswf_t* rwf, int num_kpts, int* maps,
 		wf->lattice[i] = lattice[i];
 		wf->reclattice[i] = reclattice[i];
 	}
-	wf->fftg = NULL; // TODO MAKE FFTG
+	wf->fftg = NULL;
 
 	wf->is_ncl = rwf->is_ncl;
 
@@ -901,7 +905,10 @@ pswf_t* expand_symm_wf(pswf_t* rwf, int num_kpts, int* maps,
 
 		double pw[3] = {0,0,0};
 		int rnum = maps[knum%num_kpts];
-		if (knum >= num_kpts) rnum += rwf->nwk;
+		int tr = trs[knum%num_kpts];
+		if (knum >= num_kpts && rwf->nspin ==2) {
+			rnum += rwf->nwk;
+		}
 
 		kpoint_t* kpt = wf->kpts[knum];
 		kpoint_t* rkpt = rwf->kpts[rnum];
@@ -912,7 +919,6 @@ pswf_t* expand_symm_wf(pswf_t* rwf, int num_kpts, int* maps,
 		kpt->up = rkpt->up;
 		kpt->num_waves = rkpt->num_waves;
 		kpt->k = (double*) malloc(3 * sizeof(double));
-		int tr = trs[knum%num_kpts];
 		rotation_transform(kpt->k, ops+OPSIZE*(knum%num_kpts), rkpt->k);
 		if (tr == 1) {
 			kpt->k[0] *= -1;
@@ -1034,8 +1040,13 @@ pswf_t* expand_symm_wf(pswf_t* rwf, int num_kpts, int* maps,
 			gy = (int) round(pw[1]);
 			gz = (int) round(pw[2]);
 			gmaps[kptinds[(gx-gxmin)*ngy*ngz + (gy-gymin)*ngz + (gz-gzmin)]] = g;
-			factors[kptinds[(gx-gxmin)*ngy*ngz + (gy-gymin)*ngz + (gz-gzmin)]] = cexpf(
-				-I * 2 * PI * (dot(kpt->k, dr) + dot(pw, dr)) );
+			if (tr == 0) {
+				factors[kptinds[(gx-gxmin)*ngy*ngz + (gy-gymin)*ngz + (gz-gzmin)]] = cexpf(
+					-I * 2 * PI * (dot(kpt->k, dr) + dot(pw, dr)) );
+			} else {
+				factors[kptinds[(gx-gxmin)*ngy*ngz + (gy-gymin)*ngz + (gz-gzmin)]] = cexpf(
+					I * 2 * PI * (dot(kpt->k, dr) + dot(pw, dr)) );
+			}
 
 			if (kptinds[(gx-gxmin)*ngy*ngz + (gy-gymin)*ngz + (gz-gzmin)] < 0) {
 				printf("ERROR, BAD PLANE WAVE MAPPING\n");

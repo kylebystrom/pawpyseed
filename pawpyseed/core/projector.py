@@ -10,7 +10,6 @@ from pawpyseed.core.wavefunction import *
 OPSIZE = 9
 
 def make_c_ops(op_nums, symmops):
-	print(op_nums)
 	ops = np.zeros(OPSIZE*len(op_nums))
 	for i in range(len(op_nums)):
 		ops[OPSIZE*i:OPSIZE*(i+1)] = symmops[op_nums[i]].rotation_matrix.flatten()
@@ -24,6 +23,7 @@ class CopyPseudoWavefunction(PseudoWavefunction):
 		self.wf_ptr = wf_ptr
 		self.kpts = kpts
 		self.kws = kws
+		self.ncl = PAWC.is_ncl(self.wf_ptr) > 0
 
 def copy_wf(rwf, wf_ptr, allkpts, weights, setup_projectors = True, free_ref = False):
 	pwf = CopyPseudoWavefunction(wf_ptr, allkpts, weights)
@@ -66,12 +66,20 @@ class Projector(Wavefunction):
 		#__init__(self, struct, pwf, cr, outcar, setup_projectors=True)
 		#__init__(self, filename="WAVECAR", vr="vasprun.xml")
 
+		if wf.freed or basis.freed:
+			raise PAWpyError("Input has been freed, no longer usable!")
+
+		if wf.pwf.ncl or basis.pwf.ncl:
+			raise PAWpyError("Projection not supported for noncollinear case!")
+
 		if unsym_basis and unsym_wf:
 			allkpts, borig_kptnums, bop_nums, bsymmops, btrs = basis.get_nosym_kpoints()
 			weights = np.ones(allkpts.shape[0]) / allkpts.shape[0]
 			worig_kptnums, wop_nums, wsymmops, wtrs = wf.get_kpt_mapping(allkpts)
 			bops, bdrs = make_c_ops(bop_nums, bsymmops)
 			wops, wdrs = make_c_ops(wop_nums, wsymmops)
+			print ("BOPS", bops, bdrs, btrs, bop_nums, borig_kptnums)
+			print ("WOPS", wops, wdrs, wtrs, wop_nums, worig_kptnums)
 			bptr = cfunc_call(PAWC.expand_symm_wf, None, basis.pwf.wf_ptr,
 				len(borig_kptnums), borig_kptnums, bops, bdrs, weights, btrs)
 			wptr = cfunc_call(PAWC.expand_symm_wf, None, wf.pwf.wf_ptr,
@@ -83,6 +91,7 @@ class Projector(Wavefunction):
 			weights = basis.pwf.kws
 			worig_kptnums, wop_nums, wsymmops, trs = wf.get_kpt_mapping(allkpts)
 			wops, wdrs = make_c_ops(wop_nums, wsymmops)
+			print ("WOPS", wops, wdrs, trs, wop_nums, worig_kptnums)
 			wptr = cfunc_call(PAWC.expand_symm_wf, None, wf.pwf.wf_ptr,
 				len(worig_kptnums), worig_kptnums, wops, wdrs, weights, trs)
 			wf = copy_wf(wf, wptr, allkpts, weights, False, True)
@@ -91,6 +100,7 @@ class Projector(Wavefunction):
 			weights = wf.pwf.kws
 			borig_kptnums, bop_nums, bsymmops, trs = basis.get_kpt_mapping(allkpts)
 			bops, bdrs = make_c_ops(bop_nums, bsymmops)
+			print ("BOPS", bops, bdrs, trs, bop_nums, borig_kptnums)
 			bptr = cfunc_call(PAWC.expand_symm_wf, None, basis.pwf.wf_ptr,
 				len(borig_kptnums), borig_kptnums, bops, bdrs, weights, trs)
 			basis = copy_wf(basis, bptr, allkpts, weights, False, True)
@@ -99,8 +109,10 @@ class Projector(Wavefunction):
 			raise PAWpyError("k-point grids for projection are not matched.")
 		if np.linalg.norm(basis.kws - wf.kws) > 1e-10:
 			raise PAWpyError("k-point weights for projection are not matched.")
+		if wf.structure.lattice != basis.structure.lattice:
+			raise PAWpyError("Need the lattice to be the same for projections and they aren't!")
 		
-		if (wf.nums is None) and (not pseudo) and (not projector_list is None):
+		if (not pseudo) and (not (projector_list is None)):
 			selfnums = np.array([basis.labels[el(s)] for s in wf.structure], dtype=np.int32)
 			selfcoords = np.array([], np.float64)
 			for s in wf.structure:
@@ -122,7 +134,9 @@ class Projector(Wavefunction):
 		self.coords = wf.coords
 		self.basis = basis
 		self.wf = wf
+		self.encut = wf.encut
 		self.num_proj_els = wf.num_proj_els
+		self.freed = False
 
 		if not pseudo:
 			self.setup_projection(basis, projector_list == None)
@@ -237,21 +251,17 @@ class Projector(Wavefunction):
 		basiscoords = basis.coords
 		selfnums = self.nums
 		selfcoords = self.coords
-
-		print(hex(projector_list), hex(self.pwf.wf_ptr))
-		sys.stdout.flush()
-		print ("TYPETHING", basis.pwf.wf_ptr, type(basis.pwf.wf_ptr))
 		
 		if setup_basis:
 			cfunc_call(PAWC.setup_projections_no_rayleigh, None,
 						basis.pwf.wf_ptr, projector_list,
-						self.num_proj_els, len(basis.structure), self.dim,
+						basis.num_proj_els, len(basis.structure), self.dim,
 						basisnums, basiscoords)
 		start = time.monotonic()
-		#basis.pwf.wf_ptr
+		
 		cfunc_call(PAWC.setup_projections_no_rayleigh, None,
-					self.pwf.wf_ptr,
-					projector_list, self.num_proj_els, len(self.structure),
+					self.pwf.wf_ptr, projector_list,
+					self.num_proj_els, len(self.structure),
 					self.dim, selfnums, selfcoords)
 		end = time.monotonic()
 		print('--------------\nran setup_projections in %f seconds\n---------------' % (end-start))
@@ -322,7 +332,8 @@ class Projector(Wavefunction):
 		return res[::2] + 1j * res[1::2]
 
 	@staticmethod
-	def setup_bases(basis_dirs, wf_dirs, desymmetrize = True):
+	def setup_bases(basis_dirs, wf_dirs, desymmetrize = True,
+		atomate_compatible = True):
 		"""
 		This function performs the setup of all the bases in the basis_dirs.
 		After this function is called, pass the returned projector_list
@@ -334,7 +345,10 @@ class Projector(Wavefunction):
 		bases = []
 		crs = []
 		for bdir in basis_dirs:
-			basis = Wavefunction.from_directory(bdir, False)
+			if atomate_compatible:
+				basis = Wavefunction.from_atomate_directory(bdir, False)
+			else:
+				basis = Wavefunction.from_directory(bdir, False)
 
 			if desymmetrize:
 				allkpts, borig_kptnums, bop_nums, bsymmops, trs = basis.get_nosym_kpoints()
@@ -379,7 +393,7 @@ class Projector(Wavefunction):
 
 	@staticmethod
 	def setup_multiple_projections(basis_dir, wf_dirs, pseudo = False, ignore_errors = False,
-									desymmetrize = False):
+									desymmetrize = False, atomate_compatible = True):
 		"""
 		A convenient generator function for processing the Kohn-Sham wavefunctions
 		of multiple structures with respect to one structure used as the basis.
@@ -402,7 +416,11 @@ class Projector(Wavefunction):
 			onto bands of basis.
 		"""
 
-		basis = Wavefunction.from_directory(basis_dir, False)
+		if atomate_compatible:
+			basis = Wavefunction.from_atomate_directory(basis_dir, False)
+		else:
+			basis = Wavefunction.from_directory(basis_dir, False)
+		
 		if desymmetrize:
 			allkpts, borig_kptnums, bop_nums, bsymmops, trs = basis.get_nosym_kpoints()
 			weights = np.ones(allkpts.shape[0]) / allkpts.shape[0]

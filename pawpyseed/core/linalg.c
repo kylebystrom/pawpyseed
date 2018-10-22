@@ -77,7 +77,6 @@ void fft3d(double complex* x, int* G_bounds, double* lattice,
 	}
 	
 	DftiFreeDescriptor(&handle);
-	//printf("total %lf\n",total);
 }
 
 double complex* fft_calloc(int num_items, int item_size) {

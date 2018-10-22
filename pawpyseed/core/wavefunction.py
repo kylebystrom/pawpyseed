@@ -1,4 +1,4 @@
-
+# coding: utf-8
 
 ## @package pawpyseed.core.wavefunction
 # Base class containing Python classes for parsing files
@@ -15,6 +15,7 @@ from pawpyseed.core.utils import *
 import os, time
 import numpy as np
 import json
+from monty.io import zopen
 
 import sys
 
@@ -181,7 +182,15 @@ class PseudoWavefunction:
 		kws = numpy_to_cdouble(weights)
 		self.kws = np.array(weights)
 		self.kpts = np.array(vr.actual_kpoints, dtype=np.float64)
-		self.wf_ptr = PAWC.read_wavefunctions(filename.encode('utf-8'), kws)
+		if '.gz' in filename or '.bz2' in filename:
+			f = zopen(filename, 'rb')
+			contents = f.read()
+			f.close()
+			self.wf_ptr = PAWC.read_wavefunctions_from_str(
+				contents, kws)
+		else:
+			self.wf_ptr = PAWC.read_wavefunctions(filename.encode('utf-8'), kws)
+		self.ncl = PAWC.is_ncl(self.wf_ptr) > 0
 
 	def pseudoprojection(self, band_num, basis):
 		"""
@@ -231,25 +240,31 @@ class Wavefunction:
 		Returns:
 			Wavefunction object
 		"""
+
+		if pwf.ncl:
+			raise PAWpyError("Pseudowavefunction is noncollinear! Call NCLWavefunction(...) instead")
 		self.structure = struct
 		self.pwf = pwf
 		self.cr = cr
 		if type(outcar) == Outcar:
 			self.dim = outcar.ngf
+			self.dim = np.array(self.dim).astype(np.int32) // 2
 		else:
 			#assume outcar is actually ngf, will fix later
 			self.dim = outcar
-		self.dim = np.array(self.dim).astype(np.int32) // 2
+			self.dim = np.array(self.dim).astype(np.int32)
 		self.projector_owner = False
 		self.projector_list = None
 		self.nums = None
 		self.coords = None
-		if setup_projectors:
-			self.check_c_projectors()
 		self.nband = PAWC.get_nband(c_void_p(pwf.wf_ptr))
 		self.nwk = PAWC.get_nwk(c_void_p(pwf.wf_ptr))
 		self.nspin = PAWC.get_nspin(c_void_p(pwf.wf_ptr))
+		self.encut = PAWC.get_encut(c_void_p(pwf.wf_ptr))
+		if setup_projectors:
+			self.check_c_projectors()
 		self.num_proj_els = None
+		self.freed = False
 
 	@staticmethod
 	def from_files(struct="CONTCAR", pwf="WAVECAR", cr="POTCAR",
@@ -279,6 +294,31 @@ class Wavefunction:
 			filepaths.append(str(os.path.join(path, d)))
 		args = filepaths + [setup_projectors]
 		return Wavefunction.from_files(*args)
+
+	@staticmethod
+	def from_atomate_directory(path, setup_projectors = True):
+
+	    files = ["CONTCAR", "WAVECAR", "POTCAR", "vasprun.xml", "OUTCAR"]
+	    paths = []
+
+	    for file in files:
+	        filepat = os.path.join( path, file +'.relax2.gz')
+	        if not os.path.exists( filepat):
+	            filepat = os.path.join( path, file +'.relax1.gz')
+	        if not os.path.exists( filepat):
+	            filepat = os.path.join( path, file +'.gz')
+	        if not os.path.exists( filepat):
+	            filepat = os.path.join( path, file)
+	        if not os.path.exists( filepat):
+	            print('Could not find {}! Skipping this defect...'.format(file))
+	            return False
+
+	        paths.append(filepat)
+
+	    args = paths + [setup_projectors]
+	    wf = Wavefunction.from_files(*args)
+
+	    return wf
 
 	def get_c_projectors_from_pps(self, pps):
 		"""
@@ -327,6 +367,7 @@ class Wavefunction:
 
 		#print (num_els, clabels, ls, pgrids, wgrids, rmaxs)
 		grid_encut = (2 * np.pi * self.dim / self.structure.lattice.abc)**2 / 0.262
+		print("GRID_ENCUT", grid_encut)
 		return cfunc_call(PAWC.get_projector_list, None,
 							num_els, clabels, ls, pgrids, wgrids,
 							projectors, aewaves, pswaves,
@@ -361,7 +402,6 @@ class Wavefunction:
 			pps[label] = self.cr.pps[e]
 			labels[e] = label
 			label += 1
-		#print (pps, labels)
 		if basis != None:
 			for e in basis.cr.pps:
 				if not e in labels:
@@ -525,7 +565,7 @@ class Wavefunction:
 		self._convert_to_vasp_volumetric(filename, dim)
 		return res
 
-	def get_nosym_kpoints(self, init_kpts = None, symprec=1e-3,
+	def get_nosym_kpoints(self, init_kpts = None, symprec=1e-5,
 		gen_trsym = True, fil_trsym = True):
 
 		kpts = np.array(self.pwf.kpts)
@@ -533,7 +573,7 @@ class Wavefunction:
 		orig_kptnums = []
 		op_nums = []
 		sga = SpacegroupAnalyzer(self.structure, symprec)
-		symmops = sga.get_point_group_operations()
+		symmops = sga.get_symmetry_operations()
 		trs = []
 		for i, op in enumerate(symmops):
 			for k, kpt in enumerate(kpts):
@@ -544,8 +584,7 @@ class Wavefunction:
 						continue
 				unique = True
 				for nkpt in allkpts:
-					if ( np.linalg.norm(newkpt-nkpt) < 1e-10 ) \
-							and (np.abs(newkpt) < 1).all():
+					if ( np.linalg.norm(newkpt-nkpt) < 1e-10 ):
 						unique = False
 						break
 				if unique:
@@ -563,8 +602,7 @@ class Wavefunction:
 							continue
 					unique = True
 					for nkpt in allkpts:
-						if ( np.linalg.norm(newkpt-nkpt) < 1e-10 ) \
-								and (np.abs(newkpt) < 1).all():
+						if ( np.linalg.norm(newkpt-nkpt) < 1e-10 ):
 							unique = False
 							break
 					if unique:
@@ -576,11 +614,9 @@ class Wavefunction:
 		self.orig_kptnums = orig_kptnums
 		self.op_nums = op_nums
 		self.symmops = symmops
-		print("NUMBER OF KPTS", len(allkpts))
-		print("KPTS", allkpts)
 		return np.array(allkpts), orig_kptnums, op_nums, symmops, trs
 
-	def get_kpt_mapping(self, allkpts, symprec=1e-3, gen_trsym = True):
+	def get_kpt_mapping(self, allkpts, symprec=1e-5, gen_trsym = True):
 		sga = SpacegroupAnalyzer(self.structure, symprec)
 		symmops = sga.get_symmetry_operations()
 		newops = []
@@ -602,6 +638,8 @@ class Wavefunction:
 						break
 				if match:
 					break
+			if match:
+				continue
 			for i, op in enumerate(symmops):
 				for k, kpt in enumerate(kpts):
 					newkpt = np.dot(op.rotation_matrix, kpt) * -1
@@ -633,4 +671,5 @@ class Wavefunction:
 		PAWC.free_pswf(c_void_p(self.pwf.wf_ptr))
 		if self.projector_owner:
 			PAWC.free_ppot_list(c_void_p(self.projector_list), len(self.cr.pps))
+		self.freed = True
 

@@ -37,9 +37,9 @@ if COMPILE:
 	status = subprocess.call('make testsuite'.split())
 	if status != 0:
 		raise PawpyTestError("Can't compile test pawpy.so! Check the C error output for details.")
-	status = subprocess.call('make mem'.split())
-	if status != 0:
-		raise PawpyTestError("Can't compile memtest! Check the C error output for details.")
+	#status = subprocess.call('make mem'.split())
+	#if status != 0:
+	#	raise PawpyTestError("Can't compile memtest! Check the C error output for details.")
 	os.chdir(currdir)
 
 from pymatgen.io.vasp.inputs import Poscar, Potcar
@@ -112,32 +112,20 @@ def numpy_to_cint(arr):
 
 class DummyProjector(Projector):
 
-	def setup_projection(self, basis, setup_basis=True):
+	def setup_overlap(self):
 		"""
-		DEBUG VERSION OF THE setup_projection METHOD IN THE
+		DEBUG VERSION OF THE setup_overlap METHOD IN THE
 		Projector CLASS
 		"""
-		if setup_basis:
-			self.projector_list, self.nums, self.coords,\
-				basis.nums, basis.coords = self.make_c_projectors(basis)
+		basis = self.basis
+		self.check_c_projectors()
+		basis.check_c_projectors()
 		projector_list = self.projector_list
 		basisnums = basis.nums
 		basiscoords = basis.coords
 		selfnums = self.nums
 		selfcoords = self.coords
-
-		sys.stdout.flush()
 		
-		if setup_basis:
-			cfunc_call(PAWC.setup_projections_no_rayleigh, None,
-						basis.pwf.wf_ptr, projector_list,
-						self.num_proj_els, len(basis.structure), self.dim,
-						basisnums, basiscoords)
-		
-		cfunc_call(PAWC.setup_projections_no_rayleigh, None,
-					self.pwf.wf_ptr,
-					projector_list, self.num_proj_els, len(self.structure),
-					self.dim, selfnums, selfcoords)
 		M_R, M_S, N_R, N_S, N_RS = self.make_site_lists(basis)
 		num_N_RS = len(N_RS)
 		if num_N_RS > 0:
@@ -146,7 +134,7 @@ class DummyProjector(Projector):
 			N_RS_R, N_RS_S = [], []
 		self.site_cat = [M_R, M_S, N_R, N_S, N_RS_R, N_RS_S]
 		cfunc_call(PAWC.overlap_setup_real, None, basis.pwf.wf_ptr, self.pwf.wf_ptr,
-					projector_list, basisnums, selfnums, basiscoords, selfcoords,
+					basisnums, selfnums, basiscoords, selfcoords,
 					M_R, M_S, M_R, M_S, len(M_R), len(M_R), len(M_R))
 
 	def single_band_projection(self, band_num):
@@ -176,7 +164,7 @@ class DummyProjector(Projector):
 		
 		ct = cfunc_call(PAWC.compensation_terms, 2*nband*nwk*nspin,
 						band_num, self.pwf.wf_ptr, basis.pwf.wf_ptr,
-						projector_list, len(self.cr.pps),
+						len(self.cr.pps),
 						0, len(M_R), len(M_S), len(M_S),
 						np.array([]), np.array([]), M_R, M_S, M_R, M_S,
 						selfnums, selfcoords, basisnums, basiscoords,

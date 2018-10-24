@@ -361,34 +361,6 @@ Return the value of the l-order spherical bessel function at x.
 double sbf(double x, int l);
 
 /**
-Calculates <(phi_i-phit_i)|psit_nk> for one pseudowavefunction
-band psit_nk using the projections onto plane waves calculated
-in generate_rayleigh_expansion_terms
-*/
-double complex rayexp(double* kpt, int* Gs, float complex* Cs, int l, int m,
-        int num_waves, double complex* sum_terms, double* ionp);
-
-/**
-Calculates <(phi_i-phit_i)|(k+G)> for a specific index i by
-using the Rayleigh expansion of a plane wave.
-*/
-double complex* rayexp_terms(double* kpt, int* Gs, int num_waves,
-        int l, int wave_gridsize, double* grid,
-        double* wave, double** spline, double* reclattice);
-
-/**
-Calculates the overlaps <(phi_i-phit_i)|(k+G)>, where phi_i are the
-AE partial waves, phit_i are the PS partial waves, and k+G are the plane
-waves, in reciprocal space.
-*/
-void generate_rayleigh_expansion_terms(pswf_t* wf, ppot_t* pps, int num_elems);
-
-/**
-Copy the Rayleigh expansion terms from wf_R to wf.
-*/
-void copy_rayleigh_expansion_terms(pswf_t* wf, ppot_t* pps, int num_elems, pswf_t* wf_R);
-
-/**
 Takes a reference wavefunction and a list of symmetry operations
 to new kpoints, and calculates a new wavefunction that has the
 additional kpoints.

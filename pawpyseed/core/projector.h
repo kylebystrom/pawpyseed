@@ -71,32 +71,10 @@ for all onsite i and j for the element represented by pp_ptr.
 void make_pwave_overlap_matrices(ppot_t* pp_ptr);
 
 /**
-Evaluates <p_i|psit_nk> for all bands and kpoints of wf,
-and calls generate_rayleigh_expansion_terms to project
-all plane-waves onto the differences of partial
-waves |phi_i-phit_i>.
+Evaluates <p_i|psit_nk> for all bands and kpoints of wf.
 */
 void setup_projections(pswf_t* wf, ppot_t* pps, int num_elems,
 	int num_sites, int* fftg, int* labels, double* coords);
-
-/**
-Same as setup_projections, but copies the partial wave expansion terms
-from a pswf_t objected pointed to by wf_R which has the same
-basis set as wf
-*/
-void setup_projections_copy_rayleigh(pswf_t* wf, pswf_t* wf_R, ppot_t* pps, int num_elems,
-		int num_sites, int* fftg, int* labels, double* coords);
-
-/**
-Calculates three overlap terms for when bands have different
-structures:
-<(phi1_i-phit1_i)|psit2_n2k>
-<(phi2_i-phit2_i)|psit1_n1k>
-<(phi1_i-phit1_i)|(phi2_i-phit2_i)>
-*/
-void overlap_setup(pswf_t* wf_R, pswf_t* wf_S, ppot_t* pps,
-        int* labels_R, int* labels_S, double* coords_R, double* coords_S,
-        int* N_R, int* N_S, int* N_RS_R, int* N_RS_S, int num_N_R, int num_N_S, int num_N_RS);
 
 /**
 Much more efficient version of overlap_setup.
@@ -106,7 +84,7 @@ structures:
 <(phi2_i-phit2_i)|psit1_n1k>
 <(phi1_i-phit1_i)|(phi2_i-phit2_i)>
 */
-void overlap_setup_real(pswf_t* wf_R, pswf_t* wf_S, ppot_t* pps,
+void overlap_setup_real(pswf_t* wf_R, pswf_t* wf_S,
 	int* labels_R, int* labels_S, double* coords_R, double* coords_S,
 	int* N_R, int* N_S, int* N_RS_R, int* N_RS_S, int num_N_R, int num_N_S, int num_N_RS);
 
@@ -114,7 +92,7 @@ void overlap_setup_real(pswf_t* wf_R, pswf_t* wf_S, ppot_t* pps,
 Calculates the components of the overlap operator in the augmentation
 regions of each ion in the lattice.
 */
-double* compensation_terms(int BAND_NUM, pswf_t* wf_proj, pswf_t* wf_ref, ppot_t* pps,
+double* compensation_terms(int BAND_NUM, pswf_t* wf_proj, pswf_t* wf_ref,
 	int num_elems, int num_M, int num_N_R, int num_N_S, int num_N_RS,
 	int* M_R, int* M_S, int* N_R, int* N_S, int* N_RS_R, int* N_RS_S,
 	int* proj_labels, double* proj_coords, int* ref_labels, double* ref_coords,

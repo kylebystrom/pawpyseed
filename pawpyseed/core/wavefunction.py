@@ -334,6 +334,7 @@ class Wavefunction:
 			ordered in the list by their numerical keys
 		"""
 
+		start = time.monotonic()
 		clabels = np.array([], np.int32)
 		ls = np.array([], np.int32)
 		projectors = np.array([], np.float64)
@@ -347,7 +348,6 @@ class Wavefunction:
 		num_els = 0
 
 		for num in sorted(pps.keys()):
-			print ("THIS IS THE NUM %d" % num)
 			pp = pps[num]
 			clabels = np.append(clabels, [num, len(pp.ls), pp.ndata, len(pp.grid)])
 			rmaxstrs[num_els] = pp.rmaxstr
@@ -367,14 +367,16 @@ class Wavefunction:
 
 		#print (num_els, clabels, ls, pgrids, wgrids, rmaxs)
 		grid_encut = (2 * np.pi * self.dim / self.structure.lattice.abc)**2 / 0.262
-		print("GRID_ENCUT", grid_encut)
-		return cfunc_call(PAWC.get_projector_list, None,
+		projector_list = cfunc_call(PAWC.get_projector_list, None,
 							num_els, clabels, ls, pgrids, wgrids,
 							projectors, aewaves, pswaves,
 							rmaxs, max(grid_encut))
+		end = time.monotonic()
+		print('--------------\nran get_projector_list in %f seconds\n---------------' % (end-start))
+		return projector_list
 			
 
-	def make_c_projectors(self, basis=None):
+	def make_c_projectors(self):
 		"""
 		Uses the CoreRegion objects in self and basis (if not None)
 		to construct C representations of the projectors and partial waves
@@ -402,30 +404,15 @@ class Wavefunction:
 			pps[label] = self.cr.pps[e]
 			labels[e] = label
 			label += 1
-		if basis != None:
-			for e in basis.cr.pps:
-				if not e in labels:
-					pps[label] = basis.cr.pps[e]
-					labels[e] = label
-					label += 1
 		
 		projector_list = self.get_c_projectors_from_pps(pps)
 
 		selfnums = np.array([labels[el(s)] for s in self.structure], dtype=np.int32)
 		selfcoords = np.array([], np.float64)
-		if basis != None:
-			basisnums = np.array([labels[el(s)] for s in basis.structure], dtype=np.int32)
-			basiscoords = np.array([], np.float64)
 
 		self.num_proj_els = len(pps)
-		if basis != None:
-			basis.num_proj_els = len(pps)
 		for s in self.structure:
 			selfcoords = np.append(selfcoords, s.frac_coords)
-		if basis != None:
-			for s in basis.structure:
-				basiscoords = np.append(basiscoords, s.frac_coords)
-			return projector_list, selfnums, selfcoords, basisnums, basiscoords
 		return projector_list, selfnums, selfcoords
 
 	def check_c_projectors(self):
@@ -434,12 +421,15 @@ class Wavefunction:
 		If not, do so.
 		"""
 		if not self.projector_list:
+			start = time.monotonic()
 			self.projector_owner = True
 			self.projector_list, self.nums, self.coords = self.make_c_projectors()
-			cfunc_call(PAWC.setup_projections_no_rayleigh, None,
+			cfunc_call(PAWC.setup_projections, None,
 					self.pwf.wf_ptr, self.projector_list,
 					self.num_proj_els, len(self.structure), self.dim,
 					self.nums, self.coords)
+			end = time.monotonic()
+			print('--------------\nran setup_projections in %f seconds\n---------------' % (end-start))
 
 	def get_state_realspace(self, b, k, s, dim=None):
 		"""

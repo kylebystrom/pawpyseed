@@ -777,6 +777,7 @@ pswf_t* expand_symm_wf(pswf_t* rwf, int num_kpts, int* maps,
 	wf->num_projs = NULL;
 	wf->wp_num = 0;
 
+	#pragma omp parallel for
 	for (int knum = 0; knum < num_kpts * wf->nspin; knum++) {
 		wf->kpts[knum] = (kpoint_t*) malloc(sizeof(kpoint_t));
 

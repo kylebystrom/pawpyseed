@@ -641,8 +641,7 @@ double* compensation_terms(int BAND_NUM, pswf_t* wf_S, pswf_t* wf_R,
 			int site_num = N_R[s];
 			projection_t pron = band_R->projections[site_num];
 			projection_t ppron = band_S->wave_projections[s];
-			ppot_t pp = wf_R->pps[ref_labels[N_R[s]]];
-			for (int i = 0; i < pp.total_projs; i++) {
+			for (int i = 0; i < pron.total_projs; i++) {
 				temp += ppron.overlaps[i] * conj(pron.overlaps[i]);
 			}
 		}
@@ -652,11 +651,10 @@ double* compensation_terms(int BAND_NUM, pswf_t* wf_S, pswf_t* wf_R,
 
 		temp = 0 + 0 * I;
 		for (int s = 0; s < num_N_S; s++) {
-			ppot_t pp = wf_S->pps[ref_labels[N_S[s]]];
 			int site_num = N_S[s];
 			projection_t pron = band_R->wave_projections[s];
 			projection_t ppron = band_S->projections[site_num];
-			for (int i = 0; i < pp.total_projs; i++) {
+			for (int i = 0; i < ppron.total_projs; i++) {
 				temp += conj(pron.overlaps[i]) * ppron.overlaps[i];
 				//if (w % NUM_KPTS == 0) {
 				//	printf("%lf %lf %lf %lf\n", creal(pron.overlaps[i]), cimag(pron.overlaps[i]), creal(ppron.overlaps[i]), cimag(ppron.overlaps[i]));

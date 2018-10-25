@@ -229,7 +229,7 @@ class Wavefunction:
 			and therefore for FFTs in this code
 	"""
 
-	def __init__(self, struct, pwf, cr, outcar, setup_projectors=True):
+	def __init__(self, struct, pwf, cr, outcar, setup_projectors=False):
 		"""
 		Arguments:
 			struct (pymatgen.core.Structure): structure that the wavefunction describes
@@ -268,7 +268,7 @@ class Wavefunction:
 
 	@staticmethod
 	def from_files(struct="CONTCAR", pwf="WAVECAR", cr="POTCAR",
-		vr="vasprun.xml", outcar="OUTCAR", setup_projectors=True):
+		vr="vasprun.xml", outcar="OUTCAR", setup_projectors=False):
 		"""
 		Construct a Wavefunction object from file paths.
 		Arguments:
@@ -284,7 +284,7 @@ class Wavefunction:
 			Outcar(outcar), setup_projectors)
 
 	@staticmethod
-	def from_directory(path, setup_projectors=True):
+	def from_directory(path, setup_projectors=False):
 		"""
 		Assumes VASP output has the default filenames and is located
 		in the directory specificed by path.

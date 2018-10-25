@@ -26,7 +26,7 @@ class CopyPseudoWavefunction(PseudoWavefunction):
 		self.kws = kws
 		self.ncl = PAWC.is_ncl(self.wf_ptr) > 0
 
-def copy_wf(rwf, wf_ptr, allkpts, weights, setup_projectors = True, free_ref = False):
+def copy_wf(rwf, wf_ptr, allkpts, weights, setup_projectors = False, free_ref = False):
 	pwf = CopyPseudoWavefunction(wf_ptr, allkpts, weights)
 	wf = Wavefunction(rwf.structure, pwf, rwf.cr, rwf.dim,
 		setup_projectors)
@@ -139,7 +139,7 @@ class Projector(Wavefunction):
 
 	@staticmethod
 	def from_files(basis, struct="CONTCAR", pwf="WAVECAR", cr="POTCAR",
-		vr="vasprun.xml", outcar="OUTCAR",
+		vr="vasprun.xml", outcar="OUTCAR", setup_projectors = False,
 		unsym_basis = False, unsym_wf = False, pseudo = False):
 		"""
 		Construct a Projector object from file paths.
@@ -156,12 +156,12 @@ class Projector(Wavefunction):
 		wf = Wavefunction(Poscar.from_file(struct).structure,
 			PseudoWavefunction(pwf, vr),
 			CoreRegion(Potcar.from_file(cr)),
-			Outcar(outcar))
+			Outcar(outcar), setup_projectors)
 		return Projector(wf, basis,
 			unsym_basis, unsym_wf, pseudo)
 
 	@staticmethod
-	def from_directory(basis, path,
+	def from_directory(basis, path, setup_projectors = False,
 		unsym_basis = False, unsym_wf = False, pseudo = False):
 		"""
 		Assumes VASP output has the default filenames and is located
@@ -176,7 +176,7 @@ class Projector(Wavefunction):
 		filepaths = []
 		for d in ["CONTCAR", "WAVECAR", "POTCAR", "vasprun.xml", "OUTCAR"]:
 			filepaths.append(str(os.path.join(path, d)))
-		args = [basis] + filepaths + [unsym_basis, unsym_wf, pseudo]
+		args = [basis] + filepaths + [setup_projectors, unsym_basis, unsym_wf, pseudo]
 		return Projector.from_files(*args)
 
 	def make_site_lists(self, basis):
@@ -392,7 +392,7 @@ class Projector(Wavefunction):
 					pr = Projector(wf, basis, pseudo = pseudo)
 
 				yield [wf_dir, pr]
-				wf.free_all()
+				pr.wf.free_all()
 			except Exception as e:
 				if ignore_errors:
 					errcount += 1
@@ -400,9 +400,7 @@ class Projector(Wavefunction):
 					raise PAWpyError('Unable to setup wavefunction in directory %s' % wf_dir\
 										+'\nGot the following error:\n'+str(e))
 		basis.free_all()
-		if pr:
-			pr.free_all()
-		else:
+		if not pr:
 			raise PAWpyError("Could not generate any projector setups")
 		print("Number of errors:", errcount)
 

@@ -777,7 +777,7 @@ pswf_t* expand_symm_wf(pswf_t* rwf, int num_kpts, int* maps,
 	wf->num_projs = NULL;
 	wf->wp_num = 0;
 
-	#pragma omp parallel for
+	//#pragma omp parallel for
 	for (int knum = 0; knum < num_kpts * wf->nspin; knum++) {
 		wf->kpts[knum] = (kpoint_t*) malloc(sizeof(kpoint_t));
 
@@ -791,9 +791,6 @@ pswf_t* expand_symm_wf(pswf_t* rwf, int num_kpts, int* maps,
 		kpoint_t* kpt = wf->kpts[knum];
 		kpoint_t* rkpt = rwf->kpts[rnum];
 
-		//TEST
-		//kpoint_t* okpt = owf->kpts[knum];
-
 		kpt->up = rkpt->up;
 		kpt->num_waves = rkpt->num_waves;
 		kpt->k = (double*) malloc(3 * sizeof(double));
@@ -803,7 +800,7 @@ pswf_t* expand_symm_wf(pswf_t* rwf, int num_kpts, int* maps,
 			kpt->k[1] *= -1;
 			kpt->k[2] *= -1;
 		}
-		//printf("OLD KPT %lf %lf %lf\n", okpt->k[0], okpt->k[1], okpt->k[2]);
+		printf("OLD KPT %lf %lf %lf\n", rkpt->k[0], rkpt->k[1], rkpt->k[2]);
 		printf("NEW KPT %lf %lf %lf\n", kpt->k[0], kpt->k[1], kpt->k[2]);
 		//kpt->Gs = (int*) malloc(3 * kpt->num_waves * sizeof(int));
 
@@ -895,6 +892,7 @@ pswf_t* expand_symm_wf(pswf_t* rwf, int num_kpts, int* maps,
 		}
 
 		double* dr = drs + 3 * (knum%num_kpts);
+		double* op = ops+OPSIZE*(knum%num_kpts);
 
 		int w = 0;
 		for (int g = 0; g < kpt->num_waves; g++) {
@@ -902,6 +900,9 @@ pswf_t* expand_symm_wf(pswf_t* rwf, int num_kpts, int* maps,
 			pw[0] = rkpt->k[0] + rkpt->Gs[3*g+0];
 			pw[1] = rkpt->k[1] + rkpt->Gs[3*g+1];
 			pw[2] = rkpt->k[2] + rkpt->Gs[3*g+2];
+			//pw[0] = rkpt->Gs[3*g+0];
+			//pw[1] = rkpt->Gs[3*g+1];
+			//pw[2] = rkpt->Gs[3*g+2];
 
 			rotation_transform(pw, ops+OPSIZE*(knum%num_kpts), pw);
 			if (tr == 1) {
@@ -927,16 +928,13 @@ pswf_t* expand_symm_wf(pswf_t* rwf, int num_kpts, int* maps,
 			}
 
 			if (kptinds[(gx-gxmin)*ngy*ngz + (gy-gymin)*ngz + (gz-gzmin)] < 0) {
-				printf("ERROR, BAD PLANE WAVE MAPPING\n");
+				printf("ERROR, BAD PLANE WAVE MAPPING %d %d %d %d %d %d %lf %lf %lf\n %lf %lf %lf %lf %lf %lf %lf %lf %lf\n",
+						rkpt->Gs[3*g+0], rkpt->Gs[3*g+1], rkpt->Gs[3*g+2], gx, gy, gz,
+						pw[0], pw[1], pw[2], op[0],op[1],op[2],op[3],op[4],op[5],op[6],op[7],op[8]);
 			}
-
-			//kpt->Gs[3*g+0] = rkpt->Gs[3*g+0];
-			//kpt->Gs[3*g+1] = rkpt->Gs[3*g+1];
-			//kpt->Gs[3*g+2] = rkpt->Gs[3*g+2];
 
 			//printf("OLD G %d %d %d\n", okpt->Gs[3*g+0], okpt->Gs[3*g+1], okpt->Gs[3*g+2]);
 			//printf("NEW G %d %d %d\n", kpt->Gs[3*g+0],  kpt->Gs[3*g+1],  kpt->Gs[3*g+2]);
-
 		}
 
 		for (int b = 0; b < kpt->num_bands; b++) {

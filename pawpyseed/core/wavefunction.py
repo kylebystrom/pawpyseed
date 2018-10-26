@@ -180,7 +180,7 @@ class PseudoWavefunction:
 			vr = Vasprun(vr)
 		weights = vr.actual_kpoints_weights
 		kws = numpy_to_cdouble(weights)
-		self.kws = np.array(weights)
+		self.kws = np.array(weights, dtype = np.float64)
 		self.kpts = np.array(vr.actual_kpoints, dtype=np.float64)
 		if '.gz' in filename or '.bz2' in filename:
 			f = zopen(filename, 'rb')

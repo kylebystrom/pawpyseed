@@ -555,6 +555,19 @@ class Wavefunction:
 		self._convert_to_vasp_volumetric(filename, dim)
 		return res
 
+	def get_symmops(self):
+		sga = SpacegroupAnalyzer(self.structure, symprec)
+		symmops = sga.get_symmetry_operations(cartesian = True)
+		lattice = self.structure.lattice.matrix
+		invlattice = self.structure.lattice.inv_matrix
+		newops = []
+		for op in symmops:
+			newrot = np.dot(lattice, op.rotation_matrix)
+			newrot = np.dot(newrot, invlattice)
+			newops.append(SymmOp.from_rotation_and_translation(
+				newrot, op.translation_vector))
+		return newops
+
 	def get_nosym_kpoints(self, init_kpts = None, symprec=1e-5,
 		gen_trsym = True, fil_trsym = True):
 
@@ -562,8 +575,7 @@ class Wavefunction:
 		allkpts = [] if init_kpts == None else [kpt for kpt in init_kpts]
 		orig_kptnums = []
 		op_nums = []
-		sga = SpacegroupAnalyzer(self.structure, symprec)
-		symmops = sga.get_symmetry_operations()
+		symmops = self.get_symmops()
 		trs = []
 		for i, op in enumerate(symmops):
 			for k, kpt in enumerate(kpts):
@@ -607,10 +619,7 @@ class Wavefunction:
 		return np.array(allkpts), orig_kptnums, op_nums, symmops, trs
 
 	def get_kpt_mapping(self, allkpts, symprec=1e-5, gen_trsym = True):
-		sga = SpacegroupAnalyzer(self.structure, symprec)
-		symmops = sga.get_symmetry_operations()
-		newops = []
-		symmops += newops
+		symmops = self.get_symmops()
 		kpts = np.array(self.pwf.kpts)
 		orig_kptnums = []
 		op_nums = []

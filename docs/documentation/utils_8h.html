@@ -260,14 +260,6 @@ Functions</h2></td></tr>
 <tr class="separator:a01a8b15bb5441b6c7b4dde6dcfbc6e28"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a077aba25691fa7291917e3243ee4a7df"><td class="memItemLeft" align="right" valign="top">double&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="utils_8h.html#a077aba25691fa7291917e3243ee4a7df">sbf</a> (double x, int l)</td></tr>
 <tr class="separator:a077aba25691fa7291917e3243ee4a7df"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:afd4e6925a43e7cd01373855158040a05"><td class="memItemLeft" align="right" valign="top">double complex&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="utils_8h.html#afd4e6925a43e7cd01373855158040a05">rayexp</a> (double *kpt, int *Gs, float complex *Cs, int l, int m, int num_waves, double complex *sum_terms, double *ionp)</td></tr>
-<tr class="separator:afd4e6925a43e7cd01373855158040a05"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a75d26cdb346662d37e0a1cc2335520e3"><td class="memItemLeft" align="right" valign="top">double complex *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="utils_8h.html#a75d26cdb346662d37e0a1cc2335520e3">rayexp_terms</a> (double *kpt, int *Gs, int num_waves, int l, int wave_gridsize, double *grid, double *wave, double **spline, double *reclattice)</td></tr>
-<tr class="separator:a75d26cdb346662d37e0a1cc2335520e3"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:aa9b77ca501da4934d3ccda82a5b45e7e"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="utils_8h.html#aa9b77ca501da4934d3ccda82a5b45e7e">generate_rayleigh_expansion_terms</a> (<a class="el" href="utils_8h.html#a0d83785e53b058055dd3a6b963dda7e0">pswf_t</a> *wf, <a class="el" href="utils_8h.html#aa248479b99172bb8a57435eceaf6cd54">ppot_t</a> *pps, int num_elems)</td></tr>
-<tr class="separator:aa9b77ca501da4934d3ccda82a5b45e7e"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:af8deaa2e91c3d859ad692dbdeaade6c0"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="utils_8h.html#af8deaa2e91c3d859ad692dbdeaade6c0">copy_rayleigh_expansion_terms</a> (<a class="el" href="utils_8h.html#a0d83785e53b058055dd3a6b963dda7e0">pswf_t</a> *wf, <a class="el" href="utils_8h.html#aa248479b99172bb8a57435eceaf6cd54">ppot_t</a> *pps, int num_elems, <a class="el" href="utils_8h.html#a0d83785e53b058055dd3a6b963dda7e0">pswf_t</a> *wf_R)</td></tr>
-<tr class="separator:af8deaa2e91c3d859ad692dbdeaade6c0"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a51cf472c36dbfb208aece68863301b14"><td class="memItemLeft" align="right" valign="top"><a class="el" href="utils_8h.html#a0d83785e53b058055dd3a6b963dda7e0">pswf_t</a> *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="utils_8h.html#a51cf472c36dbfb208aece68863301b14">expand_symm_wf</a> (<a class="el" href="utils_8h.html#a0d83785e53b058055dd3a6b963dda7e0">pswf_t</a> *rwf, int num_kpts, int *maps, double *ops, double *drs, double *kws, int *trs)</td></tr>
 <tr class="separator:a51cf472c36dbfb208aece68863301b14"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a5f2829e97ca50110c8845615aa29db64"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="utils_8h.html#a5f2829e97ca50110c8845615aa29db64">CHECK_ALLOCATION</a> (void *ptr)</td></tr>
@@ -508,45 +500,6 @@ Functions</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-
-</div>
-</div>
-<a class="anchor" id="af8deaa2e91c3d859ad692dbdeaade6c0"></a>
-<div class="memitem">
-<div class="memproto">
-      <table class="memname">
-        <tr>
-          <td class="memname">void copy_rayleigh_expansion_terms </td>
-          <td>(</td>
-          <td class="paramtype"><a class="el" href="utils_8h.html#a0d83785e53b058055dd3a6b963dda7e0">pswf_t</a> *&#160;</td>
-          <td class="paramname"><em>wf</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype"><a class="el" href="utils_8h.html#aa248479b99172bb8a57435eceaf6cd54">ppot_t</a> *&#160;</td>
-          <td class="paramname"><em>pps</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">int&#160;</td>
-          <td class="paramname"><em>num_elems</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype"><a class="el" href="utils_8h.html#a0d83785e53b058055dd3a6b963dda7e0">pswf_t</a> *&#160;</td>
-          <td class="paramname"><em>wf_R</em>&#160;</td>
-        </tr>
-        <tr>
-          <td></td>
-          <td>)</td>
-          <td></td><td></td>
-        </tr>
-      </table>
-</div><div class="memdoc">
-<p>Copy the Rayleigh expansion terms from wf_R to wf. </p>
 
 </div>
 </div>
@@ -958,39 +911,6 @@ Functions</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-
-</div>
-</div>
-<a class="anchor" id="aa9b77ca501da4934d3ccda82a5b45e7e"></a>
-<div class="memitem">
-<div class="memproto">
-      <table class="memname">
-        <tr>
-          <td class="memname">void generate_rayleigh_expansion_terms </td>
-          <td>(</td>
-          <td class="paramtype"><a class="el" href="utils_8h.html#a0d83785e53b058055dd3a6b963dda7e0">pswf_t</a> *&#160;</td>
-          <td class="paramname"><em>wf</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype"><a class="el" href="utils_8h.html#aa248479b99172bb8a57435eceaf6cd54">ppot_t</a> *&#160;</td>
-          <td class="paramname"><em>pps</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">int&#160;</td>
-          <td class="paramname"><em>num_elems</em>&#160;</td>
-        </tr>
-        <tr>
-          <td></td>
-          <td>)</td>
-          <td></td><td></td>
-        </tr>
-      </table>
-</div><div class="memdoc">
-<p>Calculates the overlaps &lt;(phi_i-phit_i)|(k+G)&gt;, where phi_i are the AE partial waves, phit_i are the PS partial waves, and k+G are the plane waves, in reciprocal space. </p>
 
 </div>
 </div>
@@ -1515,138 +1435,6 @@ Functions</h2></td></tr>
       </table>
 </div><div class="memdoc">
 <p>Helper function for proj_value and smooth_wave_value </p>
-
-</div>
-</div>
-<a class="anchor" id="afd4e6925a43e7cd01373855158040a05"></a>
-<div class="memitem">
-<div class="memproto">
-      <table class="memname">
-        <tr>
-          <td class="memname">double complex rayexp </td>
-          <td>(</td>
-          <td class="paramtype">double *&#160;</td>
-          <td class="paramname"><em>kpt</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">int *&#160;</td>
-          <td class="paramname"><em>Gs</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">float complex *&#160;</td>
-          <td class="paramname"><em>Cs</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">int&#160;</td>
-          <td class="paramname"><em>l</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">int&#160;</td>
-          <td class="paramname"><em>m</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">int&#160;</td>
-          <td class="paramname"><em>num_waves</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">double complex *&#160;</td>
-          <td class="paramname"><em>sum_terms</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">double *&#160;</td>
-          <td class="paramname"><em>ionp</em>&#160;</td>
-        </tr>
-        <tr>
-          <td></td>
-          <td>)</td>
-          <td></td><td></td>
-        </tr>
-      </table>
-</div><div class="memdoc">
-<p>Calculates &lt;(phi_i-phit_i)|psit_nk&gt; for one pseudowavefunction band psit_nk using the projections onto plane waves calculated in generate_rayleigh_expansion_terms </p>
-
-</div>
-</div>
-<a class="anchor" id="a75d26cdb346662d37e0a1cc2335520e3"></a>
-<div class="memitem">
-<div class="memproto">
-      <table class="memname">
-        <tr>
-          <td class="memname">double complex* rayexp_terms </td>
-          <td>(</td>
-          <td class="paramtype">double *&#160;</td>
-          <td class="paramname"><em>kpt</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">int *&#160;</td>
-          <td class="paramname"><em>Gs</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">int&#160;</td>
-          <td class="paramname"><em>num_waves</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">int&#160;</td>
-          <td class="paramname"><em>l</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">int&#160;</td>
-          <td class="paramname"><em>wave_gridsize</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">double *&#160;</td>
-          <td class="paramname"><em>grid</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">double *&#160;</td>
-          <td class="paramname"><em>wave</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">double **&#160;</td>
-          <td class="paramname"><em>spline</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">double *&#160;</td>
-          <td class="paramname"><em>reclattice</em>&#160;</td>
-        </tr>
-        <tr>
-          <td></td>
-          <td>)</td>
-          <td></td><td></td>
-        </tr>
-      </table>
-</div><div class="memdoc">
-<p>Calculates &lt;(phi_i-phit_i)|(k+G)&gt; for a specific index i by using the Rayleigh expansion of a plane wave. </p>
 
 </div>
 </div>

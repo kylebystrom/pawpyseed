@@ -3,8 +3,6 @@ var searchData=
   ['r',['r',['../namespacepawpyseed_1_1core_1_1rayleigh.html#a92b829d6db56c2116a6ff30c80f5de69',1,'pawpyseed.core.rayleigh.r()'],['../namespacepawpyseed_1_1analysis_1_1plots.html#a0ead40e5362cd527cfebe430e478bd93',1,'pawpyseed.analysis.plots.r()']]],
   ['rad_5fint',['rad_int',['../namespacepawpyseed_1_1core_1_1rayleigh.html#a186996aabaa10d9feaf797b4ff30a18a',1,'pawpyseed::core::rayleigh']]],
   ['radial_2eh',['radial.h',['../radial_8h.html',1,'']]],
-  ['rayexp',['rayexp',['../utils_8h.html#afd4e6925a43e7cd01373855158040a05',1,'utils.h']]],
-  ['rayexp_5fterms',['rayexp_terms',['../utils_8h.html#a75d26cdb346662d37e0a1cc2335520e3',1,'utils.h']]],
   ['rayleigh_2epy',['rayleigh.py',['../rayleigh_8py.html',1,'']]],
   ['rayleigh_5fset',['rayleigh_set',['../structrayleigh__set.html',1,'']]],
   ['rayleigh_5fset_5ft',['rayleigh_set_t',['../utils_8h.html#a8ac470a429d8899852e7282927001df1',1,'utils.h']]],

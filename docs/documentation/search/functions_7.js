@@ -1,6 +1,5 @@
 var searchData=
 [
-  ['generate_5frayleigh_5fexpansion_5fterms',['generate_rayleigh_expansion_terms',['../utils_8h.html#aa9b77ca501da4934d3ccda82a5b45e7e',1,'utils.h']]],
   ['get_5fc_5fprojectors_5ffrom_5fpps',['get_c_projectors_from_pps',['../classpawpyseed_1_1core_1_1wavefunction_1_1Wavefunction.html#a7b4a79950e6a4376bb53ca9fdc113449',1,'pawpyseed::core::wavefunction::Wavefunction']]],
   ['get_5fencut',['get_encut',['../utils_8h.html#ab9620c8506dfaa134aac668d48e6d78e',1,'utils.h']]],
   ['get_5fenergy',['get_energy',['../utils_8h.html#a97f3622fdb711ca9b5a7b36d3cde8310',1,'utils.h']]],
@@ -11,5 +10,6 @@ var searchData=
   ['get_5fnwk',['get_nwk',['../utils_8h.html#a9bcd1a9fc9c393bcae4ac93025fe7d82',1,'utils.h']]],
   ['get_5foccs',['get_occs',['../utils_8h.html#a7fedbc8d3c707ff010535e257a46d7f2',1,'utils.h']]],
   ['get_5fprojector_5flist',['get_projector_list',['../projector_8h.html#a7b0f4f46750303fd5b1cfa5060e9c678',1,'projector.h']]],
-  ['get_5fstate_5frealspace',['get_state_realspace',['../classpawpyseed_1_1core_1_1wavefunction_1_1Wavefunction.html#a7bfc45a3dd15e4e800121e353ddd0104',1,'pawpyseed::core::wavefunction::Wavefunction']]]
+  ['get_5fstate_5frealspace',['get_state_realspace',['../classpawpyseed_1_1core_1_1wavefunction_1_1Wavefunction.html#a7bfc45a3dd15e4e800121e353ddd0104',1,'pawpyseed::core::wavefunction::Wavefunction']]],
+  ['get_5fsymmops',['get_symmops',['../classpawpyseed_1_1core_1_1wavefunction_1_1Wavefunction.html#ab968d7002b16fdd23d3bc0a4fcdf1721',1,'pawpyseed::core::wavefunction::Wavefunction']]]
 ];

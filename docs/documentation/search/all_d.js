@@ -9,8 +9,7 @@ var searchData=
   ['op_5fnums',['op_nums',['../classpawpyseed_1_1core_1_1wavefunction_1_1Wavefunction.html#a50b1276c826ffe1e99ba699ee64c7bd1',1,'pawpyseed::core::wavefunction::Wavefunction']]],
   ['opsize',['OPSIZE',['../namespacepawpyseed_1_1core_1_1projector.html#a050757c62c3393c69c57bf1be52f939b',1,'pawpyseed::core::projector']]],
   ['orig_5fkptnums',['orig_kptnums',['../classpawpyseed_1_1core_1_1wavefunction_1_1Wavefunction.html#a061f5b42372e0016cb8d83cf73f075cb',1,'pawpyseed::core::wavefunction::Wavefunction']]],
-  ['overlap_5fsetup',['overlap_setup',['../projector_8h.html#a4634bbb41990b561002bf4c288a78f85',1,'projector.h']]],
-  ['overlap_5fsetup_5freal',['overlap_setup_real',['../projector_8h.html#a91becb59970084d9fc8574cc98a3ee4f',1,'projector.h']]],
+  ['overlap_5fsetup_5freal',['overlap_setup_real',['../projector_8h.html#ad578639d206a861c83611645aebea02f',1,'projector.h']]],
   ['overlap_5ftime',['overlap_time',['../classpawpyseed_1_1core_1_1wavefunction_1_1Timer.html#a70b69e992e333461e49b644477ecd1f8',1,'pawpyseed::core::wavefunction::Timer']]],
   ['overlaps',['overlaps',['../structprojection.html#a624461fa30a63002c95f04a45bb2920b',1,'projection::overlaps()'],['../structpswf.html#a0ce41591881f869b160ed6aeda2469f4',1,'pswf::overlaps()']]]
 ];

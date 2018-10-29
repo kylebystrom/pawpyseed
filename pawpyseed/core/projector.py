@@ -93,6 +93,8 @@ class Projector(Wavefunction):
 			basis = copy_wf(basis, bptr, allkpts, weights, False, True)
 			wf = copy_wf(wf, wptr, allkpts, weights, False, True)
 		elif unsym_wf and not unsym_basis:
+			if basis.kpts.shape[0] < wf.kpts.shape[0]:
+				raise PAWpyError("Basis doesn't have enough kpoints, needs to be desymmetrized!")
 			allkpts = basis.pwf.kpts
 			weights = basis.pwf.kws
 			worig_kptnums, wop_nums, wsymmops, trs = wf.get_kpt_mapping(allkpts)
@@ -102,6 +104,8 @@ class Projector(Wavefunction):
 				len(worig_kptnums), worig_kptnums, wops, wdrs, weights, trs)
 			wf = copy_wf(wf, wptr, allkpts, weights, False, True)
 		elif unsym_basis and not unsym_wf:
+			if wf.kpts.shape[0] < basis.kpts.shape[0]:
+				raise PAWpyError("Defect doesn't have enough kpoints, needs to be desymmetrized!")
 			allkpts = wf.pwf.kpts
 			weights = wf.pwf.kws
 			borig_kptnums, bop_nums, bsymmops, trs = basis.get_kpt_mapping(allkpts)

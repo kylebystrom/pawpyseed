@@ -180,7 +180,7 @@ class PseudoWavefunction:
 			vr = Vasprun(vr)
 		weights = vr.actual_kpoints_weights
 		kws = numpy_to_cdouble(weights)
-		self.kws = np.array(weights)
+		self.kws = np.array(weights, dtype = np.float64)
 		self.kpts = np.array(vr.actual_kpoints, dtype=np.float64)
 		if '.gz' in filename or '.bz2' in filename:
 			f = zopen(filename, 'rb')
@@ -229,7 +229,7 @@ class Wavefunction:
 			and therefore for FFTs in this code
 	"""
 
-	def __init__(self, struct, pwf, cr, outcar, setup_projectors=True):
+	def __init__(self, struct, pwf, cr, outcar, setup_projectors=False):
 		"""
 		Arguments:
 			struct (pymatgen.core.Structure): structure that the wavefunction describes
@@ -268,7 +268,7 @@ class Wavefunction:
 
 	@staticmethod
 	def from_files(struct="CONTCAR", pwf="WAVECAR", cr="POTCAR",
-		vr="vasprun.xml", outcar="OUTCAR", setup_projectors=True):
+		vr="vasprun.xml", outcar="OUTCAR", setup_projectors=False):
 		"""
 		Construct a Wavefunction object from file paths.
 		Arguments:
@@ -284,7 +284,7 @@ class Wavefunction:
 			Outcar(outcar), setup_projectors)
 
 	@staticmethod
-	def from_directory(path, setup_projectors=True):
+	def from_directory(path, setup_projectors=False):
 		"""
 		Assumes VASP output has the default filenames and is located
 		in the directory specificed by path.
@@ -334,6 +334,7 @@ class Wavefunction:
 			ordered in the list by their numerical keys
 		"""
 
+		start = time.monotonic()
 		clabels = np.array([], np.int32)
 		ls = np.array([], np.int32)
 		projectors = np.array([], np.float64)
@@ -347,7 +348,6 @@ class Wavefunction:
 		num_els = 0
 
 		for num in sorted(pps.keys()):
-			print ("THIS IS THE NUM %d" % num)
 			pp = pps[num]
 			clabels = np.append(clabels, [num, len(pp.ls), pp.ndata, len(pp.grid)])
 			rmaxstrs[num_els] = pp.rmaxstr
@@ -367,14 +367,16 @@ class Wavefunction:
 
 		#print (num_els, clabels, ls, pgrids, wgrids, rmaxs)
 		grid_encut = (2 * np.pi * self.dim / self.structure.lattice.abc)**2 / 0.262
-		print("GRID_ENCUT", grid_encut)
-		return cfunc_call(PAWC.get_projector_list, None,
+		projector_list = cfunc_call(PAWC.get_projector_list, None,
 							num_els, clabels, ls, pgrids, wgrids,
 							projectors, aewaves, pswaves,
 							rmaxs, max(grid_encut))
+		end = time.monotonic()
+		print('--------------\nran get_projector_list in %f seconds\n---------------' % (end-start))
+		return projector_list
 			
 
-	def make_c_projectors(self, basis=None):
+	def make_c_projectors(self):
 		"""
 		Uses the CoreRegion objects in self and basis (if not None)
 		to construct C representations of the projectors and partial waves
@@ -402,30 +404,15 @@ class Wavefunction:
 			pps[label] = self.cr.pps[e]
 			labels[e] = label
 			label += 1
-		if basis != None:
-			for e in basis.cr.pps:
-				if not e in labels:
-					pps[label] = basis.cr.pps[e]
-					labels[e] = label
-					label += 1
 		
 		projector_list = self.get_c_projectors_from_pps(pps)
 
 		selfnums = np.array([labels[el(s)] for s in self.structure], dtype=np.int32)
 		selfcoords = np.array([], np.float64)
-		if basis != None:
-			basisnums = np.array([labels[el(s)] for s in basis.structure], dtype=np.int32)
-			basiscoords = np.array([], np.float64)
 
 		self.num_proj_els = len(pps)
-		if basis != None:
-			basis.num_proj_els = len(pps)
 		for s in self.structure:
 			selfcoords = np.append(selfcoords, s.frac_coords)
-		if basis != None:
-			for s in basis.structure:
-				basiscoords = np.append(basiscoords, s.frac_coords)
-			return projector_list, selfnums, selfcoords, basisnums, basiscoords
 		return projector_list, selfnums, selfcoords
 
 	def check_c_projectors(self):
@@ -434,12 +421,15 @@ class Wavefunction:
 		If not, do so.
 		"""
 		if not self.projector_list:
+			start = time.monotonic()
 			self.projector_owner = True
 			self.projector_list, self.nums, self.coords = self.make_c_projectors()
-			cfunc_call(PAWC.setup_projections_no_rayleigh, None,
+			cfunc_call(PAWC.setup_projections, None,
 					self.pwf.wf_ptr, self.projector_list,
 					self.num_proj_els, len(self.structure), self.dim,
 					self.nums, self.coords)
+			end = time.monotonic()
+			print('--------------\nran setup_projections in %f seconds\n---------------' % (end-start))
 
 	def get_state_realspace(self, b, k, s, dim=None):
 		"""
@@ -565,6 +555,20 @@ class Wavefunction:
 		self._convert_to_vasp_volumetric(filename, dim)
 		return res
 
+	def get_symmops(self, symprec):
+		sga = SpacegroupAnalyzer(self.structure, symprec)
+		symmops = sga.get_symmetry_operations(cartesian = True)
+		lattice = self.structure.lattice.matrix
+		invlattice = self.structure.lattice.inv_matrix
+		newops = []
+		for op in symmops:
+			newrot = np.dot(lattice, op.rotation_matrix)
+			newrot = np.dot(newrot, invlattice)
+			newtrans = np.dot(op.translation_vector, invlattice)
+			newops.append(SymmOp.from_rotation_and_translation(
+				newrot, newtrans))
+		return newops
+
 	def get_nosym_kpoints(self, init_kpts = None, symprec=1e-5,
 		gen_trsym = True, fil_trsym = True):
 
@@ -572,19 +576,26 @@ class Wavefunction:
 		allkpts = [] if init_kpts == None else [kpt for kpt in init_kpts]
 		orig_kptnums = []
 		op_nums = []
-		sga = SpacegroupAnalyzer(self.structure, symprec)
-		symmops = sga.get_symmetry_operations()
+		symmops = self.get_symmops(symprec)
 		trs = []
 		for i, op in enumerate(symmops):
 			for k, kpt in enumerate(kpts):
 				newkpt = np.dot(op.rotation_matrix, kpt)
+				newkpt -= np.around(newkpt)
+				newkpt[ abs(newkpt + 0.5) < 1e-5 ] = 0.5
+				#if ((newkpt > 0.5+1e-6) + (newkpt < -0.5+1e-6)).any():
+				#	continue
 				if fil_trsym:
-					if newkpt[2] < -1e-10 or \
-						(abs(newkpt[2]) < 1e-10 and newkpt[1] < -1e-10):
+					if newkpt[2] < -1e-6 or \
+						(abs(newkpt[2]) < 1e-6 and newkpt[1] < -1e-6) or \
+						(abs(newkpt[2]) < 1e-6 and abs(newkpt[1]) < 1e-6 and newkpt[0] < -1e-6):
 						continue
 				unique = True
 				for nkpt in allkpts:
-					if ( np.linalg.norm(newkpt-nkpt) < 1e-10 ):
+					diff = (newkpt - nkpt) % 1
+					oppdiff = 1 - diff
+					tst = (np.abs(diff) < 1e-4) + (np.abs(oppdiff) < 1e-4)
+					if ( tst.all() ):
 						unique = False
 						break
 				if unique:
@@ -596,13 +607,21 @@ class Wavefunction:
 			for i, op in enumerate(symmops):
 				for k, kpt in enumerate(kpts):
 					newkpt = np.dot(op.rotation_matrix, kpt) * -1
+					newkpt -= np.around(newkpt)
+					newkpt[ abs(newkpt + 0.5) < 1e-5 ] = 0.5
+					#if ((newkpt > 0.5+1e-6) + (newkpt < -0.5+1e-6)).any():
+					#	continue
 					if fil_trsym:
 						if newkpt[2] < -1e-10 or \
-							(abs(newkpt[2]) < 1e-10 and newkpt[1] < -1e-10):
+							(abs(newkpt[2]) < 1e-6 and newkpt[1] < -1e-6) or \
+							(abs(newkpt[2]) < 1e-6 and abs(newkpt[1]) < 1e-6 and newkpt[0] < -1e-6):
 							continue
 					unique = True
 					for nkpt in allkpts:
-						if ( np.linalg.norm(newkpt-nkpt) < 1e-10 ):
+						diff = (newkpt - nkpt) % 1
+						oppdiff = 1 - diff
+						tst = (np.abs(diff) < 1e-4) + (np.abs(oppdiff) < 1e-4)
+						if ( tst.all() ):
 							unique = False
 							break
 					if unique:
@@ -617,10 +636,7 @@ class Wavefunction:
 		return np.array(allkpts), orig_kptnums, op_nums, symmops, trs
 
 	def get_kpt_mapping(self, allkpts, symprec=1e-5, gen_trsym = True):
-		sga = SpacegroupAnalyzer(self.structure, symprec)
-		symmops = sga.get_symmetry_operations()
-		newops = []
-		symmops += newops
+		symmops = self.get_symmops(symprec)
 		kpts = np.array(self.pwf.kpts)
 		orig_kptnums = []
 		op_nums = []
@@ -630,7 +646,12 @@ class Wavefunction:
 			for i, op in enumerate(symmops):
 				for k, kpt in enumerate(kpts):
 					newkpt = np.dot(op.rotation_matrix, kpt)
-					if np.linalg.norm(newkpt-nkpt) < 1e-10:
+					#if ((newkpt > 0.5+1e-6) + (newkpt < -0.5+1e-6)).any():
+					#	continue
+					diff = (newkpt - nkpt) % 1
+					oppdiff = 1 - diff
+					tst = (np.abs(diff) < 1e-4) + (np.abs(oppdiff) < 1e-4)
+					if tst.all():
 						match = True
 						orig_kptnums.append(k)
 						op_nums.append(i)
@@ -643,7 +664,12 @@ class Wavefunction:
 			for i, op in enumerate(symmops):
 				for k, kpt in enumerate(kpts):
 					newkpt = np.dot(op.rotation_matrix, kpt) * -1
-					if np.linalg.norm(newkpt-nkpt) < 1e-10:
+					#if ((newkpt > 0.5+1e-6) + (newkpt < -0.5+1e-6)).any():
+					#	continue
+					diff = (newkpt - nkpt) % 1
+					oppdiff = 1 - diff
+					tst = (np.abs(diff) < 1e-4) + (np.abs(oppdiff) < 1e-4)
+					if tst.all():
 						match = True
 						orig_kptnums.append(k)
 						op_nums.append(i)

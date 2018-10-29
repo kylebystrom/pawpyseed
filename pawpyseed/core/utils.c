@@ -741,129 +741,6 @@ double sbf(double x, int l) {
 	return jlp1;
 }
 
-
-double complex rayexp(double* kpt, int* Gs, float complex* Cs, int l, int m,
-	int num_waves, double complex* sum_terms, double* ionp) {
-
-	double complex result = 0;
-	double pvec[3] = {0,0,0};
-	double complex phase = 0;
-	for (int w = 0; w < num_waves; w++) {
-		pvec[0] = Gs[3*w+0];
-		pvec[1] = Gs[3*w+1];
-		pvec[2] = Gs[3*w+2];
-		phase = cexp(2*PI*I*dot(ionp, pvec));
-		result += phase * Cs[w] * sum_terms[(2*l+1)*w+l+m];
-	}
-	return result * 4 * PI * cpow(I, l);
-}
-
-double complex* rayexp_terms(double* kpt, int* Gs, int num_waves,
-	int l, int wave_gridsize, double* grid,
-	double* wave, double** spline, double* reclattice) {
-
-	double complex ylmdir = 0;
-	double k = 0;
-	double complex* terms = (double complex*) malloc((2*l+1) * num_waves * sizeof(double complex));
-	CHECK_ALLOCATION(terms);
-
-	double overlap = 0;
-	double pvec[3] = {0,0,0};
-	double phat[2] = {0,0};
-	if (l == 0) printf("KPOINT %lf %lf %lf\n", kpt[0], kpt[1], kpt[2]);
-	for (int w = 0; w < num_waves; w++) {
-		pvec[0] = kpt[0] + Gs[3*w+0];
-		pvec[1] = kpt[1] + Gs[3*w+1];
-		pvec[2] = kpt[2] + Gs[3*w+2];
-		frac_to_cartesian(pvec, reclattice);
-		//if (l == 0) printf("PVECART %lf %lf %lf\n", pvec[0], pvec[1], pvec[2]);
-		k = mag(pvec);
-		if (k > 10e-12) direction(pvec, phat);
-		overlap = wave_interpolate(k, wave_gridsize, grid, wave, spline);
-		for (int m = -l; m <= l; m++) {
-			if (k > 10e-12) ylmdir = conj(Ylm(l, m, phat[0], phat[1]));
-			else ylmdir = 0;
-			//if (k < 0.1 && l == 0) overlap = -0.1693;
-			//else if (k < 0.1) overlap = 0;
-			terms[(2*l+1)*w+l+m] = ylmdir * overlap;
-		}
-	}
-	return terms;
-}
-
-void generate_rayleigh_expansion_terms(pswf_t* wf, ppot_t* pps, int num_elems) {
-
-	int* num_projs = (int*) malloc(num_elems * sizeof(int));
-	for (int i = 0; i < num_elems; i++) {
-		num_projs[i] = pps[i].num_projs;
-	}
-	wf->num_projs = num_projs;
-
-	#pragma omp parallel for
-	for (int k_num = 0; k_num < wf->nwk; k_num++) {
-		kpoint_t* kpt = wf->kpts[k_num];
-		kpt->expansion = (rayleigh_set_t**) malloc(num_elems * sizeof(rayleigh_set_t*));
-		CHECK_ALLOCATION(kpt->expansion);
-		for (int i = 0; i < num_elems; i++) {
-			ppot_t pp = pps[i];
-			kpt->expansion[i] = (rayleigh_set_t*) malloc(pp.num_projs * sizeof(rayleigh_set_t));
-			CHECK_ALLOCATION(kpt->expansion[i]);
-			for (int j = 0; j < pp.num_projs; j++) {
-				double complex* terms = rayexp_terms(kpt->k, kpt->Gs, kpt->num_waves,
-					pp.funcs[j].l, pp.wave_gridsize, pp.kwave_grid,
-					pp.funcs[j].kwave, pp.funcs[j].kwave_spline, wf->reclattice);
-				kpt->expansion[i][j].terms = terms;
-				kpt->expansion[i][j].l = pp.funcs[j].l;
-			}
-		}
-		for (int spin_num = 1; spin_num < wf->nspin; spin_num++) {
-			kpoint_t* kpt2 = wf->kpts[k_num + wf->nwk * spin_num];
-			kpt2->expansion = (rayleigh_set_t**) malloc(num_elems * sizeof(rayleigh_set_t*));
-			for (int i = 0; i < num_elems; i++) {
-				ppot_t pp = pps[i];
-				kpt2->expansion[i] = (rayleigh_set_t*) malloc(pp.num_projs * sizeof(rayleigh_set_t));
-				CHECK_ALLOCATION(kpt->expansion[i]);
-				for (int j = 0; j < pp.num_projs; j++) {
-					int num_bytes = kpt->num_waves * (2*pp.funcs[j].l+1) * sizeof(double complex);
-					double complex* terms = (double complex*) malloc(num_bytes);
-					memcpy(terms, kpt->expansion[i][j].terms, num_bytes);
-					kpt2->expansion[i][j].terms = terms;
-					kpt2->expansion[i][j].l = pp.funcs[j].l;
-				}
-			}
-		}
-	}
-}
-
-void copy_rayleigh_expansion_terms(pswf_t* wf, ppot_t* pps, int num_elems, pswf_t* wf_R) {
-	
-	int* num_projs = (int*) malloc(num_elems * sizeof(int));
-	for (int i = 0; i < num_elems; i++) {
-		num_projs[i] = pps[i].num_projs;
-	}
-	wf->num_projs = num_projs;
-
-	#pragma omp parallel for 
-	for (int k_num = 0; k_num < wf->nwk * wf->nspin; k_num++) {
-		kpoint_t* kpt = wf->kpts[k_num];
-		kpoint_t* kpt_R = wf_R->kpts[k_num];
-		kpt->expansion = (rayleigh_set_t**) malloc(num_elems * sizeof(rayleigh_set_t*));
-		CHECK_ALLOCATION(kpt->expansion);
-		for (int i = 0; i < num_elems; i++) {
-			ppot_t pp = pps[i];
-			kpt->expansion[i] = (rayleigh_set_t*) malloc(pp.num_projs * sizeof(rayleigh_set_t));
-			CHECK_ALLOCATION(kpt->expansion[i]);
-			for (int j = 0; j < pp.num_projs; j++) {
-				int num_bytes = kpt->num_waves * (2*pp.funcs[j].l+1) * sizeof(double complex);
-				double complex* terms = (double complex*) malloc(num_bytes);
-				memcpy(terms, kpt_R->expansion[i][j].terms, num_bytes);
-				kpt->expansion[i][j].terms = terms;
-				kpt->expansion[i][j].l = pp.funcs[j].l;
-			}
-		}
-	}
-}
-
 pswf_t* expand_symm_wf(pswf_t* rwf, int num_kpts, int* maps,
 	double* ops, double* drs, double* kws, int* trs) {
 
@@ -900,6 +777,7 @@ pswf_t* expand_symm_wf(pswf_t* rwf, int num_kpts, int* maps,
 	wf->num_projs = NULL;
 	wf->wp_num = 0;
 
+	//#pragma omp parallel for
 	for (int knum = 0; knum < num_kpts * wf->nspin; knum++) {
 		wf->kpts[knum] = (kpoint_t*) malloc(sizeof(kpoint_t));
 
@@ -913,9 +791,6 @@ pswf_t* expand_symm_wf(pswf_t* rwf, int num_kpts, int* maps,
 		kpoint_t* kpt = wf->kpts[knum];
 		kpoint_t* rkpt = rwf->kpts[rnum];
 
-		//TEST
-		//kpoint_t* okpt = owf->kpts[knum];
-
 		kpt->up = rkpt->up;
 		kpt->num_waves = rkpt->num_waves;
 		kpt->k = (double*) malloc(3 * sizeof(double));
@@ -925,7 +800,11 @@ pswf_t* expand_symm_wf(pswf_t* rwf, int num_kpts, int* maps,
 			kpt->k[1] *= -1;
 			kpt->k[2] *= -1;
 		}
-		//printf("OLD KPT %lf %lf %lf\n", okpt->k[0], okpt->k[1], okpt->k[2]);
+		double kdiff[3] = {round(kpt->k[0]), round(kpt->k[1]), round(kpt->k[2])};
+		kpt->k[0] -= kdiff[0];
+		kpt->k[1] -= kdiff[1];
+		kpt->k[2] -= kdiff[2];
+		printf("OLD KPT %lf %lf %lf\n", rkpt->k[0], rkpt->k[1], rkpt->k[2]);
 		printf("NEW KPT %lf %lf %lf\n", kpt->k[0], kpt->k[1], kpt->k[2]);
 		//kpt->Gs = (int*) malloc(3 * kpt->num_waves * sizeof(int));
 
@@ -1017,13 +896,17 @@ pswf_t* expand_symm_wf(pswf_t* rwf, int num_kpts, int* maps,
 		}
 
 		double* dr = drs + 3 * (knum%num_kpts);
+		double* op = ops+OPSIZE*(knum%num_kpts);
 
 		int w = 0;
 		for (int g = 0; g < kpt->num_waves; g++) {
 
-			pw[0] = rkpt->k[0] + rkpt->Gs[3*g+0];
-			pw[1] = rkpt->k[1] + rkpt->Gs[3*g+1];
-			pw[2] = rkpt->k[2] + rkpt->Gs[3*g+2];
+			//pw[0] = rkpt->k[0] + rkpt->Gs[3*g+0];
+			//pw[1] = rkpt->k[1] + rkpt->Gs[3*g+1];
+			//pw[2] = rkpt->k[2] + rkpt->Gs[3*g+2];
+			pw[0] = rkpt->Gs[3*g+0];
+			pw[1] = rkpt->Gs[3*g+1];
+			pw[2] = rkpt->Gs[3*g+2];
 
 			rotation_transform(pw, ops+OPSIZE*(knum%num_kpts), pw);
 			if (tr == 1) {
@@ -1032,9 +915,12 @@ pswf_t* expand_symm_wf(pswf_t* rwf, int num_kpts, int* maps,
 				pw[2] *= -1;
 			}
 
-			pw[0] -= kpt->k[0];
-			pw[1] -= kpt->k[1];
-			pw[2] -= kpt->k[2];
+			//pw[0] -= kpt->k[0];
+			//pw[1] -= kpt->k[1];
+			//pw[2] -= kpt->k[2];
+			pw[0] += kdiff[0];
+			pw[1] += kdiff[1];
+			pw[2] += kdiff[2];
 
 			gx = (int) round(pw[0]);
 			gy = (int) round(pw[1]);
@@ -1049,16 +935,13 @@ pswf_t* expand_symm_wf(pswf_t* rwf, int num_kpts, int* maps,
 			}
 
 			if (kptinds[(gx-gxmin)*ngy*ngz + (gy-gymin)*ngz + (gz-gzmin)] < 0) {
-				printf("ERROR, BAD PLANE WAVE MAPPING\n");
+				printf("ERROR, BAD PLANE WAVE MAPPING %d %d %d %d %d %d %lf %lf %lf\n %lf %lf %lf %lf %lf %lf %lf %lf %lf\n",
+						rkpt->Gs[3*g+0], rkpt->Gs[3*g+1], rkpt->Gs[3*g+2], gx, gy, gz,
+						pw[0], pw[1], pw[2], op[0],op[1],op[2],op[3],op[4],op[5],op[6],op[7],op[8]);
 			}
-
-			//kpt->Gs[3*g+0] = rkpt->Gs[3*g+0];
-			//kpt->Gs[3*g+1] = rkpt->Gs[3*g+1];
-			//kpt->Gs[3*g+2] = rkpt->Gs[3*g+2];
 
 			//printf("OLD G %d %d %d\n", okpt->Gs[3*g+0], okpt->Gs[3*g+1], okpt->Gs[3*g+2]);
 			//printf("NEW G %d %d %d\n", kpt->Gs[3*g+0],  kpt->Gs[3*g+1],  kpt->Gs[3*g+2]);
-
 		}
 
 		for (int b = 0; b < kpt->num_bands; b++) {

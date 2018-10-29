@@ -33,11 +33,7 @@ PAWC.read_wavefunctions.restype = c_void_p
 PAWC.get_projector_list.argtypes = [c_int, c_int_p, c_int_p] + [c_double_p]*6 + [c_double]
 PAWC.get_projector_list.restype = c_void_p
 
-PAWC.overlap_setup.argtypes = [c_void_p, c_void_p, c_void_p, c_int_p, c_int_p,
-				c_double_p, c_double_p] + 4*[c_int_p] + 3*[c_int]
-PAWC.overlap_setup.restype = None
-
-PAWC.overlap_setup_real.argtypes = [c_void_p, c_void_p, c_void_p, c_int_p, c_int_p,
+PAWC.overlap_setup_real.argtypes = [c_void_p, c_void_p, c_int_p, c_int_p,
                 c_double_p, c_double_p] + 4*[c_int_p] + 3*[c_int]
 PAWC.overlap_setup_real.restype = None
 
@@ -55,9 +51,7 @@ PAWC.write_density_noreturn.argtypes = PAWC.write_density_return.argtypes
 PAWC.write_density_return.restype = c_double_p
 PAWC.write_density_noreturn.restype = None
 
-PAWC.setup_projections_no_rayleigh.argtypes = [c_void_p, c_void_p, c_int, c_int, c_int_p, c_int_p, c_double_p]
-PAWC.setup_projections.argtypes = PAWC.setup_projections_no_rayleigh.argtypes
-PAWC.setup_projections_copy_rayleigh.argtypes = [c_void_p] + PAWC.setup_projections.argtypes
+PAWC.setup_projections.argtypes = [c_void_p, c_void_p, c_int, c_int, c_int_p, c_int_p, c_double_p]
 
 PAWC.project_realspace_state.argtypes = [c_int, c_int, c_void_p, c_void_p, c_void_p, c_int_p, c_int_p, c_double_p, c_int_p, c_double_p]
 PAWC.project_realspace_state.restype = c_void_p
@@ -65,7 +59,7 @@ PAWC.project_realspace_state.restype = c_void_p
 PAWC.pseudoprojection.argtypes = [c_void_p, c_void_p, c_int]
 PAWC.pseudoprojection.restype = c_double_p
 
-PAWC.compensation_terms.argtypes = [c_int] + [c_void_p]*3 + [c_int]*5 + [c_int_p]*6 \
+PAWC.compensation_terms.argtypes = [c_int] + [c_void_p]*2 + [c_int]*5 + [c_int_p]*6 \
 									+ [c_int_p, c_double_p]*2 + [c_int_p]
 PAWC.compensation_terms.restype = c_double_p
 
@@ -98,6 +92,14 @@ PAWC.free_pswf.restype = None
 class PAWpyError(Exception):
 	"""
 	Class for handling errors that occur during execution
+	of Python functions in pawpyseed
+	"""
+	def __init__(self, msg):
+		self.msg = msg
+
+class PAWpyWarning(Warning):
+	"""
+	Class for handling warnings taht occur during execution
 	of Python functions in pawpyseed
 	"""
 	def __init__(self, msg):

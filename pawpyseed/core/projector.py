@@ -278,6 +278,9 @@ class Projector(Wavefunction):
 				as described above
 		"""
 
+		if self.wf.freed or self.basis.freed:
+			raise PAWpyError("Can't do projection with freed Wavefunction objects!")
+
 		if self.pseudo:
 			return self.pwf.pseudoprojection(band_num, self.basis.pwf)
 
@@ -332,7 +335,11 @@ class Projector(Wavefunction):
 
 			if desymmetrize:
 				allkpts, borig_kptnums, bop_nums, bsymmops, trs = basis.get_nosym_kpoints()
-				weights = np.ones(allkpts.shape[0]) / allkpts.shape[0]
+				weights = np.ones(allkpts.shape[0])
+				for i in range(allkpts.shape[0]):
+					if np.linalg.norm(allkpts[i]) < 1e-10:
+						weights[i] *= 0.5
+				weights /= np.sum(weights)
 				bops, bdrs = make_c_ops(bop_nums, bsymmops)
 				bptr = cfunc_call(PAWC.expand_symm_wf, None, basis.pwf.wf_ptr,
 					len(borig_kptnums), borig_kptnums, bops, bdrs, weights, trs)

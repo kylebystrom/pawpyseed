@@ -555,7 +555,7 @@ class Wavefunction:
 		self._convert_to_vasp_volumetric(filename, dim)
 		return res
 
-	def get_symmops(self):
+	def get_symmops(self, symprec):
 		sga = SpacegroupAnalyzer(self.structure, symprec)
 		symmops = sga.get_symmetry_operations(cartesian = True)
 		lattice = self.structure.lattice.matrix
@@ -564,8 +564,9 @@ class Wavefunction:
 		for op in symmops:
 			newrot = np.dot(lattice, op.rotation_matrix)
 			newrot = np.dot(newrot, invlattice)
+			newtrans = np.dot(op.translation_vector, invlattice)
 			newops.append(SymmOp.from_rotation_and_translation(
-				newrot, op.translation_vector))
+				newrot, newtrans))
 		return newops
 
 	def get_nosym_kpoints(self, init_kpts = None, symprec=1e-5,
@@ -575,18 +576,26 @@ class Wavefunction:
 		allkpts = [] if init_kpts == None else [kpt for kpt in init_kpts]
 		orig_kptnums = []
 		op_nums = []
-		symmops = self.get_symmops()
+		symmops = self.get_symmops(symprec)
 		trs = []
 		for i, op in enumerate(symmops):
 			for k, kpt in enumerate(kpts):
 				newkpt = np.dot(op.rotation_matrix, kpt)
+				newkpt -= np.around(newkpt)
+				newkpt[ abs(newkpt + 0.5) < 1e-5 ] = 0.5
+				#if ((newkpt > 0.5+1e-6) + (newkpt < -0.5+1e-6)).any():
+				#	continue
 				if fil_trsym:
-					if newkpt[2] < -1e-10 or \
-						(abs(newkpt[2]) < 1e-10 and newkpt[1] < -1e-10):
+					if newkpt[2] < -1e-6 or \
+						(abs(newkpt[2]) < 1e-6 and newkpt[1] < -1e-6) or \
+						(abs(newkpt[2]) < 1e-6 and abs(newkpt[1]) < 1e-6 and newkpt[0] < -1e-6):
 						continue
 				unique = True
 				for nkpt in allkpts:
-					if ( np.linalg.norm(newkpt-nkpt) < 1e-10 ):
+					diff = (newkpt - nkpt) % 1
+					oppdiff = 1 - diff
+					tst = (np.abs(diff) < 1e-4) + (np.abs(oppdiff) < 1e-4)
+					if ( tst.all() ):
 						unique = False
 						break
 				if unique:
@@ -598,13 +607,21 @@ class Wavefunction:
 			for i, op in enumerate(symmops):
 				for k, kpt in enumerate(kpts):
 					newkpt = np.dot(op.rotation_matrix, kpt) * -1
+					newkpt -= np.around(newkpt)
+					newkpt[ abs(newkpt + 0.5) < 1e-5 ] = 0.5
+					#if ((newkpt > 0.5+1e-6) + (newkpt < -0.5+1e-6)).any():
+					#	continue
 					if fil_trsym:
 						if newkpt[2] < -1e-10 or \
-							(abs(newkpt[2]) < 1e-10 and newkpt[1] < -1e-10):
+							(abs(newkpt[2]) < 1e-6 and newkpt[1] < -1e-6) or \
+							(abs(newkpt[2]) < 1e-6 and abs(newkpt[1]) < 1e-6 and newkpt[0] < -1e-6):
 							continue
 					unique = True
 					for nkpt in allkpts:
-						if ( np.linalg.norm(newkpt-nkpt) < 1e-10 ):
+						diff = (newkpt - nkpt) % 1
+						oppdiff = 1 - diff
+						tst = (np.abs(diff) < 1e-4) + (np.abs(oppdiff) < 1e-4)
+						if ( tst.all() ):
 							unique = False
 							break
 					if unique:
@@ -619,7 +636,7 @@ class Wavefunction:
 		return np.array(allkpts), orig_kptnums, op_nums, symmops, trs
 
 	def get_kpt_mapping(self, allkpts, symprec=1e-5, gen_trsym = True):
-		symmops = self.get_symmops()
+		symmops = self.get_symmops(symprec)
 		kpts = np.array(self.pwf.kpts)
 		orig_kptnums = []
 		op_nums = []
@@ -629,7 +646,12 @@ class Wavefunction:
 			for i, op in enumerate(symmops):
 				for k, kpt in enumerate(kpts):
 					newkpt = np.dot(op.rotation_matrix, kpt)
-					if np.linalg.norm(newkpt-nkpt) < 1e-10:
+					#if ((newkpt > 0.5+1e-6) + (newkpt < -0.5+1e-6)).any():
+					#	continue
+					diff = (newkpt - nkpt) % 1
+					oppdiff = 1 - diff
+					tst = (np.abs(diff) < 1e-4) + (np.abs(oppdiff) < 1e-4)
+					if tst.all():
 						match = True
 						orig_kptnums.append(k)
 						op_nums.append(i)
@@ -642,7 +664,12 @@ class Wavefunction:
 			for i, op in enumerate(symmops):
 				for k, kpt in enumerate(kpts):
 					newkpt = np.dot(op.rotation_matrix, kpt) * -1
-					if np.linalg.norm(newkpt-nkpt) < 1e-10:
+					#if ((newkpt > 0.5+1e-6) + (newkpt < -0.5+1e-6)).any():
+					#	continue
+					diff = (newkpt - nkpt) % 1
+					oppdiff = 1 - diff
+					tst = (np.abs(diff) < 1e-4) + (np.abs(oppdiff) < 1e-4)
+					if tst.all():
 						match = True
 						orig_kptnums.append(k)
 						op_nums.append(i)

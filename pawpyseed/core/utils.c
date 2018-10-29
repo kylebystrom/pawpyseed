@@ -800,6 +800,10 @@ pswf_t* expand_symm_wf(pswf_t* rwf, int num_kpts, int* maps,
 			kpt->k[1] *= -1;
 			kpt->k[2] *= -1;
 		}
+		double kdiff[3] = {round(kpt->k[0]), round(kpt->k[1]), round(kpt->k[2])};
+		kpt->k[0] -= kdiff[0];
+		kpt->k[1] -= kdiff[1];
+		kpt->k[2] -= kdiff[2];
 		printf("OLD KPT %lf %lf %lf\n", rkpt->k[0], rkpt->k[1], rkpt->k[2]);
 		printf("NEW KPT %lf %lf %lf\n", kpt->k[0], kpt->k[1], kpt->k[2]);
 		//kpt->Gs = (int*) malloc(3 * kpt->num_waves * sizeof(int));
@@ -897,12 +901,12 @@ pswf_t* expand_symm_wf(pswf_t* rwf, int num_kpts, int* maps,
 		int w = 0;
 		for (int g = 0; g < kpt->num_waves; g++) {
 
-			pw[0] = rkpt->k[0] + rkpt->Gs[3*g+0];
-			pw[1] = rkpt->k[1] + rkpt->Gs[3*g+1];
-			pw[2] = rkpt->k[2] + rkpt->Gs[3*g+2];
-			//pw[0] = rkpt->Gs[3*g+0];
-			//pw[1] = rkpt->Gs[3*g+1];
-			//pw[2] = rkpt->Gs[3*g+2];
+			//pw[0] = rkpt->k[0] + rkpt->Gs[3*g+0];
+			//pw[1] = rkpt->k[1] + rkpt->Gs[3*g+1];
+			//pw[2] = rkpt->k[2] + rkpt->Gs[3*g+2];
+			pw[0] = rkpt->Gs[3*g+0];
+			pw[1] = rkpt->Gs[3*g+1];
+			pw[2] = rkpt->Gs[3*g+2];
 
 			rotation_transform(pw, ops+OPSIZE*(knum%num_kpts), pw);
 			if (tr == 1) {
@@ -911,9 +915,12 @@ pswf_t* expand_symm_wf(pswf_t* rwf, int num_kpts, int* maps,
 				pw[2] *= -1;
 			}
 
-			pw[0] -= kpt->k[0];
-			pw[1] -= kpt->k[1];
-			pw[2] -= kpt->k[2];
+			//pw[0] -= kpt->k[0];
+			//pw[1] -= kpt->k[1];
+			//pw[2] -= kpt->k[2];
+			pw[0] += kdiff[0];
+			pw[1] += kdiff[1];
+			pw[2] += kdiff[2];
 
 			gx = (int) round(pw[0]);
 			gy = (int) round(pw[1]);

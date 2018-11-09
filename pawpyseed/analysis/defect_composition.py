@@ -98,7 +98,8 @@ class PawpyData:
 
 class BulkCharacter(PawpyData):
 
-	def __init__(self, dos, structure, band_dict, energy_levels = None):
+	def __init__(self, dos, structure, band_dict, energy_levels = None,
+		vbm = None, cbm = None):
 
 		if type(dos) == list:
 			self.energies = dos[0]
@@ -111,8 +112,12 @@ class BulkCharacter(PawpyData):
 		self.structure = structure
 		self.data = band_dict
 		self.energy_levels = energy_levels
+		self.vbm = vbm
+		self.cbm = cbm
+		if vbm:
+			self.efermi = self.vbm
 
-	def plot(self, name):
+	def plot(self, name, bandgap = None):
 		bs = []
 		vs = []
 		cs = []
@@ -122,6 +127,9 @@ class BulkCharacter(PawpyData):
 			vs.append(self.data[b][0][1])
 			cs.append(self.data[b][1][0])
 			cs.append(self.data[b][1][1])
+
+		if bandgap == None and self.vbm != None and self.cbm != None:
+			bandgap = self.cbm - self.vbm
 
 		bs = np.array(bs) - np.mean(bs)
 		cs = np.array(cs)
@@ -152,17 +160,47 @@ class BulkCharacter(PawpyData):
 			ax3.set_ylabel('Total DOS')
 			ax3.set_xlim(-2,2)
 			ax3.set_ylim(0,max(self.densities))
-		else:
-			bs, es = [], []
+		elif type(self.energy_levels.values()[0]) != list:
+			bs = list(self.energy_levels.keys())
+			bmean = np.mean(bs)
+			print(self.energy_levels)
 			for b in self.energy_levels:
-				bs.append(b)
-				es.append(self.energy_levels[b])
-			bs = np.array(bs) - np.mean(bs)
-			es = np.array(es)
-			ax3.bar(bs, es - self.efermi)
+				ax3.plot([b-0.4-bmean,b+0.4-bmean],
+					[self.energy_levels[b] - self.efermi] * 2,
+					color = 'r')
+			if bandgap != None:
+				bmin = min(bs) - bmean - 0.5
+				bmax = max(bs) - bmean + 0.5
+				ax3.plot([bmin,bmax], [0,0], color='black')
+				ax3.plot([bmin,bmax], [bandgap,bandgap], color='black')
+			#	bs.append(b)
+			#	es.append(self.energy_levels[b])
+			#bs = np.array(bs) - np.mean(bs)
+			#es = np.array(es)
+			#ax3.bar(bs, es - self.efermi)
 			ax3.set_xlabel('band')
 			ax3.set_ylabel('Energy (eV)')
-		#plt.savefig('DOS_'+name)
+		else:
+			bs = list(self.energy_levels.keys())
+			bmean = np.mean(bs)
+			print(self.energy_levels)
+			for b in self.energy_levels:
+				for en, occ in self.energy_levels[b]:
+					if occ > 0.5:
+						ax3.plot([b-0.4-bmean,b+0.4-bmean],
+							[en - self.efermi] * 2,
+							color = 'tab:red')
+					else:
+						ax3.plot([b-0.4-bmean,b+0.4-bmean],
+							[en - self.efermi] * 2,
+							color = 'tab:gray')
+			if bandgap != None:
+				bmin = min(bs) - bmean - 0.5
+				bmax = max(bs) - bmean + 0.5
+				ax3.plot([bmin,bmax], [0,0], color='black')
+				ax3.plot([bmin,bmax], [bandgap,bandgap], color='black')
+			ax3.set_xlabel('band')
+			ax3.set_ylabel('Energy (eV)')
 		plt.savefig(name.replace(' ', '_'))
 
 	@staticmethod

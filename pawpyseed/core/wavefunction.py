@@ -284,7 +284,7 @@ class Wavefunction:
 			Outcar(outcar), setup_projectors)
 
 	@staticmethod
-	def from_directory(path, setup_projectors=False):
+	def from_directory(path, setup_projectors = False):
 		"""
 		Assumes VASP output has the default filenames and is located
 		in the directory specificed by path.
@@ -296,7 +296,7 @@ class Wavefunction:
 		return Wavefunction.from_files(*args)
 
 	@staticmethod
-	def from_atomate_directory(path, setup_projectors = True):
+	def from_atomate_directory(path, setup_projectors = False):
 
 	    files = ["CONTCAR", "WAVECAR", "POTCAR", "vasprun.xml", "OUTCAR"]
 	    paths = []

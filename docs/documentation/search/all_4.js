@@ -2,8 +2,9 @@ var searchData=
 [
   ['data',['data',['../classpawpyseed_1_1analysis_1_1defect__composition_1_1PawpyData.html#a8bd06b827cf3f1c5bd7b40fc9e28328e',1,'pawpyseed.analysis.defect_composition.PawpyData.data()'],['../classpawpyseed_1_1analysis_1_1defect__composition_1_1BulkCharacter.html#a9056797ef21d2a5324eb2866d395c631',1,'pawpyseed.analysis.defect_composition.BulkCharacter.data()'],['../classpawpyseed_1_1analysis_1_1defect__composition_1_1BasisExpansion.html#aff5786b1e90dee067d5c41dba610606f',1,'pawpyseed.analysis.defect_composition.BasisExpansion.data()']]],
   ['dcoords',['dcoords',['../structpswf.html#a65c6a42ec9ca9bcd2d513b4bc8156b0a',1,'pswf']]],
-  ['defect_5fband_5fanalysis',['defect_band_analysis',['../classpawpyseed_1_1core_1_1projector_1_1Projector.html#adc397d6e24e5cc8a80a98368f55c12f7',1,'pawpyseed::core::projector::Projector']]],
+  ['defect_5fband_5fanalysis',['defect_band_analysis',['../classpawpyseed_1_1core_1_1projector_1_1Projector.html#a811e5ecb3198fb3286e912c4a4819332',1,'pawpyseed::core::projector::Projector']]],
   ['defect_5fcomposition_2epy',['defect_composition.py',['../defect__composition_8py.html',1,'']]],
+  ['defects',['defects',['../namespacepawpyseed_1_1analysis_1_1prep.html#a05c0d7d61270dcc7332c9603e52940f6',1,'pawpyseed::analysis::prep']]],
   ['defectworkflowwavefunctionhandle',['DefectWorkflowWavefunctionHandle',['../classpawpyseed_1_1analysis_1_1run__pawpy_1_1DefectWorkflowWavefunctionHandle.html',1,'pawpyseed::analysis::run_pawpy']]],
   ['dense_5fkgrid',['dense_kgrid',['../structppot.html#aeb36a85ea11cb576bdb9172dd859f20c',1,'ppot']]],
   ['dense_5fkwave',['dense_kwave',['../structfuncset.html#a44f2e964fe5c8b77ba6bf61e804b7f8a',1,'funcset']]],
@@ -18,6 +19,7 @@ var searchData=
   ['dist_5ffrom_5ffrac',['dist_from_frac',['../utils_8h.html#aec43e91b403f937e4628bd5b3bb7b86d',1,'utils.h']]],
   ['dot',['dot',['../utils_8h.html#a9e686fe27fdeb066d0dc584e73062d99',1,'utils.h']]],
   ['down_5fprojections',['down_projections',['../structband.html#a1ce820f9c4cfa877bf5f6a10289f81f5',1,'band']]],
+  ['dpaths',['dpaths',['../namespacepawpyseed_1_1analysis_1_1prep.html#a672f96785a2af73bd0080be6309d5797',1,'pawpyseed::analysis::prep']]],
   ['drho',['drho',['../structsbt__descriptor.html#ab13befdd4bab5fd70ecfc2e98c1d069c',1,'sbt_descriptor']]],
   ['dt',['dt',['../structsbt__descriptor.html#a4c71c1d68e6d76f404d3b9afd16b0cea',1,'sbt_descriptor']]],
   ['dummyfirework',['DummyFirework',['../classpawpyseed_1_1analysis_1_1run__pawpy_1_1DummyFirework.html',1,'pawpyseed::analysis::run_pawpy']]],

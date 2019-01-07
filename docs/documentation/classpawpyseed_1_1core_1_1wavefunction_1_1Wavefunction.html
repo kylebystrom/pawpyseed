@@ -141,8 +141,8 @@ Static Public Member Functions</h2></td></tr>
 <tr class="separator:a023ab6756f4e61a311da1ddfaf8f9524"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ae49d3dabeecb7d216d4b50a6fd49bca7"><td class="memItemLeft" align="right" valign="top">def&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classpawpyseed_1_1core_1_1wavefunction_1_1Wavefunction.html#ae49d3dabeecb7d216d4b50a6fd49bca7">from_directory</a> (path, setup_projectors=False)</td></tr>
 <tr class="separator:ae49d3dabeecb7d216d4b50a6fd49bca7"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a120c6c00246f8de4e097a12cc7213ae0"><td class="memItemLeft" align="right" valign="top">def&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classpawpyseed_1_1core_1_1wavefunction_1_1Wavefunction.html#a120c6c00246f8de4e097a12cc7213ae0">from_atomate_directory</a> (path, setup_projectors=True)</td></tr>
-<tr class="separator:a120c6c00246f8de4e097a12cc7213ae0"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aa7db4993c2a60a3958942caa8a983a47"><td class="memItemLeft" align="right" valign="top">def&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classpawpyseed_1_1core_1_1wavefunction_1_1Wavefunction.html#aa7db4993c2a60a3958942caa8a983a47">from_atomate_directory</a> (path, setup_projectors=False)</td></tr>
+<tr class="separator:aa7db4993c2a60a3958942caa8a983a47"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-attribs"></a>
 Public Attributes</h2></td></tr>
@@ -247,10 +247,13 @@ Attributes:
 </div><div class="memdoc">
 <pre class="fragment">Arguments:
     struct (pymatgen.core.Structure): structure that the wavefunction describes
-    pwf (PseudoWavefunction): Pseudowavefunction componenet
+    pwf (PseudoWavefunction): Pseudowavefunction component
     cr (CoreRegion): Contains the pseudopotentials, with projectors and
 partials waves, for the structure
     outcar (pymatgen.io.vasp.outputs.Outcar): Outcar object for reading ngf
+    setup_projectors (bool, False): Whether to set up the core region
+components of the wavefunctions (leave as False if passing this
+object to Projector, which will do the setup automatically)
 Returns:
     Wavefunction object
 </pre> 
@@ -293,7 +296,7 @@ After being called, this object is not usable.
 </pre> 
 </div>
 </div>
-<a class="anchor" id="a120c6c00246f8de4e097a12cc7213ae0"></a>
+<a class="anchor" id="aa7db4993c2a60a3958942caa8a983a47"></a>
 <div class="memitem">
 <div class="memproto">
 <table class="mlabels">
@@ -310,7 +313,7 @@ After being called, this object is not usable.
           <td class="paramkey"></td>
           <td></td>
           <td class="paramtype">&#160;</td>
-          <td class="paramname"><em>setup_projectors</em> = <code>True</code>&#160;</td>
+          <td class="paramname"><em>setup_projectors</em> = <code>False</code>&#160;</td>
         </tr>
         <tr>
           <td></td>
@@ -324,7 +327,19 @@ After being called, this object is not usable.
   </tr>
 </table>
 </div><div class="memdoc">
+<pre class="fragment">Assumes VASP output has the default filenames and is located
+in the directory specificed by path. Checks for
+gzipped files created by atomate
 
+Arguments:
+    path (str): VASP output directory
+    setup_projectors (bool, False): Whether to set up the core region
+components of the wavefunctions (leave as False if passing this
+object to Projector, which will do the setup automatically)
+
+Returns:
+    Wavefunction object
+</pre> 
 </div>
 </div>
 <a class="anchor" id="ae49d3dabeecb7d216d4b50a6fd49bca7"></a>
@@ -360,6 +375,15 @@ After being called, this object is not usable.
 </div><div class="memdoc">
 <pre class="fragment">Assumes VASP output has the default filenames and is located
 in the directory specificed by path.
+
+Arguments:
+    path (str): VASP output directory
+    setup_projectors (bool, False): Whether to set up the core region
+components of the wavefunctions (leave as False if passing this
+object to Projector, which will do the setup automatically)
+
+Returns:
+    Wavefunction object
 </pre> 
 </div>
 </div>
@@ -419,10 +443,14 @@ in the directory specificed by path.
 </table>
 </div><div class="memdoc">
 <pre class="fragment">Construct a Wavefunction object from file paths.
+
 Arguments:
     struct (str): VASP POSCAR or CONTCAR file path
     pwf (str): VASP WAVECAR file path
+    cr (str): VASP POTCAR file path
     vr (str): VASP vasprun file path
+    outcar (str): VASP OUTCAR file path
+
 Returns:
     Wavefunction object
 </pre> 

@@ -1,8 +1,8 @@
 var searchData=
 [
   ['n',['N',['../structsbt__descriptor.html#a307bfb987bfd0ca448ec575238099da8',1,'sbt_descriptor::N()'],['../structband.html#ac2a7172884359ed472390ad449bf216d',1,'band::N()'],['../structband.html#a369826acad76f9f5996c414faa4bd748',1,'band::n()']]],
-  ['name',['name',['../classpawpyseed_1_1analysis_1_1run__pawpy_1_1DummyFirework.html#a3d593e2718d77d8daad4b5672b5b5edf',1,'pawpyseed::analysis::run_pawpy::DummyFirework']]],
-  ['names',['names',['../namespacepawpyseed_1_1analysis_1_1prep.html#a3cedfb43a06fa5bb169ad5c526103b32',1,'pawpyseed::analysis::prep']]],
+  ['name',['name',['../classpawpyseed_1_1analysis_1_1run__pawpy_1_1DummyFirework.html#a3d593e2718d77d8daad4b5672b5b5edf',1,'pawpyseed.analysis.run_pawpy.DummyFirework.name()'],['../namespacepawpyseed_1_1analysis_1_1prep.html#a949ecb560c63c54c6b7833e819b831ae',1,'pawpyseed.analysis.prep.name()']]],
+  ['names',['names',['../namespacepawpyseed_1_1analysis_1_1prep.html#a52f3b78f0949ead42c658551a69c1d6c',1,'pawpyseed::analysis::prep']]],
   ['nband',['nband',['../classpawpyseed_1_1core_1_1noncollinear_1_1NCLWavefunction.html#ad88c63dfec749aa93addfabed60e67fa',1,'pawpyseed.core.noncollinear.NCLWavefunction.nband()'],['../classpawpyseed_1_1core_1_1projector_1_1Projector.html#a31f7323179cbf792678e8c80e73847f1',1,'pawpyseed.core.projector.Projector.nband()'],['../structpswf.html#a4848baae41a701bc7e3268b0cda710f3',1,'pswf::nband()'],['../classpawpyseed_1_1core_1_1wavefunction_1_1Wavefunction.html#a441101ecc8bf517950db2e071c1baad2',1,'pawpyseed.core.wavefunction.Wavefunction.nband()']]],
   ['ncl',['ncl',['../classpawpyseed_1_1core_1_1projector_1_1CopyPseudoWavefunction.html#a324fb53088079cc697fd417c57d313a6',1,'pawpyseed.core.projector.CopyPseudoWavefunction.ncl()'],['../classpawpyseed_1_1core_1_1wavefunction_1_1PseudoWavefunction.html#aaa17a9816616e57703cce3929a7bb140',1,'pawpyseed.core.wavefunction.PseudoWavefunction.ncl()']]],
   ['ncl_5frealspace_5fstate',['ncl_realspace_state',['../density_8h.html#a3aaffb443397f9bb19055a472a634d50',1,'density.h']]],

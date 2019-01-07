@@ -117,7 +117,9 @@ class BulkCharacter(PawpyData):
 		if vbm:
 			self.efermi = self.vbm
 
-	def plot(self, name, bandgap = None):
+	def plot(self, name, bandgap = None, spinpol = False, title=None):
+		if title == None:
+			title = name
 		bs = []
 		vs = []
 		cs = []
@@ -140,30 +142,31 @@ class BulkCharacter(PawpyData):
 		else:
 			fig, (ax1, ax3) = plt.subplots(2, 1, gridspec_kw = {'height_ratios':[1, 1]},
 				figsize=[6.4,8])
-		ax1.set_xlabel('band')
-		ax1.set_ylabel('valence', color='b')
+		ax1.set_xlabel('band', fontsize=18)
+		ax1.set_ylabel('valence', color='b', fontsize=18)
 		ax1.bar(bs-0.2, vs[::2], width=0.4, color='b')
 		ax1.bar(bs+0.2, vs[1::2], width=0.4, color='b')
 		ax1.set_ylim(0,1)
 		ax2 = ax1.twinx()
-		ax2.set_ylabel('conduction', color='r')
+		ax2.set_ylabel('conduction', color='r', fontsize=18)
 		ax2.bar(bs-0.2, cs[::2], width=0.4, color='r')
 		ax2.bar(bs+0.2, cs[1::2], width=0.4, color='r')
 		ax2.set_ylim(0,1)
 		ax2.invert_yaxis()
-		plt.title(name + ' band character')
+		plt.title(title + ' band character', fontsize=20)
 		#plt.savefig('BAND_'+name)
 
 		if self.energy_levels == None:
 			ax3.plot(self.energies - self.efermi, self.densities)
-			ax3.set_xlabel('Energy (eV)')
-			ax3.set_ylabel('Total DOS')
+			ax3.set_xlabel('Energy (eV)', fontsize=18)
+			ax3.set_ylabel('Total DOS', fontsize=18)
 			ax3.set_xlim(-2,2)
 			ax3.set_ylim(0,max(self.densities))
-		elif type(self.energy_levels.values()[0]) != list:
+		elif type(list(self.energy_levels.values())[0]) == int:
+			print('here')
 			bs = list(self.energy_levels.keys())
 			bmean = np.mean(bs)
-			print(self.energy_levels)
+			#print(self.energy_levels)
 			for b in self.energy_levels:
 				ax3.plot([b-0.4-bmean,b+0.4-bmean],
 					[self.energy_levels[b] - self.efermi] * 2,
@@ -178,29 +181,36 @@ class BulkCharacter(PawpyData):
 			#bs = np.array(bs) - np.mean(bs)
 			#es = np.array(es)
 			#ax3.bar(bs, es - self.efermi)
-			ax3.set_xlabel('band')
-			ax3.set_ylabel('Energy (eV)')
+			ax3.set_xlabel('band', fontsize=18)
+			ax3.set_ylabel('Energy (eV)', fontsize=18)
 		else:
 			bs = list(self.energy_levels.keys())
 			bmean = np.mean(bs)
-			print(self.energy_levels)
+			#print(self.energy_levels)
+			cmap = plt.get_cmap('plasma')
 			for b in self.energy_levels:
+				i = 0
+				delta = 0.8 / len(self.energy_levels[b])
 				for en, occ in self.energy_levels[b]:
-					if occ > 0.5:
-						ax3.plot([b-0.4-bmean,b+0.4-bmean],
-							[en - self.efermi] * 2,
-							color = 'tab:red')
-					else:
-						ax3.plot([b-0.4-bmean,b+0.4-bmean],
-							[en - self.efermi] * 2,
-							color = 'tab:gray')
-			if bandgap != None:
+					color = cmap(1-occ)
+					disp = i * delta - 0.4
+					span = [b-bmean+disp, b-bmean+disp+delta]
+					ax3.plot(span,
+						[en - self.efermi] * 2,
+						color = color)
+					i += 1
+			if self.vbm != None and self.cbm != None:
+				bmin = min(bs) - bmean - 0.5
+				bmax = max(bs) - bmean + 0.5
+				ax3.plot([bmin, bmax], [0,0], color='black')
+				ax3.plot([bmin, bmax], [self.cbm-self.vbm,self.cbm-self.vbm], color='black')
+			elif bandgap != None:
 				bmin = min(bs) - bmean - 0.5
 				bmax = max(bs) - bmean + 0.5
 				ax3.plot([bmin,bmax], [0,0], color='black')
 				ax3.plot([bmin,bmax], [bandgap,bandgap], color='black')
-			ax3.set_xlabel('band')
-			ax3.set_ylabel('Energy (eV)')
+			ax3.set_xlabel('band', fontsize=18)
+			ax3.set_ylabel('Energy (eV)', fontsize=18)
 		plt.savefig(name.replace(' ', '_'))
 
 	@staticmethod

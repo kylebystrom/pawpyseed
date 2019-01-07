@@ -126,7 +126,7 @@ class DummyProjector(Projector):
 		selfnums = self.nums
 		selfcoords = self.coords
 		
-		M_R, M_S, N_R, N_S, N_RS = self.make_site_lists(basis)
+		M_R, M_S, N_R, N_S, N_RS = self.make_site_lists()
 		num_N_RS = len(N_RS)
 		if num_N_RS > 0:
 			N_RS_R, N_RS_S = zip(*N_RS)

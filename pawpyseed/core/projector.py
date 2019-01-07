@@ -51,14 +51,16 @@ class Projector(Wavefunction):
 				bands are to be projected onto basis
 			basis (Wavefunction): The wavefunction whose bands
 				serve as the basis set for projection
-			projector_list (c_void_p) (default None): pointer to a list of C
-				ppot_t objects. When manually calling the initializer,
-				this should generally be left as the default, in which
-				case the setup will be performed for wf and basis.
-				projector_list != None is used by setup_multiple_projections
-				for efficiency and memory management
-			allkpts (2D numpy array) (default None): List of fractional
-				coordinate k-points to map onto
+			unsym_basis (bool, False): If True, makes a copy
+				of basis in which the k-point mesh is not symmetrically
+				reduced, and then frees the original basis
+			unsym_wf (bool, False): If True, makes a copy of
+				wf in which the k-point mesh is not symmetrically
+				reduced, and the frees the original wf
+			pseudo (bool, False): Whether the perform projections
+				using only plane-wave coefficient components of the
+				wavefunctions. Sacrifices orthogonalization and
+				normalization for speed
 
 		Returns:
 			Projector object, containing all the same fields as
@@ -148,7 +150,7 @@ class Projector(Wavefunction):
 
 	@staticmethod
 	def from_files(basis, struct="CONTCAR", pwf="WAVECAR", cr="POTCAR",
-		vr="vasprun.xml", outcar="OUTCAR", setup_projectors = False,
+		vr="vasprun.xml", outcar="OUTCAR",
 		unsym_basis = False, unsym_wf = False, pseudo = False):
 		"""
 		Construct a Projector object from file paths.
@@ -156,21 +158,33 @@ class Projector(Wavefunction):
 			basis (Wavefunction): the basis Wavefunction
 			struct (str): VASP POSCAR or CONTCAR file path
 			pwf (str): VASP WAVECAR file path
+			cr (str): VASP POTCAR file path
 			vr (str): VASP vasprun file path
 			outcar (str): VASP OUTCAR file path
 			setup_basis (bool): whether to set up the basis
+			unsym_basis (bool, False): If True, makes a copy
+				of basis in which the k-point mesh is not symmetrically
+				reduced, and then frees the original basis
+			unsym_wf (bool, False): If True, makes a copy of
+				wf in which the k-point mesh is not symmetrically
+				reduced, and the frees the original wf
+			pseudo (bool, False): Whether the perform projections
+				using only plane-wave coefficient components of the
+				wavefunctions. Sacrifices orthogonalization and
+				normalization for speed
+
 		Returns:
 			Projector object
 		"""
 		wf = Wavefunction(Poscar.from_file(struct).structure,
 			PseudoWavefunction(pwf, vr),
 			CoreRegion(Potcar.from_file(cr)),
-			Outcar(outcar), setup_projectors)
+			Outcar(outcar), False)
 		return Projector(wf, basis,
 			unsym_basis, unsym_wf, pseudo)
 
 	@staticmethod
-	def from_directory(basis, path, setup_projectors = False,
+	def from_directory(basis, path,
 		unsym_basis = False, unsym_wf = False, pseudo = False):
 		"""
 		Assumes VASP output has the default filenames and is located
@@ -178,26 +192,33 @@ class Projector(Wavefunction):
 		Arguments:
 			basis (Wavefunction): the basis Wavefunction
 			path (str): path to the VASP calculation directory
-			setup_basis (bool): whether to set up the basis
+			unsym_basis (bool, False): If True, makes a copy
+				of basis in which the k-point mesh is not symmetrically
+				reduced, and then frees the original basis
+			unsym_wf (bool, False): If True, makes a copy of
+				wf in which the k-point mesh is not symmetrically
+				reduced, and the frees the original wf
+			pseudo (bool, False): Whether the perform projections
+				using only plane-wave coefficient components of the
+				wavefunctions. Sacrifices orthogonalization and
+				normalization for speed
+
 		Returns:
 			Projector object
 		"""
 		filepaths = []
 		for d in ["CONTCAR", "WAVECAR", "POTCAR", "vasprun.xml", "OUTCAR"]:
 			filepaths.append(str(os.path.join(path, d)))
-		args = [basis] + filepaths + [setup_projectors, unsym_basis, unsym_wf, pseudo]
+		args = [basis] + filepaths + [unsym_basis, unsym_wf, pseudo]
 		return Projector.from_files(*args)
 
-	def make_site_lists(self, basis):
+	def make_site_lists(self):
 		"""
 		Organizes sites into sets for use in the projection scheme. M_R and M_S contain site indices
 		of sites which are identical in structures R (basis) and S (self). N_R and N_S contain all other
 		site indices, and N_RS contains pairs of indices in R and S with overlapping augmentation
 		spheres in the PAW formalism.
 
-		Arguments:
-			basis (Wavefunction object): Wavefunction in the same lattice as self.
-				The bands in self will be projected onto the bands in basis
 		Returns:
 			M_R (numpy array): Indices of sites in basis which have an identical site in
 				S (self) (same element and position to within tolerance of 0.02 Angstroms).
@@ -208,7 +229,8 @@ class Projector(Wavefunction):
 			N_RS (numpy array): Pairs of indices (one in basis and one in self) which
 				are not identical but have overlapping augmentation regions
 		"""
-		ref_sites = basis.structure.sites
+
+		ref_sites = self.basis.structure.sites
 		sites = self.structure.sites
 		M_R = []
 		M_S = []
@@ -238,11 +260,8 @@ class Projector(Wavefunction):
 		Evaluates projectors <p_i|psi>, as well
 		as <(phi-phit)|psi> and <(phi_i-phit_i)|(phi_j-phit_j)>,
 		when needed
-
-		Arguments:
-			basis (Wavefunction): wavefunction onto which bands of self
-			will be projected.
 		"""
+
 		basis = self.basis
 		projector_list = self.projector_list
 		basisnums = basis.nums
@@ -250,7 +269,7 @@ class Projector(Wavefunction):
 		selfnums = self.nums
 		selfcoords = self.coords
 
-		M_R, M_S, N_R, N_S, N_RS = self.make_site_lists(basis)
+		M_R, M_S, N_R, N_S, N_RS = self.make_site_lists()
 		num_N_RS = len(N_RS)
 		if num_N_RS > 0:
 			N_RS_R, N_RS_S = zip(*N_RS)
@@ -319,7 +338,7 @@ class Projector(Wavefunction):
 		return res[::2] + 1j * res[1::2]
 
 	@staticmethod
-	def setup_bases(basis_dirs, wf_dirs, desymmetrize = True,
+	def setup_bases(basis_dirs, desymmetrize = True,
 		atomate_compatible = True):
 		"""
 		This function performs the setup of all the bases in the basis_dirs.
@@ -327,6 +346,20 @@ class Projector(Wavefunction):
 		each time you call Projector with one of the wavefunctions in the
 		basis_dirs list. Free projector_list after you are fully finished
 		using the wavefunctions in basis_dirs for projections.
+
+		Arguments:
+			basis_dir (str): paths to the VASP outputs
+				to be used as the basis structures
+			desymmetrize (bool, False): If True, constructs
+				Wavefunction objects in which the k-point mesh
+				is not symmetrically reduced
+			atomate_compatible (bool, True): If True, checks for the gzipped
+				files created the atomate workflow tools and reads the most
+				recent run based on title
+
+		Returns:
+			list of Wavefunction objects, each basis in the same
+				order as the basis_dirs list
 		"""
 
 		bases = []
@@ -370,6 +403,12 @@ class Projector(Wavefunction):
 			ignore_errors (bool, False): whether to ignore errors in setting up
 				Wavefunction objects by skipping over the directories for which
 				setup fails.
+			desymmetrize (bool, False): If True, constructs
+				Wavefunction objects in which the k-point mesh
+				is not symmetrically reduced
+			atomate_compatible (bool, True): If True, checks for the gzipped
+				files created the atomate workflow tools and reads the most
+				recent run based on title
 
 		Returns:
 			list -- wf_dir, basis, wf
@@ -429,7 +468,9 @@ class Projector(Wavefunction):
 		wavefunctions.
 
 		Arguments:
-			band_num (int): number of defect band in self
+			band_num (int): number of defect bands in self
+			spinpol (bool, False): whether to return separate
+				values of the projection for spin up and spin down
 
 		Returns:
 			v, c (int, int): The valence (v) and conduction (c)
@@ -483,6 +524,7 @@ class Projector(Wavefunction):
 			num_above_ef (int, 20): number of bands to analyze above the fermi level
 			spinpol (bool, False): whether to return spin-polarized results (only allowed
 				for spin-polarized DFT output)
+			TODO: energy and vbmband docs (need to clean up energy return vals)
 		"""
 		if num_below_ef < 0 or num_above_ef < 0:
 			raise PAWpyError("num_above_ef and num_below_ef must both be nonnegative.")

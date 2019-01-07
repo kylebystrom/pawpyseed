@@ -233,10 +233,13 @@ class Wavefunction:
 		"""
 		Arguments:
 			struct (pymatgen.core.Structure): structure that the wavefunction describes
-			pwf (PseudoWavefunction): Pseudowavefunction componenet
+			pwf (PseudoWavefunction): Pseudowavefunction component
 			cr (CoreRegion): Contains the pseudopotentials, with projectors and
 				partials waves, for the structure
 			outcar (pymatgen.io.vasp.outputs.Outcar): Outcar object for reading ngf
+			setup_projectors (bool, False): Whether to set up the core region
+				components of the wavefunctions (leave as False if passing this
+				object to Projector, which will do the setup automatically)
 		Returns:
 			Wavefunction object
 		"""
@@ -271,10 +274,14 @@ class Wavefunction:
 		vr="vasprun.xml", outcar="OUTCAR", setup_projectors=False):
 		"""
 		Construct a Wavefunction object from file paths.
+
 		Arguments:
 			struct (str): VASP POSCAR or CONTCAR file path
 			pwf (str): VASP WAVECAR file path
+			cr (str): VASP POTCAR file path
 			vr (str): VASP vasprun file path
+			outcar (str): VASP OUTCAR file path
+
 		Returns:
 			Wavefunction object
 		"""
@@ -288,6 +295,15 @@ class Wavefunction:
 		"""
 		Assumes VASP output has the default filenames and is located
 		in the directory specificed by path.
+
+		Arguments:
+			path (str): VASP output directory
+			setup_projectors (bool, False): Whether to set up the core region
+				components of the wavefunctions (leave as False if passing this
+				object to Projector, which will do the setup automatically)
+
+		Returns:
+			Wavefunction object
 		"""
 		filepaths = []
 		for d in ["CONTCAR", "WAVECAR", "POTCAR", "vasprun.xml", "OUTCAR"]:
@@ -297,28 +313,42 @@ class Wavefunction:
 
 	@staticmethod
 	def from_atomate_directory(path, setup_projectors = False):
+		"""
+		Assumes VASP output has the default filenames and is located
+		in the directory specificed by path. Checks for
+		gzipped files created by atomate
 
-	    files = ["CONTCAR", "WAVECAR", "POTCAR", "vasprun.xml", "OUTCAR"]
-	    paths = []
+		Arguments:
+			path (str): VASP output directory
+			setup_projectors (bool, False): Whether to set up the core region
+				components of the wavefunctions (leave as False if passing this
+				object to Projector, which will do the setup automatically)
 
-	    for file in files:
-	        filepat = os.path.join( path, file +'.relax2.gz')
-	        if not os.path.exists( filepat):
-	            filepat = os.path.join( path, file +'.relax1.gz')
-	        if not os.path.exists( filepat):
-	            filepat = os.path.join( path, file +'.gz')
-	        if not os.path.exists( filepat):
-	            filepat = os.path.join( path, file)
-	        if not os.path.exists( filepat):
-	            print('Could not find {}! Skipping this defect...'.format(file))
-	            return False
+		Returns:
+			Wavefunction object
+		"""
 
-	        paths.append(filepat)
+		files = ["CONTCAR", "WAVECAR", "POTCAR", "vasprun.xml", "OUTCAR"]
+		paths = []
 
-	    args = paths + [setup_projectors]
-	    wf = Wavefunction.from_files(*args)
+		for file in files:
+		    filepat = os.path.join( path, file +'.relax2.gz')
+		    if not os.path.exists( filepat):
+		        filepat = os.path.join( path, file +'.relax1.gz')
+		    if not os.path.exists( filepat):
+		        filepat = os.path.join( path, file +'.gz')
+		    if not os.path.exists( filepat):
+		        filepat = os.path.join( path, file)
+		    if not os.path.exists( filepat):
+		        print('Could not find {}! Skipping this defect...'.format(file))
+		        return False
 
-	    return wf
+		    paths.append(filepat)
+
+		args = paths + [setup_projectors]
+		wf = Wavefunction.from_files(*args)
+
+		return wf
 
 	def get_c_projectors_from_pps(self, pps):
 		"""

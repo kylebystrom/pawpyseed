@@ -8,11 +8,6 @@ Linear algebra routines performed by interacing with the Intel Math Kernel Libra
 #include <mkl_types.h>
 
 /**
-DEPRECATED, DO NOT USE
-*/
-void trilinear_interpolate_values(double complex* x, double* frac, int* fftg, double complex* values);
-
-/**
 Utility allocation function to allocate memory for an MKL complex double.
 */
 double complex* fft_calloc(int num_items, int item_size);

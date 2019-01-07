@@ -211,6 +211,8 @@ void cartesian_to_frac(double* coord, double* reclattice);
 
 void min_cart_path(double* coord, double* center, double* lattice, double* path, double* r);
 
+void trilinear_interpolate_values(double complex* x, double* frac, int* fftg, double complex* values);
+
 double complex trilinear_interpolate(double complex* c, double* frac, int* fftg);
 
 void free_projection_list(projection_t* projlist, int num);

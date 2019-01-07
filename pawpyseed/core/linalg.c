@@ -11,27 +11,6 @@
 
 #define PI 3.14159265359
 
-void trilinear_interpolate_values(double complex* x, double* frac, int* fftg, double complex* values) {
-	//values: c000, c001, c010, c011, c100, c101, c110, c111
-	int i = (int) (frac[0] * fftg[0]);
-	int j = (int) (frac[1] * fftg[1]);
-	int k = (int) (frac[2] * fftg[2]);
-	int ip = (i+1)%fftg[0];
-	int jp = (j+1)%fftg[1];
-	int kp = (k+1)%fftg[2];
-
-	int ind[8];
-	ind[0] = i*fftg[1]*fftg[2] + j*fftg[2] + k;
-	ind[1] = i*fftg[1]*fftg[2] + j*fftg[2] + kp;
-	ind[2] = i*fftg[1]*fftg[2] + jp*fftg[2] + k;
-	ind[3] = i*fftg[1]*fftg[2] + jp*fftg[2] + kp;
-	ind[4] = ip*fftg[1]*fftg[2] + j*fftg[2] + k;
-	ind[5] = ip*fftg[1]*fftg[2] + j*fftg[2] + kp;
-	ind[6] = ip*fftg[1]*fftg[2] + jp*fftg[2] + k;
-	ind[7] = ip*fftg[1]*fftg[2] + jp*fftg[2] + kp;
-	for (int n = 0; n < 8; n++) values[n] = x[ind[n]];
-}
-
 void fft3d(double complex* x, int* G_bounds, double* lattice,
 	double* kpt, int* Gs, float complex* Cs, int num_waves, int* fftg) {
 

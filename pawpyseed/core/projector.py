@@ -313,7 +313,6 @@ class Projector(Wavefunction):
 		nspin = basis.nspin
 		res = cfunc_call(PAWC.pseudoprojection, 2*nband*nwk*nspin,
 						basis.pwf.wf_ptr, self.pwf.wf_ptr, band_num)
-		print("datsa", nband, nwk, nspin)
 		sys.stdout.flush()
 		projector_list = self.projector_list
 		basisnums = basis.nums
@@ -333,7 +332,7 @@ class Projector(Wavefunction):
 						self.dim)
 		end = time.monotonic()
 		Timer.augmentation_time(end-start)
-		print('---------\nran compensation_terms in %f seconds\n-----------' % (end-start))
+		#print('---------\nran compensation_terms in %f seconds\n-----------' % (end-start))
 		res += ct
 		return res[::2] + 1j * res[1::2]
 
@@ -512,7 +511,7 @@ class Projector(Wavefunction):
 
 	def defect_band_analysis(self, num_below_ef=20,
 		num_above_ef=20, spinpol = False, return_energies = False,
-		energy_list = False, vbmband = None):
+		return_energy_list = False, vbmband = None):
 		"""
 		Identifies a set of 'interesting' bands in a defect structure
 		to analyze by choosing any band that is more than bound conduction
@@ -563,12 +562,12 @@ class Projector(Wavefunction):
 					energies[b] += cfunc_call(PAWC.get_energy, None, self.pwf.wf_ptr, b, k, s) * self.pwf.kws[k]
 			energies[b] /= np.sum(self.pwf.kws) * self.nspin
 
-		if energy_list:
+		if return_energy_list:
 			for b in totest:
-				energies[b] = 0
+				energy_list[b] = []
 				for k in range(self.nwk):
 					for s in range(self.nspin):
-						energies[b].append([cfunc_call(PAWC.get_energy, None, self.pwf.wf_ptr, b, k, s),\
+						energy_list[b].append([cfunc_call(PAWC.get_energy, None, self.pwf.wf_ptr, b, k, s),\
 											occs[b*self.nwk*self.nspin + s*self.nwk + k]])
 			return results, energy_list
 		if return_energies:

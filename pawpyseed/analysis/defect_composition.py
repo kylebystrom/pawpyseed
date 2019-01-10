@@ -8,47 +8,19 @@ from pymatgen.io.vasp.outputs import Vasprun
 from pymatgen.io.vasp.inputs import Poscar
 from pymatgen import Spin
 
-"""
-f = open('ddres.yaml', 'r')
-data = yaml.load(f)
-f.close()
-
-bs = []
-vs = []
-cs = []
-
-for defect in data:
-	bs = []
-	vs = []
-	cs = []
-	dat = data[defect]
-	for b in dat:
-		bs.append(b)
-		#bs.append(2*b)
-		#bs.append(2*b+1)
-		vs.append(dat[b][0][0])
-		#vs.append(dat[b][0][1])
-		cs.append(dat[b][1][0])
-		#cs.append(dat[b][1][1])
-
-	fig, ax1 = plt.subplots()
-	ax1.set_xlabel('band')
-	ax1.set_ylabel('valence', color='b')
-	ax1.bar(bs, vs, color='b')
-	ax1.set_ylim(0,1)
-	ax2 = ax1.twinx()
-	ax2.set_ylabel('conduction', color='r')
-	ax2.bar(bs, cs, color='r')
-	ax2.set_ylim(0,1)
-	ax2.invert_yaxis()
-	plt.title(defect)
-	plt.savefig('../../../Si_stuff/new/'+defect+'.png')
-"""
-
 class PawpyData:
 
-	def __init__(self, dos, structure, data):
-		
+	def __init__(self, dos, structure, data, vbm = None, cbm = None):
+		"""
+		Arguments:
+			dos (pymatgen.electronic_structure.dos.DOS or list): A pymatgen
+				density of states or a list containing: 1) energies, 2) density
+				of states values at those energies, 3) the Fermi level.
+			structure (pymatgen.core.structure.Structure): crystal structure
+			data: Whatever data is stored
+			vbm (float, None): valence band maximum
+			cbm (float, None): conduction band minimum
+		"""
 		self.energies = energies
 		if type(dos) == list:
 			self.energies = dos[0]
@@ -60,6 +32,22 @@ class PawpyData:
 			self.efermi = dos.efermi
 		self.structure = structure
 		self.data = data
+		self.cbm = cbm
+		self.vbm = vbm
+		if (not (cbm is None)) and (not (vbm is None)):
+			self.bandgap = max(0, cbm - vbm)
+
+	def set_band_properties(vbm, cbm):
+		"""
+		Set the VBM, CBM, and band gap.
+
+		Arguments:
+			vbm (float): valence band maximum
+			cbm (float): conduction band minimum
+		"""
+		self.bandgap = max(0, cbm - vbm)
+		self.cbm = cbm
+		self.vbm = vbm
 
 	def as_dict(self):
 
@@ -117,7 +105,7 @@ class BulkCharacter(PawpyData):
 		if vbm:
 			self.efermi = self.vbm
 
-	def plot(self, name, bandgap = None, spinpol = False, title=None):
+	def plot(self, name, spinpol = False, title=None):
 		if title == None:
 			title = name
 		bs = []
@@ -162,31 +150,9 @@ class BulkCharacter(PawpyData):
 			ax3.set_ylabel('Total DOS', fontsize=18)
 			ax3.set_xlim(-2,2)
 			ax3.set_ylim(0,max(self.densities))
-		elif type(list(self.energy_levels.values())[0]) == int:
-			print('here')
-			bs = list(self.energy_levels.keys())
-			bmean = np.mean(bs)
-			#print(self.energy_levels)
-			for b in self.energy_levels:
-				ax3.plot([b-0.4-bmean,b+0.4-bmean],
-					[self.energy_levels[b] - self.efermi] * 2,
-					color = 'r')
-			if bandgap != None:
-				bmin = min(bs) - bmean - 0.5
-				bmax = max(bs) - bmean + 0.5
-				ax3.plot([bmin,bmax], [0,0], color='black')
-				ax3.plot([bmin,bmax], [bandgap,bandgap], color='black')
-			#	bs.append(b)
-			#	es.append(self.energy_levels[b])
-			#bs = np.array(bs) - np.mean(bs)
-			#es = np.array(es)
-			#ax3.bar(bs, es - self.efermi)
-			ax3.set_xlabel('band', fontsize=18)
-			ax3.set_ylabel('Energy (eV)', fontsize=18)
 		else:
 			bs = list(self.energy_levels.keys())
 			bmean = np.mean(bs)
-			#print(self.energy_levels)
 			cmap = plt.get_cmap('plasma')
 			for b in self.energy_levels:
 				i = 0

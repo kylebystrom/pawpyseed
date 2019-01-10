@@ -541,16 +541,20 @@ class TestPy:
 		sys.stdout.flush()
 		wf1 = Wavefunction.from_directory('.', False)
 		basis = Wavefunction.from_directory('.', False)
+		print("ENCUT", wf1.encut, basis.encut)
 		pr = Projector(wf1, basis)
+		test_vals = {}
 		for b in range(wf1.nband):
 			v, c = pr.proportion_conduction(b)
 			print("CHECK_VALS", v,c)
+			test_vals[b] = (v,c)
+		for b in range(wf1.nband):
 			if b < 6:
-				assert_almost_equal(v, 1, decimal=2)
-				assert_almost_equal(c, 0, decimal=4)
+				assert_almost_equal(test_vals[b][0], 1, decimal=2)
+				assert_almost_equal(test_vals[b][1], 0, decimal=4)
 			else:
-				assert_almost_equal(v, 0, decimal=4)
-				assert_almost_equal(c, 1, decimal=2)
+				assert_almost_equal(test_vals[b][0], 0, decimal=4)
+				assert_almost_equal(test_vals[b][1], 1, decimal=2)
 		basis.free_all()
 		wf1.free_all()
 		pr.free_all()

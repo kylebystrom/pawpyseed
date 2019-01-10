@@ -164,15 +164,23 @@ class CoreRegion:
 
 class PseudoWavefunction:
 	"""
+	THIS CLASS IS NOT USEFUL ON ITS OWN. IF YOU WANT TO WORK WITH
+	PSEUDOWAVEFUNCTIONS, INITIALIZE A Wavefunction OBJECT WITH
+	setup_projectors=False.
+
 	Class for storing pseudowavefunction from WAVECAR file. Most important attribute
 	is wf_ptr, a C pointer used in the C portion of the program for storing
-	plane wave coefficients
+	plane wave coefficients.
 
 	Attributes:
 		kpts (np.array): nx3 array of fractional kpoint vectors,
 			where n is the number of kpoints
 		kws (np.array): weight of each kpoint
 		wf_ptr (ctypes POINTER): c pointer to pswf_t object
+		ncl (bool): Whether the pseudowavefunction is from a noncollinear
+			VASP calculation
+		band_props (list): [band gap, conduction band minimum,
+			valence band maximum, whether the band gap is direct]
 	"""
 
 	def __init__(self, filename="WAVECAR", vr="vasprun.xml"):
@@ -191,6 +199,7 @@ class PseudoWavefunction:
 		else:
 			self.wf_ptr = PAWC.read_wavefunctions(filename.encode('utf-8'), kws)
 		self.ncl = PAWC.is_ncl(self.wf_ptr) > 0
+		self.band_props = vr.eigenvalue_band_properties
 
 	def pseudoprojection(self, band_num, basis):
 		"""
@@ -223,10 +232,19 @@ class Wavefunction:
 		pwf (PseudoWavefunction): Pseudowavefunction componenet
 		cr (CoreRegion): Contains the pseudopotentials, with projectors and
 			partials waves, for the structure
-		projector: ctypes object for interfacing with C code
-		wf_ptr (C pointer): pointer to the pswf_t C object for this wavefunction
 		dim (np.ndarray, length 3): dimension of the FFT grid used by VASP
 			and therefore for FFTs in this code
+		nband, nwk, nspin (int): Number of bands, kpoints, spins in VASP calculation
+		encut (int or float): VASP calculation plane-wave energy cutoff
+		nums (list of int, length nsites): Element labels for the structure
+		coords (list of float, length 3*nsites): Flattened list of coordinates for the structure
+		projector_owner (bool): Whether a list of projector function/partial wave
+			data has been initialized for this structure
+		projector_list (pointer): List of projector function/partial wave data
+			for this structure
+		num_proj_els (int): Number of elements in the structure
+		freed (bool): Whether the C data associated with this Wavefunction
+			has been freed.
 	"""
 
 	def __init__(self, struct, pwf, cr, outcar, setup_projectors=False):
@@ -396,7 +414,8 @@ class Wavefunction:
 				pswaves = np.append(pswaves, pspw)
 
 		#print (num_els, clabels, ls, pgrids, wgrids, rmaxs)
-		grid_encut = (2 * np.pi * self.dim / self.structure.lattice.abc)**2 / 0.262
+		grid_encut = (np.pi * self.dim / self.structure.lattice.abc)**2 / 0.262
+		print ("GRID ENCUT", grid_encut)
 		projector_list = cfunc_call(PAWC.get_projector_list, None,
 							num_els, clabels, ls, pgrids, wgrids,
 							projectors, aewaves, pswaves,

@@ -35,17 +35,29 @@ def copy_wf(rwf, wf_ptr, allkpts, weights, setup_projectors = False, free_ref = 
 	return wf
 
 class Projector(Wavefunction):
+	"""
+	Projector is a class to projector KS states
+	from wf onto the KS states of basis
+	(both wavefunction objects). Projector extends
+	Wavefunction, so a Projector is essentially
+	a Wavefunction object that is set up to be
+	projected onto basis.
+
+	Attributes:
+		-attributes from Wavefunction
+
+		wf (Wavefunction): Wavefunction object
+		basis (Wavefunction): Wavefunction object onto which the
+			wavefunctions of wf are to be projected
+		pseudo (bool): Whether to perform projections
+			using only plane-wave coefficient components of the
+			wavefunctions. Sacrifices orthogonalization and
+			normalization for speed
+	"""
 
 	def __init__(self, wf, basis,
 		unsym_basis = False, unsym_wf = False, pseudo = False):
 		"""
-		Projector is a class to projector KS states
-		from wf onto the KS states of basis
-		(both wavefunction objects). Projector extends
-		Wavefunction, so a Projector is essentially
-		a Wavefunction object that is set up to be
-		projected onto basis.
-
 		Arguments:
 			wf (Wavefunction): The wavefunction objects whose
 				bands are to be projected onto basis
@@ -57,7 +69,7 @@ class Projector(Wavefunction):
 			unsym_wf (bool, False): If True, makes a copy of
 				wf in which the k-point mesh is not symmetrically
 				reduced, and the frees the original wf
-			pseudo (bool, False): Whether the perform projections
+			pseudo (bool, False): Whether to perform projections
 				using only plane-wave coefficient components of the
 				wavefunctions. Sacrifices orthogonalization and
 				normalization for speed
@@ -124,8 +136,9 @@ class Projector(Wavefunction):
 		if wf.structure.lattice != basis.structure.lattice:
 			raise PAWpyError("Need the lattice to be the same for projections and they aren't!")
 
-		basis.check_c_projectors()
-		wf.check_c_projectors()
+		if not pseudo:
+			basis.check_c_projectors()
+			wf.check_c_projectors()
 
 		self.structure = wf.structure
 		self.pwf = wf.pwf
@@ -406,7 +419,7 @@ class Projector(Wavefunction):
 				Wavefunction objects in which the k-point mesh
 				is not symmetrically reduced
 			atomate_compatible (bool, True): If True, checks for the gzipped
-				files created the atomate workflow tools and reads the most
+				files created by the atomate workflow tools and reads the most
 				recent run based on title
 
 		Returns:
@@ -511,19 +524,30 @@ class Projector(Wavefunction):
 
 	def defect_band_analysis(self, num_below_ef=20,
 		num_above_ef=20, spinpol = False, return_energies = False,
-		return_energy_list = False, vbmband = None):
+		vbmband = None, band_list = None, analyze_all = False):
 		"""
 		Identifies a set of 'interesting' bands in a defect structure
 		to analyze by choosing any band that is more than bound conduction
 		and more than bound valence in the pseudoprojection scheme,
-		and then fully analyzing these bands using single_band_projection
+		and then fully analyzing these bands using single_band_projection.
+		NOTE: ALL BANDS ARE ZERO-INDEXED!
 
 		Args:
 			num_below_ef (int, 20): number of bands to analyze below the fermi level
 			num_above_ef (int, 20): number of bands to analyze above the fermi level
 			spinpol (bool, False): whether to return spin-polarized results (only allowed
 				for spin-polarized DFT output)
-			TODO: energy and vbmband docs (need to clean up energy return vals)
+			return_energies (bool, False): whether to return the energy levels
+				of the bands analyzed in the form
+				{band : [kpoint label: {spin label: (energy, occupation)}},
+				where the kpoint label and spin label are integers
+			vbmband (int, None): Optionally allows a VBM band number to be specified.
+				If None, the VBM of wf is determined and used.
+			band_list (list of int, None): If not None, overrides num_below_ef,
+				num_above_ef, and vbmband. Specifies the set of bands to analyze.
+			analyze_all (bool, False): If True, overrides num_below_ef,
+				num_above_ef, vbmband, and band_list. Whether to perform
+				analysis on all bands in wf
 		"""
 		if num_below_ef < 0 or num_above_ef < 0:
 			raise PAWpyError("num_above_ef and num_below_ef must both be nonnegative.")
@@ -533,36 +557,28 @@ class Projector(Wavefunction):
 		nwk = basis.nwk
 		nspin = basis.nspin
 		occs = cdouble_to_numpy(PAWC.get_occs(c_void_p(self.pwf.wf_ptr)), self.nband*self.nwk*self.nspin)
-		vbm = 0
-		print(occs)
-		for i in range(self.nband):
-			if occs[i*self.nwk*self.nspin] > 0.5:
-				vbm = i
-		if vbmband != None:
-			vbm = vbmband
-		min_band, max_band = max(vbm - num_below_ef, 0), min(vbm + num_above_ef, self.nband - 1)
-		"""
-		for b in range(nband):
-			v, c = self.proportion_conduction(b, basis, spinpol = False)
-			if v > bound and c > bound:
-				totest.add(b)
-				totest.add(b-1)
-				totest.add(b+1)
-		"""
-		totest = [i for i in range(min_band,max_band+1)]
+		
+		if analyze_all:
+			totest = [i for i in range(nband)]
+		elif band_list:
+			totest = band_list[:]
+		else:
+			vbm = 0
+			print(occs)
+			for i in range(self.nband):
+				if occs[i*self.nwk*self.nspin] > 0.5:
+					vbm = i
+			if vbmband != None:
+				vbm = vbmband
+			min_band, max_band = max(vbm - num_below_ef, 0), min(vbm + num_above_ef, self.nband - 1)
+			totest = [i for i in range(min_band,max_band+1)]
 
 		results = {}
-		energies = {}
 		energy_list = {}
 		for b in totest:
 			results[b] = self.proportion_conduction(b, spinpol = spinpol)
-			energies[b] = 0
-			for k in range(self.nwk):
-				for s in range(self.nspin):
-					energies[b] += cfunc_call(PAWC.get_energy, None, self.pwf.wf_ptr, b, k, s) * self.pwf.kws[k]
-			energies[b] /= np.sum(self.pwf.kws) * self.nspin
 
-		if return_energy_list:
+		if return_energies:
 			for b in totest:
 				energy_list[b] = []
 				for k in range(self.nwk):
@@ -570,17 +586,11 @@ class Projector(Wavefunction):
 						energy_list[b].append([cfunc_call(PAWC.get_energy, None, self.pwf.wf_ptr, b, k, s),\
 											occs[b*self.nwk*self.nspin + s*self.nwk + k]])
 			return results, energy_list
-		if return_energies:
-			return results, energies
 		return results
 
 	def free_all(self):
 		"""
-		Frees all of the C structures associated with the Wavefunction object.
-		After being called, this object is not usable.
+		Frees wf
 		"""
-		warnings.warn(
-			"free_all not implemented for Projector class. Call free_all on basis and wf",
-			PAWpyWarning
-			)
-
+		self.wf.free_all()
+		self.freed = True

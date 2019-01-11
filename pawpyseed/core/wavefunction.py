@@ -44,8 +44,7 @@ class Pseudopotential:
 	partial waves, and pseudo partial waves.
 
 	Attributes:
-		rmaxstr (str): Maximum radius of the projection operators, as string
-			of double precision float
+		rmax (np.float64): Maximum radius of the projection operators
 		grid (np.array): radial grid on which partial waves are defined
 		aepotential (np.array): All electron potential defined radially on grid
 		aecorecharge (np.array): All electron core charge defined radially
@@ -74,7 +73,6 @@ class Pseudopotential:
 		self.realprojs = []
 		self.nonlocalprojs = []
 		self.ls = []
-		self.rmaxstrs = []
 
 		auguccstr, gridstr = gridstr.split("grid", 1)
 		gridstr, aepotstr = gridstr.split("aepotential", 1)
@@ -123,8 +121,6 @@ class Pseudopotential:
 		for projstr in projstrs:
 			lst = projstr.split("Reciprocal Space Part")
 			nonlocalvals, projs = lst[0], lst[1:]
-			self.rmaxstr = c_char_p()
-			self.rmaxstr.value = nonlocalvals.split()[2].encode('utf-8')
 			self.rmax = self.make_nums(nonlocalvals.split()[2])[0]
 			nonlocalvals = self.make_nums(nonlocalvals)
 			l = nonlocalvals[0]
@@ -389,20 +385,16 @@ class Wavefunction:
 		aewaves = np.array([], np.float64)
 		pswaves = np.array([], np.float64)
 		wgrids = np.array([], np.float64)
-		pgrids = np.array([], np.float64)
 		augs = np.array([], np.float64)
-		rmaxstrs = (c_char_p * len(pps))()
 		rmaxs = np.array([], np.float64)
 		num_els = 0
 
 		for num in sorted(pps.keys()):
 			pp = pps[num]
 			clabels = np.append(clabels, [num, len(pp.ls), pp.ndata, len(pp.grid)])
-			rmaxstrs[num_els] = pp.rmaxstr
 			rmaxs = np.append(rmaxs, pp.rmax)
 			ls = np.append(ls, pp.ls)
 			wgrids = np.append(wgrids, pp.grid)
-			pgrids = np.append(pgrids, pp.projgrid)
 			augs = np.append(augs, pp.augs)
 			num_els += 1
 			for i in range(len(pp.ls)):
@@ -413,11 +405,10 @@ class Wavefunction:
 				aewaves = np.append(aewaves, aepw)
 				pswaves = np.append(pswaves, pspw)
 
-		#print (num_els, clabels, ls, pgrids, wgrids, rmaxs)
 		grid_encut = (np.pi * self.dim / self.structure.lattice.abc)**2 / 0.262
 		print ("GRID ENCUT", grid_encut)
 		projector_list = cfunc_call(PAWC.get_projector_list, None,
-							num_els, clabels, ls, pgrids, wgrids,
+							num_els, clabels, ls, wgrids,
 							projectors, aewaves, pswaves,
 							rmaxs, max(grid_encut))
 		end = time.monotonic()

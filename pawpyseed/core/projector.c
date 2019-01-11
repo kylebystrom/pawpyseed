@@ -17,7 +17,7 @@
 #define PI 3.14159265358979323846
 #define DENSE_GRID_SCALE 1
 
-ppot_t* get_projector_list(int num_els, int* labels, int* ls, double* proj_grids, double* wave_grids,
+ppot_t* get_projector_list(int num_els, int* labels, int* ls, double* wave_grids,
 	double* projectors, double* aewaves, double* pswaves, double* rmaxs, double grid_encut) {
 
 	setbuf(stdout,NULL);	
@@ -233,11 +233,16 @@ void onto_projector_helper(band_t* band, double complex* x, real_proj_site_t* si
 	kpt_cart[1] = kpt[1];
 	kpt_cart[2] = kpt[2];
 	frac_to_cartesian(kpt_cart, reclattice);
+	double complex overlap;
+	double complex* values;
+	double complex* xvals;
+	int* indices;
 
 	int num_indices, index, t=0;
 	for (int s = 0; s < num_sites; s++) {
 		num_indices = sites[s].num_indices;
-		int* indices = sites[s].indices;
+		xvals = (double complex*) malloc(num_indices * sizeof(double complex));
+		indices = sites[s].indices;
 		projections[s].num_projs = sites[s].num_projs;
 		projections[s].total_projs = sites[s].total_projs;
 		projections[s].ns = malloc(sites[s].total_projs * sizeof(int));
@@ -252,15 +257,16 @@ void onto_projector_helper(band_t* band, double complex* x, real_proj_site_t* si
 			projections[s].ns[p] = sites[s].projs[p].func_num;
 			projections[s].ls[p] = sites[s].projs[p].l;
 			projections[s].ms[p] = sites[s].projs[p].m;
-			double complex* values = sites[s].projs[p].values;
-			double complex total = 0 + 0 * I;
+			values = sites[s].projs[p].values;
 			for (int i = 0; i < num_indices; i++) {
 				index = indices[i];
 				kdotr = dot(kpt_cart, sites[s].projs[p].paths+i*3);
-				total += x[index] * conj(values[i]) * dv * cexp(I * kdotr);
+				xvals[i] = x[index] * dv * cexp(I * kdotr);
 			}
-			projections[s].overlaps[p] = total;
+			cblas_zdotc_sub(num_indices, values, 1, xvals, 1, &overlap);
+			projections[s].overlaps[p] = overlap;
 		}
+		free(xvals);
 	}
 }
 

@@ -64,14 +64,6 @@ void test_compensation_terms() {
 		fscanf(fp, "%d ", ls+i);
 	}
 
-	int lenpgrids = 0;
-	fscanf(fp, "%d ", &lenpgrids);
-	printf("pgrids %d\n", lenpgrids);
-	double* pgrids = (double*) malloc(lenpgrids * sizeof(double));
-	for (int i = 0; i < lenpgrids; i++) {
-		fscanf(fp, "%lf ", pgrids + i);
-	}
-
 	int lenwgrids = 0;
 	fscanf(fp, "%d ", &lenwgrids);
 	printf("wgrids %d\n", lenwgrids);
@@ -125,11 +117,10 @@ void test_compensation_terms() {
 	double rmm = 0;
 	sscanf(rm[0], "%lf", &rmm);
 	printf("pps\n");
-	ppot_t* pps = get_projector_list(num_els, labels, ls, pgrids, wgrids,
+	ppot_t* pps = get_projector_list(num_els, labels, ls, wgrids,
 		projectors, aewaves, pswaves, &rmm, 7000);
 
 	free(labels);
-	free(pgrids);
 	free(wgrids);
 	free(projectors);
 	free(aewaves);

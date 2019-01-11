@@ -30,7 +30,7 @@ PAWC.read_wavefunctions_from_str.restype = c_void_p
 PAWC.read_wavefunctions.argtypes = (c_char_p, c_double_p)
 PAWC.read_wavefunctions.restype = c_void_p
 
-PAWC.get_projector_list.argtypes = [c_int, c_int_p, c_int_p] + [c_double_p]*6 + [c_double]
+PAWC.get_projector_list.argtypes = [c_int, c_int_p, c_int_p] + [c_double_p]*5 + [c_double]
 PAWC.get_projector_list.restype = c_void_p
 
 PAWC.overlap_setup_real.argtypes = [c_void_p, c_void_p, c_int_p, c_int_p,

@@ -10,19 +10,23 @@ from pymatgen import Spin
 
 class PawpyData:
 
-	def __init__(self, dos, structure, data, vbm = None, cbm = None):
+	def __init__(self, structure, data, dos = None, vbm = None, cbm = None):
 		"""
 		Arguments:
-			dos (pymatgen.electronic_structure.dos.DOS or list): A pymatgen
-				density of states or a list containing: 1) energies, 2) density
-				of states values at those energies, 3) the Fermi level.
 			structure (pymatgen.core.structure.Structure): crystal structure
 			data: Whatever data is stored
+			dos (pymatgen.electronic_structure.dos.DOS or list, None): A pymatgen
+				density of states or a list containing: 1) energies, 2) density
+				of states values at those energies, 3) the Fermi level.
 			vbm (float, None): valence band maximum
 			cbm (float, None): conduction band minimum
 		"""
 		self.energies = energies
-		if type(dos) == list:
+		if dos is None:
+			self.energies = None
+			self.densities = None
+			self.efermi = None
+		elif type(dos) == list:
 			self.energies = dos[0]
 			self.densities = dos[1]
 			self.efermi = dos[2]
@@ -50,7 +54,10 @@ class PawpyData:
 		self.vbm = vbm
 
 	def as_dict(self):
-
+		"""
+		Returns a representation of the PawpyData
+		as a dictionary.
+		"""
 		data = {}
 		data['structure'] = Poscar(self.structure).get_string()
 		data['energies'] = self.energies
@@ -62,7 +69,10 @@ class PawpyData:
 		return data
 
 	def write_yaml(self, filename):
-
+		"""
+		Write the PawpyData as a yaml file
+		called filename
+		"""
 		data = self.as_dict()
 		f = open(filename, 'w')
 		yaml.dump(data, f)
@@ -70,6 +80,10 @@ class PawpyData:
 
 	@classmethod
 	def from_dict(cls, data):
+		"""
+		Takes the dictionary--data--and
+		returns a PawpyData instance.
+		"""
 		if 'energy_levels' in data:
 			return cls([data['energies'], data['densities'], data['efermi']],
 				data['structure'], data['data'], data['energy_levels'])
@@ -78,6 +92,10 @@ class PawpyData:
 
 	@classmethod
 	def from_yaml(cls, filename):
+		"""
+		Reads a PawpyData instance from
+		a file called filename.
+		"""
 		f = open(filename, 'r')
 		data = yaml.load(f.read().encode('utf-8'))
 		return cls.from_dict(data)
@@ -85,27 +103,47 @@ class PawpyData:
 
 
 class BulkCharacter(PawpyData):
+	"""
+	The data member for the BulkCharacter is dictionary of form
+	{band_index : (v, c)}, where v and c are the valence and
+	conduction character of the band, respectively.
+	"""
 
-	def __init__(self, dos, structure, band_dict, energy_levels = None,
-		vbm = None, cbm = None):
+	def __init__(self, structure, data, energy_levels = None,
+		dos = None, vbm = None, cbm = None):
+		"""
+		Arguments:
+			structure (pymatgen.core.structure.Structure): crystal structure
+			energy_levels (list of list): list of energy levels at the different
+				k-points and spins in each band. Returned by Projector.defect_band_analysis
+			data: {band_index : (v, c)}, where v and c are the valence and
+				conduction character of the band, respectively.
+				Returned by Projector.defect_band_analysis
+			dos (pymatgen.electronic_structure.dos.DOS or list, None): A pymatgen
+				density of states or a list containing: 1) energies, 2) density
+				of states values at those energies, 3) the Fermi level.
+			vbm (float, None): valence band maximum
+			cbm (float, None): conduction band minimum
+		"""
 
-		if type(dos) == list:
-			self.energies = dos[0]
-			self.densities = dos[1]
-			self.efermi = dos[2]
-		else:
-			self.energies = dos.energies
-			self.densities = (dos.densities[Spin.up] + dos.densities[Spin.down]) / 2
-			self.efermi = dos.efermi
-		self.structure = structure
-		self.data = band_dict
 		self.energy_levels = energy_levels
-		self.vbm = vbm
-		self.cbm = cbm
-		if vbm:
-			self.efermi = self.vbm
+		super(PawpyData, self).__init__(structure, data, dos, vbm, cbm)
 
-	def plot(self, name, spinpol = False, title=None):
+	def plot(self, name, title=None, spinpol = False):
+		"""
+		Plot the bulk character data. If the energy levels are available,
+		those are plotted for reference. Otherwise, if the dos is available,
+		it is plotted for reference.
+
+		Arguments:
+			name (str): Name of the file to which the plot is saved.
+				Spaces will be replaced with underscores.
+			title (str, None): Title of the plot. Defaults to name,
+				so it is recommended to set this.
+			spinpol (bool, False): Show the spin polarized valence
+				and conduction character. Only works if the VASP
+				calculation was spin polarized
+		"""
 		if title == None:
 			title = name
 		bs = []
@@ -184,7 +222,7 @@ class BulkCharacter(PawpyData):
 		#Example: 
 		#>>> def_lst = ['charge_1', 'charge_0', 'charge_-1']
 		#>>> generator = Projector.setup_multiple_protections('bulk', def_lst)
-		#>>> objs = BulkComposition.makeit()
+		#>>> objs = BulkComposition.makeit(generator)
 
 		bcs = {}
 
@@ -193,28 +231,19 @@ class BulkCharacter(PawpyData):
 			dos = vr.tdos
 			data, energy_levels = wf.defect_band_analysis(num_above_ef=5, num_below_ef=5,
 				spinpol = True, return_energies=True)
-			bcs[wf_dir] = BulkCharacter(dos, wf.structure, data, energy_levels)
+			bcs[wf_dir] = BulkCharacter(wf.structure, data,
+				energy_levels = energy_levels, dos = dos)
 
 		return bcs
 
 
-
 class BasisExpansion(PawpyData):
-
-	def __init__(self, dos, structure, projs):
-
-		self.energies = dos.energies
-		if type(dos) == list:
-			self.energies = dos[0]
-			self.densities = dos[1]
-			self.efermi = dos[2]
-		else:
-			self.energies = dos.energies
-			self.densities = (dos.densities[Spin.up] + dos.densities[Spin.down]) / 2
-			self.efermi = dos.efermi
-		self.structure = structure
-		self.data = projs
-
+	"""
+	The data member for the BasisExpansion is 2D array of shape
+	(wf.nband, basis.nband * basis.nwk * basis.nspin).
+	Each item is the projection of a band of wf onto a band of
+	basis for a given k-point index and spin index.
+	"""
 
 	@staticmethod
 	def makeit(generator):
@@ -224,7 +253,7 @@ class BasisExpansion(PawpyData):
 		#OR
 		#>>> generator = Projector.setup_multiple_projections(*pycdt_dirs('.'))
 		#
-		#>>> objs = BasisExpansion.makeit()
+		#>>> objs = BasisExpansion.makeit(generator)
 
 		bes = {}
 
@@ -237,7 +266,7 @@ class BasisExpansion(PawpyData):
 				dtype=np.complex128)
 			for b in range(wf.nband):
 				expansion[b,:] = wf.single_band_projection(b)
-			bes[wf_dir] = BasisExpansion(dos, wf.structure, expansion)
+			bes[wf_dir] = BasisExpansion(wf.structure, expansion, dos=dos)
 
 		return bes
 

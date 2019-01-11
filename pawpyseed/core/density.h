@@ -32,8 +32,8 @@ double* ae_chg_density(pswf_t* wf, ppot_t* pps, int* fftg, int* labels, double* 
 Projects one band of wf onto all the bands of wf_R in real space. Very slow for large systems,
 but a good test tool.
 */
-double* project_realspace_state(int BAND_NUM, int numtoproj, pswf_t* wf, pswf_t* wf_R, ppot_t* pps, int* fftg,
-	int* labels, double* coords, int* labels_R, double* coords_R);
+double* project_realspace_state(int BAND_NUM, pswf_t* wf, pswf_t* wf_R, ppot_t* pps,
+	ppot_t* pps_R, int* fftg, int* labels, double* coords, int* labels_R, double* coords_R);
 
 void write_realspace_state_ncl_ri(char* filename1, char* filename2,
 	char* filename3, char* filename4,

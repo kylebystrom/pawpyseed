@@ -53,8 +53,8 @@ PAWC.write_density_noreturn.restype = None
 
 PAWC.setup_projections.argtypes = [c_void_p, c_void_p, c_int, c_int, c_int_p, c_int_p, c_double_p]
 
-PAWC.project_realspace_state.argtypes = [c_int, c_int, c_void_p, c_void_p, c_void_p, c_int_p, c_int_p, c_double_p, c_int_p, c_double_p]
-PAWC.project_realspace_state.restype = c_void_p
+PAWC.project_realspace_state.argtypes = [c_int, c_void_p, c_void_p, c_void_p, c_void_p, c_int_p, c_int_p, c_double_p, c_int_p, c_double_p]
+PAWC.project_realspace_state.restype = c_double_p
 
 PAWC.pseudoprojection.argtypes = [c_void_p, c_void_p, c_int]
 PAWC.pseudoprojection.restype = c_double_p

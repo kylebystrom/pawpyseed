@@ -69,8 +69,8 @@ double* ae_chg_density(pswf_t* wf, ppot_t* pps, int* fftg, int* labels, double* 
 	return P;
 }
 
-double* project_realspace_state(int BAND_NUM, int numtoproj, pswf_t* wf, pswf_t* wf_R, ppot_t* pps, int* fftg,
-	int* labels, double* coords, int* labels_R, double* coords_R) {
+double* project_realspace_state(int BAND_NUM, pswf_t* wf, pswf_t* wf_R, ppot_t* pps,
+	ppot_t* pps_R, int* fftg, int* labels, double* coords, int* labels_R, double* coords_R) {
 
 	int nband = wf->nband;
 	int nwk = wf->nwk;
@@ -83,7 +83,7 @@ double* project_realspace_state(int BAND_NUM, int numtoproj, pswf_t* wf, pswf_t*
 		double complex overlap = 0;
 		double complex* state = realspace_state(BAND_NUM, k, wf, pps, fftg, labels, coords);
 		for (int b = 0; b < nband; b++) {
-			double complex* state_R = realspace_state(b, k, wf_R, pps, fftg, labels_R, coords_R);
+			double complex* state_R = realspace_state(b, k, wf_R, pps_R, fftg, labels_R, coords_R);
 			cblas_zdotc_sub(gridsize, state_R, 1, state, 1, &overlap);
 			overlap *= vol / gridsize;
 			projs[b*nwk*nspin + k] = creal(overlap);
@@ -100,11 +100,11 @@ double complex* realspace_state(int BAND_NUM, int KPOINT_NUM, pswf_t* wf, ppot_t
 		int* labels, double* coords) {
 
 	double complex* x = mkl_calloc(fftg[0]*fftg[1]*fftg[2], sizeof(double complex), 64);
-	printf("START FT\n");
+	//printf("START FT\n");
 	fft3d(x, wf->G_bounds, wf->lattice, wf->kpts[KPOINT_NUM]->k,
 		wf->kpts[KPOINT_NUM]->Gs, wf->kpts[KPOINT_NUM]->bands[BAND_NUM]->Cs,
 		wf->kpts[KPOINT_NUM]->bands[BAND_NUM]->num_waves, fftg);
-	printf("FINISH FT\n");
+	//printf("FINISH FT\n");
 	double* lattice = wf->lattice;
 	double vol = determinant(lattice);
 	for (int i = 0; i < fftg[0]; i++) {
@@ -125,7 +125,7 @@ double complex* realspace_state(int BAND_NUM, int KPOINT_NUM, pswf_t* wf, ppot_t
 	#pragma omp parallel for
 	for (int p = 0; p < num_sites; p++) {
 		projection_t pros = wf->kpts[KPOINT_NUM]->bands[BAND_NUM]->projections[p];
-		printf("READ PROJECTIONS\n");
+		//printf("READ PROJECTIONS\n");
 		ppot_t pp = pps[labels[p]];
 		double rmax = pp.wave_grid[pp.wave_gridsize-1];
 		double res[3] = {0,0,0};
@@ -138,7 +138,7 @@ double complex* realspace_state(int BAND_NUM, int KPOINT_NUM, pswf_t* wf, ppot_t
 		int center1 = (int) round(coords[3*p+0] * fftg[0]);
 		int center2 = (int) round(coords[3*p+1] * fftg[1]);
 		int center3 = (int) round(coords[3*p+2] * fftg[2]);
-		printf("FINISH SETUP %d\n%d %d %d\n%d %d %d\n",p, center1, center2, center3, grid1, grid2, grid3);
+		//printf("FINISH SETUP %d\n%d %d %d\n%d %d %d\n",p, center1, center2, center3, grid1, grid2, grid3);
 		for (int i = -grid1 + center1; i <= grid1 + center1; i++) {
 			double frac[3] = {0,0,0};
 			double testcoord[3] = {0,0,0};

@@ -743,8 +743,9 @@ class Wavefunction:
 		Frees all of the C structures associated with the Wavefunction object.
 		After being called, this object is not usable.
 		"""
-		PAWC.free_pswf(c_void_p(self.pwf.wf_ptr))
-		if self.projector_owner:
-			PAWC.free_ppot_list(c_void_p(self.projector_list), len(self.cr.pps))
-		self.freed = True
+		if not self.freed:
+			PAWC.free_pswf(c_void_p(self.pwf.wf_ptr))
+			if self.projector_owner:
+				PAWC.free_ppot_list(c_void_p(self.projector_list), len(self.cr.pps))
+			self.freed = True
 

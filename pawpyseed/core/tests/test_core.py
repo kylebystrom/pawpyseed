@@ -503,8 +503,7 @@ class TestPy:
 			else:
 				assert_almost_equal(v, 0, decimal=8)
 				assert_almost_equal(c, 1, decimal=4)
-		basis.free_all()
-		wf1.free_all()
+		pr.basis.free_all()
 		pr.free_all()
 
 		generator = Projector.setup_multiple_projections('.', ['.', '.'])

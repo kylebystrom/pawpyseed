@@ -588,9 +588,19 @@ class Projector(Wavefunction):
 			return results, energy_list
 		return results
 
+	def realspace_projection(self, band_num, dim = None):
+		if dim is None:
+			dim = self.dim
+		return cfunc_call(PAWC.project_realspace_state,
+			self.basis.nband * self.basis.nwk * self.basis.nspin, 
+			band_num, self.pwf.wf_ptr, self.basis.pwf.wf_ptr,
+			self.projector_list, self.basis.projector_list,
+			dim, self.nums, self.coords, self.basis.nums, self.basis.coords)
+
 	def free_all(self):
 		"""
 		Frees wf
 		"""
-		self.wf.free_all()
-		self.freed = True
+		if not self.freed:
+			self.wf.free_all()
+			self.freed = True

@@ -164,7 +164,6 @@ class DummyProjector(Projector):
 		
 		ct = cfunc_call(PAWC.compensation_terms, 2*nband*nwk*nspin,
 						band_num, self.pwf.wf_ptr, basis.pwf.wf_ptr,
-						len(self.cr.pps),
 						0, len(M_R), len(M_S), len(M_S),
 						np.array([]), np.array([]), M_R, M_S, M_R, M_S,
 						selfnums, selfcoords, basisnums, basiscoords,

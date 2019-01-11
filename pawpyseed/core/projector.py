@@ -338,7 +338,6 @@ class Projector(Wavefunction):
 		start = time.monotonic()
 		ct = cfunc_call(PAWC.compensation_terms, 2*nband*nwk*nspin,
 						band_num, self.pwf.wf_ptr, basis.pwf.wf_ptr,
-						len(self.cr.pps),
 						len(M_R), len(N_R), len(N_S), len(N_RS_R),
 						M_R, M_S, N_R, N_S, N_RS_R, N_RS_S,
 						selfnums, selfcoords, basisnums, basiscoords,

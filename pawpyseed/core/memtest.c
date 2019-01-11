@@ -157,9 +157,9 @@ void test_compensation_terms() {
 	setup_projections(wf_proj, pps, num_els, 4, fftg, selfnums, selfcoords);
 	setup_projections(wf_ref, pps, num_els, 4, fftg, selfnums, selfcoords);
 	overlap_setup_real(wf_ref, wf_proj, pps, selfnums, selfnums, selfcoords, selfcoords, M, M, M, M, 4, 4, 4);
-	double* terms = compensation_terms(0, wf_proj, wf_ref, pps, num_els,
+	double* terms = compensation_terms(0, wf_proj, wf_ref, pps,
 		4, 0, 0, 0, M, M, N_S, N_S, N_S, N_S, selfnums, selfcoords, selfnums, selfcoords, fftg);
-	double* terms2 = compensation_terms(0, wf_proj, wf_ref, pps, num_els,
+	double* terms2 = compensation_terms(0, wf_proj, wf_ref, pps,
 		0, 4, 4, 4, N_S, N_S, M, M, M, M, selfnums, selfcoords, selfnums, selfcoords, fftg);
 
 	free(ls);

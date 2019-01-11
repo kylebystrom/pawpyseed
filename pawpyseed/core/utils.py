@@ -59,7 +59,7 @@ PAWC.project_realspace_state.restype = c_double_p
 PAWC.pseudoprojection.argtypes = [c_void_p, c_void_p, c_int]
 PAWC.pseudoprojection.restype = c_double_p
 
-PAWC.compensation_terms.argtypes = [c_int] + [c_void_p]*2 + [c_int]*5 + [c_int_p]*6 \
+PAWC.compensation_terms.argtypes = [c_int] + [c_void_p]*2 + [c_int]*4 + [c_int_p]*6 \
 									+ [c_int_p, c_double_p]*2 + [c_int_p]
 PAWC.compensation_terms.restype = c_double_p
 

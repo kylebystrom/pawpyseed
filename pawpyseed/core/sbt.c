@@ -128,7 +128,9 @@ double* wave_spherical_bessel_transform(sbt_descriptor_t* d, double* f, int l) {
 
 	double phase = 0;
 	for (int m = 0; m < N; m++) {
-		x[m] = pow(r[m], 0.5) * fs[m]; // f is multiplied by r
+		x[m] = pow(r[m], 0.5) * fs[m];
+		// f is the radial part of the function times r,
+		// so only multiply by r^0.5 instead of r^1.5
 	}
 	double rp=0.0, ip=0.0;
 	status = DftiComputeBackward(handle, x);

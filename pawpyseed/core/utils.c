@@ -622,11 +622,13 @@ void setup_site(real_proj_site_t* sites, ppot_t* pps, int num_sites, int* site_n
 							sites[s].projs[n].paths[3*sites[s].num_indices+1] = testcoord[1];
 							sites[s].projs[n].paths[3*sites[s].num_indices+2] = testcoord[2];
 							if (pr0_pw1)
-								sites[s].projs[n].values[sites[s].num_indices] = smooth_wave_value(pps[labels[p]].funcs[sites[s].projs[n].func_num],
+								sites[s].projs[n].values[sites[s].num_indices] = smooth_wave_value(
+									pps[labels[p]].funcs[sites[s].projs[n].func_num],
 									pps[labels[p]].smooth_grid, sites[s].projs[n].m, sites[s].rmax,
 									pps[labels[p]].proj_gridsize, coords+3*p, frac, lattice);
 							else
-								sites[s].projs[n].values[sites[s].num_indices] = proj_value(pps[labels[p]].funcs[sites[s].projs[n].func_num],
+								sites[s].projs[n].values[sites[s].num_indices] = proj_value(
+									pps[labels[p]].funcs[sites[s].projs[n].func_num],
 									pps[labels[p]].proj_grid, sites[s].projs[n].m, sites[s].rmax,
 									pps[labels[p]].proj_gridsize, coords+3*p, frac, lattice);
 						}

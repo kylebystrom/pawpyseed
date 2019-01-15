@@ -229,7 +229,7 @@ double complex reciprocal_offsite_wave_overlap(double* dcoord,
 		double** ispline = spline_coeff(kgrid, ifunc, KGRID_SIZE);
 		if (R > 10e-10)
 			total += spline_integral(kgrid, ifunc, ispline, KGRID_SIZE)
-				* SBTFACS[lx][lx][(L-abs(l1-l2))/2][lx+mx][my]
+				* SBTFACS[lx][ly][(L-abs(l1-l2))/2][lx+mx][my]
 				* Ylm(L, m1-m2, theta, phi) * cpow(I, l2+L-l1);
 		else {
 			if (L == 0 && l1 == l2 && m1 == m2)

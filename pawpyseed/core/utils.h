@@ -253,6 +253,9 @@ int get_nwk(pswf_t* wf);
 /** Return the number of spins in the wavefunction. */
 int get_nspin(pswf_t* wf);
 
+/** Return whether wf is noncollinear. */
+int is_ncl(pswf_t* wf);
+
 /** Return the encut of the plane-wave basis of the wavefunction. */
 double get_encut(pswf_t* wf);
 

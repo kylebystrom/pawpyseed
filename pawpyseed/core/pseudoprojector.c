@@ -62,14 +62,12 @@ void vc_pseudoprojection(pswf_t* wf_ref, pswf_t* wf_proj, int BAND_NUM, double* 
 
 }
 
-double* pseudoprojection(pswf_t* wf_ref, pswf_t* wf_proj, int BAND_NUM) {
+void pseudoprojection(double complex* projections, pswf_t* wf_ref, pswf_t* wf_proj, int BAND_NUM) {
 
 	kpoint_t** kpts = wf_ref->kpts;
 	kpoint_t** kptspro = wf_proj->kpts;
 	int NUM_KPTS = wf_ref->nwk * wf_ref->nspin;
 	int NUM_BANDS = wf_ref->nband;
-
-	double* projections = (double*) malloc(2*NUM_BANDS*NUM_KPTS*sizeof(double));
 
 	#pragma omp parallel for 
 	for (int b = 0; b < NUM_BANDS; b++)
@@ -84,8 +82,7 @@ double* pseudoprojection(pswf_t* wf_ref, pswf_t* wf_proj, int BAND_NUM) {
 			{
 				curr_overlap += C1s[w] * conj(C2s[w]);
 			}
-			projections[2*(b*NUM_KPTS+kpt_num)] = creal(curr_overlap);
-			projections[2*(b*NUM_KPTS+kpt_num)+1] = cimag(curr_overlap);
+			projections[b*NUM_KPTS+kpt_num] = curr_overlap;
 		}
 	}
 

@@ -15,7 +15,6 @@ from pawpyseed.core.utils import *
 import os, time
 import numpy as np
 import json
-from monty.io import zopen
 
 import sys
 
@@ -156,65 +155,6 @@ class CoreRegion:
 		self.pps = {}
 		for potsingle in potcar:
 			self.pps[potsingle.element] = Pseudopotential(potsingle.data[:-15], potsingle.rmax)
-		
-
-class PseudoWavefunction:
-	"""
-	THIS CLASS IS NOT USEFUL ON ITS OWN. IF YOU WANT TO WORK WITH
-	PSEUDOWAVEFUNCTIONS, INITIALIZE A Wavefunction OBJECT WITH
-	setup_projectors=False.
-
-	Class for storing pseudowavefunction from WAVECAR file. Most important attribute
-	is wf_ptr, a C pointer used in the C portion of the program for storing
-	plane wave coefficients.
-
-	Attributes:
-		kpts (np.array): nx3 array of fractional kpoint vectors,
-			where n is the number of kpoints
-		kws (np.array): weight of each kpoint
-		wf_ptr (ctypes POINTER): c pointer to pswf_t object
-		ncl (bool): Whether the pseudowavefunction is from a noncollinear
-			VASP calculation
-		band_props (list): [band gap, conduction band minimum,
-			valence band maximum, whether the band gap is direct]
-	"""
-
-	def __init__(self, filename="WAVECAR", vr="vasprun.xml"):
-		if type(vr) == str:
-			vr = Vasprun(vr)
-		weights = vr.actual_kpoints_weights
-		kws = numpy_to_cdouble(weights)
-		self.kws = np.array(weights, dtype = np.float64)
-		self.kpts = np.array(vr.actual_kpoints, dtype=np.float64)
-		if '.gz' in filename or '.bz2' in filename:
-			f = zopen(filename, 'rb')
-			contents = f.read()
-			f.close()
-			self.wf_ptr = PAWC.read_wavefunctions_from_str(
-				contents, kws)
-		else:
-			self.wf_ptr = PAWC.read_wavefunctions(filename.encode('utf-8'), kws)
-		self.ncl = PAWC.is_ncl(self.wf_ptr) > 0
-		self.band_props = vr.eigenvalue_band_properties
-
-	def pseudoprojection(self, band_num, basis):
-		"""
-		Computes <psibt_n1k|psit_n2k> for all n1 and k
-		and a given n2, where psibt are basis structures
-		pseudowavefunctions and psit are self pseudowavefunctions
-
-		Arguments:
-			band_num (int): n2 (see description)
-			basis (Pseudowavefunction): pseudowavefunctions onto whose bands
-				the band of self is projected
-		"""
-		nband = PAWC.get_nband(c_void_p(basis.wf_ptr))
-		nwk = PAWC.get_nwk(c_void_p(basis.wf_ptr))
-		nspin = PAWC.get_nspin(c_void_p(basis.wf_ptr))
-
-		res = PAWC.pseudoprojection(c_void_p(basis.wf_ptr), c_void_p(self.wf_ptr), band_num)
-		res = cdouble_to_numpy(res, 2*nband*nwk*nspin)
-		return res[::2] + 1j * res[1::2]
 
 
 class Wavefunction:

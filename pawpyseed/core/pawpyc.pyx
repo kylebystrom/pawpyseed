@@ -2,14 +2,38 @@ from pawpyseed.core cimport pawpyc
 from cpython cimport array
 from libc.stdlib cimport malloc, free
 from libc.stdio cimport FILE
+from pymatgen.core.structure import Structure
 from pymatgen.io.vasp.outputs import Vasprun
 #from pawpyseed.core import projector
 #from pawpyseed.core import wavefunction
 from monty.io import zopen
 import numpy as np
 cimport numpy as np
+import time
+
+class Timer:
+	@staticmethod
+	def setup_time(t):
+		Timer.ALL_SETUP_TIME += t
+	@staticmethod
+	def overlap_time(t):
+		Timer.ALL_OVERLAP_TIME += t
+	@staticmethod
+	def augmentation_time(t):
+		Timer.ALL_AUGMENTATION_TIME += t
+	ALL_SETUP_TIME = 0
+	ALL_OVERLAP_TIME = 0
+	ALL_AUGMENTATION_TIME = 0
+
+def el(site):
+	"""
+	Return the element symbol of a pymatgen
+	site object
+	"""
+	return site.specie.symbol
 
 cdef class Pointer:
+
 	cdef void* ptr
 
 	cdef set_pointer(self, void* ptr):
@@ -75,6 +99,10 @@ cdef class PseudoWavefunction:
 		self.nband = pawpyc.get_nband(self.wf_ptr)
 		self.nwk = pawpyc.get_nwk(self.wf_ptr)
 		self.nspin = pawpyc.get_nspin(self.wf_ptr)
+		self.encut = pawpyc.get_encut(self.wf_ptr)
+
+	def __dealloc__(self):
+		pawpyc.free_pswf(self.wf_ptr)
 
 	def pseudoprojection(self, band_num, PseudoWavefunction basis):
 		"""
@@ -91,6 +119,140 @@ cdef class PseudoWavefunction:
 		cdef double complex[::1] resv = res
 		pawpyc.pseudoprojection(&resv[0], basis.wf_ptr, self.wf_ptr, band_num)
 		return res
+
+cdef class CWavefunction(PseudoWavefunction):
+
+	cdef int[::1] dimv
+	cdef int gridsize
+
+	cdef int[::1] nums
+	cdef double[::1] coords
+	cdef int number_projector_elements
+	cdef readonly int projector_owner
+	
+	cdef pawpyc.ppot_t* projector_list
+
+	def __init__(self, filename="WAVECAR", vr="vasprun.xml"):
+		self.projector_owner = 0
+		super(CWavefunction, self).__init__(filename, vr)
+
+	def __dealloc__(self):
+		if self.projector_owner:
+			pawpyc.free_ppot_list(self.projector_list, self.number_projector_elements)
+
+	def _c_projector_setup(self, int num_elems, int num_sites,
+							double grid_encut, nums, coords, dim, pps):
+		"""
+		Returns a point to a list of ppot_t objects in C,
+		to be used for high performance parts of the code
+
+		Args:
+			pps (dict of Pseudopotential objects): keys are integers,
+				values of Pseudopotential objects
+
+		Returns:
+			c_void_p object pointing to ppot_t list with each Pseudopotential,
+			ordered in the list by their numerical keys
+		"""
+
+		start = time.monotonic()
+		clabels = np.array([], np.intc)
+		ls = np.array([], np.intc)
+		projectors = np.array([], np.double)
+		aewaves = np.array([], np.double)
+		pswaves = np.array([], np.double)
+		wgrids = np.array([], np.double)
+		augs = np.array([], np.double)
+		rmaxs = np.array([], np.double)
+
+		for num in sorted(pps.keys()):
+			pp = pps[num]
+			clabels = np.append(clabels, [num, len(pp.ls), pp.ndata, len(pp.grid)])
+			rmaxs = np.append(rmaxs, pp.rmax)
+			ls = np.append(ls, pp.ls)
+			wgrids = np.append(wgrids, pp.grid)
+			augs = np.append(augs, pp.augs)
+			for i in range(len(pp.ls)):
+				proj = pp.realprojs[i]
+				aepw = pp.aewaves[i]
+				pspw = pp.pswaves[i]
+				projectors = np.append(projectors, proj)
+				aewaves = np.append(aewaves, aepw)
+				pswaves = np.append(pswaves, pspw)
+
+		cdef int[::1] clabels_v = clabels.astype(np.intc)
+		cdef int[::1] ls_v = ls.astype(np.intc)
+		cdef double[::1] wgrids_v = wgrids.astype(np.double)
+		cdef double[::1] projectors_v = projectors.astype(np.double)
+		cdef double[::1] aewaves_v = aewaves.astype(np.double)
+		cdef double[::1] pswaves_v = pswaves.astype(np.double)
+		cdef double[::1] rmaxs_v = rmaxs.astype(np.double)
+
+		print ("GRID ENCUT", grid_encut)
+		self.projector_list = pawpyc.get_projector_list(
+							num_elems, &clabels_v[0], &ls_v[0], &wgrids_v[0],
+							&projectors_v[0], &aewaves_v[0], &pswaves_v[0],
+							&rmaxs_v[0], grid_encut)
+		end = time.monotonic()
+		print('--------------\nran get_projector_list in %f seconds\n---------------' % (end-start))
+
+		self.projector_owner = 1
+		self.number_projector_elements = num_elems
+		self.nums = np.array(nums, dtype = np.int32, copy = True)
+		self.coords = np.array(coords, dtype = np.float64, copy = True)
+		self.update_dimv(dim)
+
+		pawpyc.setup_projections(
+			self.wf_ptr, self.projector_list,
+			num_elems, num_sites, &self.dimv[0],
+			&self.nums[0], &self.coords[0]
+			)
+
+	def update_dimv(self, dim):
+		dim = np.array(dim, dtype = np.int32, order = 'C', copy = False)
+		self.dimv = dim
+		self.gridsize = np.cumprod(dim)[-1]
+
+	def _get_realspace_state(self, int b, int k, int s):
+		res = np.zeros(self.gridsize, dtype = np.complex128, order='C')
+		cdef double complex[::1] resv = res
+		pawpyc.realspace_state(&resv[0], b, k+s*self.nwk,
+			self.wf_ptr, self.projector_list,
+			&self.dimv[0], &self.nums[0], &self.coords[0])
+		res.shape = self.dimv
+		return res
+
+	def _get_realspace_density(self):
+		res = np.zeros(self.gridsize, dtype = np.float64, order='C')
+		cdef double[::1] resv = res
+		pawpyc.ae_chg_density(&resv[0], self.wf_ptr, self.projector_list,
+			&self.dimv[0], &self.nums[0], &self.coords[0])
+		res.shape = self.dimv
+		return res
+
+	def _write_realspace_state(self, filename1, filename2, double scale, int b, int k, int s):
+		filename1 = bytes(filename1.encode('utf-8'))
+		filename2 = bytes(filename2.encode('utf-8'))
+		res = self._get_realspace_state(b, k, s)
+		res2 = res.view()
+		res2.shape = self.gridsize
+		resr = np.ascontiguousarray(np.real(res2))
+		resi = np.ascontiguousarray(np.imag(res2))
+		cdef double[::1] resv = resr
+		pawpyc.write_volumetric(filename1, &resv[0], &self.dimv[0], scale)
+		resv = resi
+		pawpyc.write_volumetric(filename2, &resv[0], &self.dimv[0], scale)
+		return res
+
+	def _write_realspace_density(self, filename, double scale):
+		filename = bytes(filename.encode('utf-8'))
+		res = self._get_realspace_density()
+		res2 = res.view()
+		res2.shape = self.gridsize
+		cdef double[::1] resv = res2
+		pawpyc.write_volumetric(filename, &resv[0], &self.dimv[0], scale);
+		return res
+
 """
 if not arr.flags['C_CONTIGUOUS']:
 	arr = np.ascontiguousarray(arr)

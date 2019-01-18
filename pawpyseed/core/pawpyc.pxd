@@ -228,3 +228,53 @@ cdef extern from "reader.h":
     cdef pswf_t* read_wavefunctions_from_str(char* start, double* kpt_weights)
     cdef kpoint_t** read_one_band(int* G_bounds, double* kpt_weights, int* ns, int* nk, int* nb, int BAND_NUM, char* filename)
     
+
+cdef extern from "density.h":
+
+    cdef void realspace_state(double complex* x, int BAND_NUM, int KPOINT_NUM,
+        pswf_t* wf, ppot_t* pps, int* fftg, int* labels, double* coords)
+    cdef void ncl_realspace_state(double complex* x, int BAND_NUM, int KPOINT_NUM,
+        pswf_t* wf, ppot_t* pps, int* fftg, int* labels, double* coords)
+    cdef void ae_chg_density(double* P, pswf_t* wf, ppot_t* pps, int* fftg, int* labels, double* coords)
+    cdef void project_realspace_state(double complex* projs, int BAND_NUM, pswf_t* wf, pswf_t* wf_R, ppot_t* pps,
+        ppot_t* pps_R, int* fftg, int* labels, double* coords, int* labels_R, double* coords_R)
+    cdef void write_realspace_state_ncl_ri(char* filename1, char* filename2,
+        char* filename3, char* filename4,
+        int BAND_NUM, int KPOINT_NUM,
+        pswf_t* wf, ppot_t* pps, int* fftg,
+        int* labels, double* coords)
+    cdef double* realspace_state_ri(int BAND_NUM, int KPOINT_NUM, pswf_t* wf, ppot_t* pps, int* fftg,
+            int* labels, double* coords)
+    cdef void write_volumetric(char* filename, double* x, int* fftg, double scale)
+    cdef double* write_realspace_state_ri_return(char* filename1, char* filename2, int BAND_NUM, int KPOINT_NUM,
+        pswf_t* wf, ppot_t* pps, int* fftg,
+        int* labels, double* coords)
+    cdef double* write_density_return(char* filename, pswf_t* wf, ppot_t* pps,
+        int* fftg, int* labels, double* coords)
+    cdef void write_realspace_state_ri_noreturn(char* filename1, char* filename2, int BAND_NUM, int KPOINT_NUM,
+        pswf_t* wf, ppot_t* pps, int* fftg,
+        int* labels, double* coords)
+    cdef void write_density_noreturn(char* filename, pswf_t* wf, ppot_t* pps,
+        int* fftg, int* labels, double* coords)
+    
+
+cdef extern from "sbt.h":
+
+    ctypedef struct  sbt_descriptor_t:
+            double kmin
+            double kappamin
+            double rmin
+            double rhomin
+            double drho
+            double dt
+            int N
+            double complex** mult_table
+            double* ks
+            double* rs
+            int lmax
+    cdef sbt_descriptor_t* spherical_bessel_transform_setup(double encut, double enbuf, int lmax, int N,
+        double* r, double* ks)
+    cdef double* wave_spherical_bessel_transform(sbt_descriptor_t* d, double* f, int l)
+    cdef double* inverse_wave_spherical_bessel_transform(sbt_descriptor_t* d, double* f, int l)
+    cdef void free_sbt_descriptor(sbt_descriptor_t* d)
+    

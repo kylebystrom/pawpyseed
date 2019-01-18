@@ -1,7 +1,7 @@
 import re
 
 directory = 'pawpyseed/core/'
-files = ['utils', 'projector', 'pseudoprojector', 'reader']
+files = ['utils', 'projector', 'pseudoprojector', 'reader', 'density', 'sbt']
 
 full_file = ''
 full_file += 'from libc.stdio cimport FILE\n'

@@ -52,8 +52,12 @@ from pawpyseed.core.projector import Projector
 
 from ctypes import *
 
+c_double_p = POINTER(c_double)
+c_float_p = POINTER(c_float)
+c_int_p = POINTER(c_int)
+
 MODULE_DIR = os.path.dirname(os.path.abspath(__file__))
-#PAWC = CDLL(os.path.join(MODULE_DIR, "../pawpy.so"))
+PAWC = CDLL(os.path.join(MODULE_DIR, "../pawpy.so"))
 PAWC.fac.restype = c_double
 PAWC.legendre.restype = c_double
 PAWC.Ylmr.restype = c_double
@@ -423,18 +427,13 @@ class TestPy:
 		print("TEST INIT")
 		sys.stdout.flush()
 		wf = Wavefunction.from_directory('.', True)
-		wf.free_all()
 		wf = Wavefunction.from_directory('.', False)
-		wf.free_all()
 		wf = Wavefunction.from_files('CONTCAR', 'WAVECAR',
 			'POTCAR', 'vasprun.xml', 'OUTCAR', True)
-		wf.free_all()
 		wf = Wavefunction.from_files('CONTCAR', 'WAVECAR',
 			'POTCAR', 'vasprun.xml', 'OUTCAR', False)
-		wf.free_all()
 		wf = Wavefunction.from_files('CONTCAR', 'WAVECAR2.gz',
 			'POTCAR', 'vasprun.xml', 'OUTCAR', False)
-		wf.free_all()
 
 	def test_writestate(self):
 		print("TEST WRITE")
@@ -445,14 +444,15 @@ class TestPy:
 		print(PAWC.write_realspace_state_ri_return.argtypes, "LOOK HERE")
 		sys.stdout.flush()
 		state1 = wf.write_state_realspace(b, k, s, fileprefix = "", 
-			dim=np.array([30,30,30]), return_wf = True)
-		wf.free_all()
+			dim=np.array([30,30,30]))
 		wf = Wavefunction.from_directory('.', False)
 		state2 = wf.write_state_realspace(b, k, s, fileprefix = "", 
-			dim=np.array([30,30,30]), return_wf = True)
-		wf.free_all()
+			dim=np.array([30,30,30]))
 		assert_almost_equal(np.linalg.norm(state1-state2),0)
-		assert state1.shape[0] == 2*30*30*30
+		assert state1.shape[0] == 30
+		assert state1.shape[1] == 30
+		assert state1.shape[2] == 30
+		assert state1.dtype == np.complex128
 		filename_base = "%sB%dK%dS%d" % (fileprefix, b, k, s)
 		filename1 = "%s_REAL" % filename_base
 		filename2 = "%s_IMAG" % filename_base
@@ -462,8 +462,12 @@ class TestPy:
 	def test_density(self):
 		print("TEST DENSITY")
 		sys.stdout.flush()
+		print("LOAD WAVEFUNCTION")
+		sys.stdout.flush()
 		wf = Wavefunction.from_directory('.')
-		wf.write_density_realspace(dim=np.array([40,40,40]))
+		print("FINISHED LOAD WAVEFUNCTION")
+		sys.stdout.flush()
+		wf.write_density_realspace(dim=np.array([40,40,40]), scale = wf.structure.lattice.volume)
 		tstchg = Chgcar.from_file("AECCAR2").data['total']# / wf.structure.volume
 		chg = Chgcar.from_file("PYAECCAR").data['total']
 		reldiff = np.sqrt(np.mean(((chg-tstchg)/tstchg)**2))
@@ -473,6 +477,7 @@ class TestPy:
 		assert_almost_equal(reldiff, 0, decimal=3)
 		#os.remove('PYAECCAR')
 
+	@nottest
 	def test_pseudoprojector(self):
 		print("TEST PSEUDO")
 		sys.stdout.flush()
@@ -484,9 +489,8 @@ class TestPy:
 		assert res.shape[0] == basis.nband * basis.nspin * basis.nwk
 		res = pr.defect_band_analysis(4, 10, False)
 		assert len(res.keys()) == 15
-		wf.free_all()
-		basis.free_all()
 
+	@nottest
 	def test_projector(self):
 		print("TEST PROJ")
 		sys.stdout.flush()
@@ -502,13 +506,12 @@ class TestPy:
 			else:
 				assert_almost_equal(v, 0, decimal=8)
 				assert_almost_equal(c, 1, decimal=4)
-		pr.basis.free_all()
-		pr.free_all()
 
 		generator = Projector.setup_multiple_projections('.', ['.', '.'])
 		for wf_dir, wf in generator:
 			wf.defect_band_analysis(4, 10, spinpol=True)
 
+	@nottest
 	def test_projector_gz(self):
 		print("TEST PROJGZ")
 		sys.stdout.flush()
@@ -525,14 +528,12 @@ class TestPy:
 			else:
 				assert_almost_equal(v, 0, decimal=8)
 				assert_almost_equal(c, 1, decimal=4)
-		basis.free_all()
-		wf1.free_all()
-		pr.free_all()
 
 		generator = Projector.setup_multiple_projections('.', ['.', '.'])
 		for wf_dir, wf in generator:
 			wf.defect_band_analysis(4, 10, spinpol=True)
 
+	@nottest
 	def test_offsite(self):
 		Projector = DummyProjector
 		print("TEST OFFSITE")
@@ -553,9 +554,6 @@ class TestPy:
 			else:
 				assert_almost_equal(test_vals[b][0], 0, decimal=4)
 				assert_almost_equal(test_vals[b][1], 1, decimal=2)
-		basis.free_all()
-		wf1.free_all()
-		pr.free_all()
 
 		generator = Projector.setup_multiple_projections('.', ['.', '.'])
 		for wf_dir, wf in generator:

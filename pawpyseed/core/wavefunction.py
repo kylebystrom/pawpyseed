@@ -18,19 +18,7 @@ import json
 
 import sys
 
-class Timer:
-	@staticmethod
-	def setup_time(t):
-		Timer.ALL_SETUP_TIME += t
-	@staticmethod
-	def overlap_time(t):
-		Timer.ALL_OVERLAP_TIME += t
-	@staticmethod
-	def augmentation_time(t):
-		Timer.ALL_AUGMENTATION_TIME += t
-	ALL_SETUP_TIME = 0
-	ALL_OVERLAP_TIME = 0
-	ALL_AUGMENTATION_TIME = 0
+import pawpy
 
 class Pseudopotential:
 	"""
@@ -157,7 +145,7 @@ class CoreRegion:
 			self.pps[potsingle.element] = Pseudopotential(potsingle.data[:-15], potsingle.rmax)
 
 
-class Wavefunction:
+class Wavefunction(pawpy.CWavefunction):
 	"""
 	Class for storing and manipulating all electron wave functions in the PAW
 	formalism.
@@ -174,7 +162,6 @@ class Wavefunction:
 		encut (int or float): VASP calculation plane-wave energy cutoff
 		nums (list of int, length nsites): Element labels for the structure
 		coords (list of float, length 3*nsites): Flattened list of coordinates for the structure
-		projector_owner (bool): Whether a list of projector function/partial wave
 			data has been initialized for this structure
 		projector_list (pointer): List of projector function/partial wave data
 			for this structure
@@ -183,11 +170,12 @@ class Wavefunction:
 			has been freed.
 	"""
 
-	def __init__(self, struct, pwf, cr, outcar, setup_projectors=False):
+	def __init__(self, struct, pwf, vr, cr, outcar, setup_projectors=False):
 		"""
 		Arguments:
 			struct (pymatgen.core.Structure): structure that the wavefunction describes
-			pwf (PseudoWavefunction): Pseudowavefunction component
+			pwf (str): path to WAVECAR
+			vr (str): path to vasprun.xml
 			cr (CoreRegion): Contains the pseudopotentials, with projectors and
 				partials waves, for the structure
 			outcar (pymatgen.io.vasp.outputs.Outcar): Outcar object for reading ngf
@@ -198,7 +186,8 @@ class Wavefunction:
 			Wavefunction object
 		"""
 
-		if pwf.ncl:
+		super(Wavefunction, self).__init__(pwf, vr)
+		if self.ncl:
 			raise PAWpyError("Pseudowavefunction is noncollinear! Call NCLWavefunction(...) instead")
 		self.structure = struct
 		self.pwf = pwf
@@ -210,14 +199,6 @@ class Wavefunction:
 			#assume outcar is actually ngf, will fix later
 			self.dim = outcar
 			self.dim = np.array(self.dim).astype(np.int32)
-		self.projector_owner = False
-		self.projector_list = None
-		self.nums = None
-		self.coords = None
-		self.nband = PAWC.get_nband(c_void_p(pwf.wf_ptr))
-		self.nwk = PAWC.get_nwk(c_void_p(pwf.wf_ptr))
-		self.nspin = PAWC.get_nspin(c_void_p(pwf.wf_ptr))
-		self.encut = PAWC.get_encut(c_void_p(pwf.wf_ptr))
 		if setup_projectors:
 			self.check_c_projectors()
 		self.num_proj_els = None
@@ -240,8 +221,7 @@ class Wavefunction:
 			Wavefunction object
 		"""
 		return Wavefunction(Poscar.from_file(struct).structure,
-			PseudoWavefunction(pwf, vr),
-			CoreRegion(Potcar.from_file(cr)),
+			pwf, vr, CoreRegion(Potcar.from_file(cr)),
 			Outcar(outcar), setup_projectors)
 
 	@staticmethod
@@ -304,79 +284,15 @@ class Wavefunction:
 
 		return wf
 
-	def get_c_projectors_from_pps(self, pps):
+	def _make_c_projectors(self):
 		"""
-		Returns a point to a list of ppot_t objects in C,
-		to be used for high performance parts of the code
-
-		Args:
-			pps (dict of Pseudopotential objects): keys are integers,
-				values of Pseudopotential objects
-
-		Returns:
-			c_void_p object pointing to ppot_t list with each Pseudopotential,
-			ordered in the list by their numerical keys
-		"""
-
-		start = time.monotonic()
-		clabels = np.array([], np.int32)
-		ls = np.array([], np.int32)
-		projectors = np.array([], np.float64)
-		aewaves = np.array([], np.float64)
-		pswaves = np.array([], np.float64)
-		wgrids = np.array([], np.float64)
-		augs = np.array([], np.float64)
-		rmaxs = np.array([], np.float64)
-		num_els = 0
-
-		for num in sorted(pps.keys()):
-			pp = pps[num]
-			clabels = np.append(clabels, [num, len(pp.ls), pp.ndata, len(pp.grid)])
-			rmaxs = np.append(rmaxs, pp.rmax)
-			ls = np.append(ls, pp.ls)
-			wgrids = np.append(wgrids, pp.grid)
-			augs = np.append(augs, pp.augs)
-			num_els += 1
-			for i in range(len(pp.ls)):
-				proj = pp.realprojs[i]
-				aepw = pp.aewaves[i]
-				pspw = pp.pswaves[i]
-				projectors = np.append(projectors, proj)
-				aewaves = np.append(aewaves, aepw)
-				pswaves = np.append(pswaves, pspw)
-
-		grid_encut = (np.pi * self.dim / self.structure.lattice.abc)**2 / 0.262
-		print ("GRID ENCUT", grid_encut)
-		projector_list = cfunc_call(PAWC.get_projector_list, None,
-							num_els, clabels, ls, wgrids,
-							projectors, aewaves, pswaves,
-							rmaxs, max(grid_encut))
-		end = time.monotonic()
-		print('--------------\nran get_projector_list in %f seconds\n---------------' % (end-start))
-		return projector_list
-			
-
-	def make_c_projectors(self):
-		"""
-		Uses the CoreRegion objects in self and basis (if not None)
+		Uses the CoreRegion objects in self
 		to construct C representations of the projectors and partial waves
 		for a structure. Also assigns numerical labels for each element and
-		returns a list of indices and positions which can be easily converted
-		to C lists for projection functions.
-
-		Arguments:
-			basis (None or Wavefunction): an additional structure from which
-				to include pseudopotentials. E.g. can be useful if a basis contains
-				some different elements than self.
-		Returns:
-			projector_list (C pointer): describes the pseudopotential data in C
-			selfnums (int32 numpy array): numerical element label for each site in
-				the structure
-			selfcoords (float64 numpy array): flattened list of coordinates of each site
-				in self
-			basisnums (if basis != None): same as selfnums, but for basis
-			basiscoords (if basis != None): same as selfcoords, but for basis
+		setups up a list of indices and positions which can be easily converted
+		to C lists for projection routines.
 		"""
+
 		pps = {}
 		labels = {}
 		label = 0
@@ -384,30 +300,28 @@ class Wavefunction:
 			pps[label] = self.cr.pps[e]
 			labels[e] = label
 			label += 1
-		
-		projector_list = self.get_c_projectors_from_pps(pps)
 
-		selfnums = np.array([labels[el(s)] for s in self.structure], dtype=np.int32)
-		selfcoords = np.array([], np.float64)
+		nums = np.array([labels[el(s)] for s in self.structure], dtype=np.int32)
+		coords = np.array([], dtype = np.float64)
 
-		self.num_proj_els = len(pps)
+		self.num_sites = len(self.structure)
+		self.num_elems = len(pps)
 		for s in self.structure:
-			selfcoords = np.append(selfcoords, s.frac_coords)
-		return projector_list, selfnums, selfcoords
+			coords = np.append(coords, s.frac_coords)
+
+		grid_encut = (np.pi * self.dim / self.structure.lattice.abc)**2 / 0.262
+
+		self._c_projector_setup(self.num_elems, self.num_sites, max(grid_encut),
+								nums, coords, self.dim, pps)
 
 	def check_c_projectors(self):
 		"""
 		Check to see if the projector functions have been read in and set up.
 		If not, do so.
 		"""
-		if not self.projector_list:
+		if not self.projector_owner:
 			start = time.monotonic()
-			self.projector_owner = True
-			self.projector_list, self.nums, self.coords = self.make_c_projectors()
-			cfunc_call(PAWC.setup_projections, None,
-					self.pwf.wf_ptr, self.projector_list,
-					self.num_proj_els, len(self.structure), self.dim,
-					self.nums, self.coords)
+			self._make_c_projectors()
 			end = time.monotonic()
 			print('--------------\nran setup_projections in %f seconds\n---------------' % (end-start))
 
@@ -426,11 +340,9 @@ class Wavefunction:
 		"""
 
 		self.check_c_projectors()
-		if type(dim) == type(None):
-			dim = self.dim
-		return cfunc_call(PAWC.realspace_state_ri, 2*dim[0]*dim[1]*dim[2], b, k+s*self.nwk,
-			self.pwf.wf_ptr, self.projector_list,
-			dim, self.nums, self.coords)
+		if dim != None:
+			self.update_dimv(np.array(dim))
+		return self._get_realspace_state(b, k, s)
 
 	def _convert_to_vasp_volumetric(self, filename, dim):
 		
@@ -460,7 +372,7 @@ class Wavefunction:
 		f.write(lines + dimstr + nums)
 		f.close()
 
-	def write_state_realspace(self, b, k, s, fileprefix = "", dim=None, return_wf = False):
+	def write_state_realspace(self, b, k, s, fileprefix = "", dim=None, scale = 1):
 		"""
 		Writes the real and imaginary parts of a given band to two files,
 		prefixed by fileprefix
@@ -478,35 +390,26 @@ class Wavefunction:
 				imaginary part
 			The wavefunction is written with z the slow index.
 		"""
-		res = None
-		print("PARAMETERS", self.nums, self.coords, dim)
-		sys.stdout.flush()
 		self.check_c_projectors()
-		if type(dim) == type(None):
-			dim = self.dim
+		if dim is not None:
+			self.update_dimv(np.array(dim))
 		filename_base = "%sB%dK%dS%d" % (fileprefix, b, k, s)
 		filename1 = "%s_REAL" % filename_base
 		filename2 = "%s_IMAG" % filename_base
-		print("PARAMETERS", self.nums, self.coords, dim)
-		sys.stdout.flush()
-		if return_wf:
-			res = cfunc_call(PAWC.write_realspace_state_ri_return, 2*dim[0]*dim[1]*dim[2],
-				filename1, filename2,
-				b, k+s*self.nwk,
-				self.pwf.wf_ptr, self.projector_list,
-				dim, self.nums, self.coords)
-		else:
-			cfunc_call(PAWC.write_realspace_state_ri_noreturn, None, filename1, filename2,
-				b, k+s*self.nwk,
-				self.pwf.wf_ptr, self.projector_list,
-				dim, self.nums, self.coords)
+		res = self._write_realspace_state(filename1, filename2, scale, b, k, s)
 		self._convert_to_vasp_volumetric(filename1, dim)
 		self._convert_to_vasp_volumetric(filename2, dim)
 		return res
 
-	def write_density_realspace(self, filename = "PYAECCAR", dim=None, return_wf = False):
+	def get_realspace_density(self, dim = None):
+		self.check_c_projectors()
+		if dim is not None:
+			self.update_dimv(np.array(dim))
+		return self._get_realspace_density()
+
+	def write_density_realspace(self, filename = "PYAECCAR", dim=None, scale = 1):
 		"""
-		Writes the AE charge density to a file. Returns it if desired.
+		Writes the AE charge density to a file and returns it.
 
 		Args:
 			b (int): band number
@@ -521,17 +424,10 @@ class Wavefunction:
 			The charge density is written with z the slow index.
 		"""
 
-		res = None
 		self.check_c_projectors()
-		if type(dim) == type(None):
-			dim = self.dim
-		if return_wf:
-			res = cfunc_call(PAWC.write_density_return, dim[0]*dim[1]*dim[2], filename,
-				self.pwf.wf_ptr, self.projector_list, dim, self.nums, self.coords)
-		else:
-			cfunc_call(PAWC.write_density_noreturn, None, filename,
-				self.pwf.wf_ptr, self.projector_list, dim, self.nums, self.coords)
-			res = None
+		if dim is not None:
+			self.update_dimv(np.array(dim))
+		res = self._write_realspace_density(filename, scale)
 		self._convert_to_vasp_volumetric(filename, dim)
 		return res
 
@@ -660,23 +556,3 @@ class Wavefunction:
 			if not match:
 				raise PAWpyError("Could not find kpoint mapping to %s" % str(nkpt))
 		return orig_kptnums, op_nums, symmops, trs
-
-	@property
-	def kpts(self):
-		return self.pwf.kpts
-
-	@property
-	def kws(self):
-		return self.pwf.kws
-
-	def free_all(self):
-		"""
-		Frees all of the C structures associated with the Wavefunction object.
-		After being called, this object is not usable.
-		"""
-		if not self.freed:
-			PAWC.free_pswf(c_void_p(self.pwf.wf_ptr))
-			if self.projector_owner:
-				PAWC.free_ppot_list(c_void_p(self.projector_list), len(self.cr.pps))
-			self.freed = True
-

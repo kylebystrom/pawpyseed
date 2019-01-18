@@ -20,6 +20,10 @@ void fft3d(double complex* x, int* G_bounds, double* lattice,
 	MKL_LONG length[3] = {fftg[0], fftg[1], fftg[2]};
 
 	//double test_total = 0;
+	int gridsize = fftg[0] * fftg[1] * fftg[2];
+	for (int w = 0; w < gridsize; w++) {
+		x[w] = 0;
+	}
 	for (int w = 0; w < num_waves; w++) {
 		int g1 = Gs[3*w]-G_bounds[0], g2 = Gs[3*w+1]-G_bounds[2], g3 = Gs[3*w+2]-G_bounds[4];
 		x[g1*fftg[1]*fftg[2] + g2*fftg[2] + g3] = Cs[w];

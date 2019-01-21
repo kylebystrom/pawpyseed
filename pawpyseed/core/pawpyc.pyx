@@ -304,15 +304,33 @@ cdef class CWavefunction(PseudoWavefunction):
 		pawpyc.write_volumetric(filename, &resv[0], &self.dimv[0], scale);
 		return res
 
-	def _desymmetrized_pwf(structure, allkpts = None, weights = None):
+	def _desymmetrized_pwf(self, structure, allkpts = None, weights = None):
 		return PWFPointer.from_pointer_and_kpts(<pawpyc.pswf_t*> self.wf_ptr, structure,
 							self.kpts, allkpts, weights)
+
+	def _get_occs(self):
+		nk = self.nwk * self.nspin
+		res = np.zeros(self.nband * nk, dtype=np.float64, order='C')
+		for k in range(nk):
+			for b in range(self.nband):
+				res[b * nk + k] = self.wf_ptr.kpts[k].bands[b].occ
+		return res
+
+	def _get_energy_list(self, bands):
+
+		energy_list = {}
+		for b in bands:
+			energy_list[b] = []
+			for k in range(self.nwk):
+				for s in range(self.nspin):
+					energy_list[b].append([pawpyc.get_energy(self.wf_ptr, b, k, s),\
+										pawpyc.get_occ(self.wf_ptr, b, k, s)])
 
 
 cdef class CProjector:
 
-	cdef readonly CWavefunction wf
-	cdef readonly CWavefunction basis
+	cdef public CWavefunction wf
+	cdef public CWavefunction basis
 
 	cdef int[::1] M_R
 	cdef int[::1] M_S
@@ -328,34 +346,50 @@ cdef class CProjector:
 	cdef int num_N_RS_R
 	cdef int num_N_RS_S
 
-	def __init__(self, basis, wf):
+	def __init__(self, wf, basis):
 		self.wf = wf
 		self.basis = basis
 
 	def _setup_overlap(self, site_cat):
-		M_R, M_S, N_R, N_S, N_RS_R, N_RS_S = site_cat
-		self.M_R = np.array(M_R, dtype=np.int32, order = 'C')
-		self.M_S = np.array(M_S, dtype=np.int32, order = 'C')
-		self.N_R = np.array(N_R, dtype=np.int32, order = 'C')
-		self.N_S = np.array(N_S, dtype=np.int32, order = 'C')
-		self.N_RS_R = np.array(N_RS_R, dtype=np.int32, order = 'C')
-		self.N_RS_S = np.array(N_RS_S, dtype=np.int32, order = 'C')
+		self.M_R = np.array(site_cat[0], dtype=np.int32, order = 'C')
+		self.M_S = np.array(site_cat[1], dtype=np.int32, order = 'C')
+		self.N_R = np.array(site_cat[2], dtype=np.int32, order = 'C')
+		self.N_S = np.array(site_cat[3], dtype=np.int32, order = 'C')
+		self.N_RS_R = np.array(site_cat[4], dtype=np.int32, order = 'C')
+		self.N_RS_S = np.array(site_cat[5], dtype=np.int32, order = 'C')
 
-		self.num_M_R, self.num_M_S = len(M_R), len(M_S)
-		self.num_N_R, self.num_N_S = len(N_R), len(N_S)
-		self.num_N_RS_R, self.num_N_RS_S = len(N_RS_R), len(N_RS_S)
+		self.num_M_R, self.num_M_S = len(site_cat[0]), len(site_cat[1])
+		self.num_N_R, self.num_N_S = len(site_cat[2]), len(site_cat[3])
+		self.num_N_RS_R, self.num_N_RS_S = len(site_cat[4]), len(site_cat[5])
+
+		cdef int* M_R = NULL if self.num_M_R == 0 else &self.M_R[0]
+		cdef int* M_S = NULL if self.num_M_S == 0 else &self.M_S[0]
+		cdef int* N_R = NULL if self.num_N_R == 0 else &self.N_R[0]
+		cdef int* N_S = NULL if self.num_N_S == 0 else &self.N_S[0]
+		cdef int* N_RS_R = NULL if self.num_N_RS_R == 0 else &self.N_RS_R[0]
+		cdef int* N_RS_S = NULL if self.num_N_RS_S == 0 else &self.N_RS_S[0]
 		
 		pawpyc.overlap_setup_real(self.basis.wf_ptr, self.wf.wf_ptr,
 			&self.basis.nums[0], &self.wf.nums[0], &self.basis.coords[0], &self.wf.coords[0],
-			&self.N_R[0], &self.N_S[0], &self.N_RS_R[0], &self.N_RS_S[0],
+			N_R, N_S, N_RS_R, N_RS_S,
+			#self.N_R, self.N_S, self.N_RS_R, self.N_RS_S,
 			self.num_N_R, self.num_N_S, self.num_N_RS_R)
 
-	def _augmentation_terms(self, np.ndarray res, band_num):
+	def _add_augmentation_terms(self, np.ndarray res, band_num):
 		# declare res more specifically
 		cdef double complex[::1] resv = res
+
+		cdef int* M_R = NULL if self.num_M_R == 0 else &self.M_R[0]
+		cdef int* M_S = NULL if self.num_M_S == 0 else &self.M_S[0]
+		cdef int* N_R = NULL if self.num_N_R == 0 else &self.N_R[0]
+		cdef int* N_S = NULL if self.num_N_S == 0 else &self.N_S[0]
+		cdef int* N_RS_R = NULL if self.num_N_RS_R == 0 else &self.N_RS_R[0]
+		cdef int* N_RS_S = NULL if self.num_N_RS_S == 0 else &self.N_RS_S[0]
+
 		pawpyc.compensation_terms(&resv[0], band_num, self.wf.wf_ptr, self.basis.wf_ptr,
 			self.num_M_R, self.num_N_R, self.num_N_S, self.num_N_RS_R,
-			&self.M_R[0], &self.M_S[0], &self.N_R[0], &self.N_S[0], &self.N_RS_R[0], &self.N_RS_S[0],
+			M_R, M_S, N_R, N_S, N_RS_R, N_RS_S,
+			#self.M_R, self.M_S, self.N_R, self.N_S, self.N_RS_R, self.N_RS_S,
 			&self.wf.nums[0], &self.wf.coords[0], &self.basis.nums[0], &self.basis.coords[0],
 			&self.wf.dimv[0])
 

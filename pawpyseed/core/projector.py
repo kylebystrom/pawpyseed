@@ -7,6 +7,7 @@
 
 from pawpyseed.core.wavefunction import *
 import pawpy
+from pawpy import Timer
 import warnings
 
 class Projector(pawpy.CProjector):
@@ -75,14 +76,13 @@ class Projector(pawpy.CProjector):
 		if np.linalg.norm(basis.kws - wf.kws) > 1e-10:
 			raise PAWpyError("k-point weights for projection are not matched.")
 		if wf.structure.lattice != basis.structure.lattice:
-			raise PAWpyError("Need the lattice to be the same for projections and they aren't!")
+			raise PAWpyError("Need the lattice to be the same for projections, and they are not")
 
 		if not pseudo:
 			basis.check_c_projectors()
 			wf.check_c_projectors()
 
-		self.basis = basis
-		self.wf = wf
+		super(Projector, self).__init__(wf, basis)
 
 		if not pseudo:
 			self.setup_overlap()
@@ -171,16 +171,14 @@ class Projector(pawpy.CProjector):
 		if band_num >= self.wf.nband or band_num < 0:
 			raise PAWpyError("Band index out of range (0-indexed)")
 
-		res = self.pseudoprojection(band_num, self.basis)
+		res = self.wf.pseudoprojection(band_num, self.basis)
 		if self.pseudo:
 			return res
-		
 		start = time.monotonic()
-		self._augmentation_terms(res, band_num)
+		self._add_augmentation_terms(res, band_num)
 		end = time.monotonic()
 		Timer.augmentation_time(end-start)
 		#print('---------\nran compensation_terms in %f seconds\n-----------' % (end-start))
-		res += ct
 		return res
 
 	@staticmethod
@@ -279,14 +277,12 @@ class Projector(pawpy.CProjector):
 					pr = Projector(wf, basis, pseudo = pseudo)
 
 				yield [wf_dir, pr]
-				pr.wf.free_all()
 			except Exception as e:
 				if ignore_errors:
 					errcount += 1
 				else:
 					raise PAWpyError('Unable to setup wavefunction in directory %s' % wf_dir\
 										+'\nGot the following error:\n'+str(e))
-		basis.free_all()
 		if not pr:
 			raise PAWpyError("Could not generate any projector setups")
 		print("Number of errors:", errcount)
@@ -312,7 +308,7 @@ class Projector(pawpy.CProjector):
 		nband = basis.nband
 		nwk = basis.nwk
 		nspin = basis.nspin
-		occs = cdouble_to_numpy(PAWC.get_occs(c_void_p(basis.pwf.wf_ptr)), nband*nwk*nspin)
+		occs = self.wf._get_occs()
 
 		res = self.single_band_projection(band_num)
 
@@ -323,16 +319,16 @@ class Projector(pawpy.CProjector):
 					for k in range(nwk):
 						i = b*nspin*nwk + s*nwk + k
 						if occs[i] > 0.5:
-							v[s] += np.absolute(res[i]) ** 2 * self.pwf.kws[i%nwk]
+							v[s] += np.absolute(res[i]) ** 2 * self.wf.kws[i%nwk]
 						else:
-							c[s] += np.absolute(res[i]) ** 2 * self.pwf.kws[i%nwk]
+							c[s] += np.absolute(res[i]) ** 2 * self.wf.kws[i%nwk]
 		else:
 			c, v = 0, 0
 			for i in range(nband*nwk*nspin):
 				if occs[i] > 0.5:
-					v += np.absolute(res[i]) ** 2 * self.pwf.kws[i%nwk] / nspin
+					v += np.absolute(res[i]) ** 2 * self.wf.kws[i%nwk] / nspin
 				else:
-					c += np.absolute(res[i]) ** 2 * self.pwf.kws[i%nwk] / nspin
+					c += np.absolute(res[i]) ** 2 * self.wf.kws[i%nwk] / nspin
 		if self.pseudo:
 			t = v+c
 			v /= t
@@ -376,7 +372,7 @@ class Projector(pawpy.CProjector):
 		nband = basis.nband
 		nwk = basis.nwk
 		nspin = basis.nspin
-		occs = cdouble_to_numpy(PAWC.get_occs(c_void_p(self.pwf.wf_ptr)), self.nband*self.nwk*self.nspin)
+		occs = self.wf._get_occs()
 		
 		if analyze_all:
 			totest = [i for i in range(nband)]
@@ -385,28 +381,22 @@ class Projector(pawpy.CProjector):
 		else:
 			vbm = 0
 			print(occs)
-			for i in range(self.nband):
-				if occs[i*self.nwk*self.nspin] > 0.5:
+			for i in range(self.wf.nband):
+				if occs[i*self.wf.nwk*self.wf.nspin] > 0.5:
 					vbm = i
 			if vbmband != None:
 				vbm = vbmband
-			min_band, max_band = max(vbm - num_below_ef, 0), min(vbm + num_above_ef, self.nband - 1)
+			min_band, max_band = max(vbm - num_below_ef, 0), min(vbm + num_above_ef, self.wf.nband - 1)
 			totest = [i for i in range(min_band,max_band+1)]
 
 		results = {}
-		energy_list = {}
 		for b in totest:
 			results[b] = self.proportion_conduction(b, spinpol = spinpol)
 
 		if return_energies:
-			for b in totest:
-				energy_list[b] = []
-				for k in range(self.nwk):
-					for s in range(self.nspin):
-						energy_list[b].append([cfunc_call(PAWC.get_energy, None, self.pwf.wf_ptr, b, k, s),\
-											occs[b*self.nwk*self.nspin + s*self.nwk + k]])
-			return results, energy_list
-		return results
+			return results, self.wf._get_energy_list(totest)
+		else:
+			return results
 
 	def realspace_projection(self, band_num, dim = None):
 		return self._realspace_projection(band_num)

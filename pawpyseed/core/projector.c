@@ -618,7 +618,7 @@ void compensation_terms(double complex* overlap, int BAND_NUM, pswf_t* wf_S, psw
 				}
 			}
 		}
-		overlap[w] = temp;
+		overlap[w] += temp;
 		//overlap[2*w] = creal(temp);
 		//overlap[2*w+1]= cimag(temp);
 		//printf("temp 1 %lf %lf\n", creal(temp), cimag(temp));
@@ -673,5 +673,4 @@ void compensation_terms(double complex* overlap, int BAND_NUM, pswf_t* wf_S, psw
 	}
 
 	mkl_free_buffers();
-	return overlap;
 }

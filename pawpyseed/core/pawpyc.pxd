@@ -137,6 +137,7 @@ cdef extern from "utils.h":
     cdef int is_ncl(pswf_t* wf)
     cdef double get_encut(pswf_t* wf)
     cdef double get_energy(pswf_t* wf, int band, int kpt, int spin)
+    cdef double get_occ(pswf_t* wf, int band, int kpt, int spin)
     cdef void set_num_sites(pswf_t* wf, int nsites)
     cdef double legendre(int l, int m, double x)
     cdef void legendre_coeff(double* ptr, int l, int m)

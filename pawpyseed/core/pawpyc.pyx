@@ -10,6 +10,9 @@ from monty.io import zopen
 import numpy as np
 cimport numpy as np
 import time
+import sys
+from libc.stdint cimport uintptr_t
+from pawpyseed.core.symmetry import *
 
 class Timer:
 	@staticmethod
@@ -32,21 +35,80 @@ def el(site):
 	"""
 	return site.specie.symbol
 
-cdef class Pointer:
+OPSIZE = 9
 
-	cdef void* ptr
+def make_c_ops(op_nums, symmops):
+	ops = np.zeros(OPSIZE*len(op_nums), dtype = np.float64)
+	for i in range(len(op_nums)):
+		ops[OPSIZE*i:OPSIZE*(i+1)] = symmops[op_nums[i]].rotation_matrix.flatten()
+	drs = np.zeros(3*len(op_nums), dtype = np.float64)
+	for i in range(len(op_nums)):
+		drs[3*i:3*(i+1)] = symmops[op_nums[i]].translation_vector
+	return ops, drs
 
-	cdef set_pointer(self, void* ptr):
-		self.ptr = ptr
+cdef class PWFPointer:
+
+	cdef pawpyc.pswf_t* ptr
+	cdef public np.ndarray kpts
+	cdef public np.ndarray weights
+	cdef public np.ndarray band_props
+
+	def __init__(self, filename, vr):
+		filename = str(filename)
+		if type(vr) == str:
+			vr = Vasprun(vr) 
+		self.weights = np.array(vr.actual_kpoints_weights, dtype=np.float64)
+		self.kpts = np.array(vr.actual_kpoints, dtype=np.float64)
+		self.band_props = np.array(vr.eigenvalue_band_properties)
+		cdef double[::1] kws = self.weights
+		if '.gz' in filename or '.bz2' in filename:
+			f = zopen(filename, 'rb')
+			contents = f.read()
+			f.close()
+			self.ptr = pawpyc.read_wavefunctions_from_str(
+				contents, &kws[0])
+		else:
+			self.ptr = pawpyc.read_wavefunctions(filename.encode('utf-8'), &kws[0])
 
 	@staticmethod
-	cdef from_pointer(void* ptr):
-		self = Pointer(0)
-		self.set_pointer(ptr)
-		return self
+	cdef PWFPointer from_pointer_and_kpts(pawpyc.pswf_t* ptr,
+		structure, kpts, allkpts = None, weights = None):
 
-	def __dealloc__(self):
-		free(self.ptr)
+		return_kpts_and_weights = False
+		if (not allkpts) or (not weights):
+			return_kpts_and_weights = True
+			allkpts, orig_kptnums, op_nums, symmops, trs = get_nosym_kpoints(kpts, structure)
+			weights = np.ones(allkpts.shape[0], dtype=np.float64)
+			# need to change this if spin orbit coupling is added in later
+			for i in range(allkpts.shape[0]):
+				if np.linalg.norm(allkpts[i]) < 1e-10:
+					weights[i] *= 0.5
+			weights /= np.sum(weights)
+		else:
+			orig_kptnums, op_nums, symmops, trs = get_kpt_mapping(allkpts, kpts, structure)
+
+		ops, drs = make_c_ops(op_nums, symmops)
+
+		kpts = np.array(allkpts, np.float64, order='C', copy=False)
+		weights = np.array(weights, np.float64, order='C', copy=False)
+		cdef double[::1] weights_v = kws
+		cdef int[::1] orig_kptnums_v = np.array(orig_kptnums, np.int32, order='C', copy=False)
+		cdef int[::1] op_nums_v = np.array(op_nums, np.int32, order='C', copy=False)
+		cdef double[::1] ops_v = np.array(ops, np.float64, order='C', copy=False)
+		cdef double[::1] drs_v = np.array(drs, np.float64, order='C', copy=False)
+		cdef int[::1] trs_v = np.array(trs, np.int32, order='C', copy=False)
+
+		cdef pawpyc.pswf_t* new_ptr = pawpyc.expand_symm_wf(ptr, orig_kptnums.shape[0],
+				&orig_kptnums_v[0], &ops_v[0], &drs_v[0], &weights_v[0], &trs_v[0])
+
+		cdef PWFPointer pwfp = PWFPointer.__new__()
+		pwfp.ptr = new_ptr
+		pwfp.kpts = kpts
+		pwfp.weights = weights
+		if return_kpts_and_weights:
+			return pwfp, allkpts, weights
+		else:
+			return pwfp
 
 
 cdef class PseudoWavefunction:
@@ -76,26 +138,14 @@ cdef class PseudoWavefunction:
 	cdef readonly int ncl
 	cdef readonly np.ndarray kws
 	cdef readonly np.ndarray kpts
-	cdef readonly np.ndarray band_props
 
-	def __init__(self, filename="WAVECAR", vr="vasprun.xml"):
-		if type(vr) == str:
-			vr = Vasprun(vr)
-		weights = vr.actual_kpoints_weights
-		kpts = vr.actual_kpoints
-		self.kws = np.array(weights)
-		self.kpts = np.array(kpts)
-		cdef double[::1] kws = self.kws
-		if '.gz' in filename or '.bz2' in filename:
-			f = zopen(filename, 'rb')
-			contents = f.read()
-			f.close() 
-			self.wf_ptr = pawpyc.read_wavefunctions_from_str(
-				contents, &kws[0])
-		else:
-			self.wf_ptr = pawpyc.read_wavefunctions(filename.encode('utf-8'), &kws[0])
+	def __init__(self, PWFPointer pwf):
+		if pwf.ptr is NULL:
+			raise Exception("NULL PWFPointer ptr!")
+		self.wf_ptr = pwf.ptr
+		self.kpts = pwf.kpts.copy(order='C')
+		self.kws = pwf.weights.copy(order='C')
 		self.ncl = pawpyc.is_ncl(self.wf_ptr) > 0
-		self.band_props = np.array(vr.eigenvalue_band_properties)
 		self.nband = pawpyc.get_nband(self.wf_ptr)
 		self.nwk = pawpyc.get_nwk(self.wf_ptr)
 		self.nspin = pawpyc.get_nspin(self.wf_ptr)
@@ -120,6 +170,7 @@ cdef class PseudoWavefunction:
 		pawpyc.pseudoprojection(&resv[0], basis.wf_ptr, self.wf_ptr, band_num)
 		return res
 
+
 cdef class CWavefunction(PseudoWavefunction):
 
 	cdef int[::1] dimv
@@ -132,9 +183,9 @@ cdef class CWavefunction(PseudoWavefunction):
 	
 	cdef pawpyc.ppot_t* projector_list
 
-	def __init__(self, filename="WAVECAR", vr="vasprun.xml"):
+	def __init__(self, PWFPointer pwf):
 		self.projector_owner = 0
-		super(CWavefunction, self).__init__(filename, vr)
+		super(CWavefunction, self).__init__(pwf)
 
 	def __dealloc__(self):
 		if self.projector_owner:
@@ -253,10 +304,77 @@ cdef class CWavefunction(PseudoWavefunction):
 		pawpyc.write_volumetric(filename, &resv[0], &self.dimv[0], scale);
 		return res
 
-"""
-if not arr.flags['C_CONTIGUOUS']:
-	arr = np.ascontiguousarray(arr)
-"""
+	def _desymmetrized_pwf(structure, allkpts = None, weights = None):
+		return PWFPointer.from_pointer_and_kpts(<pawpyc.pswf_t*> self.wf_ptr, structure,
+							self.kpts, allkpts, weights)
+
+
+cdef class CProjector:
+
+	cdef readonly CWavefunction wf
+	cdef readonly CWavefunction basis
+
+	cdef int[::1] M_R
+	cdef int[::1] M_S
+	cdef int[::1] N_R
+	cdef int[::1] N_S
+	cdef int[::1] N_RS_R
+	cdef int[::1] N_RS_S
+
+	cdef int num_M_R
+	cdef int num_M_S 
+	cdef int num_N_R
+	cdef int num_N_S
+	cdef int num_N_RS_R
+	cdef int num_N_RS_S
+
+	def __init__(self, basis, wf):
+		self.wf = wf
+		self.basis = basis
+
+	def _setup_overlap(self, site_cat):
+		M_R, M_S, N_R, N_S, N_RS_R, N_RS_S = site_cat
+		self.M_R = np.array(M_R, dtype=np.int32, order = 'C')
+		self.M_S = np.array(M_S, dtype=np.int32, order = 'C')
+		self.N_R = np.array(N_R, dtype=np.int32, order = 'C')
+		self.N_S = np.array(N_S, dtype=np.int32, order = 'C')
+		self.N_RS_R = np.array(N_RS_R, dtype=np.int32, order = 'C')
+		self.N_RS_S = np.array(N_RS_S, dtype=np.int32, order = 'C')
+
+		self.num_M_R, self.num_M_S = len(M_R), len(M_S)
+		self.num_N_R, self.num_N_S = len(N_R), len(N_S)
+		self.num_N_RS_R, self.num_N_RS_S = len(N_RS_R), len(N_RS_S)
+		
+		pawpyc.overlap_setup_real(self.basis.wf_ptr, self.wf.wf_ptr,
+			&self.basis.nums[0], &self.wf.nums[0], &self.basis.coords[0], &self.wf.coords[0],
+			&self.N_R[0], &self.N_S[0], &self.N_RS_R[0], &self.N_RS_S[0],
+			self.num_N_R, self.num_N_S, self.num_N_RS_R)
+
+	def _augmentation_terms(self, np.ndarray res, band_num):
+		# declare res more specifically
+		cdef double complex[::1] resv = res
+		pawpyc.compensation_terms(&resv[0], band_num, self.wf.wf_ptr, self.basis.wf_ptr,
+			self.num_M_R, self.num_N_R, self.num_N_S, self.num_N_RS_R,
+			&self.M_R[0], &self.M_S[0], &self.N_R[0], &self.N_S[0], &self.N_RS_R[0], &self.N_RS_S[0],
+			&self.wf.nums[0], &self.wf.coords[0], &self.basis.nums[0], &self.basis.coords[0],
+			&self.wf.dimv[0])
+
+	def _realspace_projection(self, int band_num, np.ndarray dim):
+		res = np.zeros(self.basis.nband * self.basis.nwk * self.basis.nspin,
+			dtype=np.complex128, order='C')
+		cdef double complex[::1] resv = res
+		cdef int[::1] dimv
+		if dim == None:
+			dimv = self.wf.dimv
+		else:
+			dimv = np.array(dim, dtype=np.float64, order='C', copy=False)
+		pawpyc.project_realspace_state(&resv[0], 
+			band_num, self.wf.wf_ptr, self.basis.wf_ptr,
+			self.wf.projector_list, self.basis.projector_list,
+			&dimv[0], &self.wf.nums[0], &self.wf.coords[0],
+			&self.basis.nums[0], &self.basis.coords[0])
+		return res
+
 
 
 def py_compensation_terms(b, wf, basis, M_R, M_S, N_R, N_S, N_RS_R, N_RS_S, dim):

@@ -195,7 +195,7 @@ cdef extern from "projector.h":
     cdef void overlap_setup_real(pswf_t* wf_R, pswf_t* wf_S,
         int* labels_R, int* labels_S, double* coords_R, double* coords_S,
         int* N_R, int* N_S, int* N_RS_R, int* N_RS_S, int num_N_R, int num_N_S, int num_N_RS)
-    cdef double* compensation_terms(int BAND_NUM, pswf_t* wf_proj, pswf_t* wf_ref,
+    cdef void compensation_terms(double complex* overlap, int BAND_NUM, pswf_t* wf_S, pswf_t* wf_R,
         int num_M, int num_N_R, int num_N_S, int num_N_RS,
         int* M_R, int* M_S, int* N_R, int* N_S, int* N_RS_R, int* N_RS_S,
         int* proj_labels, double* proj_coords, int* ref_labels, double* ref_coords,

@@ -7,11 +7,10 @@
 from pymatgen.io.vasp.inputs import Potcar, Poscar
 from pymatgen.io.vasp.outputs import Vasprun, Outcar
 from pymatgen.core.structure import Structure
-from pymatgen.symmetry.analyzer import SpacegroupAnalyzer
-from pymatgen.core.operations import SymmOp
 import numpy as np
 from ctypes import *
 from pawpyseed.core.utils import *
+import pawpyseed.core.symmetry as pawpy_symm
 import os, time
 import numpy as np
 import json
@@ -165,17 +164,13 @@ class Wavefunction(pawpy.CWavefunction):
 			data has been initialized for this structure
 		projector_list (pointer): List of projector function/partial wave data
 			for this structure
-		num_proj_els (int): Number of elements in the structure
-		freed (bool): Whether the C data associated with this Wavefunction
-			has been freed.
 	"""
 
-	def __init__(self, struct, pwf, vr, cr, outcar, setup_projectors=False):
+	def __init__(self, struct, pwf, cr, outcar, setup_projectors=False):
 		"""
 		Arguments:
 			struct (pymatgen.core.Structure): structure that the wavefunction describes
-			pwf (str): path to WAVECAR
-			vr (str): path to vasprun.xml
+			pwf (pawpy.PWFPointer): holder class for pswf_t and k-points/k-point weights
 			cr (CoreRegion): Contains the pseudopotentials, with projectors and
 				partials waves, for the structure
 			outcar (pymatgen.io.vasp.outputs.Outcar): Outcar object for reading ngf
@@ -185,12 +180,11 @@ class Wavefunction(pawpy.CWavefunction):
 		Returns:
 			Wavefunction object
 		"""
-
-		super(Wavefunction, self).__init__(pwf, vr)
+		self.band_props = pwf.band_props.copy(order = 'C')
+		super(Wavefunction, self).__init__(pwf)
 		if self.ncl:
 			raise PAWpyError("Pseudowavefunction is noncollinear! Call NCLWavefunction(...) instead")
 		self.structure = struct
-		self.pwf = pwf
 		self.cr = cr
 		if type(outcar) == Outcar:
 			self.dim = outcar.ngf
@@ -201,11 +195,19 @@ class Wavefunction(pawpy.CWavefunction):
 			self.dim = np.array(self.dim).astype(np.int32)
 		if setup_projectors:
 			self.check_c_projectors()
-		self.num_proj_els = None
-		self.freed = False
+
+	def desymmetrized_copy(self, allkpts = None, weights = None):
+		if (not allkpts) or (not weights):
+			pwf, allkpts, weights = self._desymmetrized_pwf(self.structure)
+			new_wf = Wavefunction(self.structure, pwf, self.cr, self.dim)
+			return new_wf, allkpts, weights
+		else:
+			pwf = self._desymmetrized_pwf(self.structure, allkpts, weights)
+			new_wf = Wavefunction(self.structure, pwf, self.cr, self.dim)
+			return new_wf
 
 	@staticmethod
-	def from_files(struct="CONTCAR", pwf="WAVECAR", cr="POTCAR",
+	def from_files(struct="CONTCAR", wavecar="WAVECAR", cr="POTCAR",
 		vr="vasprun.xml", outcar="OUTCAR", setup_projectors=False):
 		"""
 		Construct a Wavefunction object from file paths.
@@ -220,8 +222,9 @@ class Wavefunction(pawpy.CWavefunction):
 		Returns:
 			Wavefunction object
 		"""
+		pwf = pawpy.PWFPointer(wavecar, vr)
 		return Wavefunction(Poscar.from_file(struct).structure,
-			pwf, vr, CoreRegion(Potcar.from_file(cr)),
+			pwf, CoreRegion(Potcar.from_file(cr)),
 			Outcar(outcar), setup_projectors)
 
 	@staticmethod
@@ -431,128 +434,13 @@ class Wavefunction(pawpy.CWavefunction):
 		self._convert_to_vasp_volumetric(filename, dim)
 		return res
 
-	def get_symmops(self, symprec):
-		sga = SpacegroupAnalyzer(self.structure, symprec)
-		symmops = sga.get_symmetry_operations(cartesian = True)
-		lattice = self.structure.lattice.matrix
-		invlattice = self.structure.lattice.inv_matrix
-		newops = []
-		for op in symmops:
-			newrot = np.dot(lattice, op.rotation_matrix)
-			newrot = np.dot(newrot, invlattice)
-			newtrans = np.dot(op.translation_vector, invlattice)
-			newops.append(SymmOp.from_rotation_and_translation(
-				newrot, newtrans))
-		return newops
-
 	def get_nosym_kpoints(self, init_kpts = None, symprec=1e-5,
 		gen_trsym = True, fil_trsym = True):
 
-		kpts = np.array(self.pwf.kpts)
-		allkpts = [] if init_kpts == None else [kpt for kpt in init_kpts]
-		orig_kptnums = []
-		op_nums = []
-		symmops = self.get_symmops(symprec)
-		trs = []
-		for i, op in enumerate(symmops):
-			for k, kpt in enumerate(kpts):
-				newkpt = np.dot(op.rotation_matrix, kpt)
-				newkpt -= np.around(newkpt)
-				newkpt[ abs(newkpt + 0.5) < 1e-5 ] = 0.5
-				#if ((newkpt > 0.5+1e-6) + (newkpt < -0.5+1e-6)).any():
-				#	continue
-				if fil_trsym:
-					if newkpt[2] < -1e-6 or \
-						(abs(newkpt[2]) < 1e-6 and newkpt[1] < -1e-6) or \
-						(abs(newkpt[2]) < 1e-6 and abs(newkpt[1]) < 1e-6 and newkpt[0] < -1e-6):
-						continue
-				unique = True
-				for nkpt in allkpts:
-					diff = (newkpt - nkpt) % 1
-					oppdiff = 1 - diff
-					tst = (np.abs(diff) < 1e-4) + (np.abs(oppdiff) < 1e-4)
-					if ( tst.all() ):
-						unique = False
-						break
-				if unique:
-					allkpts.append(newkpt)
-					orig_kptnums.append(k)
-					op_nums.append(i)
-					trs.append(0)
-		if gen_trsym:
-			for i, op in enumerate(symmops):
-				for k, kpt in enumerate(kpts):
-					newkpt = np.dot(op.rotation_matrix, kpt) * -1
-					newkpt -= np.around(newkpt)
-					newkpt[ abs(newkpt + 0.5) < 1e-5 ] = 0.5
-					#if ((newkpt > 0.5+1e-6) + (newkpt < -0.5+1e-6)).any():
-					#	continue
-					if fil_trsym:
-						if newkpt[2] < -1e-10 or \
-							(abs(newkpt[2]) < 1e-6 and newkpt[1] < -1e-6) or \
-							(abs(newkpt[2]) < 1e-6 and abs(newkpt[1]) < 1e-6 and newkpt[0] < -1e-6):
-							continue
-					unique = True
-					for nkpt in allkpts:
-						diff = (newkpt - nkpt) % 1
-						oppdiff = 1 - diff
-						tst = (np.abs(diff) < 1e-4) + (np.abs(oppdiff) < 1e-4)
-						if ( tst.all() ):
-							unique = False
-							break
-					if unique:
-						allkpts.append(newkpt)
-						orig_kptnums.append(k)
-						op_nums.append(i)
-						trs.append(1)
-		self.nosym_kpts = allkpts
-		self.orig_kptnums = orig_kptnums
-		self.op_nums = op_nums
-		self.symmops = symmops
-		return np.array(allkpts), orig_kptnums, op_nums, symmops, trs
+		return pawpy_symm.get_nosym_kpoints(kpts, self.structure, init_kpts,
+										symprec, gen_trsym, fil_trsym)
 
 	def get_kpt_mapping(self, allkpts, symprec=1e-5, gen_trsym = True):
-		symmops = self.get_symmops(symprec)
-		kpts = np.array(self.pwf.kpts)
-		orig_kptnums = []
-		op_nums = []
-		trs = []
-		for nkpt in allkpts:
-			match = False
-			for i, op in enumerate(symmops):
-				for k, kpt in enumerate(kpts):
-					newkpt = np.dot(op.rotation_matrix, kpt)
-					#if ((newkpt > 0.5+1e-6) + (newkpt < -0.5+1e-6)).any():
-					#	continue
-					diff = (newkpt - nkpt) % 1
-					oppdiff = 1 - diff
-					tst = (np.abs(diff) < 1e-4) + (np.abs(oppdiff) < 1e-4)
-					if tst.all():
-						match = True
-						orig_kptnums.append(k)
-						op_nums.append(i)
-						trs.append(0)
-						break
-				if match:
-					break
-			if match:
-				continue
-			for i, op in enumerate(symmops):
-				for k, kpt in enumerate(kpts):
-					newkpt = np.dot(op.rotation_matrix, kpt) * -1
-					#if ((newkpt > 0.5+1e-6) + (newkpt < -0.5+1e-6)).any():
-					#	continue
-					diff = (newkpt - nkpt) % 1
-					oppdiff = 1 - diff
-					tst = (np.abs(diff) < 1e-4) + (np.abs(oppdiff) < 1e-4)
-					if tst.all():
-						match = True
-						orig_kptnums.append(k)
-						op_nums.append(i)
-						trs.append(1)
-						break
-				if match:
-					break
-			if not match:
-				raise PAWpyError("Could not find kpoint mapping to %s" % str(nkpt))
-		return orig_kptnums, op_nums, symmops, trs
+
+		return pawpy_symm.get_kpt_mapping(allkpts, self.kpts, self.structure,
+										symprec, gen_trsym)

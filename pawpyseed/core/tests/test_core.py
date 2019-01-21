@@ -12,7 +12,7 @@ from scipy.special import lpmn, sph_harm
 from nose import SkipTest
 from nose.tools import nottest
 
-COMPILE = True
+COMPILE = False
 
 class PawpyTestError(Exception):
 	"""
@@ -477,7 +477,6 @@ class TestPy:
 		assert_almost_equal(reldiff, 0, decimal=3)
 		#os.remove('PYAECCAR')
 
-	@nottest
 	def test_pseudoprojector(self):
 		print("TEST PSEUDO")
 		sys.stdout.flush()

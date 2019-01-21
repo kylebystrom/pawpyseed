@@ -116,65 +116,11 @@ def numpy_to_cint(arr):
 
 class DummyProjector(Projector):
 
-	def setup_overlap(self):
-		"""
-		DEBUG VERSION OF THE setup_overlap METHOD IN THE
-		Projector CLASS
-		"""
-		basis = self.basis
-		self.check_c_projectors()
-		basis.check_c_projectors()
-		projector_list = self.projector_list
-		basisnums = basis.nums
-		basiscoords = basis.coords
-		selfnums = self.nums
-		selfcoords = self.coords
-		
-		M_R, M_S, N_R, N_S, N_RS = self.make_site_lists()
-		num_N_RS = len(N_RS)
-		if num_N_RS > 0:
-			N_RS_R, N_RS_S = zip(*N_RS)
-		else:
-			N_RS_R, N_RS_S = [], []
-		self.site_cat = [M_R, M_S, N_R, N_S, N_RS_R, N_RS_S]
-		cfunc_call(PAWC.overlap_setup_real, None, basis.pwf.wf_ptr, self.pwf.wf_ptr,
-					basisnums, selfnums, basiscoords, selfcoords,
-					M_R, M_S, M_R, M_S, len(M_R), len(M_R), len(M_R))
+	def make_site_lists(self):
+		M_R, M_S, N_R, N_S, N_RS = super(DummyProjector, self).make_site_lists()
+		return [], [], M_R, M_S, [pair for pair in zip(M_R, M_S)]
 
-	def single_band_projection(self, band_num):
-		"""
-		DEBUG VERSION OF THE single_band_projection METHOD IN THE
-		Projector CLASS
-		"""
-
-		if self.pseudo:
-			return self.pwf.pseudoprojection(band_num, basis.pwf)
-
-		basis = self.basis
-		nband = basis.nband
-		nwk = basis.nwk
-		nspin = basis.nspin
-		res = cfunc_call(PAWC.pseudoprojection, 2*nband*nwk*nspin,
-						basis.pwf.wf_ptr, self.pwf.wf_ptr, band_num)
-		print("datsa", nband, nwk, nspin)
-		sys.stdout.flush()
-		projector_list = self.projector_list
-		basisnums = basis.nums
-		basiscoords = basis.coords
-		selfnums = self.nums
-		selfcoords = self.coords
-
-		M_R, M_S, N_R, N_S, N_RS_R, N_RS_S = self.site_cat
-		
-		ct = cfunc_call(PAWC.compensation_terms, 2*nband*nwk*nspin,
-						band_num, self.pwf.wf_ptr, basis.pwf.wf_ptr,
-						0, len(M_R), len(M_S), len(M_S),
-						np.array([]), np.array([]), M_R, M_S, M_R, M_S,
-						selfnums, selfcoords, basisnums, basiscoords,
-						self.dim)
-		res += ct
-		return res[::2] + 1j * res[1::2]
-
+@nottest
 class TestC:
 
 	def setup(self):
@@ -489,7 +435,6 @@ class TestPy:
 		res = pr.defect_band_analysis(4, 10, False)
 		assert len(res.keys()) == 15
 
-	@nottest
 	def test_projector(self):
 		print("TEST PROJ")
 		sys.stdout.flush()
@@ -510,7 +455,6 @@ class TestPy:
 		for wf_dir, wf in generator:
 			wf.defect_band_analysis(4, 10, spinpol=True)
 
-	@nottest
 	def test_projector_gz(self):
 		print("TEST PROJGZ")
 		sys.stdout.flush()
@@ -532,7 +476,6 @@ class TestPy:
 		for wf_dir, wf in generator:
 			wf.defect_band_analysis(4, 10, spinpol=True)
 
-	@nottest
 	def test_offsite(self):
 		Projector = DummyProjector
 		print("TEST OFFSITE")

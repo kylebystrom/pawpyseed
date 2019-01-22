@@ -3,7 +3,7 @@ from pymatgen.core.operations import SymmOp
 import numpy as np
 
 def get_symmops(structure, symprec):
-	sga = SpacegroupAnalyzer(self.structure, symprec)
+	sga = SpacegroupAnalyzer(structure, symprec)
 	symmops = sga.get_symmetry_operations(cartesian = True)
 	lattice = structure.lattice.matrix
 	invlattice = structure.lattice.inv_matrix

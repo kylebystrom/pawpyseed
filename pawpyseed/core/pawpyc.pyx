@@ -4,8 +4,6 @@ from libc.stdlib cimport malloc, free
 from libc.stdio cimport FILE
 from pymatgen.core.structure import Structure
 from pymatgen.io.vasp.outputs import Vasprun
-#from pawpyseed.core import projector
-#from pawpyseed.core import wavefunction
 from monty.io import zopen
 import numpy as np
 cimport numpy as np
@@ -46,6 +44,8 @@ def make_c_ops(op_nums, symmops):
 		drs[3*i:3*(i+1)] = symmops[op_nums[i]].translation_vector
 	return ops, drs
 
+#cpdef struct PWFPointer:
+
 cdef class PWFPointer:
 
 	cdef pawpyc.pswf_t* ptr
@@ -75,10 +75,10 @@ cdef class PWFPointer:
 		structure, kpts, allkpts = None, weights = None):
 
 		return_kpts_and_weights = False
-		if (not allkpts) or (not weights):
+		if (allkpts is None) or (weights is None):
 			return_kpts_and_weights = True
 			allkpts, orig_kptnums, op_nums, symmops, trs = get_nosym_kpoints(kpts, structure)
-			weights = np.ones(allkpts.shape[0], dtype=np.float64)
+			weights = np.ones(allkpts.shape[0], dtype=np.float64, order='C')
 			# need to change this if spin orbit coupling is added in later
 			for i in range(allkpts.shape[0]):
 				if np.linalg.norm(allkpts[i]) < 1e-10:
@@ -91,14 +91,16 @@ cdef class PWFPointer:
 
 		kpts = np.array(allkpts, np.float64, order='C', copy=False)
 		weights = np.array(weights, np.float64, order='C', copy=False)
-		cdef double[::1] weights_v = kws
+		print(kpts, weights, "hihi")
+		sys.stdout.flush()
+		cdef double[::1] weights_v = weights
 		cdef int[::1] orig_kptnums_v = np.array(orig_kptnums, np.int32, order='C', copy=False)
 		cdef int[::1] op_nums_v = np.array(op_nums, np.int32, order='C', copy=False)
 		cdef double[::1] ops_v = np.array(ops, np.float64, order='C', copy=False)
 		cdef double[::1] drs_v = np.array(drs, np.float64, order='C', copy=False)
 		cdef int[::1] trs_v = np.array(trs, np.int32, order='C', copy=False)
 
-		cdef pawpyc.pswf_t* new_ptr = pawpyc.expand_symm_wf(ptr, orig_kptnums.shape[0],
+		cdef pawpyc.pswf_t* new_ptr = pawpyc.expand_symm_wf(ptr, len(orig_kptnums),
 				&orig_kptnums_v[0], &ops_v[0], &drs_v[0], &weights_v[0], &trs_v[0])
 
 		cdef PWFPointer pwfp = PWFPointer.__new__()

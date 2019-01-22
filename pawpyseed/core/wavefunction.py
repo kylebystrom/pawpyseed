@@ -197,14 +197,9 @@ class Wavefunction(pawpy.CWavefunction):
 			self.check_c_projectors()
 
 	def desymmetrized_copy(self, allkpts = None, weights = None):
-		if (not allkpts) or (not weights):
-			pwf, allkpts, weights = self._desymmetrized_pwf(self.structure)
-			new_wf = Wavefunction(self.structure, pwf, self.cr, self.dim)
-			return new_wf, allkpts, weights
-		else:
-			pwf = self._desymmetrized_pwf(self.structure, allkpts, weights)
-			new_wf = Wavefunction(self.structure, pwf, self.cr, self.dim)
-			return new_wf
+		pwf = self._desymmetrized_pwf(self.structure, self.band_props, allkpts, weights)
+		new_wf = Wavefunction(self.structure, pwf, self.cr, self.dim)
+		return new_wf
 
 	@staticmethod
 	def from_files(struct="CONTCAR", wavecar="WAVECAR", cr="POTCAR",

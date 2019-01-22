@@ -49,30 +49,34 @@ def make_c_ops(op_nums, symmops):
 cdef class PWFPointer:
 
 	cdef pawpyc.pswf_t* ptr
-	cdef public np.ndarray kpts
-	cdef public np.ndarray weights
-	cdef public np.ndarray band_props
+	cdef readonly np.ndarray kpts
+	cdef readonly np.ndarray weights
+	cdef readonly np.ndarray band_props
 
-	def __init__(self, filename, vr):
-		filename = str(filename)
-		if type(vr) == str:
-			vr = Vasprun(vr) 
-		self.weights = np.array(vr.actual_kpoints_weights, dtype=np.float64)
-		self.kpts = np.array(vr.actual_kpoints, dtype=np.float64)
-		self.band_props = np.array(vr.eigenvalue_band_properties)
-		cdef double[::1] kws = self.weights
-		if '.gz' in filename or '.bz2' in filename:
-			f = zopen(filename, 'rb')
-			contents = f.read()
-			f.close()
-			self.ptr = pawpyc.read_wavefunctions_from_str(
-				contents, &kws[0])
+	def __init__(self, filename = None, vr = None):
+		cdef double[::1] kws
+		if filename == None or vr == None:
+			self.ptr = NULL
 		else:
-			self.ptr = pawpyc.read_wavefunctions(filename.encode('utf-8'), &kws[0])
+			filename = str(filename)
+			if type(vr) == str:
+				vr = Vasprun(vr) 
+			self.weights = np.array(vr.actual_kpoints_weights, dtype=np.float64)
+			self.kpts = np.array(vr.actual_kpoints, dtype=np.float64)
+			self.band_props = np.array(vr.eigenvalue_band_properties)
+			kws = self.weights
+			if '.gz' in filename or '.bz2' in filename:
+				f = zopen(filename, 'rb')
+				contents = f.read()
+				f.close()
+				self.ptr = pawpyc.read_wavefunctions_from_str(
+					contents, &kws[0])
+			else:
+				self.ptr = pawpyc.read_wavefunctions(filename.encode('utf-8'), &kws[0])
 
 	@staticmethod
 	cdef PWFPointer from_pointer_and_kpts(pawpyc.pswf_t* ptr,
-		structure, kpts, allkpts = None, weights = None):
+		structure, kpts, band_props, allkpts = None, weights = None):
 
 		return_kpts_and_weights = False
 		if (allkpts is None) or (weights is None):
@@ -103,14 +107,12 @@ cdef class PWFPointer:
 		cdef pawpyc.pswf_t* new_ptr = pawpyc.expand_symm_wf(ptr, len(orig_kptnums),
 				&orig_kptnums_v[0], &ops_v[0], &drs_v[0], &weights_v[0], &trs_v[0])
 
-		cdef PWFPointer pwfp = PWFPointer.__new__()
+		cdef PWFPointer pwfp = PWFPointer()
 		pwfp.ptr = new_ptr
 		pwfp.kpts = kpts
 		pwfp.weights = weights
-		if return_kpts_and_weights:
-			return pwfp, allkpts, weights
-		else:
-			return pwfp
+		pwfp.band_props = np.array(band_props)
+		return pwfp
 
 
 cdef class PseudoWavefunction:
@@ -306,9 +308,9 @@ cdef class CWavefunction(PseudoWavefunction):
 		pawpyc.write_volumetric(filename, &resv[0], &self.dimv[0], scale);
 		return res
 
-	def _desymmetrized_pwf(self, structure, allkpts = None, weights = None):
+	def _desymmetrized_pwf(self, structure, band_props, allkpts = None, weights = None):
 		return PWFPointer.from_pointer_and_kpts(<pawpyc.pswf_t*> self.wf_ptr, structure,
-							self.kpts, allkpts, weights)
+							self.kpts, band_props, allkpts, weights)
 
 	def _get_occs(self):
 		nk = self.nwk * self.nspin

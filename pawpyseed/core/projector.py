@@ -56,8 +56,8 @@ class Projector(pawpy.CProjector):
 			raise PAWpyError("Projection not supported for noncollinear case!")
 
 		if unsym_basis and unsym_wf:
-			basis, allkpts, weights = basis.desymmetrized_copy()
-			wf = wf.desymmetrized_copy(allkpts, weights)
+			basis = basis.desymmetrized_copy()
+			wf = wf.desymmetrized_copy(basis.kpts, basis.weights)
 		elif unsym_wf and not unsym_basis:
 			if basis.kpts.shape[0] < wf.kpts.shape[0]:
 				raise PAWpyError("Basis doesn't have enough kpoints, needs to be desymmetrized!")
@@ -215,7 +215,7 @@ class Projector(pawpy.CProjector):
 				basis = Wavefunction.from_directory(bdir, False)
 
 			if desymmetrize:
-				basis, allkpts, weights = basis.desymmetrized_copy()
+				basis = basis.desymmetrized_copy()
 
 			basis.check_c_projectors()
 			bases.append(basis)
@@ -259,7 +259,7 @@ class Projector(pawpy.CProjector):
 			basis = Wavefunction.from_directory(basis_dir, False)
 		
 		if desymmetrize:
-			basis, allkpts, weights = basis.desymmetrized_copy()
+			basis = basis.desymmetrized_copy()
 
 		errcount = 0
 		pr = None

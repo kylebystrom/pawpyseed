@@ -458,6 +458,9 @@ void setup_projections(pswf_t* wf, ppot_t* pps, int num_elems,
 	real_proj_site_t* sites = projector_values(num_sites, labels, coords,
 		wf->lattice, wf->reclattice, pps, fftg);
 	printf("onto_projector calcs\n");
+#if defined(_OPENMP)
+	omp_set_num_threads(omp_get_max_threads());
+#endif
 	#pragma omp parallel for 
 	for (int w = 0; w < NUM_BANDS * NUM_KPTS; w++) {
 		kpoint_t* kpt = wf->kpts[w % NUM_KPTS];
@@ -496,6 +499,9 @@ void overlap_setup_real(pswf_t* wf_R, pswf_t* wf_S,
 	if (num_N_R > 0) {
 		real_proj_site_t* sites_N_R = smooth_pw_values(num_N_R, N_R, labels_R, coords_R,
 			wf_S->lattice, wf_S->reclattice, wf_R->pps, wf_S->fftg);
+#if defined(_OPENMP)
+		omp_set_num_threads(omp_get_max_threads());
+#endif
 		#pragma omp parallel for
 		for (int w = 0; w < NUM_BANDS * NUM_KPTS; w++) {
 			kpoint_t* kpt_S = wf_S->kpts[w%NUM_KPTS];
@@ -510,6 +516,9 @@ void overlap_setup_real(pswf_t* wf_R, pswf_t* wf_S,
 		real_proj_site_t* sites_N_S = smooth_pw_values(num_N_S, N_S, labels_S, coords_S,
 			wf_R->lattice, wf_R->reclattice, wf_S->pps, wf_R->fftg);
 		NUM_BANDS = wf_R->nband;
+#if defined(_OPENMP)
+		omp_set_num_threads(omp_get_max_threads());
+#endif
 		#pragma omp parallel for
 		for (int w = 0; w < NUM_BANDS * NUM_KPTS; w++) {
 			kpoint_t* kpt_R = wf_R->kpts[w%NUM_KPTS];
@@ -526,6 +535,9 @@ void overlap_setup_real(pswf_t* wf_R, pswf_t* wf_S,
 		dcoords = (double*) malloc(3 * num_N_RS * sizeof(double));
 		CHECK_ALLOCATION(dcoords);
 	}
+#if defined(_OPENMP)
+	omp_set_num_threads(omp_get_max_threads());
+#endif
 	#pragma omp parallel for
 	for (int i = 0; i < num_N_RS; i++) {
 		double R = 0;
@@ -586,6 +598,9 @@ void compensation_terms(double complex* overlap, int BAND_NUM, pswf_t* wf_S, psw
 	double complex** N_RS_overlaps = wf_S->overlaps;
 	double inv_sqrt_vol = pow(determinant(wf_R->lattice), -0.5);
 
+#if defined(_OPENMP)
+	omp_set_num_threads(omp_get_max_threads());
+#endif
 	#pragma omp parallel for
 	for (int w = 0; w < NUM_BANDS * NUM_KPTS; w++) {
 		int ni = 0, nj = 0;

@@ -21,7 +21,6 @@ class PawpyData:
 			vbm (float, None): valence band maximum
 			cbm (float, None): conduction band minimum
 		"""
-		self.energies = energies
 		if dos is None:
 			self.energies = None
 			self.densities = None
@@ -127,7 +126,7 @@ class BulkCharacter(PawpyData):
 		"""
 
 		self.energy_levels = energy_levels
-		super(PawpyData, self).__init__(structure, data, dos, vbm, cbm)
+		super(BulkCharacter, self).__init__(structure, data, dos, vbm, cbm)
 
 	def plot(self, name, title=None, spinpol = False):
 		"""

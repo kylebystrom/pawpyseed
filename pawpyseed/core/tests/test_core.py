@@ -413,13 +413,14 @@ class TestPy:
 		wf = Wavefunction.from_directory('.')
 		print("FINISHED LOAD WAVEFUNCTION")
 		sys.stdout.flush()
-		wf.write_density_realspace(dim=np.array([40,40,40]), scale = wf.structure.lattice.volume)
+		wf = wf.desymmetrized_copy()
+		wf.write_density_realspace(dim=np.array([56,56,56]), scale = wf.structure.lattice.volume)
 		tstchg = Chgcar.from_file("AECCAR2").data['total']# / wf.structure.volume
 		chg = Chgcar.from_file("PYAECCAR").data['total']
 		reldiff = np.sqrt(np.mean(((chg-tstchg)/tstchg)**2))
 		newchg = chg-tstchg
 		Chgcar(Poscar(wf.structure), {'total': newchg}).write_file('DIFFCHGCAR.vasp')
-		print(np.sum(chg)/40**3, np.sum(tstchg)/40**3)
+		print(np.sum(chg)/56**3, np.sum(tstchg)/56**3)
 		assert_almost_equal(reldiff, 0, decimal=3)
 		#os.remove('PYAECCAR')
 

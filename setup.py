@@ -14,9 +14,6 @@ class PawpyBuildError(Exception):
 with codecs.open('README.md', 'r', encoding='utf8') as fh:
 	long_description = fh.read()
 
-#os.environ["CC"] = "icc"
-#os.environ["CXX"] = "icc"
-
 srcfiles = ['density', 'gaunt', 'linalg', 'projector', 'pseudoprojector', 'quadrature',\
 			'radial', 'reader', 'sbt', 'tests', 'utils']
 cfiles = [f+'.c' for f in srcfiles]
@@ -29,11 +26,21 @@ if 'MKLROOT' in os.environ:
 	MKLROOT = os.environ['MKLROOT']
 	lib_dirs.append('%s/lib/intel64_lin' % MKLROOT)
 	inc_dirs.append('%s/include' % MKLROOT)
+rt_lib_dirs = lib_dirs[:]
+if 'C_INCLUDE_PATH' in os.environ:
+	inc_dirs += os.environ['C_INCLUDE_PATH'].split(':')
+if 'LD_LIBRARY_PATH' in os.environ:
+	lib_dirs += os.environ['LD_LIBRARY_PATH'].split(':')
+if 'LIBRARY_PATH' in os.environ:
+	rt_lib_dirs += os.environ['LIBRARY_PATH'].split(':')
+extra_args = '-std=c11 -lmkl_rt -fopenmp -O3 -fPIC -Wall'.split()
+link_args = '-lmkl_sequential -lmkl_intel_lp64 -lmkl_core -lpthread -lm -ldl'.split()
 
 extensions = [Extension('pawpy', ext_files,
 	define_macros=[('MKL_Complex16', 'double complex'), ('MKL_Complex8', 'float complex')],
 	library_dirs=lib_dirs,
-	extra_link_args='-std=c11 -lmkl_rt -fopenmp -lpthread -ldl -lm -O3 -fPIC -Wall'.split(),
+	extra_link_args=extra_args + link_args,
+	extra_compile_args=extra_args,
 	runtime_library_dirs=lib_dirs,
 	include_dirs=inc_dirs)]
 

@@ -308,7 +308,7 @@ class Projector(pawpy.CProjector):
 		nband = basis.nband
 		nwk = basis.nwk
 		nspin = basis.nspin
-		occs = self.wf._get_occs()
+		occs = self.basis._get_occs()
 
 		res = self.single_band_projection(band_num)
 

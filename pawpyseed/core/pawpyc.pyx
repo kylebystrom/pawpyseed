@@ -1,3 +1,5 @@
+# cython : profile=True
+
 from pawpyseed.core cimport pawpyc
 from cpython cimport array
 from libc.stdlib cimport malloc, free
@@ -169,7 +171,7 @@ cdef class PseudoWavefunction:
 			basis (Pseudowavefunction): pseudowavefunctions onto whose bands
 				the band of self is projected
 		"""
-		res = np.zeros(self.nband * self.nwk * self.nspin, dtype = np.complex128)
+		res = np.zeros(basis.nband * basis.nwk * basis.nspin, dtype = np.complex128)
 		cdef double complex[::1] resv = res
 		pawpyc.pseudoprojection(&resv[0], basis.wf_ptr, self.wf_ptr, band_num)
 		return res

@@ -279,3 +279,25 @@ cdef extern from "sbt.h":
     cdef double* inverse_wave_spherical_bessel_transform(sbt_descriptor_t* d, double* f, int l)
     cdef void free_sbt_descriptor(sbt_descriptor_t* d)
     
+
+cdef extern from "linalg.h":
+
+    cdef double complex* fft_calloc(int num_items, int item_size)
+    cdef void fft3d(double complex* x, int* G_bounds, double* lattice,
+        double* kpt, int* Gs, float complex* Cs, int num_waves, int* fftg)
+    
+
+cdef extern from "radial.h":
+
+    cdef double complex spherwave_planewave_overlap(double* center,
+        double* r, double* f, double** spline, int size,
+        double* lattice, double* reclattice, int l, int m,
+        double complex* x, int* fftg, double* k)
+    cdef double complex offsite_wave_overlap(double* dcoord, double* r1, double* f1, double** spline1, int size1,
+        double* r2, double* f2, double** spline2, int size2,
+        double* lattice, int l1, int m1, int l2, int m2)
+    cdef double complex reciprocal_offsite_wave_overlap(double* dcoord,
+        double* k1, double* f1, double** s1, int size1,
+        double* k2, double* f2, double** s2, int size2,
+        double* lattice, int l1, int m1, int l2, int m2)
+    

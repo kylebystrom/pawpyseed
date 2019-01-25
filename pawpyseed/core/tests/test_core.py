@@ -12,6 +12,8 @@ from scipy.special import lpmn, sph_harm
 from nose import SkipTest
 from nose.tools import nottest
 
+import pawpy
+
 COMPILE = False
 
 class PawpyTestError(Exception):
@@ -22,25 +24,7 @@ class PawpyTestError(Exception):
 	def __init__(self, msg):
 		self.msg = msg
 
-if COMPILE:
-	currdir = os.getcwd()
-	MODULE_DIR = os.path.dirname(os.path.abspath(__file__))
-	os.chdir(MODULE_DIR+'/..')
-	if not "PAWPYCC" in os.environ:
-		if subprocess.call("which icc".split()) == 0:
-			os.environ["PAWPYCC"] = "icc"
-		elif subprocess.call("which gcc".split()) == 0:
-			os.environ["PAWPYCC"] = "gcc"
-		else:
-			raise PawpyTestError("Can't find icc or gcc compiler!")
-
-	status = subprocess.call('make testsuite'.split())
-	if status != 0:
-		raise PawpyTestError("Can't compile test pawpy.so! Check the C error output for details.")
-	#status = subprocess.call('make mem'.split())
-	#if status != 0:
-	#	raise PawpyTestError("Can't compile memtest! Check the C error output for details.")
-	os.chdir(currdir)
+MODULE_DIR = os.path.dirname(os.path.abspath(__file__))
 
 from pymatgen.io.vasp.inputs import Poscar, Potcar
 from pymatgen.io.vasp.outputs import Vasprun, Chgcar
@@ -50,77 +34,12 @@ from pawpyseed.core.utils import *
 from pawpyseed.core.wavefunction import *
 from pawpyseed.core.projector import Projector
 
-from ctypes import *
-
-c_double_p = POINTER(c_double)
-c_float_p = POINTER(c_float)
-c_int_p = POINTER(c_int)
-
-MODULE_DIR = os.path.dirname(os.path.abspath(__file__))
-PAWC = CDLL(os.path.join(MODULE_DIR, "../pawpy.so"))
-PAWC.fac.restype = c_double
-PAWC.legendre.restype = c_double
-PAWC.Ylmr.restype = c_double
-PAWC.Ylmi.restype = c_double
-PAWC.spline_coeff.restype = POINTER(POINTER(c_double))
-PAWC.proj_interpolate.restype = c_double
-PAWC.spherical_bessel_transform_setup.restype = POINTER(None)
-PAWC.wave_spherical_bessel_transform.argtypes = [c_void_p, POINTER(c_double), c_int]
-PAWC.wave_spherical_bessel_transform.restype = POINTER(c_double)
-PAWC.free_sbt_descriptor.argtypes = [c_void_p]
-PAWC.free_sbt_descriptor.restype = None
-PAWC.fft_check.argtypes = [c_char_p, c_double_p, c_int_p]
-
-def cdouble_to_numpy(arr, length):
-	arr = cast(arr, POINTER(c_double))
-	newarr = np.zeros(length)
-	for i in range(length):
-		newarr[i] = arr[i]
-	#PAWC.free_ptr(arr)
-	return newarr
-
-def cfloat_to_numpy(arr, length):
-	arr = cast(arr, POINTER(c_float))
-	newarr = np.zeros(length)
-	for i in range(length):
-		newarr[i] = arr[i]
-	#PAWC.free_ptr(arr)
-	return newarr
-
-def cfloat_to_numpy(arr, length):
-	arr = cast(arr, POINTER(c_int))
-	newarr = np.zeros(length)
-	for i in range(length):
-		newarr[i] = arr[i]
-	#PAWC.free_ptr(arr)
-	return newarr
-
-def numpy_to_cdouble(arr):
-	newarr = (c_double * len(arr))()
-	for i in range(len(arr)):
-		newarr[i] = arr[i]
-	return newarr
-
-def numpy_to_cfloat(arr):
-	newarr = (c_float * len(arr))()
-	for i in range(len(arr)):
-		newarr[i] = arr[i]
-	return newarr
-
-def numpy_to_cint(arr):
-	newarr = (c_int * len(arr))()
-	for i in range(len(arr)):
-		newarr[i] = int(arr[i])
-	return newarr
-
-
 class DummyProjector(Projector):
 
 	def make_site_lists(self):
 		M_R, M_S, N_R, N_S, N_RS = super(DummyProjector, self).make_site_lists()
 		return [], [], M_R, M_S, [pair for pair in zip(M_R, M_S)]
 
-@nottest
 class TestC:
 
 	def setup(self):
@@ -132,28 +51,17 @@ class TestC:
 	def teardown(self):
 		os.chdir(self.currdir)
 
-	def test_fac(self):
-		print(int(PAWC.fac(5)))
-		assert int(PAWC.fac(5)) == 120
-
 	def test_legendre(self):
 		xs = np.linspace(0,1,10000)
 		ys = np.zeros(10000*16)
 		ys2 = np.zeros(10000*16)
-		t1 = time.time()
 		for i in range(xs.shape[0]):
 			if i == 0: print (lpmn(-3,3,xs[i])[0])
 			ys[16*i:16*(i+1)] = lpmn(-3,3,xs[i])[0].flatten()
-		t2 = time.time()
 		for i in range(xs.shape[0]):
 			for l in range(4):
 				for m in range(0,-l-1,-1):
-					if i == 0: print(PAWC.legendre(l, m, c_double(xs[i])))
-					ys2[i*16-m*4+l] = PAWC.legendre(l, m, c_double(xs[i]))
-		t3 = time.time()
-		#rough speed check
-		#assert 2*(t2-t1) > t3 - t2
-		#accuracy check
+					ys2[i*16-m*4+l] = pawpy.legendre(l, m, xs[i])
 		assert_almost_equal(np.linalg.norm(ys-ys2), 0.0)
 
 	def test_Ylm(self):
@@ -161,36 +69,31 @@ class TestC:
 			for m in range(-l,1):
 				xs = np.linspace(0,1,100)
 				ys = np.zeros(10000, np.complex128)
+				ys1 = np.zeros(10000, np.complex128)
 				ys2 = np.zeros(10000, np.complex128)
-				t1 = time.time()
 				for i in range(xs.shape[0]):
 					for j in range(xs.shape[0]):
 						ys[i*100+j] = sph_harm(m, l, xs[j]*2*np.pi, xs[i]*np.pi)
-				t2 = time.time()
 				i,j=0,0
 				for i in range(xs.shape[0]):
 					for j in range(xs.shape[0]):
-						ys2[i*100+j] = PAWC.Ylmr(l, m, c_double(xs[i]*np.pi), c_double(xs[j]*np.pi*2))\
-										+ 1.0j*PAWC.Ylmi(l, m, c_double(xs[i]*np.pi), c_double(xs[j]*np.pi*2))
-				t3 = time.time()
-				#rough speed check
-				#assert 2*(t2-t1) > t3 - t2
-				assert_almost_equal(np.linalg.norm(ys-ys2),0.0)
+						ys1[i*100+j] = pawpy.Ylm(l, m, xs[i]*np.pi, xs[j]*np.pi*2)
+						ys2[i*100+j] = pawpy.Ylm2(l, m, np.cos(xs[i]*np.pi), xs[j]*np.pi*2)
+				assert_almost_equal(np.linalg.norm(ys-ys1),0.0)
+				assert_almost_equal(np.linalg.norm(ys1-ys2),0.0)
 
 	def test_unit_conversion(self):
 		struct = Poscar.from_file("CONTCAR").structure
-		lattice = numpy_to_cdouble(struct.lattice.matrix.flatten())
-		reclattice = numpy_to_cdouble(struct.lattice.reciprocal_lattice.matrix.flatten())
+		lattice = struct.lattice.matrix
+		reclattice = struct.lattice.reciprocal_lattice.matrix
 		for site in struct:
 			coord = site.coords
 			fcoord = site.frac_coords
-			ccoord = numpy_to_cdouble(coord)
-			cfcoord = numpy_to_cdouble(fcoord)
-			PAWC.frac_to_cartesian(cfcoord, lattice)
-			temp1 = cdouble_to_numpy(cfcoord, 3)
+			temp1 = np.copy(fcoord, order='C')
+			pawpy.frac_to_cartesian(temp1, lattice)
 			assert_almost_equal(np.linalg.norm(temp1-coord), 0.0)
-			PAWC.cartesian_to_frac(ccoord, reclattice)
-			temp2 = cdouble_to_numpy(ccoord, 3)
+			temp2 = np.copy(coord, order='C')
+			pawpy.cartesian_to_frac(temp2, reclattice)
 			assert_almost_equal(np.linalg.norm(temp2-fcoord), 0.0)
 
 	def test_spline(self):
@@ -199,61 +102,112 @@ class TestC:
 		struct = Poscar.from_file("CONTCAR").structure
 		grid = cr.pps['Ga'].projgrid
 		vals = cr.pps['Ga'].realprojs[0]
-		rmax = cr.pps['Ga'].rmax / 1.88973
+		rmax = cr.pps['Ga'].rmax
 		tst = np.linspace(0, max(grid), 400)
-		res1 = scipy.interpolate.CubicSpline(grid, vals, extrapolate=True)(tst)
-		x, y = numpy_to_cdouble(grid), numpy_to_cdouble(vals)
-		cof = PAWC.spline_coeff(x, y, 100)
-		res2 = (c_double * tst.shape[0])()
-		for i in range(tst.shape[0]):
-			res2[i] = PAWC.proj_interpolate(c_double(tst[i]), c_double(rmax),
-						100, x, y, cof)
-		res2 = cdouble_to_numpy(res2, tst.shape[0])
-		print ('Completed spline test')
-		print (res1)
-		print (res2)
-		print (res1-res2)
+		res1 = scipy.interpolate.CubicSpline(grid, vals,
+			extrapolate=True, bc_type='natural')(tst)
+		x, y = grid[:], vals[:]
+		res2 = np.zeros(tst.shape)
+		pawpy.interpolate(res2, tst, x, y, rmax, 100, 400)
+		assert_almost_equal(np.linalg.norm(res1-res2), 0, 2)
 		sys.stdout.flush()
 
+	@nottest
 	def test_fft3d(self):
 		vr = self.vr 
-		weights = vr.actual_kpoints_weights
-		kws = (c_double * len(weights))()
-		for i in range(len(weights)):
-			kws[i] = weights[i]
-		PAWC.fft_check("WAVECAR".encode('utf-8'), kws,
-			numpy_to_cint(np.array([40,40,40])))
+		weights = np.array(vr.actual_kpoints_weights)
+		pawpy.fft_check("WAVECAR", weights, np.array([20,20,20], dtype=np.int32, order='C'))
 
 	def test_sbt(self):
 		from scipy.special import spherical_jn as jn
 		cr = CoreRegion(Potcar.from_file("POTCAR"))
 		r = cr.pps['Ga'].grid
-		ks = 0 * r
 		f = cr.pps['Ga'].aewaves[0] - cr.pps['Ga'].pswaves[0];
-		print ('yo')
-		print (len(r), len(numpy_to_cdouble(r)))
-		sys.stdout.flush()
-		sbtd = PAWC.spherical_bessel_transform_setup(c_double(520), c_double(5000),
-					2, len(r), numpy_to_cdouble(r), numpy_to_cdouble(ks))
-		print ('yo')
-		sys.stdout.flush()
-		res = PAWC.wave_spherical_bessel_transform(sbtd, numpy_to_cdouble(f), 0)
+		ks, res = pawpy.spherical_bessel_transform(1e6, 0, r, f)
 		k = ks[180]
-		print ('hi')
-		print (r, f)
 		vals = jn(0, r * k) * f * r
 		integral = np.trapz(vals, r)
-		#print (cdouble_to_numpy(ks, 388)[334])
 		print (integral)
 		print (ks[180])
 		print (res[180])
 		assert_almost_equal(integral, res[180], decimal=3)
 
-	@nottest
 	def test_radial(self):
+		try:
+			import reference as gint
+			from scipy.misc import factorial2 as fac2
+		except ImportError:
+			print("No McMurchie-Davidson installed, skipping radial test")
+			return
+
+
+		def getf(f, r, a, n, m):
+			if n == 0:
+				N = 0.25
+				ijks = [(0,0,0)]
+				coefs = [1]
+			elif n == 1:
+				N = .25
+				if m == 0:
+					ijks = [(0,0,1)]
+				else:
+					ijks = [(1,0,0)]
+				coefs = [1]
+			elif n == 2 and m == 0:
+				N = 3
+				ijks = [(0,0,2), (2,0,0), (0,2,0)]
+				coefs = [2,-1,-1]
+			elif n == 2 and m == 1:
+				N = 0.25
+				ijks = [(1,0,1)]
+				coefs = [1]
+			elif n == 2 and m == -1:
+				N = 0.25
+				ijks = [(0,1,1)]
+				coefs = [1]
+			elif n == 2 and m == 2:
+				N = 1
+				ijks = [(2,0,0), (0,2,0)]
+				coefs = [1,-1]
+			elif n == 2 and m == -2:
+				N = 0.25
+				ijks = [(1,1,0)]
+				coefs = [1]
+			elif n == 3 and m == 0:
+				N = 15
+				ijks = [(0,0,3), (0,2,1), (2,0,1)]
+				coefs = [2,-3,1]
+			else:
+				raise ValueError('Do not know that n,m pair %d %d' % (n, m))
+			return r * 2**(n+2) * np.sqrt(np.pi * N / fac2(2*n+1)) * (a*r)**n * f, ijks, coefs
 		# test realspace radial overlap
 		# test recipspace radial overlap
-		pass
+		pols = ([0,0,0],[0,0,1],[0,0,2],[0,0,3],[0,1,1]) 
+		ls = (0,1,2,3,2)
+		ms = (0,0,0,0,1)
+		a = 1
+		b = 1
+		A = [0,0,0]
+		Bs = ([0,0,0], [0.5,0.5,0.5], [0.123,0.543,-0.96])
+		r = np.exp(np.linspace(np.log(0.001),np.log(3),300))
+		init_f1 = np.exp(-a * r**2)
+		init_f2 = np.exp(-b * r**2)
+		for B in Bs:
+			Barr = np.array(B, dtype=np.float64, order='C')
+			for l1, m1 in zip(ls, ms):
+				f1, ijks1, coefs1 = getf(init_f1, r, a, l1, m1)
+				for l2, m2 in zip(ls, ms):
+					print("START", l1, m1, l2, m2, a, b, B)
+					f2, ijks2, coefs2 = getf(init_f2, r, b, l2, m2)
+					ov1 = 0
+					for coef1, ijk1 in zip(coefs1, ijks1):
+						for coef2, ijk2 in zip(coefs2, ijks2):
+							print(ijk1, ijk2, coef1, coef2)
+							ov1 += coef1 * coef2 * gint.overlap(a,ijk1,A,b,ijk2,B)
+					ov2 = pawpy.reciprocal_offsite_wave_overlap(Barr,
+						r, f1, r, f2,
+						l1, m1, l2, m2) * 4 * np.pi
+					print(ov1, ov2)
 
 
 @nottest
@@ -360,6 +314,7 @@ class TestMem:
 		f.close()
 """
 
+@nottest
 class TestPy:
 
 	def setup(self):
@@ -387,8 +342,6 @@ class TestPy:
 		wf = Wavefunction.from_directory('.')
 		fileprefix = ''
 		b, k, s = 10, 1, 0
-		print(PAWC.write_realspace_state_ri_return.argtypes, "LOOK HERE")
-		sys.stdout.flush()
 		state1 = wf.write_state_realspace(b, k, s, fileprefix = "", 
 			dim=np.array([30,30,30]))
 		wf = Wavefunction.from_directory('.', False)
@@ -405,6 +358,7 @@ class TestPy:
 		os.remove(filename1)
 		os.remove(filename2)
 
+	@nottest
 	def test_density(self):
 		print("TEST DENSITY")
 		sys.stdout.flush()

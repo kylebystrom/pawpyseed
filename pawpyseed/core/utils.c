@@ -251,7 +251,6 @@ void free_ppot(ppot_t* pp) {
 }
 
 void free_real_proj(real_proj_t* proj) {
-	free(proj->paths);
 	free(proj->values);
 }
 
@@ -280,6 +279,7 @@ void free_real_proj_site(real_proj_site_t* site) {
 	free(site->projs);
 	free(site->indices);
 	free(site->coord);
+	free(site->paths);
 }
 
 void free_ptr(void* ptr) {
@@ -574,15 +574,15 @@ void setup_site(real_proj_site_t* sites, ppot_t* pps, int num_sites, int* site_n
 		CHECK_ALLOCATION(sites[s].indices);
 		sites[s].projs = (real_proj_t*) malloc(sites[s].total_projs * sizeof(real_proj_t));
 		int p = 0;
+		sites[s].paths = malloc(3*pps[labels[i]].num_cart_gridpts * sizeof(double));
+		CHECK_ALLOCATION(sites[s].paths);
 		for (int j = 0; j < sites[s].num_projs; j++) {
 			for (int m = -pps[labels[i]].funcs[j].l; m <= pps[labels[i]].funcs[j].l; m++) {
 				sites[s].projs[p].l = pps[labels[i]].funcs[j].l;
 				sites[s].projs[p].m = m;
 				sites[s].projs[p].func_num = j;
 				sites[s].projs[p].values = malloc(pps[labels[i]].num_cart_gridpts * sizeof(double complex));
-				sites[s].projs[p].paths = malloc(3*pps[labels[i]].num_cart_gridpts * sizeof(double));
 				CHECK_ALLOCATION(sites[s].projs[p].values);
-				CHECK_ALLOCATION(sites[s].projs[p].paths);
 				p++;
 			}
 		}
@@ -621,10 +621,10 @@ void setup_site(real_proj_site_t* sites, ppot_t* pps, int num_sites, int* site_n
 						frac[1] = (double) jj / fftg[1];
 						frac[2] = (double) kk / fftg[2];
 						sites[s].indices[sites[s].num_indices] = ii*fftg[1]*fftg[2] + jj*fftg[2] + kk;
+						sites[s].paths[3*sites[s].num_indices+0] = testcoord[0];
+						sites[s].paths[3*sites[s].num_indices+1] = testcoord[1];
+						sites[s].paths[3*sites[s].num_indices+2] = testcoord[2];
 						for (int n = 0; n < sites[s].total_projs; n++) {
-							sites[s].projs[n].paths[3*sites[s].num_indices+0] = testcoord[0];
-							sites[s].projs[n].paths[3*sites[s].num_indices+1] = testcoord[1];
-							sites[s].projs[n].paths[3*sites[s].num_indices+2] = testcoord[2];
 							if (pr0_pw1)
 								sites[s].projs[n].values[sites[s].num_indices] = smooth_wave_value(
 									pps[labels[p]].funcs[sites[s].projs[n].func_num],

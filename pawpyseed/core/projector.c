@@ -220,8 +220,8 @@ real_proj_site_t* smooth_pw_values(int num_N, int* Nlst, int* labels, double* co
 }
 
 void onto_projector_helper(band_t* band, double complex* x, real_proj_site_t* sites,
-	int num_sites, double* lattice, double* reclattice, double* kpt, ppot_t* pps, int* fftg,
-	projection_t* projections) {
+	int num_sites, double* lattice, double* reclattice, double* kpt, int num_cart_gridpts,
+	int* fftg, projection_t* projections) {
 
 	double dv = determinant(lattice) / fftg[0] / fftg[1] / fftg[2];
 
@@ -235,13 +235,12 @@ void onto_projector_helper(band_t* band, double complex* x, real_proj_site_t* si
 	frac_to_cartesian(kpt_cart, reclattice);
 	double complex overlap;
 	double complex* values;
-	double complex* xvals;
+	double complex* xvals = (double complex*) malloc(num_cart_gridpts * sizeof(double complex));
 	int* indices;
 
 	int num_indices, index, t=0;
 	for (int s = 0; s < num_sites; s++) {
 		num_indices = sites[s].num_indices;
-		xvals = (double complex*) malloc(num_indices * sizeof(double complex));
 		indices = sites[s].indices;
 		projections[s].num_projs = sites[s].num_projs;
 		projections[s].total_projs = sites[s].total_projs;
@@ -260,18 +259,18 @@ void onto_projector_helper(band_t* band, double complex* x, real_proj_site_t* si
 			values = sites[s].projs[p].values;
 			for (int i = 0; i < num_indices; i++) {
 				index = indices[i];
-				kdotr = dot(kpt_cart, sites[s].projs[p].paths+i*3);
+				kdotr = dot(kpt_cart, sites[s].paths+i*3);
 				xvals[i] = x[index] * dv * cexp(I * kdotr);
 			}
 			cblas_zdotc_sub(num_indices, values, 1, xvals, 1, &overlap);
 			projections[s].overlaps[p] = overlap;
 		}
-		free(xvals);
 	}
+	free(xvals);
 }
 
 void onto_projector(kpoint_t* kpt, int band_num, real_proj_site_t* sites, int num_sites,
-	int* G_bounds, double* lattice, double* reclattice, ppot_t* pps, int* fftg) {
+	int* G_bounds, double* lattice, double* reclattice, int num_cart_gridpts, int* fftg) {
 
 	double* k = kpt->k;
 	int* Gs = kpt->Gs;
@@ -288,14 +287,14 @@ void onto_projector(kpoint_t* kpt, int band_num, real_proj_site_t* sites, int nu
 	CHECK_ALLOCATION (band->projections);
 
 	onto_projector_helper(kpt->bands[band_num], x, sites, num_sites,
-		lattice, reclattice, k, pps, fftg, band->projections);
+		lattice, reclattice, k, num_cart_gridpts, fftg, band->projections);
 
 	//kpt->bands[band_num]->CRs = x;
 	mkl_free(x);
 }
 
 void onto_projector_ncl(kpoint_t* kpt, int band_num, real_proj_site_t* sites, int num_sites,
-	int* G_bounds, double* lattice, double* reclattice, ppot_t* pps, int* fftg) {
+	int* G_bounds, double* lattice, double* reclattice, int num_cart_gridpts, int* fftg) {
 
 	double* k = kpt->k;
 	int* Gs = kpt->Gs;
@@ -317,13 +316,13 @@ void onto_projector_ncl(kpoint_t* kpt, int band_num, real_proj_site_t* sites, in
 	band->down_projections =
 		(projection_t*) malloc(num_sites * sizeof(projection_t));
 	onto_projector_helper(kpt->bands[band_num], xup, sites, num_sites,
-		lattice, reclattice, k, pps, fftg, band->up_projections);
+		lattice, reclattice, k, num_cart_gridpts, fftg, band->up_projections);
 	onto_projector_helper(kpt->bands[band_num], xdown, sites, num_sites,
-		lattice, reclattice, k, pps, fftg, band->down_projections);
+		lattice, reclattice, k, num_cart_gridpts, fftg, band->down_projections);
 }
 
 void onto_smoothpw(kpoint_t* kpt, int band_num, real_proj_site_t* sites, int num_sites,
-	int* G_bounds, double* lattice, double* reclattice, ppot_t* pps, int* fftg) {
+	int* G_bounds, double* lattice, double* reclattice, int num_cart_gridpts, int* fftg) {
 
 	double* k = kpt->k;
 	int* Gs = kpt->Gs;
@@ -339,7 +338,7 @@ void onto_smoothpw(kpoint_t* kpt, int band_num, real_proj_site_t* sites, int num
 	CHECK_ALLOCATION (band->wave_projections);
 
 	onto_projector_helper(kpt->bands[band_num], x, sites, num_sites,
-		lattice, reclattice, k, pps, fftg, band->wave_projections);
+		lattice, reclattice, k, num_cart_gridpts, fftg, band->wave_projections);
 
 	mkl_free(x);
 }
@@ -448,9 +447,12 @@ void setup_projections(pswf_t* wf, ppot_t* pps, int num_elems,
 	wf->num_sites = num_sites;
 	wf->pps = pps;
 	printf("started setup_proj\n");
-	#pragma omp parallel for 
+	int num_cart_gridpts = 0;
 	for (int p = 0; p < num_elems; p++) {
 		add_num_cart_gridpts(pps+p, wf->lattice, fftg);
+		if (pps[p].num_cart_gridpts > num_cart_gridpts) {
+			num_cart_gridpts = pps[p].num_cart_gridpts;
+		}
 	}
 	int NUM_KPTS = wf->nwk * wf->nspin;
 	int NUM_BANDS = wf->nband;
@@ -466,10 +468,10 @@ void setup_projections(pswf_t* wf, ppot_t* pps, int num_elems,
 		kpoint_t* kpt = wf->kpts[w % NUM_KPTS];
 		int band_num = w / NUM_KPTS;
 		onto_projector(kpt, band_num, sites, num_sites,
-			wf->G_bounds, wf->lattice, wf->reclattice, pps, fftg);
+			wf->G_bounds, wf->lattice, wf->reclattice, num_cart_gridpts, fftg);
 		if (wf->is_ncl) {
 			onto_projector_ncl(kpt, band_num, sites, num_sites,
-				wf->G_bounds, wf->lattice, wf->reclattice, pps, fftg);
+				wf->G_bounds, wf->lattice, wf->reclattice, num_cart_gridpts, fftg);
 		}
 	}
 	printf("Done \n");

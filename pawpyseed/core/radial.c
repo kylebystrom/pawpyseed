@@ -217,6 +217,7 @@ double complex reciprocal_offsite_wave_overlap(double* dcoord,
 	double* ifunc = (double*) malloc(KGRID_SIZE * sizeof(double));
 	double complex total = 0;
 	double kk;
+	double mult_factor = pow(-1, m1) * 8;
 	for (int L = abs(l1-l2); L <= l1+l2; L+=2) {
 		for (int knum = 0; knum < KGRID_SIZE; knum++) {
 			kgrid[knum] = kmin * pow(kmax/kmin, (double) knum / KGRID_SIZE);
@@ -230,7 +231,7 @@ double complex reciprocal_offsite_wave_overlap(double* dcoord,
 		if (R > 10e-10)
 			total += spline_integral(kgrid, ifunc, ispline, KGRID_SIZE)
 				* SBTFACS[lx][ly][(L-abs(l1-l2))/2][lx+mx][my]
-				* Ylm(L, m1-m2, theta, phi) * cpow(I, l2+L-l1);
+				* Ylm(L, m1-m2, theta, phi) * cpow(I, l2+L-l1) * mult_factor;
 		else {
 			if (L == 0 && l1 == l2 && m1 == m2)
 				total += spline_integral(kgrid, ifunc, ispline, KGRID_SIZE)

@@ -66,7 +66,7 @@ class TestC:
 
 	def test_Ylm(self):
 		for l in range(4):
-			for m in range(-l,1):
+			for m in range(-l,l):
 				xs = np.linspace(0,1,100)
 				ys = np.zeros(10000, np.complex128)
 				ys1 = np.zeros(10000, np.complex128)
@@ -140,23 +140,71 @@ class TestC:
 			print("No McMurchie-Davidson installed, skipping radial test")
 			return
 
+		h0 = ([1], [0])
+		h1 = ([2], [1])
+		h2 = ([4, -2], [2, 0])
+		h3 = ([8, -12], [3, 1])
+		H = [h0, h1, h2, h3]
+
+		def eval_overlap(a, ijk1, A, b, ijk2, B):
+			ov = 0
+			for ci1, i1 in zip(*(H[ijk1[0]])):
+				for cj1, j1 in zip(*(H[ijk1[1]])):
+					for ck1, k1 in zip(*(H[ijk1[2]])):
+						for ci2, i2 in zip(*(H[ijk2[0]])):
+							for cj2, j2 in zip(*(H[ijk2[1]])):
+								for ck2, k2 in zip(*(H[ijk2[2]])):
+									ov += ci1 * ci2 * cj1 * cj2 * ck1 *ck2\
+											* gint.overlap(a, (i1,j1,k1), A,
+															b,(i2,j2,k2), B)
+			return ov
 
 		def getf(f, r, a, n, m):
 			if n == 0:
 				N = 0.25
 				ijks = [(0,0,0)]
 				coefs = [1]
-			elif n == 1:
+			elif n == 1 and m == 0:
 				N = .25
-				if m == 0:
-					ijks = [(0,0,1)]
-				else:
-					ijks = [(1,0,0)]
+				ijks = [(0,0,1)]
 				coefs = [1]
+			elif n == 1:
+				N = 0.25
+				ijks = [(1,0,0), (0,1,0)]
+				if m == 1:
+					coefs = [1,1j]
+				else:
+					coefs = [1,-1j]
 			elif n == 2 and m == 0:
 				N = 3
 				ijks = [(0,0,2), (2,0,0), (0,2,0)]
 				coefs = [2,-1,-1]
+			elif n == 2 and m == 1:
+				N = 0.25
+				ijks = [(1,0,1), (0,1,1)]
+				coefs = [1, 1.0j]
+			elif n == 2 and m == -1:
+				N = 0.25
+				ijks = [(1,0,1), (0,1,1)]
+				coefs = [1, -1.0j]
+			elif n ==2 and m == 2:
+				N = 1
+				ijks = [(2,0,0), (0,2,0), (1,1,0)]
+				coefs=[1, -1, 1.0j*2]
+			elif n ==2 and m == -2:
+				N = 1
+				ijks = [(2,0,0), (0,2,0), (1,1,0)]
+				coefs=[1, -1, -1.0j*2]
+			elif n == 3 and m == 0:
+				N = 15
+				ijks = [(0,0,3), (0,2,1), (2,0,1)]
+				coefs = [2, -3, -3]
+			else:
+				raise ValueError('Do not know that n,m pair %d %d' % (n, m))
+			return r * 2**(n+2) * np.sqrt(np.pi * N / fac2(2*n+1)) * (a*r)**n * f, ijks, coefs
+
+
+			"""
 			elif n == 2 and m == 1:
 				N = 0.25
 				ijks = [(1,0,1)]
@@ -165,6 +213,8 @@ class TestC:
 				N = 0.25
 				ijks = [(0,1,1)]
 				coefs = [1]
+			"""
+			"""
 			elif n == 2 and m == 2:
 				N = 1
 				ijks = [(2,0,0), (0,2,0)]
@@ -173,22 +223,17 @@ class TestC:
 				N = 0.25
 				ijks = [(1,1,0)]
 				coefs = [1]
-			elif n == 3 and m == 0:
-				N = 15
-				ijks = [(0,0,3), (0,2,1), (2,0,1)]
-				coefs = [2,-3,1]
-			else:
-				raise ValueError('Do not know that n,m pair %d %d' % (n, m))
-			return r * 2**(n+2) * np.sqrt(np.pi * N / fac2(2*n+1)) * (a*r)**n * f, ijks, coefs
+			"""
+
 		# test realspace radial overlap
 		# test recipspace radial overlap
 		pols = ([0,0,0],[0,0,1],[0,0,2],[0,0,3],[0,1,1]) 
-		ls = (0,1,2,3,2)
-		ms = (0,0,0,0,1)
+		ls = (0,1,2,3,2, 2, 2,2,1, 1)
+		ms = (0,0,0,0,1,-1,-2,2,1,-1)
 		a = 1
 		b = 1
 		A = [0,0,0]
-		Bs = ([0,0,0], [0.5,0.5,0.5], [0.123,0.543,-0.96])
+		Bs = ([0,0,0], [0.5,0.5,0.5], [-0.5,0.5,-0.5], [0.123,0.543,-0.96])
 		r = np.exp(np.linspace(np.log(0.001),np.log(3),300))
 		init_f1 = np.exp(-a * r**2)
 		init_f2 = np.exp(-b * r**2)
@@ -203,11 +248,88 @@ class TestC:
 					for coef1, ijk1 in zip(coefs1, ijks1):
 						for coef2, ijk2 in zip(coefs2, ijks2):
 							print(ijk1, ijk2, coef1, coef2)
-							ov1 += coef1 * coef2 * gint.overlap(a,ijk1,A,b,ijk2,B)
+							ov1 += coef1 * np.conj(coef2) * eval_overlap(a,ijk1,A,b,ijk2,B)
+					if m1 != 0:
+						ov1 /= np.sqrt(2)
+					if m2 != 0:
+						ov1 /= np.sqrt(2)
+					if np.linalg.norm(B) > 0:
+						# sign convention adjustment
+						if m1 > 0:
+							ov1 *= (-1)**(m1)
+						if m2 > 0:
+							ov1 *= (-1)**(m2)
+
 					ov2 = pawpy.reciprocal_offsite_wave_overlap(Barr,
 						r, f1, r, f2,
-						l1, m1, l2, m2) * 4 * np.pi
+						l1, m1, l2, m2)
 					print(ov1, ov2)
+					if np.abs(ov1) < 1e-10:
+						assert_almost_equal(np.abs(ov2), 0, 10)
+					else:
+						assert_almost_equal((np.abs(ov1 - ov2))/np.abs(ov1), 0, 2)
+
+	@nottest
+	def test_sphagain(self):
+		# a little snippet to check the sign of teh gaussians vs spherical harmonics
+		h0 = ([1], [0])
+		h1 = ([2], [1])
+		h2 = ([4, -2], [2, 0])
+		h3 = ([8, -12], [3, 1])
+		H = [h0, h1, h2, h3]
+		for n, m in [(2,1), (2,-1), (2,0), (2,2), (2,-2)]:
+			if n == 0:
+				N = 0.25
+				ijks = [(0,0,0)]
+				coefs = [1]
+			elif n == 1 and m == 0:
+				N = .25
+				ijks = [(0,0,1)]
+				coefs = [1]
+			elif n == 1:
+				N = 0.25
+				ijks = [(1,0,0), (0,1,0)]
+				if m == 1:
+					coefs = [1,1j]
+				else:
+					coefs = [1,-1j]
+			elif n == 2 and m == 0:
+				N = 3
+				ijks = [(0,0,2), (2,0,0), (0,2,0)]
+				coefs = [2,-1,-1]
+			elif n == 2 and m == 1:
+				N = 0.25
+				ijks = [(1,0,1), (0,1,1)]
+				coefs = [1, 1.0j]
+			elif n == 2 and m == -1:
+				N = 0.25
+				ijks = [(1,0,1), (0,1,1)]
+				coefs = [1, -1.0j]
+			elif n ==2 and m == 2:
+				N = 1
+				ijks = [(2,0,0), (0,2,0), (1,1,0)]
+				coefs=[1, -1, 1.0j*2]
+			elif n ==2 and m == -2:
+				N = 1
+				ijks = [(2,0,0), (0,2,0), (1,1,0)]
+				coefs=[1, -1, -1.0j*2]
+			elif n == 3 and m == 0:
+				N = 15
+				ijks = [(0,0,3), (0,2,1), (2,0,1)]
+				coefs = [2, -3, -3]
+			ov = 0
+			o, p = np.pi/4, np.pi/4
+			for ijk1, coef in zip(ijks, coefs):
+				for ci1, i1 in zip(*(H[ijk1[0]])):
+					for cj1, j1 in zip(*(H[ijk1[1]])):
+						for ck1, k1 in zip(*(H[ijk1[2]])):
+							ov += ci1 * cj1 * ck1 * coef\
+									* (np.sin(o)*np.cos(p))**i1\
+									* (np.sin(o)*np.sin(p))**j1\
+									* (np.cos(o))**k1
+			print("SPHHARM CHECK!!!")
+			print(sph_harm(m, n, o, p))
+			print(ov)
 
 
 @nottest

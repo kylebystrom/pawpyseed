@@ -560,13 +560,14 @@ void overlap_setup_real(pswf_t* wf_R, pswf_t* wf_S,
 				for (int k = 0; k < pp2.num_projs; k++) {
 					l2 = pp2.funcs[k].l;
 					for (int m2 = -l2; m2 <= l2; m2++) {
-						overlaps[i][tj*pp2.total_projs+tk] =
+						overlaps[i][tj*pp2.total_projs+tk] = conj(
                             reciprocal_offsite_wave_overlap(dcoords + 3*i,
                             pp1.kwave_grid, pp1.funcs[j].kwave,
                             pp1.funcs[j].kwave_spline, pp1.wave_gridsize,
                             pp2.kwave_grid, pp2.funcs[k].kwave,
                             pp2.funcs[k].kwave_spline, pp2.wave_gridsize,
-                            wf_R->lattice, l1, m1, l2, m2);
+                            wf_R->lattice, l1, m1, l2, m2)
+                            );
 						tk++;
 					}
 				}

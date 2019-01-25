@@ -29,6 +29,7 @@ size size1, of the function f1 interpolated with spline1;
 likewise for f2; the lattice in which the sites
 are located, and the angular quantum numbers of the two functions, finds the overlap integral
 of f1 and f2 in reciprocal space.
+Returns integral[f2*(r-R)f1(r)d^3r]
 */
 double complex reciprocal_offsite_wave_overlap(double* dcoord,
 	double* k1, double* f1, double** s1, int size1,

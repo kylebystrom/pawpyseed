@@ -59,9 +59,6 @@ void setup(int nrecl, int nprec, int nspin, int nwk, int nband,
 	vcross(reclattice+0, lattice+3, lattice+6);
 	vcross(reclattice+3, lattice+6, lattice+0);
 	vcross(reclattice+6, lattice+0, lattice+3);
-	double* b1 = reclattice;
-	double* b2 = reclattice+3;
-	double* b3 = reclattice+6;
 	double Vcell = determinant(lattice);
 	for (int i = 0; i < 9; i++) {
 		reclattice[i] *= 2.0 * PI / Vcell;
@@ -79,7 +76,8 @@ void setup(int nrecl, int nprec, int nspin, int nwk, int nband,
 	double nb1maxA = pow(encut*c,0.5) / (magb1 * fabs(sin(phi12))) + 1;
 	double nb2maxA = pow(encut*c,0.5) / (magb2 * fabs(sin(phi12))) + 1;
 	double nb3maxA = pow(encut*c,0.5) / (magb3 * fabs(sinphi123)) + 1;
-	printf("%lf %lf %lf %lf %lf %lf\n", sin(phi12), pow(encut*c,0.5), phi12, vmag, sinphi123, magb3*abs(sinphi123));
+	//printf("%lf %lf %lf %lf %lf %lf\n", sin(phi12), pow(encut*c,0.5),
+	//			phi12, vmag, sinphi123, magb3*abs(sinphi123));
 	int npmaxA = (int) round(4.0/3.0*PI*nb1maxA*nb2maxA*nb3maxA);
 	
 	double phi13 = acos(dot(reclattice+0, reclattice+6) / (magb1 * magb3));
@@ -103,22 +101,22 @@ void setup(int nrecl, int nprec, int nspin, int nwk, int nband,
 	double nb1max = fmax(nb1maxA, fmax(nb1maxB, nb1maxC));
 	double nb2max = fmax(nb2maxA, fmax(nb2maxB, nb2maxC));
 	double nb3max = fmax(nb3maxA, fmax(nb3maxB, nb3maxC));
-	printf("%lf %lf %lf\n", nb1maxA, nb2maxA, nb3maxA);
-	printf("%lf %lf %lf\n", nb1maxB, nb2maxB, nb3maxB);
-	printf("%lf %lf %lf\n", nb1maxC, nb2maxC, nb3maxC);
+	//printf("%lf %lf %lf\n", nb1maxA, nb2maxA, nb3maxA);
+	//printf("%lf %lf %lf\n", nb1maxB, nb2maxB, nb3maxB);
+	//printf("%lf %lf %lf\n", nb1maxC, nb2maxC, nb3maxC);
 
 	int npmax = npmaxA;
 	if (npmaxB < npmax) npmax = npmaxB;
 	if (npmaxC < npmax) npmax = npmaxC;
 
-	printf("spin k band %d %d %d\n", nspin, nwk, nband);
-	printf(" %lf %lf %lf\n", lattice[0], lattice[1], lattice[2]);
-	printf(" %lf %lf %lf\n", lattice[3], lattice[4], lattice[5]);
-	printf(" %lf %lf %lf\n", lattice[6], lattice[7], lattice[8]);
-	printf(" %lf %lf %lf\n", reclattice[0], reclattice[1], reclattice[2]);
-	printf(" %lf %lf %lf\n", reclattice[3], reclattice[4], reclattice[5]);
-	printf(" %lf %lf %lf\n", reclattice[6], reclattice[7], reclattice[8]);
-	printf("\n %lf %lf %lf %d %d %d\n", nb1max, nb2max, nb3max, npmaxA, npmaxB, npmaxC);
+	//printf("spin k band %d %d %d\n", nspin, nwk, nband);
+	//printf(" %lf %lf %lf\n", lattice[0], lattice[1], lattice[2]);
+	//printf(" %lf %lf %lf\n", lattice[3], lattice[4], lattice[5]);
+	//printf(" %lf %lf %lf\n", lattice[6], lattice[7], lattice[8]);
+	//printf(" %lf %lf %lf\n", reclattice[0], reclattice[1], reclattice[2]);
+	//printf(" %lf %lf %lf\n", reclattice[3], reclattice[4], reclattice[5]);
+	//printf(" %lf %lf %lf\n", reclattice[6], reclattice[7], reclattice[8]);
+	//printf("\n %lf %lf %lf %d %d %d\n", nb1max, nb2max, nb3max, npmaxA, npmaxB, npmaxC);
 
 	*nb1 = nb1max;
 	*nb2 = nb2max;

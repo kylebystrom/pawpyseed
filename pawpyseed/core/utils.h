@@ -384,6 +384,12 @@ void CHECK_ALLOCATION(void* ptr);
 /**
 Called when a memory allocation fails to exit the program
 */
-void ALLOCATION_FAILED();
+void ALLOCATION_FAILED(void);
+
+/**
+Checks to see if a routine returned a non-zero status.
+If so, prints the status and exits the program.
+*/
+void CHECK_STATUS(int status);
 
 #endif

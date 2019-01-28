@@ -189,10 +189,6 @@ double* besselt(double* r, double* k, double* f, double encut, int N, int l) {
 real_proj_site_t* projector_values(int num_sites, int* labels, double* coords,
 	double* lattice, double* reclattice, ppot_t* pps, int* fftg) {
 
-	double intervals[3] = {mag(lattice)/fftg[0], mag(lattice+3)/fftg[1], mag(lattice+6)/fftg[2]};
-	double vol = determinant(lattice);
-	int num_pts = fftg[0] * fftg[1] * fftg[2];
-
 	real_proj_site_t* sites = (real_proj_site_t*) malloc(num_sites * sizeof(real_proj_site_t));
 	CHECK_ALLOCATION(sites);
 	int* all_sites = (int*) malloc(num_sites * sizeof(int));
@@ -208,10 +204,6 @@ real_proj_site_t* projector_values(int num_sites, int* labels, double* coords,
 real_proj_site_t* smooth_pw_values(int num_N, int* Nlst, int* labels, double* coords,
 	double* lattice, double* reclattice, ppot_t* pps, int* fftg) {
 
-	double intervals[3] = {mag(lattice)/fftg[0], mag(lattice+3)/fftg[1], mag(lattice+6)/fftg[2]};
-	double vol = determinant(lattice);
-	int num_pts = fftg[0] * fftg[1] * fftg[2];
-
 	real_proj_site_t* sites = (real_proj_site_t*) malloc(num_N * sizeof(real_proj_site_t));
 	CHECK_ALLOCATION(sites);
 	setup_site(sites, pps, num_N, Nlst, labels, coords, lattice, fftg, 1);
@@ -225,7 +217,6 @@ void onto_projector_helper(band_t* band, double complex* x, real_proj_site_t* si
 
 	double dv = determinant(lattice) / fftg[0] / fftg[1] / fftg[2];
 
-	double path[3] = {0,0,0};
 	double kdotr = 0;
 
 	double kpt_cart[3] = {0,0,0};
@@ -238,7 +229,7 @@ void onto_projector_helper(band_t* band, double complex* x, real_proj_site_t* si
 	double complex* xvals = (double complex*) malloc(num_cart_gridpts * sizeof(double complex));
 	int* indices;
 
-	int num_indices, index, t=0;
+	int num_indices, index;
 	for (int s = 0; s < num_sites; s++) {
 		num_indices = sites[s].num_indices;
 		indices = sites[s].indices;
@@ -498,7 +489,6 @@ void overlap_setup_real(pswf_t* wf_R, pswf_t* wf_S,
 	int NUM_KPTS = wf_R->nwk * wf_R->nspin;
 	int NUM_BANDS = wf_S->nband;
 	int max_num_indices = 0;
-	double inv_sqrt_vol = pow(determinant(wf_R->lattice), -0.5);
 	if (num_N_R > 0) {
 		real_proj_site_t* sites_N_R = smooth_pw_values(num_N_R, N_R, labels_R, coords_R,
 			wf_S->lattice, wf_S->reclattice, wf_R->pps, wf_S->fftg);
@@ -611,7 +601,6 @@ void compensation_terms(double complex* overlap, int BAND_NUM, pswf_t* wf_S, psw
 	CHECK_ALLOCATION(overlap);
 
 	double complex** N_RS_overlaps = wf_S->overlaps;
-	double inv_sqrt_vol = pow(determinant(wf_R->lattice), -0.5);
 
 #if defined(_OPENMP)
 	omp_set_num_threads(omp_get_max_threads());
@@ -619,7 +608,6 @@ void compensation_terms(double complex* overlap, int BAND_NUM, pswf_t* wf_S, psw
 	#pragma omp parallel for
 	for (int w = 0; w < NUM_BANDS * NUM_KPTS; w++) {
 		int ni = 0, nj = 0;
-		int l1 = 0, l2 = 0;
 
 		kpoint_t* kpt_R = wf_R->kpts[w%NUM_KPTS];
 		kpoint_t* kpt_S = wf_S->kpts[w%NUM_KPTS];
@@ -627,7 +615,6 @@ void compensation_terms(double complex* overlap, int BAND_NUM, pswf_t* wf_S, psw
 		band_t* band_S = kpt_S->bands[BAND_NUM];
 
 		double complex temp = 0 + 0 * I;
-		int t = 0;
 		for (int s = 0; s < num_M; s++) {
 			ppot_t pp = wf_R->pps[ref_labels[M_R[s]]];
 			int s1 = M_R[s];
@@ -683,7 +670,6 @@ void compensation_terms(double complex* overlap, int BAND_NUM, pswf_t* wf_S, psw
 
 		temp = 0 + 0 * I;
 		for (int s = 0; s < num_N_RS; s++) {
-			ppot_t pp = wf_R->pps[ref_labels[N_RS_R[s]]];
 			int site_num1 = N_RS_R[s];
 			int site_num2 = N_RS_S[s];
 			projection_t pron = band_R->projections[site_num1];

@@ -95,11 +95,6 @@ sbt_descriptor_t* spherical_bessel_transform_setup(double encut, double enbuf, i
 
 double* wave_spherical_bessel_transform(sbt_descriptor_t* d, double* f, int l) {
 
-	double kmin = d->kmin;
-	double kappamin = d->kappamin;
-	double rhomin = d->rhomin;
-	double drho = d->drho;
-	double dt = d->dt;
 	int N = d->N;
 	double complex** M = d->mult_table;
 	double* ks = d->ks;
@@ -126,14 +121,13 @@ double* wave_spherical_bessel_transform(sbt_descriptor_t* d, double* f, int l) {
 	status = DftiCreateDescriptor(&handle, DFTI_DOUBLE, DFTI_COMPLEX, dim, length);
 	status = DftiCommitDescriptor(handle);
 
-	double phase = 0;
 	for (int m = 0; m < N; m++) {
 		x[m] = pow(r[m], 0.5) * fs[m];
 		// f is the radial part of the function times r,
 		// so only multiply by r^0.5 instead of r^1.5
 	}
-	double rp=0.0, ip=0.0;
 	status = DftiComputeBackward(handle, x);
+	CHECK_STATUS(status);
 	for (int n = 0; n < N; n++) {
 		x[n] *= M[l][n];
 		if (n >= N/2) {
@@ -141,10 +135,8 @@ double* wave_spherical_bessel_transform(sbt_descriptor_t* d, double* f, int l) {
 		}
 	}
 	status = DftiComputeBackward(handle, x);
-	printf("status %ld\n", status);
-	double kp = 0;
+	CHECK_STATUS(status);
 	for (int p = 0; p < N / 2; p++) {
-		kp = kmin * exp(p * drho);
 		vals[p] = creal(x[p]);
 		vals[p] *= 2 / pow(ks[p], 1.5);
 	}
@@ -161,11 +153,6 @@ double* inverse_wave_spherical_bessel_transform(sbt_descriptor_t* d, double* f, 
 	//double rmin = d->rmin;
 	//double rhomin = d->rhomin;
 	//double drho = d->drho;
-	double kmin = d->rmin;
-	double kappamin = d->rhomin;
-	double rhomin = d->kappamin;
-	double drho = d->drho;
-	double dt = d->dt;
 	int N = d->N;
 	double complex** M = d->mult_table;
 	//double* ks = d->ks;
@@ -193,13 +180,12 @@ double* inverse_wave_spherical_bessel_transform(sbt_descriptor_t* d, double* f, 
 	status = DftiCreateDescriptor(&handle, DFTI_DOUBLE, DFTI_COMPLEX, dim, length);
 	status = DftiCommitDescriptor(handle);
 
-	double phase = 0;
 	for (int m = 0; m < N; m++) {
 		x[m] = pow(r[m], 1.5) * fs[m];
 	}
-	double rp=0.0, ip=0.0;
+	
 	status = DftiComputeBackward(handle, x);
-	printf("status %ld\n", status);
+	CHECK_STATUS(status);
 	for (int n = 0; n < N; n++) {
 		x[n] *= M[l][n];
 		if (n >= N/2) {
@@ -207,10 +193,8 @@ double* inverse_wave_spherical_bessel_transform(sbt_descriptor_t* d, double* f, 
 		}
 	}
 	status = DftiComputeBackward(handle, x);
-	printf("status %ld\n", status);
-	double kp = 0;
+	CHECK_STATUS(status);
 	for (int p = 0; p < N / 2; p++) {
-		kp = kmin * exp(p * drho);
 		vals[p] = creal(x[p + N / 2]) / PI * 2;
 		//vals[p] *= 2 / pow(ks[p], 1.5);
 		vals[p] *= 2 / pow(ks[p + N / 2], 1.5);

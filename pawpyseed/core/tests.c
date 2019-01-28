@@ -35,8 +35,6 @@ int fft_check(char* wavecar, double* kpt_weights, int* fftg) {
 	int* Gs = wf->kpts[0]->Gs;
 	float complex* Cs = wf->kpts[0]->bands[0]->Cs;
 	double inv_sqrt_vol = pow(determinant(wf->lattice), -0.5);
-	double dv = determinant(wf->lattice) / fftg[0] / fftg[1] / fftg[2];
-	double* kpt = wf->kpts[0]->k;
 	double total1 = 0;
 	double total2 = 0;
 	double total3 = 0;

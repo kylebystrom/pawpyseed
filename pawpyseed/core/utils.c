@@ -398,7 +398,6 @@ double* legendre_product(int l1, int l2, int m1, int m2) {
 			polynomial[n1+n2] += lp1[n1] * lp2[n2];
 		}
 	}
-	int fac;
 	for (int l = maxl; l >= abs(m); l--) {
 		legendre_coeff(test, l, m);
 		coeff[l] = polynomial[l] / test[l];
@@ -427,10 +426,10 @@ double fac(int n) {
 double complex Ylm(int l, int m, double theta, double phi) {
 	//printf("%lf %lf %lf\n", pow((2*l+1)/(4*PI)*fac(l-m)/fac(l+m), 0.5), legendre(l, m, cos(theta)),
 	//	creal(cexp(I*m*phi)));
-	double complex multiplier = 0;
-	if (m == 0) multiplier = 1;
-	else if (m < 0) multiplier = pow(2.0, 0.5) * cos(-m*phi);
-	else multiplier = pow(-1,m) * pow(2.0, 0.5) * sin(m*phi);
+	//double complex multiplier = 0;
+	//if (m == 0) multiplier = 1;
+	//else if (m < 0) multiplier = pow(2.0, 0.5) * cos(-m*phi);
+	//else multiplier = pow(-1,m) * pow(2.0, 0.5) * sin(m*phi);
 	return pow((2*l+1)/(4*PI)*fac(l-m)/fac(l+m), 0.5) *
 		legendre(l, m, cos(theta))* cexp(I*m*phi);
 }
@@ -438,10 +437,10 @@ double complex Ylm(int l, int m, double theta, double phi) {
 double complex Ylm2(int l, int m, double costheta, double phi) {
 	//printf("%lf %lf %lf\n", pow((2*l+1)/(4*PI)*fac(l-m)/fac(l+m), 0.5), legendre(l, m, cos(theta)),
 	//	creal(cexp(I*m*phi)));
-	double complex multiplier = 0;
-        if (m == 0) multiplier = 1;
-        else if (m < 0) multiplier = pow(2.0, 0.5) * cos(-m*phi);
-        else multiplier = pow(-1,m) * pow(2.0, 0.5) * sin(m*phi);
+	//double complex multiplier = 0;
+	//if (m == 0) multiplier = 1;
+	//else if (m < 0) multiplier = pow(2.0, 0.5) * cos(-m*phi);
+	//else multiplier = pow(-1,m) * pow(2.0, 0.5) * sin(m*phi);
 	return pow((2*l+1)/(4*PI)*fac(l-m)/fac(l+m), 0.5) *
 		legendre(l, m, costheta) * cexp(I*m*phi);
 }
@@ -928,7 +927,6 @@ pswf_t* expand_symm_wf(pswf_t* rwf, int num_kpts, int* maps,
 		double* dr = drs + 3 * (knum%num_kpts);
 		double* op = ops+OPSIZE*(knum%num_kpts);
 
-		int w = 0;
 		for (int g = 0; g < kpt->num_waves; g++) {
 
 			//pw[0] = rkpt->k[0] + rkpt->Gs[3*g+0];
@@ -1016,9 +1014,16 @@ void CHECK_ALLOCATION(void* ptr) {
 	}
 }
 
-void ALLOCATION_FAILED() {
+void ALLOCATION_FAILED(void) {
 	printf("ALLOCATION FAILED\n");
 	exit(-1);
+}
+
+void CHECK_STATUS(int status) {
+	if (status != 0) {
+		printf("ROUTINE FAILED WITH STATUS %d", status);
+		exit(-1);
+	}
 }
 
 double* get_smooth_wave(ppot_t* lst, int num) {

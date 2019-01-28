@@ -14,8 +14,6 @@ from nose.tools import nottest
 
 import pawpy
 
-COMPILE = False
-
 class PawpyTestError(Exception):
 	"""
 	Class for handling errors that occur during execution

@@ -8,11 +8,6 @@ of two overlapping spheres
 
 #include <complex.h>
 
-double complex spherwave_planewave_overlap(double* center,
-	double* r, double* f, double** spline, int size,
-	double* lattice, double* reclattice, int l, int m,
-	double complex* x, int* fftg, double* k);
-
 /**
 Given dcoord: difference between site locations (R2-R1); r1, the radial grid, size size1, of
 the function f1 interpolated with spline1; likewise for f2; the lattice in which the sites

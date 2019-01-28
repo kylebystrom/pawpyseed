@@ -30,9 +30,12 @@ void fft3d(double complex* x, int* G_bounds, double* lattice,
 		//test_total += cabs(Cs[w]) * cabs(Cs[w]);
 	}
 
-	MKL_LONG status1 = DftiCreateDescriptor(&handle, DFTI_DOUBLE, DFTI_COMPLEX, dim, length);
-	MKL_LONG status2 = DftiCommitDescriptor(handle);
-	MKL_LONG status3 = DftiComputeBackward(handle, x);
+	status = DftiCreateDescriptor(&handle, DFTI_DOUBLE, DFTI_COMPLEX, dim, length);
+	CHECK_STATUS(status);
+	status = DftiCommitDescriptor(handle);
+	CHECK_STATUS(status);
+	status = DftiComputeBackward(handle, x);
+	CHECK_STATUS(status);
 	//printf("%s\n%s\n%s\n", DftiErrorMessage(status1), DftiErrorMessage(status2), DftiErrorMessage(status3));
 
 	//double kmins[3] = {G_bounds[0] + kpt[0], G_bounds[2] + kpt[1], G_bounds[4] + kpt[2]};
@@ -44,7 +47,6 @@ void fft3d(double complex* x, int* G_bounds, double* lattice,
 	double kdotr = 0;
 
 	double total = 0;
-	double rp, ip;
 	for (int i = 0; i < fftg[0]; i++) {
 		for (int j = 0; j < fftg[1]; j++) {
 			for (int k = 0; k  < fftg[2]; k++) {

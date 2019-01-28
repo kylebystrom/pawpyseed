@@ -8,7 +8,6 @@ from pymatgen.io.vasp.inputs import Potcar, Poscar
 from pymatgen.io.vasp.outputs import Vasprun, Outcar
 from pymatgen.core.structure import Structure
 import numpy as np
-from ctypes import *
 from pawpyseed.core.utils import *
 import pawpyseed.core.symmetry as pawpy_symm
 import os, time

@@ -32,7 +32,6 @@ void ae_state_density(double* P, int BAND_NUM, int KPOINT_NUM, pswf_t* wf,
 
 	int gridsize = fftg[0] * fftg[1] * fftg[2];
 	//double* P = mkl_calloc(gridsize, sizeof(double), 64);
-	int spin_mult = 2 / wf->nspin;
 	double complex* x = mkl_malloc(gridsize * sizeof(double complex), 64);
 	realspace_state(x, BAND_NUM, KPOINT_NUM,
 		wf, fftg, labels, coords);

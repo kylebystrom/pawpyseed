@@ -11,75 +11,6 @@
 #define PI 3.14159265358979323846
 #define KGRID_SIZE 500
 
-double complex spherwave_planewave_overlap(double* center,
-	double* r, double* f, double** spline, int size,
-	double* lattice, double* reclattice, int l, int m,
-	double complex* x, int* fftg, double* k) {
-
-	double temp[3] = {0,0,0};
-	double rmax = r[size-1];
-	double dphi = 0;
-	double R, costheta, dcostheta, sintheta, phi, integral = 0;
-	double complex F;
-	int NUM_RADIAL_SUBSTEPS, NUM_PHI, NUM_THETA = 0;
-
-	double center_cart[3];
-	center_cart[0] = center[0];
-	center_cart[1] = center[1];
-	center_cart[2] = center[2];
-	frac_to_cartesian(center_cart, lattice);
-
-	double kcart[3];
-	kcart[0] = k[0];
-	kcart[1] = k[1];
-	kcart[2] = k[2];
-	frac_to_cartesian(kcart, reclattice);
-
-	double vals[8];
-	double F2 = 0;
-
-	double dr = 0;
-	double F1 = 0;
-
-	double phase = 0;
-
-	for (int rstep = 0; rstep < size-1; rstep++) {
-		dr = (r[rstep+1] - r[rstep]);
-		NUM_THETA = min(80, max(6, (int) (r[rstep] * PI / 0.05)));
-		double* costhetas = QUADRATURE_POINTS[NUM_THETA-3];
-		double* dcosthetas = QUADRATURE_WEIGHTS[NUM_THETA-3];
-		for (int substep = 0; substep < NUM_RADIAL_SUBSTEPS; substep++) {
-			R = r[rstep];
-			for (int thetastep = 0; thetastep < NUM_THETA; thetastep++) {
-				costheta = costhetas[thetastep];
-				dcostheta = dcosthetas[thetastep];
-				sintheta = pow(1 - pow(costheta, 2), 0.5);
-				NUM_PHI = max((int) ((NUM_THETA+1)*2*sintheta/4)*4, 12);
-				dphi = 2 * PI / NUM_PHI;
-				for (int phistep = 0; phistep < NUM_PHI; phistep++) {
-					phi = phistep * dphi;
-					temp[0] = R * sintheta * cos(phi) + center_cart[0];
-					temp[1] = R * sintheta * sin(phi) + center_cart[1];
-					temp[2] = R * costheta + center_cart[2];
-					//F1 = wave_interpolate(R1, size1, r1, f1, spline1) * Ylm2(l1, m1, costheta, phi);
-					F1 = f[rstep] * Ylm2(l, m, costheta, phi);
-					phase = cexp(I * dot(kcart, temp));
-
-					cartesian_to_frac(temp, reclattice);
-					temp[0] = fmod( fmod(temp[0], 1) + 1, 1 );
-					temp[1] = fmod( fmod(temp[1], 1) + 1, 1 );
-					temp[2] = fmod( fmod(temp[2], 1) + 1, 1 );
-					trilinear_interpolate_values(x, temp, fftg, vals);
-					F2 = trilinear_interpolate(vals, temp, fftg);
-					integral += conj(F1) * F2 * R * dr * dcostheta * dphi * phase;
-				}
-			}
-		}
-	}
-
-	return integral;
-}
-
 double complex offsite_wave_overlap(double* dcoord,
 	double* r1, double* f1, double** spline1, int size1,
 	double* r2, double* f2, double** spline2, int size2,
@@ -91,7 +22,7 @@ double complex offsite_wave_overlap(double* dcoord,
 	double dphi = 0;
 	double THETA, PHI, R1, R2, costheta, dcostheta, sintheta, phi, integral = 0;
 	double complex F1, F2;
-	int NUM_RADIAL_SUBSTEPS, NUM_PHI, NUM_THETA = 0;
+	int NUM_RADIAL_SUBSTEPS = 1, NUM_PHI = 1, NUM_THETA = 0;
 
 	//loop over 1st coord
 	double dr = 0;

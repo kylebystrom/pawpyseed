@@ -22,8 +22,8 @@ cfiles = [f+'.c' for f in srcfiles]
 hfiles = [f+'.h' for f in srcfiles]
 ext_files = cfiles + ['pawpyc.pyx']
 ext_files = ['pawpyseed/core/' + f for f in ext_files]
-lib_dirs = ['/usr/local/lib']
-inc_dirs = ['/usr/local/include', 'pawpyseed/core', np.get_include()]
+lib_dirs = ['/usr/lib', '/usr/local/lib']
+inc_dirs = ['/usr/include', '/usr/local/include', 'pawpyseed/core', np.get_include()]
 if 'MKLROOT' in os.environ:
 	MKLROOT = os.environ['MKLROOT']
 	lib_dirs.append('%s/lib/intel64_lin' % MKLROOT)

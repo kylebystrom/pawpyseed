@@ -8,11 +8,16 @@ from pymatgen.core.structure import Structure
 from pymatgen.io.vasp.outputs import Vasprun
 from monty.io import zopen
 import numpy as np
+from numpy.testing import assert_almost_equal
 cimport numpy as np
 import time
 import sys
 from libc.stdint cimport uintptr_t
 from pawpyseed.core.symmetry import *
+
+###################
+#  TIMER SECTION  #
+###################
 
 class Timer:
 	@staticmethod
@@ -27,6 +32,10 @@ class Timer:
 	ALL_SETUP_TIME = 0
 	ALL_OVERLAP_TIME = 0
 	ALL_AUGMENTATION_TIME = 0
+
+################################
+#  MISCELLANEOUS PYTHON UTILS  #
+################################  
 
 def el(site):
 	"""
@@ -46,7 +55,168 @@ def make_c_ops(op_nums, symmops):
 		drs[3*i:3*(i+1)] = symmops[op_nums[i]].translation_vector
 	return ops, drs
 
-#cpdef struct PWFPointer:
+#################################
+#  C UTILS INTERFACE FUNCTIONS  #
+#################################
+
+cpdef double legendre(int l, int m, double x):
+	return pawpyc.legendre(l, m, x)
+
+cpdef double complex Ylm(int l, int m, double theta, double phi):
+	return pawpyc.Ylm(l, m, theta, phi)
+
+cpdef double complex Ylm2(int l, int m, double costheta, double phi):
+	return pawpyc.Ylm2(l, m, costheta, phi)
+
+cpdef frac_to_cartesian(np.ndarray[double, ndim=1] coord,
+	np.ndarray[double, ndim=2] lattice):
+
+	if not coord.flags['C_CONTIGUOUS']:
+		coord = np.ascontiguousarray(coord)
+	latticef = lattice.flatten()
+	if not latticef.flags['C_CONTIGUOUS']:
+		latticef = np.ascontiguousarray(latticef)
+	cdef double[::1] coordv = coord
+	cdef double[::1] latticev = latticef
+	pawpyc.frac_to_cartesian(&coordv[0], &latticev[0])
+
+cpdef cartesian_to_frac(np.ndarray[double, ndim=1] coord,
+	np.ndarray[double, ndim=2] reclattice):
+
+	if not coord.flags['C_CONTIGUOUS']:
+		coord = np.ascontiguousarray(coord)
+	reclatticef = reclattice.flatten()
+	if not reclatticef.flags['C_CONTIGUOUS']:
+		reclatticef = np.ascontiguousarray(reclatticef)
+	cdef double[::1] coordv = coord
+	cdef double[::1] latticev = reclatticef
+	pawpyc.cartesian_to_frac(&coordv[0], &latticev[0])
+
+cpdef interpolate(np.ndarray[double, ndim=1] res,
+	np.ndarray[double, ndim=1] tst,
+	np.ndarray[double, ndim=1] x,
+	np.ndarray[double, ndim=1] y,
+	double rmax,
+	int size, int tstsize):
+
+	cdef double[::1] xv = x
+	cdef double[::1] yv = y
+	cdef double** coef = pawpyc.spline_coeff(&xv[0], &yv[0], size)
+
+	for i in range(tstsize):
+		res[i] = pawpyc.proj_interpolate(tst[i], rmax,
+			size, &xv[0], &yv[0], coef)
+
+	free(coef[0])
+	free(coef[1])
+	free(coef[2])
+	free(coef)
+
+cpdef fft_check(str wavecar, np.ndarray[double, ndim=1] kpt_weights,
+	np.ndarray[int, ndim=1] fftgrid):
+
+	cdef int[::1] fftg = fftgrid
+	cdef double[::1] kws = kpt_weights
+	cdef pawpyc.pswf_t* wf = pawpyc.read_wavefunctions(wavecar.encode('utf-8'), &kws[0])
+	cdef double complex* x = <double complex*> malloc(fftg[0]*fftg[1]*fftg[2]*sizeof(double complex))
+	pawpyc.fft3d(x, wf.G_bounds, wf.lattice, wf.kpts[0].k, wf.kpts[0].Gs,
+		wf.kpts[0].bands[0].Cs, wf.kpts[0].bands[0].num_waves, &fftg[0])
+	cdef int* Gs = wf.kpts[0].Gs
+	cdef float complex* Cs = wf.kpts[0].bands[0].Cs
+	cdef double inv_sqrt_vol = np.power(pawpyc.determinant(wf.lattice), -0.5)
+	cdef double dv = pawpyc.determinant(wf.lattice) / fftg[0] / fftg[1] / fftg[2]
+	cdef double* kpt = wf.kpts[0].k;
+	cdef double f1 = 0
+	cdef double f2 = 0
+	cdef double f3 = 0
+	cdef int ind
+	cdef double complex temp
+	il = np.arange(fftg[0], dtype=np.float64) / fftg[0]
+	jl = np.arange(fftg[1], dtype=np.float64) / fftg[1]
+	kl = np.arange(fftg[2], dtype=np.float64) / fftg[2]
+	for i in np.arange(fftg[0]):
+		for j in np.arange(fftg[1]):
+			for k in np.arange(fftg[2]):
+				f1 = il[i]
+				f2 = jl[j]
+				f3 = kl[k]
+				temp = 0;
+				for w in range(wf.kpts[0].bands[0].num_waves):
+					temp += Cs[w] * np.exp((f1 * (Gs[3*w]) +
+							f2 * (Gs[3*w+1]) +
+							f3 * (Gs[3*w+2])) * 2.0j * np.pi)
+				temp *= inv_sqrt_vol
+				ind = i*fftg[1]*fftg[2]+j*fftg[2]+k
+				assert_almost_equal(np.abs(x[ind] - temp), 0)
+	free(x)
+	pawpyc.free_pswf(wf)
+
+cpdef spherical_bessel_transform(double encut, int l,
+	np.ndarray[double, ndim=1] r, np.ndarray[double, ndim=1] f):
+
+	size = r.shape[0]
+	if not r.flags['C_CONTIGUOUS']:
+		r = np.ascontiguousarray(r)
+	if not f.flags['C_CONTIGUOUS']:
+		f = np.ascontiguousarray(f)
+	cdef np.ndarray k = np.zeros(size, dtype=np.float64, order='C')
+	cdef np.ndarray fk = np.zeros(size, dtype=np.float64, order='C')
+	cdef double[::1] rv = r
+	cdef double[::1] kv = k
+	cdef double[::1] fv = f
+	cdef pawpyc.sbt_descriptor_t* sbtd = pawpyc.spherical_bessel_transform_setup(encut, 0,
+					l, size, &rv[0], &kv[0])
+	cdef double* fkv = pawpyc.wave_spherical_bessel_transform(sbtd, &fv[0], l)
+	for i in range(size):
+		fk[i] = fkv[i]
+	free(fkv)
+	return k, fk
+
+cpdef reciprocal_offsite_wave_overlap(np.ndarray[double, ndim=1] dcoord,
+	np.ndarray[double, ndim=1] r1, np.ndarray[double, ndim=1] f1,
+	np.ndarray[double, ndim=1] r2, np.ndarray[double, ndim=1] f2,
+	int l1, int m1, int l2, int m2):
+
+	cdef int size1 = r1.shape[0]
+	cdef int size2 = r2.shape[0]
+
+	cdef double[::1] r1v = r1
+	cdef double[::1] r2v = r2
+	cdef double[::1] f1v = f1
+	cdef double[::1] f2v = f2
+
+	cdef double encut = 1e5
+	k1, fk1 = spherical_bessel_transform(encut, l1, r1, f1)
+	k2, fk2 = spherical_bessel_transform(encut, l2, r2, f2)
+
+	cdef double[::1] dcoordv = dcoord
+	cdef double[::1] k1v = k1
+	cdef double[::1] fk1v = fk1
+	cdef double[::1] k2v = k2
+	cdef double[::1] fk2v = fk2
+
+	cdef double** s1 = pawpyc.spline_coeff(&k1v[0], &fk1v[0], size1)
+	cdef double** s2 = pawpyc.spline_coeff(&k2v[0], &fk2v[0], size2)
+
+	res = pawpyc.reciprocal_offsite_wave_overlap(&dcoordv[0],
+		&k1v[0], &fk1v[0], s1, size1,
+		&k2v[0], &fk2v[0], s2, size2,
+		NULL, l1, m1, l2, m2)
+
+	free(s1[0])
+	free(s1[1])
+	free(s1[2])
+	free(s1)
+	free(s2[0])
+	free(s2[1])
+	free(s2[2])
+	free(s2)
+
+	return res
+
+############################
+#  PAWPYSEED BASE CLASSES  #
+############################
 
 cdef class PWFPointer:
 
@@ -415,15 +585,3 @@ cdef class CProjector:
 			&self.basis.nums[0], &self.basis.coords[0])
 		return res
 
-
-
-def py_compensation_terms(b, wf, basis, M_R, M_S, N_R, N_S, N_RS_R, N_RS_S, dim):
-	cdef array.array ref_labels = array.array(np.int32, basis.nums)
-	cdef array.array proj_labels = array.array(np.int32, wf.nums)
-	cdef array.array ref_coords = array.array(np.float64, basis.coords)
-	cdef array.array proj_coords = array.array(np.float64, wf.coords)
-	cdef array.array fftg = array.array('i', dim)
-	return
-
-
-	

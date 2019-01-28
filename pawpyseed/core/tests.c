@@ -61,7 +61,6 @@ int fft_check(char* wavecar, double* kpt_weights, int* fftg) {
 			}
 		}
 	}
-	printf("made it %lf %lf %lf\n", total1 * dv, total2 * dv, total3);
 	mkl_free(x);
 	return 0;
 }

@@ -140,7 +140,6 @@ typedef struct real_proj {
 	int l;
 	int m;
 	int func_num;
-	double* paths;
 	double complex* values;
 } real_proj_t;
 
@@ -154,6 +153,7 @@ typedef struct real_proj_site {
 	double rmax;
 	double* coord;
 	int* indices;
+	double* paths;
 	real_proj_t* projs;
 } real_proj_site_t;
 

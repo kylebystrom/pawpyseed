@@ -380,7 +380,6 @@ class Projector(pawpy.CProjector):
 			totest = band_list[:]
 		else:
 			vbm = 0
-			print(occs)
 			for i in range(self.wf.nband):
 				if occs[i*self.wf.nwk*self.wf.nspin] > 0.5:
 					vbm = i

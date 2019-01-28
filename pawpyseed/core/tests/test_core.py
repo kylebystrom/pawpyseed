@@ -436,7 +436,6 @@ class TestMem:
 		f.close()
 """
 
-@nottest
 class TestPy:
 
 	def setup(self):

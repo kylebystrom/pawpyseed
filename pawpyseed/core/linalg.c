@@ -65,5 +65,3 @@ void fft3d(double complex* x, int* G_bounds, double* lattice,
 double complex* fft_calloc(int num_items, int item_size) {
         return (double complex*) mkl_calloc(num_items, item_size, 64);
 }
-
-

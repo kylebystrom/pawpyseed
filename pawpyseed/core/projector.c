@@ -497,10 +497,16 @@ void overlap_setup_real(pswf_t* wf_R, pswf_t* wf_S,
 	printf("STARTING OVERLAP_SETUP\n");
 	int NUM_KPTS = wf_R->nwk * wf_R->nspin;
 	int NUM_BANDS = wf_S->nband;
+	int max_num_indices = 0;
 	double inv_sqrt_vol = pow(determinant(wf_R->lattice), -0.5);
 	if (num_N_R > 0) {
 		real_proj_site_t* sites_N_R = smooth_pw_values(num_N_R, N_R, labels_R, coords_R,
 			wf_S->lattice, wf_S->reclattice, wf_R->pps, wf_S->fftg);
+		for (int s = 0; s < num_N_R; s++) {
+			if (sites_N_R[s].num_indices > max_num_indices) {
+				max_num_indices = sites_N_R[s].num_indices;
+			}
+		}
 #if defined(_OPENMP)
 		omp_set_num_threads(omp_get_max_threads());
 #endif
@@ -509,15 +515,21 @@ void overlap_setup_real(pswf_t* wf_R, pswf_t* wf_S,
 			kpoint_t* kpt_S = wf_S->kpts[w%NUM_KPTS];
 	
 			onto_smoothpw(kpt_S, w/NUM_KPTS, sites_N_R, num_N_R,
-				wf_S->G_bounds, wf_S->lattice, wf_S->reclattice, wf_R->pps, wf_S->fftg);
+				wf_S->G_bounds, wf_S->lattice, wf_S->reclattice, max_num_indices, wf_S->fftg);
 		}
 		free_real_proj_site_list(sites_N_R, num_N_R);
 	}
+	max_num_indices = 0;
 	printf("PART 1 DONE\n");
 	if (num_N_S > 0) {
 		real_proj_site_t* sites_N_S = smooth_pw_values(num_N_S, N_S, labels_S, coords_S,
 			wf_R->lattice, wf_R->reclattice, wf_S->pps, wf_R->fftg);
 		NUM_BANDS = wf_R->nband;
+		for (int s = 0; s < num_N_S; s++) {
+            if (sites_N_S[s].num_indices > max_num_indices) {
+                max_num_indices = sites_N_S[s].num_indices;
+            }
+        }
 #if defined(_OPENMP)
 		omp_set_num_threads(omp_get_max_threads());
 #endif
@@ -526,7 +538,7 @@ void overlap_setup_real(pswf_t* wf_R, pswf_t* wf_S,
 			kpoint_t* kpt_R = wf_R->kpts[w%NUM_KPTS];
 
 			onto_smoothpw(kpt_R, w/NUM_KPTS, sites_N_S, num_N_S,
-				wf_R->G_bounds, wf_R->lattice, wf_R->reclattice, wf_S->pps, wf_R->fftg);
+				wf_R->G_bounds, wf_R->lattice, wf_R->reclattice, max_num_indices, wf_R->fftg);
 		}
 		free_real_proj_site_list(sites_N_S, num_N_S);
 	}

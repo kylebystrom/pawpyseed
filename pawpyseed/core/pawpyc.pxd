@@ -93,7 +93,6 @@ cdef extern from "utils.h":
         int l
         int m
         int func_num
-        double* paths
         double complex* values
     ctypedef struct  real_proj_site_t:
         int index
@@ -105,6 +104,7 @@ cdef extern from "utils.h":
         double rmax
         double* coord
         int* indices
+        double* paths
         real_proj_t* projs
     cdef void affine_transform(double* out, double* op, double* inv)
     cdef void rotation_transform(double* out, double* op, double* inv)
@@ -181,14 +181,14 @@ cdef extern from "projector.h":
     cdef real_proj_site_t* smooth_pw_values(int num_N, int* Nlst, int* labels, double* coords,
         double* lattice, double* reclattice, ppot_t* pps, int* fftg)
     cdef void onto_projector_helper(band_t* band, double complex* x, real_proj_site_t* sites,
-        int num_sites, double* lattice, double* reclattice, double* kpt, ppot_t* pps, int* fftg,
-        projection_t* projections)
+        int num_sites, double* lattice, double* reclattice, double* kpt, int num_cart_gridpts,
+        int* fftg, projection_t* projections)
     cdef void onto_projector(kpoint_t* kpt, int band_num, real_proj_site_t* sites, int num_sites,
-        int* G_bounds, double* lattice, double* reclattice, ppot_t* pps, int* fftg)
+        int* G_bounds, double* lattice, double* reclattice, int num_cart_gridpts, int* fftg)
     cdef void onto_projector_ncl(kpoint_t* kpt, int band_num, real_proj_site_t* sites, int num_sites,
-        int* G_bounds, double* lattice, double* reclattice, ppot_t* pps, int* fftg)
+        int* G_bounds, double* lattice, double* reclattice, int num_cart_gridpts, int* fftg)
     cdef void onto_smoothpw(kpoint_t* kpt, int band_num, real_proj_site_t* sites, int num_sites,
-        int* G_bounds, double* lattice, double* reclattice, ppot_t* pps, int* fftg)
+        int* G_bounds, double* lattice, double* reclattice, int num_cart_gridpts, int* fftg)
     cdef void add_num_cart_gridpts(ppot_t* pp_ptr, double* lattice, int* fftg)
     cdef void make_pwave_overlap_matrices(ppot_t* pp_ptr)
     cdef void setup_projections(pswf_t* wf, ppot_t* pps, int num_elems,
@@ -233,29 +233,25 @@ cdef extern from "reader.h":
 cdef extern from "density.h":
 
     cdef void realspace_state(double complex* x, int BAND_NUM, int KPOINT_NUM,
-        pswf_t* wf, ppot_t* pps, int* fftg, int* labels, double* coords)
+        pswf_t* wf, int* fftg, int* labels, double* coords)
     cdef void ncl_realspace_state(double complex* x, int BAND_NUM, int KPOINT_NUM,
-        pswf_t* wf, ppot_t* pps, int* fftg, int* labels, double* coords)
-    cdef void ae_chg_density(double* P, pswf_t* wf, ppot_t* pps, int* fftg, int* labels, double* coords)
-    cdef void project_realspace_state(double complex* projs, int BAND_NUM, pswf_t* wf, pswf_t* wf_R, ppot_t* pps,
-        ppot_t* pps_R, int* fftg, int* labels, double* coords, int* labels_R, double* coords_R)
+        pswf_t* wf, int* fftg, int* labels, double* coords)
+    cdef void ae_chg_density(double* P, pswf_t* wf, int* fftg, int* labels, double* coords)
+    cdef void project_realspace_state(double complex* projs, int BAND_NUM, pswf_t* wf, pswf_t* wf_R,
+        int* fftg, int* labels, double* coords, int* labels_R, double* coords_R)
     cdef void write_realspace_state_ncl_ri(char* filename1, char* filename2,
-        char* filename3, char* filename4,
-        int BAND_NUM, int KPOINT_NUM,
-        pswf_t* wf, ppot_t* pps, int* fftg,
-        int* labels, double* coords)
-    cdef double* realspace_state_ri(int BAND_NUM, int KPOINT_NUM, pswf_t* wf, ppot_t* pps, int* fftg,
+        char* filename3, char* filename4, int BAND_NUM, int KPOINT_NUM,
+        pswf_t* wf, int* fftg, int* labels, double* coords)
+    cdef double* realspace_state_ri(int BAND_NUM, int KPOINT_NUM, pswf_t* wf, int* fftg,
             int* labels, double* coords)
     cdef void write_volumetric(char* filename, double* x, int* fftg, double scale)
     cdef double* write_realspace_state_ri_return(char* filename1, char* filename2, int BAND_NUM, int KPOINT_NUM,
-        pswf_t* wf, ppot_t* pps, int* fftg,
-        int* labels, double* coords)
-    cdef double* write_density_return(char* filename, pswf_t* wf, ppot_t* pps,
+        pswf_t* wf, int* fftg, int* labels, double* coords)
+    cdef double* write_density_return(char* filename, pswf_t* wf,
         int* fftg, int* labels, double* coords)
     cdef void write_realspace_state_ri_noreturn(char* filename1, char* filename2, int BAND_NUM, int KPOINT_NUM,
-        pswf_t* wf, ppot_t* pps, int* fftg,
-        int* labels, double* coords)
-    cdef void write_density_noreturn(char* filename, pswf_t* wf, ppot_t* pps,
+        pswf_t* wf, int* fftg, int* labels, double* coords)
+    cdef void write_density_noreturn(char* filename, pswf_t* wf,
         int* fftg, int* labels, double* coords)
     
 

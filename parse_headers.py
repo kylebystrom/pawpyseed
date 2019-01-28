@@ -50,3 +50,4 @@ for fname in files:
 f = open(directory + 'pawpyc.pxd', 'w')
 f.write(full_file.replace('\t', '    '))
 f.close()
+

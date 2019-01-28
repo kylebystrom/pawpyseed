@@ -2,7 +2,7 @@
 The following routines are based on the Fortran program NumSBT written by J. Talman.
 The algorithm performs a spherical Bessel transform in O(NlnN) time. If you adapt
 this code for any purpose, please cite:
-Talman, J. Computer Physics Communications 2009, 180, 332 �~@~S338.
+Talman, J. Computer Physics Communications 2009, 180, 332-338.
 The code is distributed under the Standard CPC license.
 */
 

@@ -294,6 +294,7 @@ pswf_t* read_wavecar(WAVECAR* wc, double* kpt_weights) {
 	free(kptr);
 	free(cptr);
 
+	wf->pps = NULL;
 	wf->overlaps = NULL;
 	wf->encut = encut;
 

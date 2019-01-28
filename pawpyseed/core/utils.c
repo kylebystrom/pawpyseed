@@ -269,6 +269,9 @@ void free_pswf(pswf_t* wf) {
 	free(wf->G_bounds);
 	free(wf->lattice);
 	free(wf->reclattice);
+	if (wf->pps != NULL) {
+		free_ppot_list(wf->pps, wf->num_elems);
+	}
 	free(wf);
 }
 
@@ -778,7 +781,7 @@ pswf_t* expand_symm_wf(pswf_t* rwf, int num_kpts, int* maps,
 
 	wf->num_elems = rwf->num_elems;
 	wf->num_sites = rwf->num_sites;
-	wf->pps = rwf->pps;
+	wf->pps = NULL;
 	wf->G_bounds = (int*) malloc(6*sizeof(int));
 	for (int i = 0; i < 6; i++) {
 		wf->G_bounds[i] = 0;//rwf->G_bounds[i];

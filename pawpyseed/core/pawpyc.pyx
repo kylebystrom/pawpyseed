@@ -357,15 +357,9 @@ cdef class CWavefunction(PseudoWavefunction):
 	cdef int number_projector_elements
 	cdef readonly int projector_owner
 	
-	cdef pawpyc.ppot_t* projector_list
-
 	def __init__(self, PWFPointer pwf):
 		self.projector_owner = 0
 		super(CWavefunction, self).__init__(pwf)
-
-	def __dealloc__(self):
-		if self.projector_owner:
-			pawpyc.free_ppot_list(self.projector_list, self.number_projector_elements)
 
 	def _c_projector_setup(self, int num_elems, int num_sites,
 							double grid_encut, nums, coords, dim, pps):
@@ -416,24 +410,25 @@ cdef class CWavefunction(PseudoWavefunction):
 		cdef double[::1] rmaxs_v = rmaxs.astype(np.double)
 
 		print ("GRID ENCUT", grid_encut)
-		self.projector_list = pawpyc.get_projector_list(
+		cdef pawpyc.ppot_t* projector_list = pawpyc.get_projector_list(
 							num_elems, &clabels_v[0], &ls_v[0], &wgrids_v[0],
 							&projectors_v[0], &aewaves_v[0], &pswaves_v[0],
 							&rmaxs_v[0], grid_encut)
 		end = time.monotonic()
 		print('--------------\nran get_projector_list in %f seconds\n---------------' % (end-start))
 
-		self.projector_owner = 1
 		self.number_projector_elements = num_elems
 		self.nums = np.array(nums, dtype = np.int32, copy = True)
 		self.coords = np.array(coords, dtype = np.float64, copy = True)
 		self.update_dimv(dim)
 
 		pawpyc.setup_projections(
-			self.wf_ptr, self.projector_list,
+			self.wf_ptr, projector_list,
 			num_elems, num_sites, &self.dimv[0],
 			&self.nums[0], &self.coords[0]
 			)
+
+		self.projector_owner = 1
 
 	def update_dimv(self, dim):
 		dim = np.array(dim, dtype = np.int32, order = 'C', copy = False)
@@ -444,15 +439,14 @@ cdef class CWavefunction(PseudoWavefunction):
 		res = np.zeros(self.gridsize, dtype = np.complex128, order='C')
 		cdef double complex[::1] resv = res
 		pawpyc.realspace_state(&resv[0], b, k+s*self.nwk,
-			self.wf_ptr, self.projector_list,
-			&self.dimv[0], &self.nums[0], &self.coords[0])
+			self.wf_ptr, &self.dimv[0], &self.nums[0], &self.coords[0])
 		res.shape = self.dimv
 		return res
 
 	def _get_realspace_density(self):
 		res = np.zeros(self.gridsize, dtype = np.float64, order='C')
 		cdef double[::1] resv = res
-		pawpyc.ae_chg_density(&resv[0], self.wf_ptr, self.projector_list,
+		pawpyc.ae_chg_density(&resv[0], self.wf_ptr,
 			&self.dimv[0], &self.nums[0], &self.coords[0])
 		res.shape = self.dimv
 		return res
@@ -580,7 +574,6 @@ cdef class CProjector:
 			dimv = np.array(dim, dtype=np.float64, order='C', copy=False)
 		pawpyc.project_realspace_state(&resv[0], 
 			band_num, self.wf.wf_ptr, self.basis.wf_ptr,
-			self.wf.projector_list, self.basis.projector_list,
 			&dimv[0], &self.wf.nums[0], &self.wf.coords[0],
 			&self.basis.nums[0], &self.basis.coords[0])
 		return res

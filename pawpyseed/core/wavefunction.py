@@ -190,7 +190,7 @@ class Wavefunction(pawpy.CWavefunction):
 			self.dim = outcar.ngf
 			self.dim = np.array(self.dim).astype(np.int32) // 2
 		else:
-			#assume outcar is actually ngf, will fix later
+			#assume outcar is actually ng, will fix later
 			self.dim = outcar
 			self.dim = np.array(self.dim).astype(np.int32)
 		if setup_projectors:

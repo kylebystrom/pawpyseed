@@ -14,11 +14,11 @@
 
 // THE FOLLOWING TWO FUNCTIONS ARE NOT YET IMPLEMENTED
 /*
-double* ncl_ae_state_density(int BAND_NUM, pswf_t* wf, ppot_t* pps, int* fftg, int* labels, double* coords) {
+double* ncl_ae_state_density(int BAND_NUM, pswf_t* wf, int* fftg, int* labels, double* coords) {
 	int gridsize = fftg[0] * fftg[1] * fftg[2];
     double* P = mkl_calloc(gridsize, sizeof(double), 64);
     int spin_mult = 2 / wf->nspin;
-    double complex* x = realspace_state(b, k, wf, pps, fftg, labels, coords);
+    double complex* x = realspace_state(b, k, wf, fftg, labels, coords);
     for (int i = 0; i < gridsize; i++) {
         P[i] += creal(x[i] * conj(x[i]));
     }
@@ -27,7 +27,7 @@ double* ncl_ae_state_density(int BAND_NUM, pswf_t* wf, ppot_t* pps, int* fftg, i
 }
 */
 
-void ae_state_density(double* P, int BAND_NUM, int KPOINT_NUM, pswf_t* wf, ppot_t* pps,
+void ae_state_density(double* P, int BAND_NUM, int KPOINT_NUM, pswf_t* wf,
 	int* fftg, int* labels, double* coords) {
 
 	int gridsize = fftg[0] * fftg[1] * fftg[2];
@@ -35,14 +35,14 @@ void ae_state_density(double* P, int BAND_NUM, int KPOINT_NUM, pswf_t* wf, ppot_
 	int spin_mult = 2 / wf->nspin;
 	double complex* x = mkl_malloc(gridsize * sizeof(double complex), 64);
 	realspace_state(x, BAND_NUM, KPOINT_NUM,
-		wf, pps, fftg, labels, coords);
+		wf, fftg, labels, coords);
 	for (int i = 0; i < gridsize; i++) {
 		P[i] += creal(x[i] * conj(x[i]));
 	}
 	mkl_free(x);
 }
 
-void ae_chg_density(double* P, pswf_t* wf, ppot_t* pps, int* fftg, int* labels, double* coords) {
+void ae_chg_density(double* P, pswf_t* wf, int* fftg, int* labels, double* coords) {
 
 	int gridsize = fftg[0] * fftg[1] * fftg[2];
 	double complex* x = mkl_malloc(gridsize * sizeof(double complex), 64);
@@ -52,7 +52,7 @@ void ae_chg_density(double* P, pswf_t* wf, ppot_t* pps, int* fftg, int* labels, 
 		printf("KLOOP %d\n", k);
 		for (int b = 0; b < wf->nband; b++) {
 			if (wf->kpts[k]->bands[b]->occ > 0) {
-				realspace_state(x, b, k, wf, pps, fftg, labels, coords);
+				realspace_state(x, b, k, wf, fftg, labels, coords);
 				for (int i = 0; i < gridsize; i++) {
 					P[i] += creal(x[i] * conj(x[i])) * wf->kpts[k]->weight
 							* wf->kpts[k]->bands[b]->occ * spin_mult;
@@ -64,8 +64,8 @@ void ae_chg_density(double* P, pswf_t* wf, ppot_t* pps, int* fftg, int* labels, 
 	mkl_free_buffers();
 }
 
-void project_realspace_state(double complex* projs, int BAND_NUM, pswf_t* wf, pswf_t* wf_R, ppot_t* pps,
-	ppot_t* pps_R, int* fftg, int* labels, double* coords, int* labels_R, double* coords_R) {
+void project_realspace_state(double complex* projs, int BAND_NUM, pswf_t* wf, pswf_t* wf_R,
+	int* fftg, int* labels, double* coords, int* labels_R, double* coords_R) {
 
 	int nband = wf->nband;
 	int nwk = wf->nwk;
@@ -78,9 +78,9 @@ void project_realspace_state(double complex* projs, int BAND_NUM, pswf_t* wf, ps
 
 	for (int k = 0; k < nwk * nspin; k++) {
 		double complex overlap = 0;
-		realspace_state(state, BAND_NUM, k, wf, pps, fftg, labels, coords);
+		realspace_state(state, BAND_NUM, k, wf, fftg, labels, coords);
 		for (int b = 0; b < nband; b++) {
-			realspace_state(state_R, b, k, wf_R, pps_R, fftg, labels_R, coords_R);
+			realspace_state(state_R, b, k, wf_R, fftg, labels_R, coords_R);
 			cblas_zdotc_sub(gridsize, state_R, 1, state, 1, &overlap);
 			overlap *= vol / gridsize;
 			projs[b*nwk*nspin + k] = overlap;
@@ -91,8 +91,9 @@ void project_realspace_state(double complex* projs, int BAND_NUM, pswf_t* wf, ps
 }
 
 void realspace_state(double complex* x, int BAND_NUM, int KPOINT_NUM,
-	pswf_t* wf, ppot_t* pps, int* fftg, int* labels, double* coords) {
+	pswf_t* wf, int* fftg, int* labels, double* coords) {
 
+	ppot_t* pps = wf->pps;
 	//double complex* x = mkl_calloc(fftg[0]*fftg[1]*fftg[2], sizeof(double complex), 64);
 	//printf("START FT\n");
 	fft3d(x, wf->G_bounds, wf->lattice, wf->kpts[KPOINT_NUM]->k,
@@ -181,8 +182,9 @@ void realspace_state(double complex* x, int BAND_NUM, int KPOINT_NUM,
 }
 
 void ncl_realspace_state(double complex* x, int BAND_NUM, int KPOINT_NUM,
-	pswf_t* wf, ppot_t* pps, int* fftg, int* labels, double* coords) {
+	pswf_t* wf, int* fftg, int* labels, double* coords) {
 
+	ppot_t* pps = wf->pps;
 	double complex* xup = x;//mkl_calloc(2*fftg[0]*fftg[1]*fftg[2], sizeof(double complex), 64);
 	double complex* xdown = x + fftg[0]*fftg[1]*fftg[2];
 	printf("START FT\n");
@@ -275,13 +277,12 @@ void ncl_realspace_state(double complex* x, int BAND_NUM, int KPOINT_NUM,
 }
 
 double* realspace_state_ri(int BAND_NUM, int KPOINT_NUM,
-	pswf_t* wf, ppot_t* pps, int* fftg,
-	int* labels, double* coords) {
+	pswf_t* wf, int* fftg, int* labels, double* coords) {
 
 	int gridsize = fftg[0]*fftg[1]*fftg[2];
 
 	double complex* x = mkl_malloc(gridsize * sizeof(double complex), 64);
-	realspace_state(x, BAND_NUM, KPOINT_NUM, wf, pps, fftg, labels, coords);
+	realspace_state(x, BAND_NUM, KPOINT_NUM, wf, fftg, labels, coords);
 
 	double* rpip = (double*) malloc(2 * gridsize * sizeof(double));
 
@@ -295,13 +296,12 @@ double* realspace_state_ri(int BAND_NUM, int KPOINT_NUM,
 }
 
 double* realspace_state_ncl_ri(int BAND_NUM, int KPOINT_NUM,
-	pswf_t* wf, ppot_t* pps, int* fftg,
-	int* labels, double* coords) {
+	pswf_t* wf, int* fftg, int* labels, double* coords) {
 
 	int gridsize = 2*fftg[0]*fftg[1]*fftg[2];
 
 	double complex* x = mkl_malloc(2 * gridsize * sizeof(double complex), 64);
-	ncl_realspace_state(x, BAND_NUM, KPOINT_NUM, wf, pps, fftg, labels, coords);
+	ncl_realspace_state(x, BAND_NUM, KPOINT_NUM, wf, fftg, labels, coords);
 
 	double* rpip = (double*) malloc(2*gridsize * sizeof(double));
 
@@ -333,12 +333,11 @@ void write_volumetric(char* filename, double* x, int* fftg, double scale) {
 void write_realspace_state_ncl_ri(char* filename1, char* filename2,
 	char* filename3, char* filename4,
 	int BAND_NUM, int KPOINT_NUM,
-	pswf_t* wf, ppot_t* pps, int* fftg,
-	int* labels, double* coords) {
+	pswf_t* wf, int* fftg, int* labels, double* coords) {
 
 	int gridsize = fftg[0]*fftg[1]*fftg[2];
 
-	double* x = realspace_state_ncl_ri(BAND_NUM, KPOINT_NUM, wf, pps, fftg, labels, coords);
+	double* x = realspace_state_ncl_ri(BAND_NUM, KPOINT_NUM, wf, fftg, labels, coords);
 	write_volumetric(filename1, x+0*gridsize, fftg, 1);
 	write_volumetric(filename2, x+1*gridsize, fftg, 1);
 	write_volumetric(filename3, x+2*gridsize, fftg, 1);
@@ -349,22 +348,21 @@ void write_realspace_state_ncl_ri(char* filename1, char* filename2,
 
 double* write_realspace_state_ri_return(char* filename1, char* filename2,
 	int BAND_NUM, int KPOINT_NUM,
-	pswf_t* wf, ppot_t* pps, int* fftg,
-	int* labels, double* coords) {
+	pswf_t* wf, int* fftg, int* labels, double* coords) {
 
-	double* x = realspace_state_ri(BAND_NUM, KPOINT_NUM, wf, pps, fftg, labels, coords);
+	double* x = realspace_state_ri(BAND_NUM, KPOINT_NUM, wf, fftg, labels, coords);
 	write_volumetric(filename1, x, fftg, 1);
 	write_volumetric(filename2, x+fftg[0]*fftg[1]*fftg[2], fftg, 1);
 
 	return x;
 }
 
-double* write_density_return(char* filename, pswf_t* wf, ppot_t* pps,
+double* write_density_return(char* filename, pswf_t* wf,
 	int* fftg, int* labels, double* coords) {
 
 	int gridsize = fftg[0] * fftg[1] * fftg[2];
 	double* x = mkl_calloc(gridsize, sizeof(double), 64);
-	ae_chg_density(x, wf, pps, fftg, labels, coords);
+	ae_chg_density(x, wf, fftg, labels, coords);
 	double scale = determinant(wf->lattice);
 	write_volumetric(filename, x, fftg, scale);
 
@@ -372,19 +370,17 @@ double* write_density_return(char* filename, pswf_t* wf, ppot_t* pps,
 }
 
 void write_realspace_state_ri_noreturn(char* filename1, char* filename2, int BAND_NUM, int KPOINT_NUM,
-	pswf_t* wf, ppot_t* pps, int* fftg,
-	int* labels, double* coords) {
+	pswf_t* wf, int* fftg, int* labels, double* coords) {
 
 	double* x = write_realspace_state_ri_return(filename1, filename2,
-		BAND_NUM, KPOINT_NUM, wf, pps, fftg,
-		labels, coords);
+		BAND_NUM, KPOINT_NUM, wf, fftg, labels, coords);
 	free(x);
 }
 
-void write_density_noreturn(char* filename, pswf_t* wf, ppot_t* pps,
+void write_density_noreturn(char* filename, pswf_t* wf,
 	int* fftg, int* labels, double* coords) {
 	setbuf(stdout, NULL);
 
-	double* x = write_density_return(filename, wf, pps, fftg, labels, coords);
+	double* x = write_density_return(filename, wf, fftg, labels, coords);
 	mkl_free(x);
 }

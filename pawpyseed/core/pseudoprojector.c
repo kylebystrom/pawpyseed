@@ -85,6 +85,4 @@ void pseudoprojection(double complex* projections, pswf_t* wf_ref, pswf_t* wf_pr
 			projections[b*NUM_KPTS+kpt_num] = curr_overlap;
 		}
 	}
-
-	return projections;
 }

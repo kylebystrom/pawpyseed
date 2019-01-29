@@ -1,79 +1,55 @@
-# Memory Management in pawpyseed (Don't worry, it's not scary!)
+# AE overlap operators for wavefunctions in different structures: The core of pawpyseed
 
-The goal of pawpyseed is to combine power and flexibility for numerical
-Kohn-Sham state analysis. To this end, pawpyseed implements a C backend
-for heavy parallel calculations. In addition, due to the large amount of
-data in plane-wave basis set wavefunctions, much of the data used
-is stored in the C backend to avoid unnecessary C to Python data passing.
+In defect physics and other problems involving perturbed crystal structures, it is
+potentially useful to describe the Kohn-Sham (KS) states of one structure in the
+basis of the KS states of another structure. This is easy to do with pseudowavefunctions,
+but since pseudowavefunctions are not orthonormal, the results are imprecise and qualitative.
+This projection is difficult for the AE wavefunctions in the PAW formalism, as the augmentation
+regions that define the wavefunction near the nuclei overlap with each other
+and the plane-wave pseudowavefunction in nontrivial ways.
 
-One downside of this system is that pawpyseed requires a little bit
-of user memory management. If you only handle a couple WAVECAR files
-per script, you probably don't even need to worry about it, but
-for scripts that process many WAVECAR files
-or very large WAVECAR files, you might run out of memory
-if you aren't careful! This tutorial shows how to manage memory in pawpyseed.
-It's short because there isn't much to know: you just have to call
-Wavefunction.free_all() and/or Projector.free_all() at the right time.
-
-## The Wavefunction.free_all() method
-
-Say you made a wavefunction:
+But pawpyseed can handle this! In fact, it's what pawpyseed is built for.
+To do AE state projections, we need to initialize a `Projector` class from two `Wavefunction`
+objects: a basis (or bulk, for defect problems) `Wavefunction`, and a perturbed (or defect)
+`Wavefunction`.
 
 ```
-wf = Wavefunction.from_directory('.')
-```
+from pawpyseed.core.projector import * # also imports the wavefunction module
 
-As is, pawpyseed's C backend contains two pointers. One is for the variable `projector_list`,
-which contains all the data about the projectors and partial waves for the
-wavefunction. The other is `pwf_ptr`, which contains the pseudowavefunction
-plane-wave constants. When you are done using `wf` (**and not before then**),
-call
-
-```
-wf.free_all()
-```
-
-to take care of the data associated with those two pointers. After this, `wf` is no
-longer usable, and you don't have any memory leaks!
-
-## The Projector.free_all() method
-
-The Projector.free_all() method is a little more nuanced, but still easy to use.
-Let's say you have
-
-```
 wf = Wavefunction.from_directory('defect', setup_projectors=False)
 basis = Wavefunction.from_directory('bulk', setup_projectors=False)
 pr = Projector(wf, basis)
 ```
 
-(See Tutorial 2 for why you want to set setup_projectors=False).
-Let's say you then make use of the `Projector` object you set up, for example:
+We choose `setup_projectors=False` for this code snippet because the `Projector`
+class does it's own setup, which combines all the projector functions and partial
+waves for the structures in `basis` and `wf`. **Keep in mind that the crystal
+structures for `basis` and `wf` can be different but must have the
+same lattice, k-points, and energy cutoff**.
+
+Now that we have intialized a `Projector`, we can call some useful functions,
+like `defect_band_analysis`, which projects the 40 bands in `wf` closest
+to the Fermi level onto all of the bands in `basis`, and then sums
+the magnitudes of these projections to give proportion valence
+and conduction band character values for the bands in `wf`.
 
 ```
-res = pr.defect_band_analysis()
+res = pr.defect_band_analysis(num_below_ef=20,
+		num_above_ef=20, pseudo = False, spinpol = False)
 ```
 
-And now you're done with it. **Projector.free_all() only frees the combo projector_list
-used by the Projector object. It does not free pseudowavefunctions or projector lists
-used by the constituent Wavefunction objects**. However, the wavefunction objects might
-rely on the `projector_list` stored in the `Projector` object, depending on how
-they were set up. Therefore, **always call free_all() for Wavefunction objects before
-the associated Projector object!**.
 
-**GOOD**
-```
-basis.free_all()
-wf.free_all()
+How is this different than just using pseudowavefunctions? With AE wavefunctions,
+the KS states of `basis` form an orthonormal\*
+basis set for the space of periodic functions in the lattice. This gives
+the results quantitative significance. In the case of defect problems,
+if the valence and conduction proportions of a band sum to less
+than 1, it might indicate that the state has some deep level character!
+(It might also mean some high-energy states outside the basis set are
+mixed in.)
 
-pr.free_all()
-```
+When we're done, we simply free the data.
 
-**BAD**
-```
-pr.free_all()
-
-basis.free_all()
-wf.free_all()
-```
-
+\* Theoretically, this basis set is complete when all states are included.
+Of course, we always calculate a finite number of KS eigenstates,
+so this basis will not be complete.

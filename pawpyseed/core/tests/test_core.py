@@ -240,12 +240,12 @@ class TestC:
 			for l1, m1 in zip(ls, ms):
 				f1, ijks1, coefs1 = getf(init_f1, r, a, l1, m1)
 				for l2, m2 in zip(ls, ms):
-					print("START", l1, m1, l2, m2, a, b, B)
+					#print("START", l1, m1, l2, m2, a, b, B)
 					f2, ijks2, coefs2 = getf(init_f2, r, b, l2, m2)
 					ov1 = 0
 					for coef1, ijk1 in zip(coefs1, ijks1):
 						for coef2, ijk2 in zip(coefs2, ijks2):
-							print(ijk1, ijk2, coef1, coef2)
+							#print(ijk1, ijk2, coef1, coef2)
 							ov1 += coef1 * np.conj(coef2) * eval_overlap(a,ijk1,A,b,ijk2,B)
 					if m1 != 0:
 						ov1 /= np.sqrt(2)
@@ -261,7 +261,7 @@ class TestC:
 					ov2 = pawpy.reciprocal_offsite_wave_overlap(Barr,
 						r, f1, r, f2,
 						l1, m1, l2, m2)
-					print(ov1, ov2)
+					#print(ov1, ov2)
 					if np.abs(ov1) < 1e-10:
 						assert_almost_equal(np.abs(ov2), 0, 10)
 					else:
@@ -417,23 +417,6 @@ class TestMem:
 			stdout=f, stderr=f)
 		f.close()
 
-"""
-	def test_read(self):
-		f = open('readtest.out', 'w')
-		subprocess.call('valgrind ./memtest read'.split(), stdout=f, stderr=f)
-		f.close()
-
-	def test_pseudo(self):
-		f = open('pseudotest.out', 'w')
-		subprocess.call('valgrind ./memtest pseudo'.split(), stdout=f, stderr=f)
-		f.close()
-
-	def test_list(self):
-		f = open('listtest.out', 'w')
-		subprocess.call('valgrind ./memtest list'.split(), stdout=f, stderr=f)
-		f.close()
-"""
-
 class TestPy:
 
 	def setup(self):
@@ -574,3 +557,9 @@ class TestPy:
 		generator = Projector.setup_multiple_projections('.', ['.', '.'])
 		for wf_dir, wf in generator:
 			wf.defect_band_analysis(4, 10, spinpol=True)
+
+	def test_convenience_routines(self):
+		pass
+
+	def test_desymmetrization(self):
+		pass

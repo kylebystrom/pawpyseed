@@ -7,7 +7,7 @@ We will use PAWpySeed to calculate these overlaps and use them to find the propo
 of the defect bands that project onto the conduction and valence bands of the bulk.
 
 ```
-from pawpyseed.core.wavefunction import *
+from pawpyseed.core.projector import Projector, Wavefunction
 import yaml # for storing our data
 
 dat = {} # dictionary of conduction/valence character values
@@ -19,6 +19,7 @@ basis = Wavefunction.from_directory('bulk')
 # loop over the defect directories
 for wf_dir in def_lst:
     wf = Wavefunction.from_directory(wf_dir)
+    pr = Projector(wf, basis, pseudo=True)
     dat[wf_dir] = {}
     # loop over bands near the band gap
     for i in range(250, 262):
@@ -27,13 +28,10 @@ for wf_dir in def_lst:
         # which is much faster but less quantitatively informative
         # v + c = 1 for pseudo = True
         # v is the valence band character and c is the conduction band character
-        v, c = wf.proportion_conduction(i, basis, spinpol=True)
+        v, c = pr.proportion_conduction(i, spinpol=True)
         dat[wf_dir][i] = (v, c)
     print ('FINISHED DEFECT %s' % wf_dir)
-    # Wavefunction objects use C code and memory, make sure to free it!
-    wf.free_all()
 
-basis.free_all()
 f = open('res.yaml', 'w')
 yaml.dump(dat, f)
 f.close()
@@ -41,5 +39,3 @@ f.close()
 
 Now 'res.yaml' will contain the valence and conduction band characters for the selected bands
 and structures in a yaml-formatted dictionary.
-
-But we can make this even easier!

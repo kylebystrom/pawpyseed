@@ -1,9 +1,8 @@
 # coding: utf-8
 
 ## @package pawpyseed.core.projector
-# Defines the Projector class, an extension
-# of the Wavefunction class for evaluating
-# AE projection operators.
+# Defines the Projector class for evaluating
+# AE and PS projection operators.
 
 from pawpyseed.core.wavefunction import *
 import pawpy
@@ -17,8 +16,6 @@ class Projector(pawpy.CProjector):
 	(both wavefunction objects).
 
 	Attributes:
-		-attributes from Wavefunction
-
 		wf (Wavefunction): Wavefunction object
 		basis (Wavefunction): Wavefunction object onto which the
 			wavefunctions of wf are to be projected
@@ -48,8 +45,7 @@ class Projector(pawpy.CProjector):
 				normalization for speed
 
 		Returns:
-			Projector object, containing all the same fields as
-				wf but set up for projections onto basis
+			Projector object
 		"""
 
 		if wf.ncl or basis.ncl:
@@ -93,7 +89,7 @@ class Projector(pawpy.CProjector):
 		Organizes sites into sets for use in the projection scheme. M_R and M_S contain site indices
 		of sites which are identical in structures R (basis) and S (self). N_R and N_S contain all other
 		site indices, and N_RS contains pairs of indices in R and S with overlapping augmentation
-		spheres in the PAW formalism.
+		spheres in the PAW formalism. R si for self.basis, S is for self.wf
 
 		Returns:
 			M_R (numpy array): Indices of sites in basis which have an identical site in
@@ -185,14 +181,11 @@ class Projector(pawpy.CProjector):
 	def setup_bases(basis_dirs, desymmetrize = True,
 		atomate_compatible = True):
 		"""
-		This function performs the setup of all the bases in the basis_dirs.
-		After this function is called, pass the returned projector_list
-		each time you call Projector with one of the wavefunctions in the
-		basis_dirs list. Free projector_list after you are fully finished
-		using the wavefunctions in basis_dirs for projections.
+		This convenience function performs the setup
+		of all the bases in the basis_dirs list.
 
 		Arguments:
-			basis_dir (str): paths to the VASP outputs
+			basis_dir (list of str): paths to the VASP outputs
 				to be used as the basis structures
 			desymmetrize (bool, False): If True, constructs
 				Wavefunction objects in which the k-point mesh
@@ -398,4 +391,13 @@ class Projector(pawpy.CProjector):
 			return results
 
 	def realspace_projection(self, band_num, dim = None):
-		return self._realspace_projection(band_num)
+		"""
+		Same operation as single_band_projection, but performed
+		by projecting the wavefunctions onto a realspace grid,
+		which can be set by the length=3 list or np.ndarray dim.
+		If dim is None (default), the FFT grid dimensions
+		of self.wf are used.
+		"""
+		if self.pseudo:
+			raise PAWpyError("Can't do realspace projection with pseudo=True")
+		return self._realspace_projection(band_num, dim)

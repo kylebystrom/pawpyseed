@@ -8,14 +8,14 @@ a `Projector` class. This is demonstrated in the
 following script:
 
 ```
-from pawpyseed.core.projector import *
+from pawpyseed.core.projector import Projector, Wavefunction
 
 basis = Wavefunction.from_directory('bulk')
 wf = Wavefunction.from_directory('defect')
 
-pr = Projector(wf, basis)
+pr = Projector(wf, basis, pseudo=False)
 
-v, c = wf.proportion_condition(253, basis, pseudo=False, spinpol=True)
+v, c = pr.proportion_condition(253, spinpol=True)
 ```
 
 The following example does the same thing as Example 1, except the all electron
@@ -25,8 +25,8 @@ and returns it as well as a list of all other directories containing
 complete VASP output.)
 
 ```
-from pawpyseed.core.wavefunction import *
-from pawpyseed.analysis.defect_composition import *
+from pawpyseed.core.projector import Projector, Wavefunction
+from pawpyseed.analysis.defect_composition import pycdt_dirs, BulkCharacter
 
 generator = Projector.setup_multiple_projections(*pycdt_dirs('.'))
 bcs = BulkCharacter.makeit(generator)

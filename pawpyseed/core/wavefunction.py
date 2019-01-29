@@ -23,6 +23,9 @@ class Pseudopotential:
 	Contains important attributes from a VASP pseudopotential files. POTCAR
 	"settings" can be read from the pymatgen POTCAR object
 
+	If you use pymatgen, you can think of this as correlating with
+	the PotcarSingle object.
+
 	Note: for the following attributes, 'index' refers to an energy
 	quantum number epsilon and angular momentum quantum number l,
 	which define one set consisting of a projector function, all electron
@@ -47,11 +50,18 @@ class Pseudopotential:
 			for each index
 	"""
 
-	def __init__(self, data, rmax):
+	def __init__(self, data):
+		"""
+		Initializer for Pseudopotential.
+		Should only be used by CoreRegion.
+
+		Arguments:
+			data (str): single-element pseudopotential
+				(POTCAR) as a string
+		"""
 		nonradial, radial = data.split("PAW radial sets", 1)
 		partial_waves = radial.split("pseudo wavefunction")
 		gridstr, partial_waves = partial_waves[0], partial_waves[1:]
-		self.rmax = rmax
 		self.pswaves = []
 		self.aewaves = []
 		self.recipprojs = []
@@ -120,10 +130,8 @@ class Pseudopotential:
 		settingstr, projgridstr = settingstr.split("STEP   =")
 		self.ndata = int(settingstr.split()[-1])
 		projgridstr = projgridstr.split("END")[0]
-		self.projgrid = self.make_nums(projgridstr)
+		self.projgrid = np.arange(len(self.realprojs[0])) * self.rmax / len(self.realprojs[0])
 		self.step = (self.projgrid[0], self.projgrid[1])
-
-		self.projgrid = np.linspace(0,rmax/1.88973,self.ndata,False,dtype=np.float64)
 
 	def make_nums(self, numstring):
 		return np.fromstring(numstring, dtype = np.float64, sep = ' ')
@@ -138,9 +146,20 @@ class CoreRegion:
 	"""
 
 	def __init__(self, potcar):
+		"""
+		Returns a new CoreRegion object from a
+		pymatgen.io.vasp.inputs.Potcar class.
+
+		Arguments:
+			potcar (pymatgen.io.vasp.inputs.Potcar): Potcar file for
+				the VASP calculation
+
+		Returns:
+			CoreRegion object based on potcar
+		"""
 		self.pps = {}
 		for potsingle in potcar:
-			self.pps[potsingle.element] = Pseudopotential(potsingle.data[:-15], potsingle.rmax)
+			self.pps[potsingle.element] = Pseudopotential(potsingle.data[:-15])
 
 
 class Wavefunction(pawpy.CWavefunction):
@@ -151,31 +170,28 @@ class Wavefunction(pawpy.CWavefunction):
 	Attributes:
 		structure (pymatgen.core.structure.Structure): stucture of the material
 			that the wave function describes
-		pwf (PseudoWavefunction): Pseudowavefunction componenet
 		cr (CoreRegion): Contains the pseudopotentials, with projectors and
 			partials waves, for the structure
 		dim (np.ndarray, length 3): dimension of the FFT grid used by VASP
 			and therefore for FFTs in this code
-		nband, nwk, nspin (int): Number of bands, kpoints, spins in VASP calculation
-		encut (int or float): VASP calculation plane-wave energy cutoff
-		nums (list of int, length nsites): Element labels for the structure
-		coords (list of float, length 3*nsites): Flattened list of coordinates for the structure
-			data has been initialized for this structure
-		projector_list (pointer): List of projector function/partial wave data
-			for this structure
+		band_props (np.ndarray): 4-item array of containing the information
+			(band gap, cbm, vbm, is_band_gap_direct). This object contains the same
+			information as pymatgen.io.vasp.outputs.Vasprun.eigenvalue_band_properties
 	"""
 
-	def __init__(self, struct, pwf, cr, outcar, setup_projectors=False):
+	def __init__(self, struct, pwf, cr, dim, setup_projectors=False):
 		"""
 		Arguments:
 			struct (pymatgen.core.Structure): structure that the wavefunction describes
 			pwf (pawpy.PWFPointer): holder class for pswf_t and k-points/k-point weights
 			cr (CoreRegion): Contains the pseudopotentials, with projectors and
 				partials waves, for the structure
-			outcar (pymatgen.io.vasp.outputs.Outcar): Outcar object for reading ngf
+			dim (pymatgen.io.vasp.outputs.Outcar OR np.ndarry OR list of length 3):
+				Outcar object for reading ngf or the dimensions NG* of the FFT grid
 			setup_projectors (bool, False): Whether to set up the core region
-				components of the wavefunctions (leave as False if passing this
-				object to Projector, which will do the setup automatically)
+				components of the wavefunctions. Pawpyseed will set up the projectors
+				automatically when they are first needed, so this generally
+				can be left as False.
 		Returns:
 			Wavefunction object
 		"""
@@ -185,17 +201,29 @@ class Wavefunction(pawpy.CWavefunction):
 			raise PAWpyError("Pseudowavefunction is noncollinear! Call NCLWavefunction(...) instead")
 		self.structure = struct
 		self.cr = cr
-		if type(outcar) == Outcar:
-			self.dim = outcar.ngf
+		if type(dim) == Outcar:
+			self.dim = dim.ngf
 			self.dim = np.array(self.dim).astype(np.int32) // 2
 		else:
-			#assume outcar is actually ng, will fix later
-			self.dim = outcar
+			self.dim = dim
 			self.dim = np.array(self.dim).astype(np.int32)
 		if setup_projectors:
 			self.check_c_projectors()
 
 	def desymmetrized_copy(self, allkpts = None, weights = None):
+		"""
+		Returns a copy of self with a k-point mesh that is not reduced
+		using crystal symmetry (time reversal symmetry is still used;
+		an option to not use time reversal symmetry will be added in
+		the future).
+
+		Arguments:
+			allkpts (optional, None): An optional k-point mesh to map
+				onto. Used by the Projector class for some cases
+			weights (optional, None): If allkpts is not None, weights
+				should contain the k-point weights of each k-point,
+				with the sum normalized to 1.
+		"""
 		pwf = self._desymmetrized_pwf(self.structure, self.band_props, allkpts, weights)
 		new_wf = Wavefunction(self.structure, pwf, self.cr, self.dim)
 		return new_wf
@@ -208,10 +236,14 @@ class Wavefunction(pawpy.CWavefunction):
 
 		Arguments:
 			struct (str): VASP POSCAR or CONTCAR file path
-			pwf (str): VASP WAVECAR file path
+			wavecar (str): VASP WAVECAR file path
 			cr (str): VASP POTCAR file path
 			vr (str): VASP vasprun file path
 			outcar (str): VASP OUTCAR file path
+			setup_projectors (bool, False): Whether to set up the core region
+				components of the wavefunctions. Pawpyseed will set up the projectors
+				automatically when they are first needed, so this generally
+				can be left as False.
 
 		Returns:
 			Wavefunction object
@@ -230,8 +262,9 @@ class Wavefunction(pawpy.CWavefunction):
 		Arguments:
 			path (str): VASP output directory
 			setup_projectors (bool, False): Whether to set up the core region
-				components of the wavefunctions (leave as False if passing this
-				object to Projector, which will do the setup automatically)
+				components of the wavefunctions. Pawpyseed will set up the projectors
+				automatically when they are first needed, so this generally
+				can be left as False.
 
 		Returns:
 			Wavefunction object
@@ -252,8 +285,9 @@ class Wavefunction(pawpy.CWavefunction):
 		Arguments:
 			path (str): VASP output directory
 			setup_projectors (bool, False): Whether to set up the core region
-				components of the wavefunctions (leave as False if passing this
-				object to Projector, which will do the setup automatically)
+				components of the wavefunctions. Pawpyseed will set up the projectors
+				automatically when they are first needed, so this generally
+				can be left as False.
 
 		Returns:
 			Wavefunction object
@@ -331,9 +365,8 @@ class Wavefunction(pawpy.CWavefunction):
 			s (int): spin number
 			dim (numpy array of 3 ints): dimensions of the FFT grid
 		Returns:
-			An array (x slow-indexed) where the first half of the values
-				are the real part and second half of the values are the
-				imaginary part
+			A 3D array (indexed by x,y,z where x,y,z are fractional coordinates)
+				with complex double values for the realspace wavefunction
 		"""
 
 		self.check_c_projectors()
@@ -341,8 +374,25 @@ class Wavefunction(pawpy.CWavefunction):
 			self.update_dimv(np.array(dim))
 		return self._get_realspace_state(b, k, s)
 
+	def get_realspace_density(self, dim = None):
+		"""
+		Returns the all electron charge density.
+		Args:
+			dim (numpy array of 3 ints, None): dimensions of the FFT grid
+		Returns:
+			A 3D array (indexed by x,y,z where x,y,z are fractional coordinates)
+				with real double values for the all electron charge density
+		"""
+		self.check_c_projectors()
+		if dim is not None:
+			self.update_dimv(np.array(dim))
+		return self._get_realspace_density()
+
 	def _convert_to_vasp_volumetric(self, filename, dim):
-		
+		"""
+		Utility function to convert pawpyseed volumetric
+		output to VASP volumetric output.
+		"""
 
 		#from pymatgen VolumetricData class
 		p = Poscar(self.structure)
@@ -378,14 +428,15 @@ class Wavefunction(pawpy.CWavefunction):
 			b (int): band number (0-indexed!)
 			k (int): kpoint number (0-indexed!)
 			s (int): spin number (0-indexed!)
-			dim (numpy array of 3 ints): dimensions of the FFT grid
-			fileprefix (string, optional): first part of the file name
-			return_wf (bool): whether to return the wavefunction
+			fileprefix (string, ""): first part of the file name
+			dim (numpy array of 3 ints, None): dimensions of the FFT grid
+			scale (scalar, 1): number to multiply the realspace wavefunction by.
+				For example, VASP multiplies charge density by the volume
+				of the structure.
 		Returns:
-			(if return_wf==True) An array (x slow-indexed) where the first half of the values
-				are the real part and second half of the values are the
-				imaginary part
-			The wavefunction is written with z the slow index.
+			A 3D array (indexed by x,y,z where x,y,z are fractional coordinates)
+				with complex double values for the realspace wavefunction
+			The wavefunction is written in two files with z the slow index.
 		"""
 		self.check_c_projectors()
 		if dim is not None:
@@ -398,26 +449,23 @@ class Wavefunction(pawpy.CWavefunction):
 		self._convert_to_vasp_volumetric(filename2, dim)
 		return res
 
-	def get_realspace_density(self, dim = None):
-		self.check_c_projectors()
-		if dim is not None:
-			self.update_dimv(np.array(dim))
-		return self._get_realspace_density()
-
 	def write_density_realspace(self, filename = "PYAECCAR", dim=None, scale = 1):
 		"""
-		Writes the AE charge density to a file and returns it.
+		Writes the real and imaginary parts of a given band to two files,
+		prefixed by fileprefix
 
 		Args:
-			b (int): band number
-			k (int): kpoint number
-			s (int): spin number
-			dim (numpy array of 3 ints): dimensions of the FFT grid
-			filename (string, "PYAECCAR"): charge density filename
-			return_wf (bool): whether to return the wavefunction
+			b (int): band number (0-indexed!)
+			k (int): kpoint number (0-indexed!)
+			s (int): spin number (0-indexed!)
+			fileprefix (string, ""): first part of the file name
+			dim (numpy array of 3 ints, None): dimensions of the FFT grid
+			scale (scalar, 1): number to multiply the realspace wavefunction by.
+				For example, VASP multiplies charge density by the volume
+				of the structure.
 		Returns:
-			(if return_wf==True) An array (x slow-indexed, as in VASP)
-				with the charge densities
+			A 3D array (indexed by x,y,z where x,y,z are fractional coordinates)
+				with complex double values for the realspace wavefunction
 			The charge density is written with z the slow index.
 		"""
 
@@ -430,11 +478,19 @@ class Wavefunction(pawpy.CWavefunction):
 
 	def get_nosym_kpoints(self, init_kpts = None, symprec=1e-5,
 		gen_trsym = True, fil_trsym = True):
+		"""
+		Helper function to get a non-symmetry-reduced k-point
+		mesh based on the symmetry-reduced mesh of self.
+		"""
 
 		return pawpy_symm.get_nosym_kpoints(kpts, self.structure, init_kpts,
 										symprec, gen_trsym, fil_trsym)
 
 	def get_kpt_mapping(self, allkpts, symprec=1e-5, gen_trsym = True):
+		"""
+		Helper function to find the mappings from self.kpts to
+		allkpts using the symmetry operations of self.structure
+		"""
 
 		return pawpy_symm.get_kpt_mapping(allkpts, self.kpts, self.structure,
 										symprec, gen_trsym)

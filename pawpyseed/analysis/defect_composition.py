@@ -61,8 +61,10 @@ class PawpyData:
 		data['structure'] = Poscar(self.structure).get_string()
 		data['energies'] = self.energies
 		data['densities'] = self.densities
-		data['efermi'] = self.efermi
 		data['data'] = self.data
+		data['vbm'] = self.vbm
+		data['cbm'] = self.cbm
+		data['efermi'] = self.efermi
 		if self.energy_levels:
 			data['energy_levels'] = self.energy_levels
 		return data
@@ -84,10 +86,12 @@ class PawpyData:
 		returns a PawpyData instance.
 		"""
 		if 'energy_levels' in data:
-			return cls([data['energies'], data['densities'], data['efermi']],
-				data['structure'], data['data'], data['energy_levels'])
-		return cls([data['energies'], data['densities'], data['efermi']],
-			data['structure'], data['data'])
+			return cls(data['structure'], data['data'], data['energy_levels'],
+				[data['energies'], data['densities'], data['efermi']],
+				data['vbm'], data['cbm'])
+		return cls(data['structure'], data['data'],
+			[data['energies'], data['densities'], data['efermi']],
+			data['vbm'], data['cbm'])
 
 	@classmethod
 	def from_yaml(cls, filename):

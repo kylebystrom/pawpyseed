@@ -1,5 +1,12 @@
 # cython : profile=True
 
+## Cython file for interfacing
+# pawpyseed classes with C code.
+# Do not directly use any classes
+# or utilities from the module; it
+# is unsafe because some of the error
+# catching is in Python.
+
 from pawpyseed.core cimport pawpyc
 from cpython cimport array
 from libc.stdlib cimport malloc, free
@@ -316,6 +323,9 @@ cdef class PseudoWavefunction:
 	cdef readonly np.ndarray kpts
 
 	def __init__(self, PWFPointer pwf):
+		"""
+		Initializes a PseudoWavefunction from a PWFPointer
+		"""
 		if pwf.ptr is NULL:
 			raise Exception("NULL PWFPointer ptr!")
 		self.wf_ptr = pwf.ptr
@@ -348,6 +358,20 @@ cdef class PseudoWavefunction:
 
 
 cdef class CWavefunction(PseudoWavefunction):
+	"""
+	Base class for pawpyseed.core.wavefunction.Wavefunction.
+	Implements functions that call C routines and access
+	C objects
+
+	Attributes:
+		int[::1] dimv: FFT grid dimensions
+		int gridsize: dimv[0]*dimv[1]*dimv[2]
+		int[::1] nums: element label of each site in the structure
+		double[::1] coords: flattened list of coordinates for each site
+		int number_projector_elements: number of elements in the structure
+		readonly int projector_owner: Whether projector functions have
+			been initialized
+	"""
 
 	cdef int[::1] dimv
 	cdef int gridsize
@@ -356,8 +380,21 @@ cdef class CWavefunction(PseudoWavefunction):
 	cdef double[::1] coords
 	cdef int number_projector_elements
 	cdef readonly int projector_owner
+
+	"""
+	dim (np.ndarray, length 3): dimension of the FFT grid used by VASP
+			and therefore for FFTs in this code
+		nband, nwk, nspin (int): Number of bands, kpoints, spins in VASP calculation
+		encut (int or float): VASP calculation plane-wave energy cutoff
+		nums (list of int, length nsites): Element labels for the structure
+		coords (list of float, length 3*nsites): Flattened list of coordinates for the structure
+			data has been initialized for this structure
+	"""
 	
 	def __init__(self, PWFPointer pwf):
+		"""
+		Initializes a CWavefunction from a PWFPointer
+		"""
 		self.projector_owner = 0
 		super(CWavefunction, self).__init__(pwf)
 
@@ -435,6 +472,10 @@ cdef class CWavefunction(PseudoWavefunction):
 		self.dimv = dim
 		self.gridsize = np.cumprod(dim)[-1]
 
+	#-----------------------------------------------------#
+	# HELPER FUNCTION ROUTINES FOR REAL SPACE PROJECTIONS #
+	#-----------------------------------------------------#
+
 	def _get_realspace_state(self, int b, int k, int s):
 		res = np.zeros(self.gridsize, dtype = np.complex128, order='C')
 		cdef double complex[::1] resv = res
@@ -487,7 +528,10 @@ cdef class CWavefunction(PseudoWavefunction):
 		return res
 
 	def _get_energy_list(self, bands):
-
+		"""
+		Helper function to get a list of energy levels for a given list
+		of bands. Used by defect_band_analysis in the Projector class.
+		"""
 		energy_list = {}
 		for b in bands:
 			energy_list[b] = []
@@ -517,10 +561,19 @@ cdef class CProjector:
 	cdef int num_N_RS_S
 
 	def __init__(self, wf, basis):
+		"""
+		Initialize a C projector form two Wavefunction objects
+		"""
 		self.wf = wf
 		self.basis = basis
 
+	#-------------------------------------------------#
+	# HELPER FUNCTION ROUTINES FOR OVERLAP EVALUATION #
+	#-------------------------------------------------#
+
 	def _setup_overlap(self, site_cat):
+
+		# set up site lists
 		self.M_R = np.array(site_cat[0], dtype=np.int32, order = 'C')
 		self.M_S = np.array(site_cat[1], dtype=np.int32, order = 'C')
 		self.N_R = np.array(site_cat[2], dtype=np.int32, order = 'C')
@@ -528,6 +581,7 @@ cdef class CProjector:
 		self.N_RS_R = np.array(site_cat[4], dtype=np.int32, order = 'C')
 		self.N_RS_S = np.array(site_cat[5], dtype=np.int32, order = 'C')
 
+		# specify lengths of site lists
 		self.num_M_R, self.num_M_S = len(site_cat[0]), len(site_cat[1])
 		self.num_N_R, self.num_N_S = len(site_cat[2]), len(site_cat[3])
 		self.num_N_RS_R, self.num_N_RS_S = len(site_cat[4]), len(site_cat[5])
@@ -539,16 +593,18 @@ cdef class CProjector:
 		cdef int* N_RS_R = NULL if self.num_N_RS_R == 0 else &self.N_RS_R[0]
 		cdef int* N_RS_S = NULL if self.num_N_RS_S == 0 else &self.N_RS_S[0]
 		
+		# call C overlap setup routine
 		pawpyc.overlap_setup_real(self.basis.wf_ptr, self.wf.wf_ptr,
 			&self.basis.nums[0], &self.wf.nums[0], &self.basis.coords[0], &self.wf.coords[0],
 			N_R, N_S, N_RS_R, N_RS_S,
 			#self.N_R, self.N_S, self.N_RS_R, self.N_RS_S,
 			self.num_N_R, self.num_N_S, self.num_N_RS_R)
 
-	def _add_augmentation_terms(self, np.ndarray res, band_num):
-		# declare res more specifically
+	def _add_augmentation_terms(self, np.ndarray[double complex, ndim=1] res, band_num):
+		
 		cdef double complex[::1] resv = res
 
+		# set up site lists
 		cdef int* M_R = NULL if self.num_M_R == 0 else &self.M_R[0]
 		cdef int* M_S = NULL if self.num_M_S == 0 else &self.M_S[0]
 		cdef int* N_R = NULL if self.num_N_R == 0 else &self.N_R[0]
@@ -556,6 +612,7 @@ cdef class CProjector:
 		cdef int* N_RS_R = NULL if self.num_N_RS_R == 0 else &self.N_RS_R[0]
 		cdef int* N_RS_S = NULL if self.num_N_RS_S == 0 else &self.N_RS_S[0]
 
+		# call compensation terms C routine
 		pawpyc.compensation_terms(&resv[0], band_num, self.wf.wf_ptr, self.basis.wf_ptr,
 			self.num_M_R, self.num_N_R, self.num_N_S, self.num_N_RS_R,
 			M_R, M_S, N_R, N_S, N_RS_R, N_RS_S,

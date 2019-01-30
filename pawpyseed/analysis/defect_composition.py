@@ -21,6 +21,8 @@ class PawpyData:
 			vbm (float, None): valence band maximum
 			cbm (float, None): conduction band minimum
 		"""
+		if type(structure) == str:
+			structure = Poscar.from_string(structure).structure
 		if dos is None:
 			self.energies = None
 			self.densities = None
@@ -39,6 +41,8 @@ class PawpyData:
 		self.vbm = vbm
 		if (not (cbm is None)) and (not (vbm is None)):
 			self.bandgap = max(0, cbm - vbm)
+		else:
+			self.bandgap = None
 
 	def set_band_properties(vbm, cbm):
 		"""
@@ -65,8 +69,6 @@ class PawpyData:
 		data['vbm'] = self.vbm
 		data['cbm'] = self.cbm
 		data['efermi'] = self.efermi
-		if self.energy_levels:
-			data['energy_levels'] = self.energy_levels
 		return data
 
 	def write_yaml(self, filename):
@@ -85,13 +87,9 @@ class PawpyData:
 		Takes the dictionary--data--and
 		returns a PawpyData instance.
 		"""
-		if 'energy_levels' in data:
-			return cls(data['structure'], data['data'], data['energy_levels'],
-				[data['energies'], data['densities'], data['efermi']],
-				data['vbm'], data['cbm'])
 		return cls(data['structure'], data['data'],
-			[data['energies'], data['densities'], data['efermi']],
-			data['vbm'], data['cbm'])
+			dos = [data['energies'], data['densities'], data['efermi']],
+			vbm = data['vbm'], cbm = data['cbm'])
 
 	@classmethod
 	def from_yaml(cls, filename):
@@ -132,6 +130,21 @@ class BulkCharacter(PawpyData):
 		self.energy_levels = energy_levels
 		super(BulkCharacter, self).__init__(structure, data, dos, vbm, cbm)
 
+	def as_dict(self):
+		data = super(BulkCharacter, self).as_dict()
+		data['energy_levels'] = self.energy_levels
+		return data
+
+	@classmethod
+	def from_dict(cls, data):
+		"""
+		Takes the dictionary--data--and
+		returns a PawpyData instance.
+		"""
+		return cls(data['structure'], data['data'], energy_levels = data['energy_levels'],
+				dos = [data['energies'], data['densities'], data['efermi']],
+				vbm = data['vbm'], cbm = data['cbm'])
+
 	def plot(self, name, title=None, spinpol = False):
 		"""
 		Plot the bulk character data. If the energy levels are available,
@@ -159,8 +172,7 @@ class BulkCharacter(PawpyData):
 			cs.append(self.data[b][1][0])
 			cs.append(self.data[b][1][1])
 
-		if bandgap == None and self.vbm != None and self.cbm != None:
-			bandgap = self.cbm - self.vbm
+		bandgap = self.bandgap
 
 		bs = np.array(bs) - np.mean(bs)
 		cs = np.array(cs)
@@ -229,13 +241,14 @@ class BulkCharacter(PawpyData):
 
 		bcs = {}
 
-		for wf_dir, wf in generator:
+		for wf_dir, pr in generator:
 			vr = Vasprun(os.path.join(wf_dir, 'vasprun.xml'))
+			bg, cbm, vbm, _ = vr.eigenvalue_band_properties
 			dos = vr.tdos
-			data, energy_levels = wf.defect_band_analysis(num_above_ef=5, num_below_ef=5,
+			data, energy_levels = pr.defect_band_analysis(num_above_ef=5, num_below_ef=5,
 				spinpol = True, return_energies=True)
-			bcs[wf_dir] = BulkCharacter(wf.structure, data,
-				energy_levels = energy_levels, dos = dos)
+			bcs[wf_dir] = BulkCharacter(pr.wf.structure, data,
+				energy_levels = energy_levels, dos = dos, vbm = vbm, cbm = cbm)
 
 		return bcs
 
@@ -260,16 +273,18 @@ class BasisExpansion(PawpyData):
 
 		bes = {}
 
-		for wf_dir, wf in generator:
+		for wf_dir, pr in generator:
 
 			vr = Vasprun(os.path.join(wf_dir, 'vasprun.xml'))
+			bg, cbm, vbm, _ = vr.eigenvalue_band_properties
 			dos = vr.tdos
-			basis = wf.basis
-			expansion = np.zeros((wf.nband, basis.nband * basis.nwk * basis.nspin),
+			basis = pr.basis
+			expansion = np.zeros((pr.wf.nband, basis.nband * basis.nwk * basis.nspin),
 				dtype=np.complex128)
-			for b in range(wf.nband):
-				expansion[b,:] = wf.single_band_projection(b)
-			bes[wf_dir] = BasisExpansion(wf.structure, expansion, dos=dos)
+			for b in range(pr.wf.nband):
+				expansion[b,:] = pr.single_band_projection(b)
+			bes[wf_dir] = BasisExpansion(pr.wf.structure, expansion, dos=dos,
+				vbm = vbm, cbm = cbm)
 
 		return bes
 

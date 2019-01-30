@@ -178,10 +178,13 @@ class BulkCharacter(PawpyData):
 		cs = np.array(cs)
 		vs = np.array(vs)
 		if self.energy_levels == None:
-			fig, (ax1, ax3) = plt.subplots(2, 1, gridspec_kw = {'height_ratios':[3, 1]},
-				figsize=[6.4,6.4])
+			if self.energies is None or self.efermi is None or self.densities is None:
+				fig, ax1 = plt.subplots()
+			else:
+				fig, (ax1, ax3) = plt.subplots(2, 1, gridspec_kw = {'height_ratios': [3, 1]},
+					figsize=[6.4,6.4])
 		else:
-			fig, (ax1, ax3) = plt.subplots(2, 1, gridspec_kw = {'height_ratios':[1, 1]},
+			fig, (ax1, ax3) = plt.subplots(2, 1, gridspec_kw = {'height_ratios': [1, 1]},
 				figsize=[6.4,8])
 		ax1.set_xlabel('band', fontsize=18)
 		ax1.set_ylabel('valence', color='b', fontsize=18)
@@ -197,12 +200,14 @@ class BulkCharacter(PawpyData):
 		plt.title(title + ' band character', fontsize=20)
 		#plt.savefig('BAND_'+name)
 
+
 		if self.energy_levels == None:
-			ax3.plot(self.energies - self.efermi, self.densities)
-			ax3.set_xlabel('Energy (eV)', fontsize=18)
-			ax3.set_ylabel('Total DOS', fontsize=18)
-			ax3.set_xlim(-2,2)
-			ax3.set_ylim(0,max(self.densities))
+			if not (self.energies is None or self.efermi is None or self.densities is None):
+				ax3.plot(self.energies - self.efermi, self.densities)
+				ax3.set_xlabel('Energy (eV)', fontsize=18)
+				ax3.set_ylabel('Total DOS', fontsize=18)
+				ax3.set_xlim(-2,2)
+				ax3.set_ylim(0,max(self.densities))
 		else:
 			bs = list(self.energy_levels.keys())
 			bmean = np.mean(bs)

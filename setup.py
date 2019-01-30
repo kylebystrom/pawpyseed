@@ -37,7 +37,7 @@ if 'LIBRARY_PATH' in os.environ:
 	rt_lib_dirs += os.environ['LIBRARY_PATH'].split(':')
 extra_args = '-std=c11 -lmkl_rt -fopenmp -fPIC -Wall'.split()
 if not DEBUG:
-	extra_args += ['-g0', '-O3']
+	extra_args += ['-g0', '-O2']
 link_args = '-lmkl_sequential -lmkl_intel_lp64 -lmkl_core -lpthread -lm -ldl'.split()
 
 extensions = [Extension('pawpy', ext_files,

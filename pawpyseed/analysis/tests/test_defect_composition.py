@@ -37,7 +37,7 @@ class TestBulkCharacter:
 		pass
 
 	def test_plot(self):
-		self.bcs['.'].plot('tst.png')		
+		self.bcs['.'].plot('tst')
 
 	def test_read_write(self):
 		self.bcs['.'].write_yaml('test_file.yaml') 

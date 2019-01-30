@@ -539,6 +539,7 @@ cdef class CWavefunction(PseudoWavefunction):
 				for s in range(self.nspin):
 					energy_list[b].append([pawpyc.get_energy(self.wf_ptr, b, k, s),\
 										pawpyc.get_occ(self.wf_ptr, b, k, s)])
+		return energy_list
 
 
 cdef class CProjector:

@@ -16,6 +16,8 @@ with codecs.open('README.md', 'r', encoding='utf8') as fh:
 
 DEBUG = True
 
+reqs = "numpy>=1.14,scipy>=1.0,pymatgen>=2018.2.13,sympy>=1.1.1,matplotlib>=0.2.5".split(',')
+
 srcfiles = ['density', 'gaunt', 'linalg', 'projector', 'pseudoprojector', 'quadrature',\
 			'radial', 'reader', 'sbt', 'tests', 'utils']
 cfiles = [f+'.c' for f in srcfiles]
@@ -49,16 +51,17 @@ extensions = [Extension('pawpy', ext_files,
 	include_dirs=inc_dirs)]
 
 setup(name='pawpyseed',
-	version='0.2.0',
+	version='0.3.0',
 	description='Parallel C/Python package for numerical analysis of PAW DFT wavefunctions',
 	long_description=long_description,
 	long_description_content_type='text/markdown',
 	author='Kyle Bystrom',
 	author_email='kylebystrom@berkeley.edu',
 	license='BSD',
+	install_requires=reqs,
 	packages=['pawpyseed', 'pawpyseed.core', 'pawpyseed.analysis'],
-	package_data={'pawpyseed.core': cfiles+hfiles},
-	data_files=[('', ['LICENSE.txt', 'README.md'])],
+	#package_data={'pawpyseed.core': cfiles+hfiles},
+	data_files=[('', ['LICENSE', 'README.md'])],
 	#scripts=['scripts/pawpy'],
 	url="https://github.com/kylebystrom/pawpyseed",
 	classifiers=(

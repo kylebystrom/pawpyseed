@@ -2,12 +2,15 @@
 
 <https://kylebystrom.github.io/pawpyseed/> <br/>
 
+**Pawpyseed has converted from ctypes to Cython for its C interface!!! This should
+make the code more portable and easier to use.**
+
 **WARNING: PAWpySeed is still in early development. Documentation is
-incomplete, and some features are not yet thoroughly tested. High-priority
-issues for the next couple months include: 1) documentation page containing
-the mathematical formalism, 2) examples and tutorials, 3) standardized unit
-tests. The evaluation of overlap operators is tested, but a standard test
-suite is not yet published, and some features still require more thorough testing.**
+incomplete, and some features are not yet thoroughly tested.
+The evaluation of overlap operators is tested, but a standard test
+suite is not yet published, and some features still require more thorough testing.
+Also, the setup.py script is only tested on a couple systems, and same
+with the pip command.**
 
 PAWpySeed is a parallelized Python and C tool for reading and
 analyzing the optimized band structure and wave functions
@@ -24,34 +27,21 @@ You can install PAWpySeed with `pip`.
 
 ```
 pip install pawpyseed
-cd <install directory>/pawpyseed/core
-export PAWPYCC=<C compiler>
-make pawpy
 ```
-
-Work is being done to eliminate the need to manually compile the C code,
-but it is necessary for the time being.
 
 This has been tested on Scientific Linux 7 and Linux Mint 18,
 but should work for systems that have the appropriate
 packages and environment variables defined as described below.
-Note that the setup script compiles and installs some C code
-as a shared object to be used by `ctypes` and places it
-in the package directory under `pawpyseed/core/`.
 
 Installation can also be performed
 by cloning this repository and running the `setup.py` script
 in the root directory of the repository.
 
 ```
+python setup.py build_ext
 python setup.py build
 python setup.py install
 ```
-
-The `build` command, in addition to the standard distutils setup,
-compiles the C code in the `pawpyseed.core` module into a shared
-object in the core module, `pawpy.so`. See below for
-dependency details.
 
 ### Dependencies
 
@@ -61,10 +51,12 @@ use of older versions will not be officially supported.
 
 Python requirements:
 ```
-python>=3.5
+Python>=3.5
 numpy>=1.14
 scipy>=1.0
 pymatgen>=2018.2.13
+sympy>=1.1.1
+matplotlib>=0.2.5
 ```
 
 C requirements:
@@ -88,12 +80,6 @@ export C_INCLUDE_PATH=$MKLROOT/include:$C_INCLUDE_PATH
 The last line is optional but might be useful for future PAWpySeed builds
 and other programs which make use of MKL.
 The setup.py file will now take care of C compilation.
-
-Optional Python dependencies (not used now but might be in the future):
-```
-sympy>=1.1.1
-matplotlib>=0.2.5
-```
 
 ## Theory and Input
 

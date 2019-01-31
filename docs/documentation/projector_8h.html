@@ -105,20 +105,20 @@ Include dependency graph for projector.h:</div>
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="func-members"></a>
 Functions</h2></td></tr>
-<tr class="memitem:a7b0f4f46750303fd5b1cfa5060e9c678"><td class="memItemLeft" align="right" valign="top"><a class="el" href="utils_8h.html#aa248479b99172bb8a57435eceaf6cd54">ppot_t</a> *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="projector_8h.html#a7b0f4f46750303fd5b1cfa5060e9c678">get_projector_list</a> (int num_els, int *labels, int *ls, double *proj_grids, double *wave_grids, double *projectors, double *aewaves, double *pswaves, double *rmaxs, double grid_encut)</td></tr>
-<tr class="separator:a7b0f4f46750303fd5b1cfa5060e9c678"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a25d754c433de907c083c3236ba01648e"><td class="memItemLeft" align="right" valign="top"><a class="el" href="utils_8h.html#aa248479b99172bb8a57435eceaf6cd54">ppot_t</a> *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="projector_8h.html#a25d754c433de907c083c3236ba01648e">get_projector_list</a> (int num_els, int *labels, int *ls, double *wave_grids, double *projectors, double *aewaves, double *pswaves, double *rmaxs, double grid_encut)</td></tr>
+<tr class="separator:a25d754c433de907c083c3236ba01648e"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:adce16a86752fdaa66a7ab8892f543572"><td class="memItemLeft" align="right" valign="top"><a class="el" href="utils_8h.html#ab775d07eb4baee2c78eafabc65e07f9e">real_proj_site_t</a> *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="projector_8h.html#adce16a86752fdaa66a7ab8892f543572">projector_values</a> (int num_sites, int *labels, double *coords, double *lattice, double *reclattice, <a class="el" href="utils_8h.html#aa248479b99172bb8a57435eceaf6cd54">ppot_t</a> *pps, int *fftg)</td></tr>
 <tr class="separator:adce16a86752fdaa66a7ab8892f543572"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a2207fe8fd8c04b81f052b7adf485e220"><td class="memItemLeft" align="right" valign="top"><a class="el" href="utils_8h.html#ab775d07eb4baee2c78eafabc65e07f9e">real_proj_site_t</a> *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="projector_8h.html#a2207fe8fd8c04b81f052b7adf485e220">smooth_pw_values</a> (int num_N, int *Nlst, int *labels, double *coords, double *lattice, double *reclattice, <a class="el" href="utils_8h.html#aa248479b99172bb8a57435eceaf6cd54">ppot_t</a> *pps, int *fftg)</td></tr>
 <tr class="separator:a2207fe8fd8c04b81f052b7adf485e220"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a8eaa45a84bc03bcc47f808f2763747c9"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="projector_8h.html#a8eaa45a84bc03bcc47f808f2763747c9">onto_projector_helper</a> (<a class="el" href="utils_8h.html#a35f43d7fba66d31ffe5b9f7bf1b80660">band_t</a> *<a class="el" href="structband.html">band</a>, double complex *x, <a class="el" href="utils_8h.html#ab775d07eb4baee2c78eafabc65e07f9e">real_proj_site_t</a> *sites, int num_sites, double *lattice, double *reclattice, double *kpt, <a class="el" href="utils_8h.html#aa248479b99172bb8a57435eceaf6cd54">ppot_t</a> *pps, int *fftg, <a class="el" href="utils_8h.html#a11a6b972b58950fd98974b5ed5011e65">projection_t</a> *projections)</td></tr>
-<tr class="separator:a8eaa45a84bc03bcc47f808f2763747c9"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a067f474d3cb5d3b25666e0405aa34806"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="projector_8h.html#a067f474d3cb5d3b25666e0405aa34806">onto_projector</a> (<a class="el" href="utils_8h.html#a8cafed6b50bb2761b72f06bf2281bcc5">kpoint_t</a> *kpt, int band_num, <a class="el" href="utils_8h.html#ab775d07eb4baee2c78eafabc65e07f9e">real_proj_site_t</a> *sites, int num_sites, int *G_bounds, double *lattice, double *reclattice, <a class="el" href="utils_8h.html#aa248479b99172bb8a57435eceaf6cd54">ppot_t</a> *pps, int *fftg)</td></tr>
-<tr class="separator:a067f474d3cb5d3b25666e0405aa34806"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a5e3d750aa1486e9a01530da68f7fc3b8"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="projector_8h.html#a5e3d750aa1486e9a01530da68f7fc3b8">onto_projector_ncl</a> (<a class="el" href="utils_8h.html#a8cafed6b50bb2761b72f06bf2281bcc5">kpoint_t</a> *kpt, int band_num, <a class="el" href="utils_8h.html#ab775d07eb4baee2c78eafabc65e07f9e">real_proj_site_t</a> *sites, int num_sites, int *G_bounds, double *lattice, double *reclattice, <a class="el" href="utils_8h.html#aa248479b99172bb8a57435eceaf6cd54">ppot_t</a> *pps, int *fftg)</td></tr>
-<tr class="separator:a5e3d750aa1486e9a01530da68f7fc3b8"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:af96b78f2e07e12f218ae9b87c845d4b9"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="projector_8h.html#af96b78f2e07e12f218ae9b87c845d4b9">onto_smoothpw</a> (<a class="el" href="utils_8h.html#a8cafed6b50bb2761b72f06bf2281bcc5">kpoint_t</a> *kpt, int band_num, <a class="el" href="utils_8h.html#ab775d07eb4baee2c78eafabc65e07f9e">real_proj_site_t</a> *sites, int num_sites, int *G_bounds, double *lattice, double *reclattice, <a class="el" href="utils_8h.html#aa248479b99172bb8a57435eceaf6cd54">ppot_t</a> *pps, int *fftg)</td></tr>
-<tr class="separator:af96b78f2e07e12f218ae9b87c845d4b9"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aac70e07dcbc1aeafca4f5b1573f1b323"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="projector_8h.html#aac70e07dcbc1aeafca4f5b1573f1b323">onto_projector_helper</a> (<a class="el" href="utils_8h.html#a35f43d7fba66d31ffe5b9f7bf1b80660">band_t</a> *<a class="el" href="structband.html">band</a>, double complex *x, <a class="el" href="utils_8h.html#ab775d07eb4baee2c78eafabc65e07f9e">real_proj_site_t</a> *sites, int num_sites, double *lattice, double *reclattice, double *kpt, int num_cart_gridpts, int *fftg, <a class="el" href="utils_8h.html#a11a6b972b58950fd98974b5ed5011e65">projection_t</a> *projections)</td></tr>
+<tr class="separator:aac70e07dcbc1aeafca4f5b1573f1b323"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ad7164b8a7fc447531e3d60de630d96b0"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="projector_8h.html#ad7164b8a7fc447531e3d60de630d96b0">onto_projector</a> (<a class="el" href="utils_8h.html#a8cafed6b50bb2761b72f06bf2281bcc5">kpoint_t</a> *kpt, int band_num, <a class="el" href="utils_8h.html#ab775d07eb4baee2c78eafabc65e07f9e">real_proj_site_t</a> *sites, int num_sites, int *G_bounds, double *lattice, double *reclattice, int num_cart_gridpts, int *fftg)</td></tr>
+<tr class="separator:ad7164b8a7fc447531e3d60de630d96b0"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a8124c789ee7290ad6be3ab8eb911574f"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="projector_8h.html#a8124c789ee7290ad6be3ab8eb911574f">onto_projector_ncl</a> (<a class="el" href="utils_8h.html#a8cafed6b50bb2761b72f06bf2281bcc5">kpoint_t</a> *kpt, int band_num, <a class="el" href="utils_8h.html#ab775d07eb4baee2c78eafabc65e07f9e">real_proj_site_t</a> *sites, int num_sites, int *G_bounds, double *lattice, double *reclattice, int num_cart_gridpts, int *fftg)</td></tr>
+<tr class="separator:a8124c789ee7290ad6be3ab8eb911574f"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a61e5fe19dafc1cebf6de53d879df3e1b"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="projector_8h.html#a61e5fe19dafc1cebf6de53d879df3e1b">onto_smoothpw</a> (<a class="el" href="utils_8h.html#a8cafed6b50bb2761b72f06bf2281bcc5">kpoint_t</a> *kpt, int band_num, <a class="el" href="utils_8h.html#ab775d07eb4baee2c78eafabc65e07f9e">real_proj_site_t</a> *sites, int num_sites, int *G_bounds, double *lattice, double *reclattice, int num_cart_gridpts, int *fftg)</td></tr>
+<tr class="separator:a61e5fe19dafc1cebf6de53d879df3e1b"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:afe21e5608c3d8091f569a205c9ee7a3b"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="projector_8h.html#afe21e5608c3d8091f569a205c9ee7a3b">add_num_cart_gridpts</a> (<a class="el" href="utils_8h.html#aa248479b99172bb8a57435eceaf6cd54">ppot_t</a> *pp_ptr, double *lattice, int *fftg)</td></tr>
 <tr class="separator:afe21e5608c3d8091f569a205c9ee7a3b"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a7d7c00b540ffe12129e34910c3859f81"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="projector_8h.html#a7d7c00b540ffe12129e34910c3859f81">make_pwave_overlap_matrices</a> (<a class="el" href="utils_8h.html#aa248479b99172bb8a57435eceaf6cd54">ppot_t</a> *pp_ptr)</td></tr>
@@ -127,8 +127,8 @@ Functions</h2></td></tr>
 <tr class="separator:ad97a2375a049eab1e3de0a0bb0cd9cb6"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ad578639d206a861c83611645aebea02f"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="projector_8h.html#ad578639d206a861c83611645aebea02f">overlap_setup_real</a> (<a class="el" href="utils_8h.html#a0d83785e53b058055dd3a6b963dda7e0">pswf_t</a> *wf_R, <a class="el" href="utils_8h.html#a0d83785e53b058055dd3a6b963dda7e0">pswf_t</a> *wf_S, int *labels_R, int *labels_S, double *coords_R, double *coords_S, int *N_R, int *N_S, int *N_RS_R, int *N_RS_S, int num_N_R, int num_N_S, int num_N_RS)</td></tr>
 <tr class="separator:ad578639d206a861c83611645aebea02f"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:aea20298c395559c6e3a2b8a2acfb7d81"><td class="memItemLeft" align="right" valign="top">double *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="projector_8h.html#aea20298c395559c6e3a2b8a2acfb7d81">compensation_terms</a> (int BAND_NUM, <a class="el" href="utils_8h.html#a0d83785e53b058055dd3a6b963dda7e0">pswf_t</a> *wf_proj, <a class="el" href="utils_8h.html#a0d83785e53b058055dd3a6b963dda7e0">pswf_t</a> *wf_ref, int num_elems, int num_M, int num_N_R, int num_N_S, int num_N_RS, int *M_R, int *M_S, int *N_R, int *N_S, int *N_RS_R, int *N_RS_S, int *proj_labels, double *proj_coords, int *ref_labels, double *ref_coords, int *fft_grid)</td></tr>
-<tr class="separator:aea20298c395559c6e3a2b8a2acfb7d81"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a66785c7c9ba05a80a152ec6b7273c3e7"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="projector_8h.html#a66785c7c9ba05a80a152ec6b7273c3e7">compensation_terms</a> (double complex *overlap, int BAND_NUM, <a class="el" href="utils_8h.html#a0d83785e53b058055dd3a6b963dda7e0">pswf_t</a> *wf_S, <a class="el" href="utils_8h.html#a0d83785e53b058055dd3a6b963dda7e0">pswf_t</a> *wf_R, int num_M, int num_N_R, int num_N_S, int num_N_RS, int *M_R, int *M_S, int *N_R, int *N_S, int *N_RS_R, int *N_RS_S, int *proj_labels, double *proj_coords, int *ref_labels, double *ref_coords, int *fft_grid)</td></tr>
+<tr class="separator:a66785c7c9ba05a80a152ec6b7273c3e7"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:afb5b3243a4fecdb12c2de111c1eff95f"><td class="memItemLeft" align="right" valign="top">double *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="projector_8h.html#afb5b3243a4fecdb12c2de111c1eff95f">besselt</a> (double *r, double *k, double *f, double encut, int N, int l)</td></tr>
 <tr class="separator:afb5b3243a4fecdb12c2de111c1eff95f"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
@@ -220,13 +220,19 @@ Functions</h2></td></tr>
 
 </div>
 </div>
-<a class="anchor" id="aea20298c395559c6e3a2b8a2acfb7d81"></a>
+<a class="anchor" id="a66785c7c9ba05a80a152ec6b7273c3e7"></a>
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
         <tr>
-          <td class="memname">double* compensation_terms </td>
+          <td class="memname">void compensation_terms </td>
           <td>(</td>
+          <td class="paramtype">double complex *&#160;</td>
+          <td class="paramname"><em>overlap</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
           <td class="paramtype">int&#160;</td>
           <td class="paramname"><em>BAND_NUM</em>, </td>
         </tr>
@@ -234,19 +240,13 @@ Functions</h2></td></tr>
           <td class="paramkey"></td>
           <td></td>
           <td class="paramtype"><a class="el" href="utils_8h.html#a0d83785e53b058055dd3a6b963dda7e0">pswf_t</a> *&#160;</td>
-          <td class="paramname"><em>wf_proj</em>, </td>
+          <td class="paramname"><em>wf_S</em>, </td>
         </tr>
         <tr>
           <td class="paramkey"></td>
           <td></td>
           <td class="paramtype"><a class="el" href="utils_8h.html#a0d83785e53b058055dd3a6b963dda7e0">pswf_t</a> *&#160;</td>
-          <td class="paramname"><em>wf_ref</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">int&#160;</td>
-          <td class="paramname"><em>num_elems</em>, </td>
+          <td class="paramname"><em>wf_R</em>, </td>
         </tr>
         <tr>
           <td class="paramkey"></td>
@@ -349,7 +349,7 @@ Functions</h2></td></tr>
 
 </div>
 </div>
-<a class="anchor" id="a7b0f4f46750303fd5b1cfa5060e9c678"></a>
+<a class="anchor" id="a25d754c433de907c083c3236ba01648e"></a>
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
@@ -370,12 +370,6 @@ Functions</h2></td></tr>
           <td></td>
           <td class="paramtype">int *&#160;</td>
           <td class="paramname"><em>ls</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">double *&#160;</td>
-          <td class="paramname"><em>proj_grids</em>, </td>
         </tr>
         <tr>
           <td class="paramkey"></td>
@@ -441,7 +435,7 @@ Functions</h2></td></tr>
 
 </div>
 </div>
-<a class="anchor" id="a067f474d3cb5d3b25666e0405aa34806"></a>
+<a class="anchor" id="ad7164b8a7fc447531e3d60de630d96b0"></a>
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
@@ -490,8 +484,8 @@ Functions</h2></td></tr>
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype"><a class="el" href="utils_8h.html#aa248479b99172bb8a57435eceaf6cd54">ppot_t</a> *&#160;</td>
-          <td class="paramname"><em>pps</em>, </td>
+          <td class="paramtype">int&#160;</td>
+          <td class="paramname"><em>num_cart_gridpts</em>, </td>
         </tr>
         <tr>
           <td class="paramkey"></td>
@@ -510,7 +504,7 @@ Functions</h2></td></tr>
 
 </div>
 </div>
-<a class="anchor" id="a8eaa45a84bc03bcc47f808f2763747c9"></a>
+<a class="anchor" id="aac70e07dcbc1aeafca4f5b1573f1b323"></a>
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
@@ -559,8 +553,8 @@ Functions</h2></td></tr>
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype"><a class="el" href="utils_8h.html#aa248479b99172bb8a57435eceaf6cd54">ppot_t</a> *&#160;</td>
-          <td class="paramname"><em>pps</em>, </td>
+          <td class="paramtype">int&#160;</td>
+          <td class="paramname"><em>num_cart_gridpts</em>, </td>
         </tr>
         <tr>
           <td class="paramkey"></td>
@@ -585,7 +579,7 @@ Functions</h2></td></tr>
 
 </div>
 </div>
-<a class="anchor" id="a5e3d750aa1486e9a01530da68f7fc3b8"></a>
+<a class="anchor" id="a8124c789ee7290ad6be3ab8eb911574f"></a>
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
@@ -634,8 +628,8 @@ Functions</h2></td></tr>
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype"><a class="el" href="utils_8h.html#aa248479b99172bb8a57435eceaf6cd54">ppot_t</a> *&#160;</td>
-          <td class="paramname"><em>pps</em>, </td>
+          <td class="paramtype">int&#160;</td>
+          <td class="paramname"><em>num_cart_gridpts</em>, </td>
         </tr>
         <tr>
           <td class="paramkey"></td>
@@ -653,7 +647,7 @@ Functions</h2></td></tr>
 
 </div>
 </div>
-<a class="anchor" id="af96b78f2e07e12f218ae9b87c845d4b9"></a>
+<a class="anchor" id="a61e5fe19dafc1cebf6de53d879df3e1b"></a>
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
@@ -702,8 +696,8 @@ Functions</h2></td></tr>
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype"><a class="el" href="utils_8h.html#aa248479b99172bb8a57435eceaf6cd54">ppot_t</a> *&#160;</td>
-          <td class="paramname"><em>pps</em>, </td>
+          <td class="paramtype">int&#160;</td>
+          <td class="paramname"><em>num_cart_gridpts</em>, </td>
         </tr>
         <tr>
           <td class="paramkey"></td>

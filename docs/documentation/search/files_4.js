@@ -1,4 +1,4 @@
 var searchData=
 [
-  ['noncollinear_2epy',['noncollinear.py',['../noncollinear_8py.html',1,'']]]
+  ['linalg_2eh',['linalg.h',['../linalg_8h.html',1,'']]]
 ];

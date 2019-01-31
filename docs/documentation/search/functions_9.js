@@ -1,5 +1,6 @@
 var searchData=
 [
-  ['kpts',['kpts',['../classpawpyseed_1_1core_1_1wavefunction_1_1Wavefunction.html#a4c41b8144174c0804f09916194a27135',1,'pawpyseed::core::wavefunction::Wavefunction']]],
-  ['kws',['kws',['../classpawpyseed_1_1core_1_1wavefunction_1_1Wavefunction.html#aa31d27047f2bbb33a5e6d13e8e6eb7a1',1,'pawpyseed::core::wavefunction::Wavefunction']]]
+  ['legendre',['legendre',['../utils_8h.html#a8ea41329e3326d2b03c68b610e241691',1,'utils.h']]],
+  ['legendre_5fcoeff',['legendre_coeff',['../utils_8h.html#a95a5b5c641c60c379cd8c66e702183d0',1,'utils.h']]],
+  ['legendre_5fproduct',['legendre_product',['../utils_8h.html#a1ca90ea673c0bec4a58e84a660fcf3c4',1,'utils.h']]]
 ];

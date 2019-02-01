@@ -4,8 +4,8 @@ docs/dox.config.*
 *.o
 *.log
 *.out
-*.xml
 *.aux
 *POTCAR
 */POTCAR
 test_files/POTCAR
+test_files/nosym/POTCAR

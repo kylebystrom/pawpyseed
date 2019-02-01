@@ -51,7 +51,7 @@ extensions = [Extension('pawpy', ext_files,
 	include_dirs=inc_dirs)]
 
 setup(name='pawpyseed',
-	version='0.3.0',
+	version='0.3.1',
 	description='Parallel C/Python package for numerical analysis of PAW DFT wavefunctions',
 	long_description=long_description,
 	long_description_content_type='text/markdown',

@@ -53,7 +53,7 @@ class Projector(pawpy.CProjector):
 
 		if unsym_basis and unsym_wf:
 			basis = basis.desymmetrized_copy()
-			wf = wf.desymmetrized_copy(basis.kpts, basis.weights)
+			wf = wf.desymmetrized_copy(basis.kpts, basis.kws)
 		elif unsym_wf and not unsym_basis:
 			if basis.kpts.shape[0] < wf.kpts.shape[0]:
 				raise PAWpyError("Basis doesn't have enough kpoints, needs to be desymmetrized!")

@@ -14,8 +14,9 @@ class PerturbationCorrection(DefectCorrection):
 		mb = True
 		defect = BulkCharacter.from_yaml(filename).data
 
-		vbm = d.parameters["vbm"] + d.parameters["potalign"]
-		cbm = d.parameters["cbm"] + d.parameters["potalign"]
+		potalign = d.parameters["potalign"]
+		vbm = d.parameters["vbm"] + potalign
+		cbm = d.parameters["cbm"] + potalign
 	
 		bulk_vbm = d.parameters["vbm"]
 		bulk_cbm = d.parameters["cbm"]
@@ -55,15 +56,15 @@ class PerturbationCorrection(DefectCorrection):
 				corr_term = (proj_amounts[band][spin][0] * (hybrid_vbm - bulk_vbm) \
 					+ proj_amounts[band][spin][1] * (hybrid_cbm - bulk_cbm))
 				new_en = np.mean(ens[band][spin::spin+1]) + corr_term
-				if new_en < hybrid_vbm:
+				if new_en < hybrid_vbm + potalign:
 					num_vbm += band_occ
-					#print('HOLE IN VB', band, spin, band_occ*(hybrid_vbm-bulk_vbm))
+					print('HOLE IN VB', band, spin, band_occ*(hybrid_vbm-bulk_vbm))
 					corr += band_occ * (hybrid_vbm - bulk_vbm)
-				elif new_en > hybrid_cbm:
-					#print('ELEC IN CB', band, spin, band_occ*(hybrid_cbm-bulk_cbm))
+				elif new_en > hybrid_cbm + potalign:
+					print('ELEC IN CB', band, spin, band_occ*(hybrid_cbm-bulk_cbm))
 					corr += band_occ * (hybrid_cbm - bulk_cbm)
 				else:
-					#print('STATE IN GAP', band, spin, corr_term)
+					print('STATE IN GAP', band, spin, corr_term)
 					corr += band_occ * corr_term
 
 		return corr, proj_amounts, num_vbm

@@ -537,8 +537,8 @@ class TestPy:
 		Projector = DummyProjector
 		print("TEST OFFSITE")
 		sys.stdout.flush()
-		wf1 = Wavefunction.from_directory('.', False)
-		basis = Wavefunction.from_directory('.', False)
+		wf1 = Wavefunction.from_directory('nosym', False)
+		basis = Wavefunction.from_directory('nosym', False)
 		print("ENCUT", wf1.encut, basis.encut)
 		pr = Projector(wf1, basis)
 		test_vals = {}
@@ -546,7 +546,7 @@ class TestPy:
 			v, c = pr.proportion_conduction(b)
 			print("CHECK_VALS", v,c)
 			test_vals[b] = (v,c)
-		for b in range(wf1.nband):
+		for b in range(wf1.nband//2):
 			if b < 6:
 				assert_almost_equal(test_vals[b][0], 1, decimal=2)
 				assert_almost_equal(test_vals[b][1], 0, decimal=4)
@@ -558,8 +558,22 @@ class TestPy:
 		for wf_dir, wf in generator:
 			wf.defect_band_analysis(4, 10, spinpol=True)
 
-	def test_convenience_routines(self):
-		pass
-
 	def test_desymmetrization(self):
-		pass
+		print("TEST DESYM")
+		sys.stdout.flush()
+		# test ae projections
+		wf1 = Wavefunction.from_directory('.', False)
+		basis = Wavefunction.from_directory('nosym', False)
+		pr = Projector(wf1, basis, unsym_wf=True, unsym_basis=True)
+		test_vals = {}
+		for b in range(wf1.nband):
+			v, c = pr.proportion_conduction(b)
+			print("CHECK_VALS", v,c)
+			test_vals[b] = (v,c)
+		for b in range(wf1.nband//2):
+			if b < 6:
+				assert_almost_equal(test_vals[b][0], 1, decimal=3)
+				assert_almost_equal(test_vals[b][1], 0, decimal=7)
+			else:
+				assert_almost_equal(test_vals[b][0], 0, decimal=7)
+				assert_almost_equal(test_vals[b][1], 1, decimal=3)

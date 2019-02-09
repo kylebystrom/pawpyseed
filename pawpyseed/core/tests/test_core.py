@@ -110,7 +110,6 @@ class TestC:
 		assert_almost_equal(np.linalg.norm(res1-res2), 0, 2)
 		sys.stdout.flush()
 
-	@nottest
 	def test_fft3d(self):
 		vr = self.vr 
 		weights = np.array(vr.actual_kpoints_weights)

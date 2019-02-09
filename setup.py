@@ -19,13 +19,19 @@ DEBUG = True
 reqs = "numpy>=1.14,scipy>=1.0,pymatgen>=2018.2.13,sympy>=1.1.1,matplotlib>=0.2.5".split(',')
 
 srcfiles = ['density', 'gaunt', 'linalg', 'projector', 'pseudoprojector', 'quadrature',\
-			'radial', 'reader', 'sbt', 'tests', 'utils']
+			'radial', 'reader', 'sbt', 'utils']
+
 cfiles = [f+'.c' for f in srcfiles]
-hfiles = [f+'.h' for f in srcfiles]
+#hfiles = [f+'.h' for f in srcfiles]
 ext_files = cfiles + ['pawpyc.pyx']
+if DEBUG:
+	ext_files.append('tests/testc.pyx')
+	ext_files.append('tests/tests.c')
 ext_files = ['pawpyseed/core/' + f for f in ext_files]
 lib_dirs = ['/usr/lib', '/usr/local/lib']
 inc_dirs = ['/usr/include', '/usr/local/include', 'pawpyseed/core', np.get_include()]
+if DEBUG:
+	inc_dirs.append('pawpyseed/core/tests')
 if 'MKLROOT' in os.environ:
 	MKLROOT = os.environ['MKLROOT']
 	lib_dirs.append('%s/lib/intel64_lin' % MKLROOT)
@@ -50,6 +56,10 @@ extensions = [Extension('pawpy', ext_files,
 	runtime_library_dirs=lib_dirs,
 	include_dirs=inc_dirs)]
 
+packages = ['pawpyseed', 'pawpyseed.core', 'pawpyseed.analysis']
+if DEBUG:
+	packages.append('pawpyseed.core.tests')
+
 setup(name='pawpyseed',
 	version='0.3.1',
 	description='Parallel C/Python package for numerical analysis of PAW DFT wavefunctions',
@@ -59,7 +69,7 @@ setup(name='pawpyseed',
 	author_email='kylebystrom@berkeley.edu',
 	license='BSD',
 	install_requires=reqs,
-	packages=['pawpyseed', 'pawpyseed.core', 'pawpyseed.analysis'],
+	packages=packages,
 	#package_data={'pawpyseed.core': cfiles+hfiles},
 	data_files=[('', ['LICENSE', 'README.md'])],
 	#scripts=['scripts/pawpy'],
@@ -69,7 +79,8 @@ setup(name='pawpyseed',
 		"License :: OSI Approved :: BSD License"
 	),
 
-	ext_modules=cythonize(extensions),#, include_path=[os.path.join(os.path.abspath(__file__), 'pawpyseed/core')]),
+	ext_modules=cythonize(extensions),
+	#	include_path=[os.path.join(os.path.abspath(__file__), 'pawpyseed/core')]),
 	zip_safe=False
 )
 

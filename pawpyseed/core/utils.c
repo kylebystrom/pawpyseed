@@ -1021,7 +1021,9 @@ void ALLOCATION_FAILED(void) {
 
 void CHECK_STATUS(int status) {
 	if (status != 0) {
-		printf("ROUTINE FAILED WITH STATUS %d", status);
+		printf("ROUTINE FAILED WITH STATUS %d:\n", status);
+		char* message = DftiErrorMessage(status);
+		printf("%s\n", message);
 		exit(-1);
 	}
 }

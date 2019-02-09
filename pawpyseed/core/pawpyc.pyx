@@ -7,7 +7,7 @@
 # is unsafe because some of the error
 # catching is in Python.
 
-from pawpyseed.core cimport pawpyc
+from pawpyseed.core cimport pawpyc_extern as pawpyc
 from cpython cimport array
 from libc.stdlib cimport malloc, free
 from libc.stdio cimport FILE
@@ -119,45 +119,6 @@ cpdef interpolate(np.ndarray[double, ndim=1] res,
 	free(coef[2])
 	free(coef)
 
-cpdef fft_check(str wavecar, np.ndarray[double, ndim=1] kpt_weights,
-	np.ndarray[int, ndim=1] fftgrid):
-
-	cdef int[::1] fftg = fftgrid
-	cdef double[::1] kws = kpt_weights
-	cdef pawpyc.pswf_t* wf = pawpyc.read_wavefunctions(wavecar.encode('utf-8'), &kws[0])
-	cdef double complex* x = <double complex*> malloc(fftg[0]*fftg[1]*fftg[2]*sizeof(double complex))
-	pawpyc.fft3d(x, wf.G_bounds, wf.lattice, wf.kpts[0].k, wf.kpts[0].Gs,
-		wf.kpts[0].bands[0].Cs, wf.kpts[0].bands[0].num_waves, &fftg[0])
-	cdef int* Gs = wf.kpts[0].Gs
-	cdef float complex* Cs = wf.kpts[0].bands[0].Cs
-	cdef double inv_sqrt_vol = np.power(pawpyc.determinant(wf.lattice), -0.5)
-	cdef double dv = pawpyc.determinant(wf.lattice) / fftg[0] / fftg[1] / fftg[2]
-	cdef double* kpt = wf.kpts[0].k;
-	cdef double f1 = 0
-	cdef double f2 = 0
-	cdef double f3 = 0
-	cdef int ind
-	cdef double complex temp
-	il = np.arange(fftg[0], dtype=np.float64) / fftg[0]
-	jl = np.arange(fftg[1], dtype=np.float64) / fftg[1]
-	kl = np.arange(fftg[2], dtype=np.float64) / fftg[2]
-	for i in np.arange(fftg[0]):
-		for j in np.arange(fftg[1]):
-			for k in np.arange(fftg[2]):
-				f1 = il[i]
-				f2 = jl[j]
-				f3 = kl[k]
-				temp = 0;
-				for w in range(wf.kpts[0].bands[0].num_waves):
-					temp += Cs[w] * np.exp((f1 * (Gs[3*w]) +
-							f2 * (Gs[3*w+1]) +
-							f3 * (Gs[3*w+2])) * 2.0j * np.pi)
-				temp *= inv_sqrt_vol
-				ind = i*fftg[1]*fftg[2]+j*fftg[2]+k
-				assert_almost_equal(np.abs(x[ind] - temp), 0)
-	free(x)
-	pawpyc.free_pswf(wf)
-
 cpdef spherical_bessel_transform(double encut, int l,
 	np.ndarray[double, ndim=1] r, np.ndarray[double, ndim=1] f):
 
@@ -227,11 +188,6 @@ cpdef reciprocal_offsite_wave_overlap(np.ndarray[double, ndim=1] dcoord,
 
 cdef class PWFPointer:
 
-	cdef pawpyc.pswf_t* ptr
-	cdef readonly np.ndarray kpts
-	cdef readonly np.ndarray weights
-	cdef readonly np.ndarray band_props
-
 	def __init__(self, filename = None, vr = None):
 		cdef double[::1] kws
 		if filename == None or vr == None:
@@ -255,7 +211,7 @@ cdef class PWFPointer:
 
 	@staticmethod
 	cdef PWFPointer from_pointer_and_kpts(pawpyc.pswf_t* ptr,
-		structure, kpts, band_props, allkpts = None, weights = None):
+		structure, kpts, band_props, allkpts, weights):
 
 		return_kpts_and_weights = False
 		if (allkpts is None) or (weights is None):
@@ -314,13 +270,6 @@ cdef class PseudoWavefunction:
 		band_props (list): [band gap, conduction band minimum,
 			valence band maximum, whether the band gap is direct]
 	"""
-	cdef pawpyc.pswf_t* wf_ptr
-	cdef readonly int nband
-	cdef readonly int nwk
-	cdef readonly int nspin
-	cdef readonly int ncl
-	cdef readonly np.ndarray kws
-	cdef readonly np.ndarray kpts
 
 	def __init__(self, PWFPointer pwf):
 		"""
@@ -371,24 +320,6 @@ cdef class CWavefunction(PseudoWavefunction):
 		int number_projector_elements: number of elements in the structure
 		readonly int projector_owner: Whether projector functions have
 			been initialized
-	"""
-
-	cdef int[::1] dimv
-	cdef int gridsize
-
-	cdef int[::1] nums
-	cdef double[::1] coords
-	cdef int number_projector_elements
-	cdef readonly int projector_owner
-
-	"""
-	dim (np.ndarray, length 3): dimension of the FFT grid used by VASP
-			and therefore for FFTs in this code
-		nband, nwk, nspin (int): Number of bands, kpoints, spins in VASP calculation
-		encut (int or float): VASP calculation plane-wave energy cutoff
-		nums (list of int, length nsites): Element labels for the structure
-		coords (list of float, length 3*nsites): Flattened list of coordinates for the structure
-			data has been initialized for this structure
 	"""
 	
 	def __init__(self, PWFPointer pwf):
@@ -543,23 +474,6 @@ cdef class CWavefunction(PseudoWavefunction):
 
 
 cdef class CProjector:
-
-	cdef public CWavefunction wf
-	cdef public CWavefunction basis
-
-	cdef int[::1] M_R
-	cdef int[::1] M_S
-	cdef int[::1] N_R
-	cdef int[::1] N_S
-	cdef int[::1] N_RS_R
-	cdef int[::1] N_RS_S
-
-	cdef int num_M_R
-	cdef int num_M_S 
-	cdef int num_N_R
-	cdef int num_N_S
-	cdef int num_N_RS_R
-	cdef int num_N_RS_S
 
 	def __init__(self, wf, basis):
 		"""

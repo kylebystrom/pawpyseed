@@ -210,6 +210,10 @@ class Wavefunction(pawpy.CWavefunction):
 		if setup_projectors:
 			self.check_c_projectors()
 
+	def update_dim(self, dim):
+		self.dim = np.array(dim, dtype=np.int32)
+		self.update_dimv(dim)
+
 	def desymmetrized_copy(self, allkpts = None, weights = None):
 		"""
 		Returns a copy of self with a k-point mesh that is not reduced
@@ -371,7 +375,7 @@ class Wavefunction(pawpy.CWavefunction):
 
 		self.check_c_projectors()
 		if dim != None:
-			self.update_dimv(np.array(dim))
+			self.update_dim(np.array(dim))
 		return self._get_realspace_state(b, k, s)
 
 	def get_realspace_density(self, dim = None):
@@ -385,7 +389,7 @@ class Wavefunction(pawpy.CWavefunction):
 		"""
 		self.check_c_projectors()
 		if dim is not None:
-			self.update_dimv(np.array(dim))
+			self.update_dim(np.array(dim))
 		return self._get_realspace_density()
 
 	def _convert_to_vasp_volumetric(self, filename, dim):
@@ -440,7 +444,7 @@ class Wavefunction(pawpy.CWavefunction):
 		"""
 		self.check_c_projectors()
 		if dim is not None:
-			self.update_dimv(np.array(dim))
+			self.update_dim(np.array(dim))
 		filename_base = "%sB%dK%dS%d" % (fileprefix, b, k, s)
 		filename1 = "%s_REAL" % filename_base
 		filename2 = "%s_IMAG" % filename_base
@@ -471,7 +475,7 @@ class Wavefunction(pawpy.CWavefunction):
 
 		self.check_c_projectors()
 		if dim is not None:
-			self.update_dimv(np.array(dim))
+			self.update_dim(np.array(dim))
 		res = self._write_realspace_density(filename, scale)
 		self._convert_to_vasp_volumetric(filename, dim)
 		return res

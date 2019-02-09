@@ -9,6 +9,8 @@ The code is distributed under the Standard CPC license.
 #ifndef SBT_H
 #define SBT_H
 
+#include <complex.h>
+
 /**
 Contains the parameters for a fast spherical Bessel transform.
 */

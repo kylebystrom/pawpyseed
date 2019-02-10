@@ -23,10 +23,7 @@ srcfiles = ['density', 'gaunt', 'linalg', 'projector', 'pseudoprojector', 'quadr
 
 cfiles = [f+'.c' for f in srcfiles]
 #hfiles = [f+'.h' for f in srcfiles]
-ext_files = cfiles + ['pawpyc.pyx']
-if DEBUG:
-	ext_files.append('tests/testc.pyx')
-	ext_files.append('tests/tests.c')
+ext_files = cfiles
 ext_files = ['pawpyseed/core/' + f for f in ext_files]
 lib_dirs = ['/usr/lib', '/usr/local/lib']
 inc_dirs = ['/usr/include', '/usr/local/include', 'pawpyseed/core', np.get_include()]
@@ -48,13 +45,22 @@ if not DEBUG:
 	extra_args += ['-g0', '-O2']
 link_args = '-lmkl_sequential -lmkl_intel_lp64 -lmkl_core -lpthread -lm -ldl'.split()
 
-extensions = [Extension('pawpy', ext_files,
+extensions = [Extension('pawpyc', ext_files + ['pawpyseed/core/pawpyc.pyx'],
 	define_macros=[('MKL_Complex16', 'double complex'), ('MKL_Complex8', 'float complex')],
 	library_dirs=lib_dirs,
 	extra_link_args=extra_args + link_args,
 	extra_compile_args=extra_args,
 	runtime_library_dirs=lib_dirs,
 	include_dirs=inc_dirs)]
+if DEBUG:
+	extensions.append(Extension('testc',
+		['pawpyseed/core/tests/testc.pyx', 'pawpyseed/core/tests/tests.c'] + ext_files,
+		define_macros=[('MKL_Complex16', 'double complex'), ('MKL_Complex8', 'float complex')],
+		library_dirs=lib_dirs,
+		extra_link_args=extra_args + link_args,
+		extra_compile_args=extra_args,
+		runtime_library_dirs=lib_dirs,
+		include_dirs=inc_dirs))
 
 packages = ['pawpyseed', 'pawpyseed.core', 'pawpyseed.analysis']
 if DEBUG:
@@ -78,7 +84,6 @@ setup(name='pawpyseed',
 		"Programming Language :: Python :: 3",
 		"License :: OSI Approved :: BSD License"
 	),
-
 	ext_modules=cythonize(extensions),
 	#	include_path=[os.path.join(os.path.abspath(__file__), 'pawpyseed/core')]),
 	zip_safe=False

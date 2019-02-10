@@ -16,7 +16,7 @@ import json
 
 import sys
 
-import pawpy
+import pawpyc
 
 class Pseudopotential:
 	"""
@@ -162,7 +162,7 @@ class CoreRegion:
 			self.pps[potsingle.element] = Pseudopotential(potsingle.data[:-15])
 
 
-class Wavefunction(pawpy.CWavefunction):
+class Wavefunction(pawpyc.CWavefunction):
 	"""
 	Class for storing and manipulating all electron wave functions in the PAW
 	formalism.
@@ -183,7 +183,7 @@ class Wavefunction(pawpy.CWavefunction):
 		"""
 		Arguments:
 			struct (pymatgen.core.Structure): structure that the wavefunction describes
-			pwf (pawpy.PWFPointer): holder class for pswf_t and k-points/k-point weights
+			pwf (pawpyc.PWFPointer): holder class for pswf_t and k-points/k-point weights
 			cr (CoreRegion): Contains the pseudopotentials, with projectors and
 				partials waves, for the structure
 			dim (pymatgen.io.vasp.outputs.Outcar OR np.ndarry OR list of length 3):
@@ -252,7 +252,7 @@ class Wavefunction(pawpy.CWavefunction):
 		Returns:
 			Wavefunction object
 		"""
-		pwf = pawpy.PWFPointer(wavecar, vr)
+		pwf = pawpyc.PWFPointer(wavecar, vr)
 		return Wavefunction(Poscar.from_file(struct).structure,
 			pwf, CoreRegion(Potcar.from_file(cr)),
 			Outcar(outcar), setup_projectors)

@@ -833,8 +833,8 @@ pswf_t* expand_symm_wf(pswf_t* rwf, int num_kpts, int* maps,
 		kpt->k[0] -= kdiff[0];
 		kpt->k[1] -= kdiff[1];
 		kpt->k[2] -= kdiff[2];
-		printf("OLD KPT %lf %lf %lf\n", rkpt->k[0], rkpt->k[1], rkpt->k[2]);
-		printf("NEW KPT %lf %lf %lf\n", kpt->k[0], kpt->k[1], kpt->k[2]);
+		//printf("OLD KPT %lf %lf %lf\n", rkpt->k[0], rkpt->k[1], rkpt->k[2]);
+		//printf("NEW KPT %lf %lf %lf\n", kpt->k[0], kpt->k[1], kpt->k[2]);
 		//kpt->Gs = (int*) malloc(3 * kpt->num_waves * sizeof(int));
 
 		kpt->weight = kws[knum%num_kpts];

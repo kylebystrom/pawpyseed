@@ -12,7 +12,7 @@ from scipy.special import lpmn, sph_harm
 from nose import SkipTest
 from nose.tools import nottest
 
-import pawpy
+import pawpyc, testc
 
 class PawpyTestError(Exception):
 	"""
@@ -59,7 +59,7 @@ class TestC:
 		for i in range(xs.shape[0]):
 			for l in range(4):
 				for m in range(0,-l-1,-1):
-					ys2[i*16-m*4+l] = pawpy.legendre(l, m, xs[i])
+					ys2[i*16-m*4+l] = pawpyc.legendre(l, m, xs[i])
 		assert_almost_equal(np.linalg.norm(ys-ys2), 0.0)
 
 	def test_Ylm(self):
@@ -75,8 +75,8 @@ class TestC:
 				i,j=0,0
 				for i in range(xs.shape[0]):
 					for j in range(xs.shape[0]):
-						ys1[i*100+j] = pawpy.Ylm(l, m, xs[i]*np.pi, xs[j]*np.pi*2)
-						ys2[i*100+j] = pawpy.Ylm2(l, m, np.cos(xs[i]*np.pi), xs[j]*np.pi*2)
+						ys1[i*100+j] = pawpyc.Ylm(l, m, xs[i]*np.pi, xs[j]*np.pi*2)
+						ys2[i*100+j] = pawpyc.Ylm2(l, m, np.cos(xs[i]*np.pi), xs[j]*np.pi*2)
 				assert_almost_equal(np.linalg.norm(ys-ys1),0.0)
 				assert_almost_equal(np.linalg.norm(ys1-ys2),0.0)
 
@@ -88,10 +88,10 @@ class TestC:
 			coord = site.coords
 			fcoord = site.frac_coords
 			temp1 = np.copy(fcoord, order='C')
-			pawpy.frac_to_cartesian(temp1, lattice)
+			pawpyc.frac_to_cartesian(temp1, lattice)
 			assert_almost_equal(np.linalg.norm(temp1-coord), 0.0)
 			temp2 = np.copy(coord, order='C')
-			pawpy.cartesian_to_frac(temp2, reclattice)
+			pawpyc.cartesian_to_frac(temp2, reclattice)
 			assert_almost_equal(np.linalg.norm(temp2-fcoord), 0.0)
 
 	def test_spline(self):
@@ -106,21 +106,21 @@ class TestC:
 			extrapolate=True, bc_type='natural')(tst)
 		x, y = grid[:], vals[:]
 		res2 = np.zeros(tst.shape)
-		pawpy.interpolate(res2, tst, x, y, rmax, 100, 400)
+		pawpyc.interpolate(res2, tst, x, y, rmax, 100, 400)
 		assert_almost_equal(np.linalg.norm(res1-res2), 0, 2)
 		sys.stdout.flush()
 
 	def test_fft3d(self):
 		vr = self.vr 
 		weights = np.array(vr.actual_kpoints_weights)
-		pawpy.fft_check("WAVECAR", weights, np.array([20,20,20], dtype=np.int32, order='C'))
+		testc.fft_check("WAVECAR", weights, np.array([20,20,20], dtype=np.int32, order='C'))
 
 	def test_sbt(self):
 		from scipy.special import spherical_jn as jn
 		cr = CoreRegion(Potcar.from_file("POTCAR"))
 		r = cr.pps['Ga'].grid
 		f = cr.pps['Ga'].aewaves[0] - cr.pps['Ga'].pswaves[0];
-		ks, res = pawpy.spherical_bessel_transform(1e6, 0, r, f)
+		ks, res = pawpyc.spherical_bessel_transform(1e6, 0, r, f)
 		k = ks[180]
 		vals = jn(0, r * k) * f * r
 		integral = np.trapz(vals, r)
@@ -257,7 +257,7 @@ class TestC:
 						if m2 > 0:
 							ov1 *= (-1)**(m2)
 
-					ov2 = pawpy.reciprocal_offsite_wave_overlap(Barr,
+					ov2 = pawpyc.reciprocal_offsite_wave_overlap(Barr,
 						r, f1, r, f2,
 						l1, m1, l2, m2)
 					#print(ov1, ov2)
@@ -576,3 +576,8 @@ class TestPy:
 			else:
 				assert_almost_equal(test_vals[b][0], 0, decimal=7)
 				assert_almost_equal(test_vals[b][1], 1, decimal=3)
+
+	def test_norm(self):
+		wf = Wavefunction.from_directory('.')
+		wf.check_c_projectors()
+		testc.proj_check(wf)

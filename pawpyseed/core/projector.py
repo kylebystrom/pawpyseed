@@ -5,11 +5,11 @@
 # AE and PS projection operators.
 
 from pawpyseed.core.wavefunction import *
-import pawpy
+from pawpyseed.core import pawpyc
 from pawpy import Timer
 import warnings
 
-class Projector(pawpy.CProjector):
+class Projector(pawpyc.CProjector):
 	"""
 	Projector is a class to project KS states
 	from wf onto the KS states of basis
@@ -25,8 +25,10 @@ class Projector(pawpy.CProjector):
 			normalization for speed
 	"""
 
+	METHODS = ["pseudo", "realspace", "aug_recip", "aug_real"]
+
 	def __init__(self, wf, basis,
-		unsym_basis = False, unsym_wf = False, pseudo = False):
+		unsym_basis = False, unsym_wf = False, method = "aug_recip"):
 		"""
 		Arguments:
 			wf (Wavefunction): The wavefunction objects whose
@@ -43,10 +45,23 @@ class Projector(pawpy.CProjector):
 				using only plane-wave coefficient components of the
 				wavefunctions. Sacrifices orthogonalization and
 				normalization for speed
+			method (str, "aug_recip"): Options: "pseudo", "realspace", "aug_recip", "aug_real";
+				The method to use for the projections
 
 		Returns:
 			Projector object
 		"""
+		self.method = method
+		if self.method == "pseudo":
+			self._single_band_projection = self._single_band_projection_pseudo
+		elif self.method == "realspace":
+			self._single_band_projection = self._single_band_projection_realspace
+		elif self.method == "aug_recip":
+			self._single_band_projection = self._single_band_projection_aug_recip
+		elif self.method == "aug_real":
+			self._single_band_projection = self._single_band_projection_aug_real
+		else:
+			raise PAWpyError("method not recognized for Projector")
 
 		if wf.ncl or basis.ncl:
 			raise PAWpyError("Projection not supported for noncollinear case!")
@@ -74,15 +89,16 @@ class Projector(pawpy.CProjector):
 		if wf.structure.lattice != basis.structure.lattice:
 			raise PAWpyError("Need the lattice to be the same for projections, and they are not")
 
-		if not pseudo:
+		if self.method != "pseudo":
 			basis.check_c_projectors()
 			wf.check_c_projectors()
 
 		super(Projector, self).__init__(wf, basis)
 
-		if not pseudo:
+		if "aug" in self.method:
 			self.setup_overlap()
-		self.pseudo = pseudo
+
+		print("METHOD", self.method)
 
 	def make_site_lists(self):
 		"""
@@ -143,12 +159,30 @@ class Projector(pawpy.CProjector):
 			N_RS_R, N_RS_S = [], []
 		self.site_cat = [M_R, M_S, N_R, N_S, N_RS_R, N_RS_S]
 		start = time.monotonic()
-		self._setup_overlap(self.site_cat)
+		if self.method == "aug_recip":
+			self._setup_overlap(self.site_cat, True)
+		elif self.method == "aug_real":
+			self._setup_overlap(self.site_cat, False)
+		else:
+			raise PAWpyError("method must be aug type for setup_overlap call")
 		end = time.monotonic()
 		Timer.overlap_time(end-start)
 		print('-------------\nran overlap_setup in %f seconds\n---------------' % (end-start))
 
-	def single_band_projection(self, band_num):
+	def _single_band_projection_pseudo(self, band_num):
+		return self.wf.pseudoprojection(band_num, self.basis)
+
+	def _single_band_projection_realspace(self, band_num, dim = None):
+		"""
+		Same operation as single_band_projection, but performed
+		by projecting the wavefunctions onto a realspace grid,
+		which can be set by the length=3 list or np.ndarray dim.
+		If dim is None (default), the FFT grid dimensions
+		of self.wf are used.
+		"""
+		return self._realspace_projection(band_num, dim)
+
+	def _single_band_projection_aug_real(self, band_num):
 		"""
 		All electron projection of the band_num band of self
 		onto all the bands of basis. Returned as a numpy array,
@@ -164,18 +198,23 @@ class Projector(pawpy.CProjector):
 			res (np.array): overlap operator expectation values
 				as described above
 		"""
-		if band_num >= self.wf.nband or band_num < 0:
-			raise PAWpyError("Band index out of range (0-indexed)")
-
 		res = self.wf.pseudoprojection(band_num, self.basis)
-		if self.pseudo:
-			return res
 		start = time.monotonic()
 		self._add_augmentation_terms(res, band_num)
 		end = time.monotonic()
 		Timer.augmentation_time(end-start)
 		#print('---------\nran compensation_terms in %f seconds\n-----------' % (end-start))
 		return res
+
+	def _single_band_projection_aug_recip(self, band_num):
+		res = self.wf.pseudoprojection(band_num, self.basis)
+		self._projection_recip(res, band_num)
+		return res
+
+	def single_band_projection(self, band_num, **kwargs):
+		if band_num >= self.wf.nband or band_num < 0:
+			raise PAWpyError("Band index out of range (0-indexed)")
+		return self._single_band_projection(band_num, **kwargs)
 
 	@staticmethod
 	def setup_bases(basis_dirs, desymmetrize = True,
@@ -216,7 +255,7 @@ class Projector(pawpy.CProjector):
 		return bases
 
 	@staticmethod
-	def setup_multiple_projections(basis_dir, wf_dirs, pseudo = False, ignore_errors = False,
+	def setup_multiple_projections(basis_dir, wf_dirs, method = "aug_recip", ignore_errors = False,
 									desymmetrize = False, atomate_compatible = True):
 		"""
 		A convenient generator function for processing the Kohn-Sham wavefunctions
@@ -265,9 +304,9 @@ class Projector(pawpy.CProjector):
 					wf = Wavefunction.from_directory(wf_dir, False)
 
 				if desymmetrize:
-					pr = Projector(wf, basis, pseudo = pseudo, unsym_wf = True)
+					pr = Projector(wf, basis, method = method, unsym_wf = True)
 				else:
-					pr = Projector(wf, basis, pseudo = pseudo)
+					pr = Projector(wf, basis, method = method)
 
 				yield [wf_dir, pr]
 			except Exception as e:
@@ -322,7 +361,7 @@ class Projector(pawpy.CProjector):
 					v += np.absolute(res[i]) ** 2 * self.wf.kws[i%nwk] / nspin
 				else:
 					c += np.absolute(res[i]) ** 2 * self.wf.kws[i%nwk] / nspin
-		if self.pseudo:
+		if self.method == "pseudo":
 			t = v+c
 			v /= t
 			c /= t
@@ -389,15 +428,3 @@ class Projector(pawpy.CProjector):
 			return results, self.wf._get_energy_list(totest)
 		else:
 			return results
-
-	def realspace_projection(self, band_num, dim = None):
-		"""
-		Same operation as single_band_projection, but performed
-		by projecting the wavefunctions onto a realspace grid,
-		which can be set by the length=3 list or np.ndarray dim.
-		If dim is None (default), the FFT grid dimensions
-		of self.wf are used.
-		"""
-		if self.pseudo:
-			raise PAWpyError("Can't do realspace projection with pseudo=True")
-		return self._realspace_projection(band_num, dim)

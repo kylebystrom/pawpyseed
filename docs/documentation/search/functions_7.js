@@ -1,15 +1,17 @@
 var searchData=
 [
-  ['get_5fc_5fprojectors_5ffrom_5fpps',['get_c_projectors_from_pps',['../classpawpyseed_1_1core_1_1wavefunction_1_1Wavefunction.html#a7b4a79950e6a4376bb53ca9fdc113449',1,'pawpyseed::core::wavefunction::Wavefunction']]],
+  ['get_5fcorrection',['get_correction',['../classpawpyseed_1_1analysis_1_1corrections_1_1PerturbationCorrection.html#ae9d8103531ea5f924901225d56f1e8b0',1,'pawpyseed::analysis::corrections::PerturbationCorrection']]],
   ['get_5fencut',['get_encut',['../utils_8h.html#ab9620c8506dfaa134aac668d48e6d78e',1,'utils.h']]],
   ['get_5fenergy',['get_energy',['../utils_8h.html#a97f3622fdb711ca9b5a7b36d3cde8310',1,'utils.h']]],
-  ['get_5fkpt_5fmapping',['get_kpt_mapping',['../classpawpyseed_1_1core_1_1wavefunction_1_1Wavefunction.html#ab1a0638cfb63e9b857da341f5a745f05',1,'pawpyseed::core::wavefunction::Wavefunction']]],
+  ['get_5fkpt_5fmapping',['get_kpt_mapping',['../classpawpyseed_1_1core_1_1wavefunction_1_1Wavefunction.html#ab1a0638cfb63e9b857da341f5a745f05',1,'pawpyseed.core.wavefunction.Wavefunction.get_kpt_mapping()'],['../namespacepawpyseed_1_1core_1_1symmetry.html#a6aa4b7034cd7ef6b3b640f745d8911e2',1,'pawpyseed.core.symmetry.get_kpt_mapping()']]],
   ['get_5fnband',['get_nband',['../utils_8h.html#a15b9061bb716b2369929860ae3ef7164',1,'utils.h']]],
-  ['get_5fnosym_5fkpoints',['get_nosym_kpoints',['../classpawpyseed_1_1core_1_1wavefunction_1_1Wavefunction.html#af811927769ddd6f11f9467e1c886f4e2',1,'pawpyseed::core::wavefunction::Wavefunction']]],
+  ['get_5fnosym_5fkpoints',['get_nosym_kpoints',['../classpawpyseed_1_1core_1_1wavefunction_1_1Wavefunction.html#af811927769ddd6f11f9467e1c886f4e2',1,'pawpyseed.core.wavefunction.Wavefunction.get_nosym_kpoints()'],['../namespacepawpyseed_1_1core_1_1symmetry.html#afadba3833f3e73d2962a0281ad7c52a9',1,'pawpyseed.core.symmetry.get_nosym_kpoints()']]],
   ['get_5fnspin',['get_nspin',['../utils_8h.html#aadf2ad6487546bb1ddf6abca8fdd2e7c',1,'utils.h']]],
   ['get_5fnwk',['get_nwk',['../utils_8h.html#a9bcd1a9fc9c393bcae4ac93025fe7d82',1,'utils.h']]],
+  ['get_5focc',['get_occ',['../utils_8h.html#aede9033ccf0506e6b17802a64785dcf5',1,'utils.h']]],
   ['get_5foccs',['get_occs',['../utils_8h.html#a7fedbc8d3c707ff010535e257a46d7f2',1,'utils.h']]],
-  ['get_5fprojector_5flist',['get_projector_list',['../projector_8h.html#a7b0f4f46750303fd5b1cfa5060e9c678',1,'projector.h']]],
+  ['get_5fprojector_5flist',['get_projector_list',['../projector_8h.html#a25d754c433de907c083c3236ba01648e',1,'projector.h']]],
+  ['get_5frealspace_5fdensity',['get_realspace_density',['../classpawpyseed_1_1core_1_1wavefunction_1_1Wavefunction.html#a9fbf15e5c3db09f95fe46e8f2dd525ec',1,'pawpyseed::core::wavefunction::Wavefunction']]],
   ['get_5fstate_5frealspace',['get_state_realspace',['../classpawpyseed_1_1core_1_1wavefunction_1_1Wavefunction.html#a7bfc45a3dd15e4e800121e353ddd0104',1,'pawpyseed::core::wavefunction::Wavefunction']]],
-  ['get_5fsymmops',['get_symmops',['../classpawpyseed_1_1core_1_1wavefunction_1_1Wavefunction.html#ab968d7002b16fdd23d3bc0a4fcdf1721',1,'pawpyseed::core::wavefunction::Wavefunction']]]
+  ['get_5fsymmops',['get_symmops',['../namespacepawpyseed_1_1core_1_1symmetry.html#a3c87397abca035df64811f516901262c',1,'pawpyseed::core::symmetry']]]
 ];

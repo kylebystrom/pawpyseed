@@ -16,7 +16,7 @@ import json
 
 import sys
 
-import pawpy
+from pawpyseed.core import pawpyc
 
 class Pseudopotential:
 	"""
@@ -162,7 +162,7 @@ class CoreRegion:
 			self.pps[potsingle.element] = Pseudopotential(potsingle.data[:-15])
 
 
-class Wavefunction(pawpy.CWavefunction):
+class Wavefunction(pawpyc.CWavefunction):
 	"""
 	Class for storing and manipulating all electron wave functions in the PAW
 	formalism.
@@ -183,7 +183,7 @@ class Wavefunction(pawpy.CWavefunction):
 		"""
 		Arguments:
 			struct (pymatgen.core.Structure): structure that the wavefunction describes
-			pwf (pawpy.PWFPointer): holder class for pswf_t and k-points/k-point weights
+			pwf (pawpyc.PWFPointer): holder class for pswf_t and k-points/k-point weights
 			cr (CoreRegion): Contains the pseudopotentials, with projectors and
 				partials waves, for the structure
 			dim (pymatgen.io.vasp.outputs.Outcar OR np.ndarry OR list of length 3):
@@ -209,6 +209,10 @@ class Wavefunction(pawpy.CWavefunction):
 			self.dim = np.array(self.dim).astype(np.int32)
 		if setup_projectors:
 			self.check_c_projectors()
+
+	def update_dim(self, dim):
+		self.dim = np.array(dim, dtype=np.int32)
+		self.update_dimv(dim)
 
 	def desymmetrized_copy(self, allkpts = None, weights = None):
 		"""
@@ -248,7 +252,7 @@ class Wavefunction(pawpy.CWavefunction):
 		Returns:
 			Wavefunction object
 		"""
-		pwf = pawpy.PWFPointer(wavecar, vr)
+		pwf = pawpyc.PWFPointer(wavecar, vr)
 		return Wavefunction(Poscar.from_file(struct).structure,
 			pwf, CoreRegion(Potcar.from_file(cr)),
 			Outcar(outcar), setup_projectors)
@@ -371,7 +375,7 @@ class Wavefunction(pawpy.CWavefunction):
 
 		self.check_c_projectors()
 		if dim != None:
-			self.update_dimv(np.array(dim))
+			self.update_dim(np.array(dim))
 		return self._get_realspace_state(b, k, s)
 
 	def get_realspace_density(self, dim = None):
@@ -385,7 +389,7 @@ class Wavefunction(pawpy.CWavefunction):
 		"""
 		self.check_c_projectors()
 		if dim is not None:
-			self.update_dimv(np.array(dim))
+			self.update_dim(np.array(dim))
 		return self._get_realspace_density()
 
 	def _convert_to_vasp_volumetric(self, filename, dim):
@@ -440,7 +444,7 @@ class Wavefunction(pawpy.CWavefunction):
 		"""
 		self.check_c_projectors()
 		if dim is not None:
-			self.update_dimv(np.array(dim))
+			self.update_dim(np.array(dim))
 		filename_base = "%sB%dK%dS%d" % (fileprefix, b, k, s)
 		filename1 = "%s_REAL" % filename_base
 		filename2 = "%s_IMAG" % filename_base
@@ -471,7 +475,7 @@ class Wavefunction(pawpy.CWavefunction):
 
 		self.check_c_projectors()
 		if dim is not None:
-			self.update_dimv(np.array(dim))
+			self.update_dim(np.array(dim))
 		res = self._write_realspace_density(filename, scale)
 		self._convert_to_vasp_volumetric(filename, dim)
 		return res

@@ -1,4 +1,5 @@
 # cython : profile=True
+# cython : language_level=3
 
 ## Cython file for interfacing
 # pawpyseed classes with C code.
@@ -8,6 +9,8 @@
 # catching is in Python.
 
 from pawpyseed.core cimport pawpyc
+from pawpyseed.core cimport pawpyc_extern as ppc
+
 from cpython cimport array
 from libc.stdlib cimport malloc, free
 from libc.stdio cimport FILE
@@ -67,13 +70,13 @@ def make_c_ops(op_nums, symmops):
 #################################
 
 cpdef double legendre(int l, int m, double x):
-	return pawpyc.legendre(l, m, x)
+	return ppc.legendre(l, m, x)
 
 cpdef double complex Ylm(int l, int m, double theta, double phi):
-	return pawpyc.Ylm(l, m, theta, phi)
+	return ppc.Ylm(l, m, theta, phi)
 
 cpdef double complex Ylm2(int l, int m, double costheta, double phi):
-	return pawpyc.Ylm2(l, m, costheta, phi)
+	return ppc.Ylm2(l, m, costheta, phi)
 
 cpdef frac_to_cartesian(np.ndarray[double, ndim=1] coord,
 	np.ndarray[double, ndim=2] lattice):
@@ -85,7 +88,7 @@ cpdef frac_to_cartesian(np.ndarray[double, ndim=1] coord,
 		latticef = np.ascontiguousarray(latticef)
 	cdef double[::1] coordv = coord
 	cdef double[::1] latticev = latticef
-	pawpyc.frac_to_cartesian(&coordv[0], &latticev[0])
+	ppc.frac_to_cartesian(&coordv[0], &latticev[0])
 
 cpdef cartesian_to_frac(np.ndarray[double, ndim=1] coord,
 	np.ndarray[double, ndim=2] reclattice):
@@ -97,7 +100,7 @@ cpdef cartesian_to_frac(np.ndarray[double, ndim=1] coord,
 		reclatticef = np.ascontiguousarray(reclatticef)
 	cdef double[::1] coordv = coord
 	cdef double[::1] latticev = reclatticef
-	pawpyc.cartesian_to_frac(&coordv[0], &latticev[0])
+	ppc.cartesian_to_frac(&coordv[0], &latticev[0])
 
 cpdef interpolate(np.ndarray[double, ndim=1] res,
 	np.ndarray[double, ndim=1] tst,
@@ -108,55 +111,16 @@ cpdef interpolate(np.ndarray[double, ndim=1] res,
 
 	cdef double[::1] xv = x
 	cdef double[::1] yv = y
-	cdef double** coef = pawpyc.spline_coeff(&xv[0], &yv[0], size)
+	cdef double** coef = ppc.spline_coeff(&xv[0], &yv[0], size)
 
 	for i in range(tstsize):
-		res[i] = pawpyc.proj_interpolate(tst[i], rmax,
+		res[i] = ppc.proj_interpolate(tst[i], rmax,
 			size, &xv[0], &yv[0], coef)
 
 	free(coef[0])
 	free(coef[1])
 	free(coef[2])
 	free(coef)
-
-cpdef fft_check(str wavecar, np.ndarray[double, ndim=1] kpt_weights,
-	np.ndarray[int, ndim=1] fftgrid):
-
-	cdef int[::1] fftg = fftgrid
-	cdef double[::1] kws = kpt_weights
-	cdef pawpyc.pswf_t* wf = pawpyc.read_wavefunctions(wavecar.encode('utf-8'), &kws[0])
-	cdef double complex* x = <double complex*> malloc(fftg[0]*fftg[1]*fftg[2]*sizeof(double complex))
-	pawpyc.fft3d(x, wf.G_bounds, wf.lattice, wf.kpts[0].k, wf.kpts[0].Gs,
-		wf.kpts[0].bands[0].Cs, wf.kpts[0].bands[0].num_waves, &fftg[0])
-	cdef int* Gs = wf.kpts[0].Gs
-	cdef float complex* Cs = wf.kpts[0].bands[0].Cs
-	cdef double inv_sqrt_vol = np.power(pawpyc.determinant(wf.lattice), -0.5)
-	cdef double dv = pawpyc.determinant(wf.lattice) / fftg[0] / fftg[1] / fftg[2]
-	cdef double* kpt = wf.kpts[0].k;
-	cdef double f1 = 0
-	cdef double f2 = 0
-	cdef double f3 = 0
-	cdef int ind
-	cdef double complex temp
-	il = np.arange(fftg[0], dtype=np.float64) / fftg[0]
-	jl = np.arange(fftg[1], dtype=np.float64) / fftg[1]
-	kl = np.arange(fftg[2], dtype=np.float64) / fftg[2]
-	for i in np.arange(fftg[0]):
-		for j in np.arange(fftg[1]):
-			for k in np.arange(fftg[2]):
-				f1 = il[i]
-				f2 = jl[j]
-				f3 = kl[k]
-				temp = 0;
-				for w in range(wf.kpts[0].bands[0].num_waves):
-					temp += Cs[w] * np.exp((f1 * (Gs[3*w]) +
-							f2 * (Gs[3*w+1]) +
-							f3 * (Gs[3*w+2])) * 2.0j * np.pi)
-				temp *= inv_sqrt_vol
-				ind = i*fftg[1]*fftg[2]+j*fftg[2]+k
-				assert_almost_equal(np.abs(x[ind] - temp), 0)
-	free(x)
-	pawpyc.free_pswf(wf)
 
 cpdef spherical_bessel_transform(double encut, int l,
 	np.ndarray[double, ndim=1] r, np.ndarray[double, ndim=1] f):
@@ -171,9 +135,9 @@ cpdef spherical_bessel_transform(double encut, int l,
 	cdef double[::1] rv = r
 	cdef double[::1] kv = k
 	cdef double[::1] fv = f
-	cdef pawpyc.sbt_descriptor_t* sbtd = pawpyc.spherical_bessel_transform_setup(encut, 0,
+	cdef ppc.sbt_descriptor_t* sbtd = ppc.spherical_bessel_transform_setup(encut, 0,
 					l, size, &rv[0], &kv[0])
-	cdef double* fkv = pawpyc.wave_spherical_bessel_transform(sbtd, &fv[0], l)
+	cdef double* fkv = ppc.wave_spherical_bessel_transform(sbtd, &fv[0], l)
 	for i in range(size):
 		fk[i] = fkv[i]
 	free(fkv)
@@ -202,10 +166,10 @@ cpdef reciprocal_offsite_wave_overlap(np.ndarray[double, ndim=1] dcoord,
 	cdef double[::1] k2v = k2
 	cdef double[::1] fk2v = fk2
 
-	cdef double** s1 = pawpyc.spline_coeff(&k1v[0], &fk1v[0], size1)
-	cdef double** s2 = pawpyc.spline_coeff(&k2v[0], &fk2v[0], size2)
+	cdef double** s1 = ppc.spline_coeff(&k1v[0], &fk1v[0], size1)
+	cdef double** s2 = ppc.spline_coeff(&k2v[0], &fk2v[0], size2)
 
-	res = pawpyc.reciprocal_offsite_wave_overlap(&dcoordv[0],
+	res = ppc.reciprocal_offsite_wave_overlap(&dcoordv[0],
 		&k1v[0], &fk1v[0], s1, size1,
 		&k2v[0], &fk2v[0], s2, size2,
 		NULL, l1, m1, l2, m2)
@@ -227,11 +191,6 @@ cpdef reciprocal_offsite_wave_overlap(np.ndarray[double, ndim=1] dcoord,
 
 cdef class PWFPointer:
 
-	cdef pawpyc.pswf_t* ptr
-	cdef readonly np.ndarray kpts
-	cdef readonly np.ndarray weights
-	cdef readonly np.ndarray band_props
-
 	def __init__(self, filename = None, vr = None):
 		cdef double[::1] kws
 		if filename == None or vr == None:
@@ -248,14 +207,14 @@ cdef class PWFPointer:
 				f = zopen(filename, 'rb')
 				contents = f.read()
 				f.close()
-				self.ptr = pawpyc.read_wavefunctions_from_str(
+				self.ptr = ppc.read_wavefunctions_from_str(
 					contents, &kws[0])
 			else:
-				self.ptr = pawpyc.read_wavefunctions(filename.encode('utf-8'), &kws[0])
+				self.ptr = ppc.read_wavefunctions(filename.encode('utf-8'), &kws[0])
 
 	@staticmethod
-	cdef PWFPointer from_pointer_and_kpts(pawpyc.pswf_t* ptr,
-		structure, kpts, band_props, allkpts = None, weights = None):
+	cdef PWFPointer from_pointer_and_kpts(ppc.pswf_t* ptr,
+		structure, kpts, band_props, allkpts, weights):
 
 		return_kpts_and_weights = False
 		if (allkpts is None) or (weights is None):
@@ -283,7 +242,7 @@ cdef class PWFPointer:
 		cdef double[::1] drs_v = np.array(drs, np.float64, order='C', copy=False)
 		cdef int[::1] trs_v = np.array(trs, np.int32, order='C', copy=False)
 
-		cdef pawpyc.pswf_t* new_ptr = pawpyc.expand_symm_wf(ptr, len(orig_kptnums),
+		cdef ppc.pswf_t* new_ptr = ppc.expand_symm_wf(ptr, len(orig_kptnums),
 				&orig_kptnums_v[0], &ops_v[0], &drs_v[0], &weights_v[0], &trs_v[0])
 
 		cdef PWFPointer pwfp = PWFPointer()
@@ -314,13 +273,6 @@ cdef class PseudoWavefunction:
 		band_props (list): [band gap, conduction band minimum,
 			valence band maximum, whether the band gap is direct]
 	"""
-	cdef pawpyc.pswf_t* wf_ptr
-	cdef readonly int nband
-	cdef readonly int nwk
-	cdef readonly int nspin
-	cdef readonly int ncl
-	cdef readonly np.ndarray kws
-	cdef readonly np.ndarray kpts
 
 	def __init__(self, PWFPointer pwf):
 		"""
@@ -331,14 +283,14 @@ cdef class PseudoWavefunction:
 		self.wf_ptr = pwf.ptr
 		self.kpts = pwf.kpts.copy(order='C')
 		self.kws = pwf.weights.copy(order='C')
-		self.ncl = pawpyc.is_ncl(self.wf_ptr) > 0
-		self.nband = pawpyc.get_nband(self.wf_ptr)
-		self.nwk = pawpyc.get_nwk(self.wf_ptr)
-		self.nspin = pawpyc.get_nspin(self.wf_ptr)
-		self.encut = pawpyc.get_encut(self.wf_ptr)
+		self.ncl = ppc.is_ncl(self.wf_ptr) > 0
+		self.nband = ppc.get_nband(self.wf_ptr)
+		self.nwk = ppc.get_nwk(self.wf_ptr)
+		self.nspin = ppc.get_nspin(self.wf_ptr)
+		self.encut = ppc.get_encut(self.wf_ptr)
 
 	def __dealloc__(self):
-		pawpyc.free_pswf(self.wf_ptr)
+		ppc.free_pswf(self.wf_ptr)
 
 	def pseudoprojection(self, band_num, PseudoWavefunction basis):
 		"""
@@ -353,7 +305,7 @@ cdef class PseudoWavefunction:
 		"""
 		res = np.zeros(basis.nband * basis.nwk * basis.nspin, dtype = np.complex128)
 		cdef double complex[::1] resv = res
-		pawpyc.pseudoprojection(&resv[0], basis.wf_ptr, self.wf_ptr, band_num)
+		ppc.pseudoprojection(&resv[0], basis.wf_ptr, self.wf_ptr, band_num)
 		return res
 
 
@@ -371,24 +323,6 @@ cdef class CWavefunction(PseudoWavefunction):
 		int number_projector_elements: number of elements in the structure
 		readonly int projector_owner: Whether projector functions have
 			been initialized
-	"""
-
-	cdef int[::1] dimv
-	cdef int gridsize
-
-	cdef int[::1] nums
-	cdef double[::1] coords
-	cdef int number_projector_elements
-	cdef readonly int projector_owner
-
-	"""
-	dim (np.ndarray, length 3): dimension of the FFT grid used by VASP
-			and therefore for FFTs in this code
-		nband, nwk, nspin (int): Number of bands, kpoints, spins in VASP calculation
-		encut (int or float): VASP calculation plane-wave energy cutoff
-		nums (list of int, length nsites): Element labels for the structure
-		coords (list of float, length 3*nsites): Flattened list of coordinates for the structure
-			data has been initialized for this structure
 	"""
 	
 	def __init__(self, PWFPointer pwf):
@@ -447,7 +381,7 @@ cdef class CWavefunction(PseudoWavefunction):
 		cdef double[::1] rmaxs_v = rmaxs.astype(np.double)
 
 		print ("GRID ENCUT", grid_encut)
-		cdef pawpyc.ppot_t* projector_list = pawpyc.get_projector_list(
+		cdef ppc.ppot_t* projector_list = ppc.get_projector_list(
 							num_elems, &clabels_v[0], &ls_v[0], &wgrids_v[0],
 							&projectors_v[0], &aewaves_v[0], &pswaves_v[0],
 							&rmaxs_v[0], grid_encut)
@@ -459,7 +393,7 @@ cdef class CWavefunction(PseudoWavefunction):
 		self.coords = np.array(coords, dtype = np.float64, copy = True)
 		self.update_dimv(dim)
 
-		pawpyc.setup_projections(
+		ppc.setup_projections(
 			self.wf_ptr, projector_list,
 			num_elems, num_sites, &self.dimv[0],
 			&self.nums[0], &self.coords[0]
@@ -479,7 +413,7 @@ cdef class CWavefunction(PseudoWavefunction):
 	def _get_realspace_state(self, int b, int k, int s):
 		res = np.zeros(self.gridsize, dtype = np.complex128, order='C')
 		cdef double complex[::1] resv = res
-		pawpyc.realspace_state(&resv[0], b, k+s*self.nwk,
+		ppc.realspace_state(&resv[0], b, k+s*self.nwk,
 			self.wf_ptr, &self.dimv[0], &self.nums[0], &self.coords[0])
 		res.shape = self.dimv
 		return res
@@ -487,7 +421,7 @@ cdef class CWavefunction(PseudoWavefunction):
 	def _get_realspace_density(self):
 		res = np.zeros(self.gridsize, dtype = np.float64, order='C')
 		cdef double[::1] resv = res
-		pawpyc.ae_chg_density(&resv[0], self.wf_ptr,
+		ppc.ae_chg_density(&resv[0], self.wf_ptr,
 			&self.dimv[0], &self.nums[0], &self.coords[0])
 		res.shape = self.dimv
 		return res
@@ -501,9 +435,9 @@ cdef class CWavefunction(PseudoWavefunction):
 		resr = np.ascontiguousarray(np.real(res2))
 		resi = np.ascontiguousarray(np.imag(res2))
 		cdef double[::1] resv = resr
-		pawpyc.write_volumetric(filename1, &resv[0], &self.dimv[0], scale)
+		ppc.write_volumetric(filename1, &resv[0], &self.dimv[0], scale)
 		resv = resi
-		pawpyc.write_volumetric(filename2, &resv[0], &self.dimv[0], scale)
+		ppc.write_volumetric(filename2, &resv[0], &self.dimv[0], scale)
 		return res
 
 	def _write_realspace_density(self, filename, double scale):
@@ -512,11 +446,11 @@ cdef class CWavefunction(PseudoWavefunction):
 		res2 = res.view()
 		res2.shape = self.gridsize
 		cdef double[::1] resv = res2
-		pawpyc.write_volumetric(filename, &resv[0], &self.dimv[0], scale);
+		ppc.write_volumetric(filename, &resv[0], &self.dimv[0], scale);
 		return res
 
 	def _desymmetrized_pwf(self, structure, band_props, allkpts = None, weights = None):
-		return PWFPointer.from_pointer_and_kpts(<pawpyc.pswf_t*> self.wf_ptr, structure,
+		return PWFPointer.from_pointer_and_kpts(<ppc.pswf_t*> self.wf_ptr, structure,
 							self.kpts, band_props, allkpts, weights)
 
 	def _get_occs(self):
@@ -537,29 +471,12 @@ cdef class CWavefunction(PseudoWavefunction):
 			energy_list[b] = []
 			for k in range(self.nwk):
 				for s in range(self.nspin):
-					energy_list[b].append([pawpyc.get_energy(self.wf_ptr, b, k, s),\
-										pawpyc.get_occ(self.wf_ptr, b, k, s)])
+					energy_list[b].append([ppc.get_energy(self.wf_ptr, b, k, s),\
+										ppc.get_occ(self.wf_ptr, b, k, s)])
 		return energy_list
 
 
 cdef class CProjector:
-
-	cdef public CWavefunction wf
-	cdef public CWavefunction basis
-
-	cdef int[::1] M_R
-	cdef int[::1] M_S
-	cdef int[::1] N_R
-	cdef int[::1] N_S
-	cdef int[::1] N_RS_R
-	cdef int[::1] N_RS_S
-
-	cdef int num_M_R
-	cdef int num_M_S 
-	cdef int num_N_R
-	cdef int num_N_S
-	cdef int num_N_RS_R
-	cdef int num_N_RS_S
 
 	def __init__(self, wf, basis):
 		"""
@@ -572,7 +489,7 @@ cdef class CProjector:
 	# HELPER FUNCTION ROUTINES FOR OVERLAP EVALUATION #
 	#-------------------------------------------------#
 
-	def _setup_overlap(self, site_cat):
+	def _setup_overlap(self, site_cat, recip):
 
 		# set up site lists
 		self.M_R = np.array(site_cat[0], dtype=np.int32, order = 'C')
@@ -594,12 +511,17 @@ cdef class CProjector:
 		cdef int* N_RS_R = NULL if self.num_N_RS_R == 0 else &self.N_RS_R[0]
 		cdef int* N_RS_S = NULL if self.num_N_RS_S == 0 else &self.N_RS_S[0]
 		
-		# call C overlap setup routine
-		pawpyc.overlap_setup_real(self.basis.wf_ptr, self.wf.wf_ptr,
-			&self.basis.nums[0], &self.wf.nums[0], &self.basis.coords[0], &self.wf.coords[0],
-			N_R, N_S, N_RS_R, N_RS_S,
-			#self.N_R, self.N_S, self.N_RS_R, self.N_RS_S,
-			self.num_N_R, self.num_N_S, self.num_N_RS_R)
+		# choose function
+		if recip:
+			ppc.overlap_setup_recip(self.basis.wf_ptr, self.wf.wf_ptr,
+				&self.basis.nums[0], &self.wf.nums[0], &self.basis.coords[0], &self.wf.coords[0],
+				N_R, N_S, N_RS_R, N_RS_S,
+				self.num_N_R, self.num_N_S, self.num_N_RS_R)
+		else:
+			ppc.overlap_setup_real(self.basis.wf_ptr, self.wf.wf_ptr,
+				&self.basis.nums[0], &self.wf.nums[0], &self.basis.coords[0], &self.wf.coords[0],
+				N_R, N_S, N_RS_R, N_RS_S,
+				self.num_N_R, self.num_N_S, self.num_N_RS_R)
 
 	def _add_augmentation_terms(self, np.ndarray[double complex, ndim=1] res, band_num):
 		
@@ -614,12 +536,56 @@ cdef class CProjector:
 		cdef int* N_RS_S = NULL if self.num_N_RS_S == 0 else &self.N_RS_S[0]
 
 		# call compensation terms C routine
-		pawpyc.compensation_terms(&resv[0], band_num, self.wf.wf_ptr, self.basis.wf_ptr,
+		ppc.compensation_terms(&resv[0], band_num, self.wf.wf_ptr, self.basis.wf_ptr,
 			self.num_M_R, self.num_N_R, self.num_N_S, self.num_N_RS_R,
 			M_R, M_S, N_R, N_S, N_RS_R, N_RS_S,
-			#self.M_R, self.M_S, self.N_R, self.N_S, self.N_RS_R, self.N_RS_S,
 			&self.wf.nums[0], &self.wf.coords[0], &self.basis.nums[0], &self.basis.coords[0],
 			&self.wf.dimv[0])
+
+	def _projection_recip(self, np.ndarray[double complex, ndim=1] res, band_num):
+		
+		cdef double complex[::1] resv = res
+
+		# set up site lists
+		cdef int* M_R = NULL if self.num_M_R == 0 else &self.M_R[0]
+		cdef int* M_S = NULL if self.num_M_S == 0 else &self.M_S[0]
+		cdef int* N_R = NULL if self.num_N_R == 0 else &self.N_R[0]
+		cdef int* N_S = NULL if self.num_N_S == 0 else &self.N_S[0]
+		cdef int* N_RS_R = NULL if self.num_N_RS_R == 0 else &self.N_RS_R[0]
+		cdef int* N_RS_S = NULL if self.num_N_RS_S == 0 else &self.N_RS_S[0]
+
+		# call compensation terms C routine
+		ppc.compensation_terms_recip(&resv[0], band_num, self.wf.wf_ptr, self.basis.wf_ptr,
+			self.num_M_R, self.num_N_R, self.num_N_S, self.num_N_RS_R,
+			M_R, M_S, N_R, N_S, N_RS_R, N_RS_S,
+			&self.wf.nums[0], &self.wf.coords[0], &self.basis.nums[0], &self.basis.coords[0],
+			&self.wf.dimv[0])
+
+	"""
+	def _projection_recip(self, band_num, recip):
+		
+		res = np.zeros(self.basis.nband * self.basis.nwk * self.basis.nspin, dtype = np.complex128)
+		cdef double complex[::1] resv = res
+
+		# set up site lists
+		cdef int* M_R = NULL if self.num_M_R == 0 else &self.M_R[0]
+		cdef int* M_S = NULL if self.num_M_S == 0 else &self.M_S[0]
+		cdef int* N_R = NULL if self.num_N_R == 0 else &self.N_R[0]
+		cdef int* N_S = NULL if self.num_N_S == 0 else &self.N_S[0]
+		cdef int* N_RS_R = NULL if self.num_N_RS_R == 0 else &self.N_RS_R[0]
+		cdef int* N_RS_S = NULL if self.num_N_RS_S == 0 else &self.N_RS_S[0]
+
+		sys.stdout.flush()
+
+		# call compensation terms C routine
+		ppc.compensation_terms_recip(&resv[0], band_num, self.wf.wf_ptr, self.basis.wf_ptr,
+			self.num_M_R, self.num_N_R, self.num_N_S, self.num_N_RS_R,
+			M_R, M_S, N_R, N_S, N_RS_R, N_RS_S,
+			&self.wf.nums[0], &self.wf.coords[0], &self.basis.nums[0], &self.basis.coords[0],
+			&self.wf.dimv[0])
+
+		return res
+	"""
 
 	def _realspace_projection(self, int band_num, np.ndarray dim):
 		res = np.zeros(self.basis.nband * self.basis.nwk * self.basis.nspin,
@@ -630,7 +596,7 @@ cdef class CProjector:
 			dimv = self.wf.dimv
 		else:
 			dimv = np.array(dim, dtype=np.float64, order='C', copy=False)
-		pawpyc.project_realspace_state(&resv[0], 
+		ppc.project_realspace_state(&resv[0], 
 			band_num, self.wf.wf_ptr, self.basis.wf_ptr,
 			&dimv[0], &self.wf.nums[0], &self.wf.coords[0],
 			&self.basis.nums[0], &self.basis.coords[0])

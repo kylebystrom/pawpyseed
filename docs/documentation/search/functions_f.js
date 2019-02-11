@@ -1,13 +1,19 @@
 var searchData=
 [
-  ['rad_5fint',['rad_int',['../namespacepawpyseed_1_1core_1_1rayleigh.html#a186996aabaa10d9feaf797b4ff30a18a',1,'pawpyseed::core::rayleigh']]],
-  ['read_5fone_5fband',['read_one_band',['../reader_8h.html#a2b1ca1c6f6884c8d3ddfb25e6495f18b',1,'reader.h']]],
-  ['read_5fwavecar',['read_wavecar',['../reader_8h.html#aa6500159c84b1af9645c8d0ecef9f1d4',1,'reader.h']]],
-  ['read_5fwavefunctions',['read_wavefunctions',['../reader_8h.html#af42fe870fdde3e44e0647913ab0fd836',1,'reader.h']]],
-  ['read_5fwavefunctions_5ffrom_5fstr',['read_wavefunctions_from_str',['../reader_8h.html#aa92e723d18aa99daa9fb0621d7af76a4',1,'reader.h']]],
-  ['realspace_5fstate',['realspace_state',['../density_8h.html#a51a90b34498eaa660d16082cc31437a5',1,'density.h']]],
-  ['realspace_5fstate_5fri',['realspace_state_ri',['../density_8h.html#a8cc0293e505c5c729770b16a6e69e450',1,'density.h']]],
-  ['reciprocal_5foffsite_5fwave_5foverlap',['reciprocal_offsite_wave_overlap',['../radial_8h.html#aa36a5b747694c61d79129249630eea3b',1,'radial.h']]],
-  ['rotation_5ftransform',['rotation_transform',['../utils_8h.html#ab97aa3c92fc5c79b3ee46bf1a54e6842',1,'utils.h']]],
-  ['run_5fpawpy',['run_pawpy',['../classpawpyseed_1_1analysis_1_1run__pawpy_1_1DefectWorkflowWavefunctionHandle.html#a4a751b7b86ad021d06f59b83821a3da4',1,'pawpyseed::analysis::run_pawpy::DefectWorkflowWavefunctionHandle']]]
+  ['sbf',['sbf',['../utils_8h.html#a077aba25691fa7291917e3243ee4a7df',1,'utils.h']]],
+  ['set_5fband_5fproperties',['set_band_properties',['../classpawpyseed_1_1analysis_1_1defect__composition_1_1PawpyData.html#a7d73543fe054baf40dc6565e3e546203',1,'pawpyseed::analysis::defect_composition::PawpyData']]],
+  ['set_5fnum_5fsites',['set_num_sites',['../utils_8h.html#a0a97b4e7300b7aa28cda13f62abff296',1,'utils.h']]],
+  ['setup',['setup',['../reader_8h.html#aa33bbe96c9e588b2f964f62e31d4ee4e',1,'reader.h']]],
+  ['setup_5fbases',['setup_bases',['../classpawpyseed_1_1core_1_1projector_1_1Projector.html#ad7ab43abe10dca5f25cf6b0bcf98fbef',1,'pawpyseed::core::projector::Projector']]],
+  ['setup_5fmultiple_5fprojections',['setup_multiple_projections',['../classpawpyseed_1_1core_1_1projector_1_1Projector.html#a886d581f20138e5f9f4c10161a2b8593',1,'pawpyseed::core::projector::Projector']]],
+  ['setup_5foverlap',['setup_overlap',['../classpawpyseed_1_1core_1_1projector_1_1Projector.html#aabf9fe94220efb715bcdb3bfa17bff3c',1,'pawpyseed::core::projector::Projector']]],
+  ['setup_5fprojections',['setup_projections',['../projector_8h.html#ad97a2375a049eab1e3de0a0bb0cd9cb6',1,'projector.h']]],
+  ['setup_5fsite',['setup_site',['../utils_8h.html#a925c7cd813df922b92acc3dfe9b7141d',1,'utils.h']]],
+  ['single_5fband_5fprojection',['single_band_projection',['../classpawpyseed_1_1core_1_1projector_1_1Projector.html#af28874342aa82105624b4c12f76d4c37',1,'pawpyseed::core::projector::Projector']]],
+  ['smooth_5fpw_5fvalues',['smooth_pw_values',['../projector_8h.html#a2207fe8fd8c04b81f052b7adf485e220',1,'projector.h']]],
+  ['smooth_5fwave_5fvalue',['smooth_wave_value',['../utils_8h.html#af6ba8223b9c90b7dc4084289a3679c95',1,'utils.h']]],
+  ['sph_5fbessel',['sph_bessel',['../utils_8h.html#a01a8b15bb5441b6c7b4dde6dcfbc6e28',1,'utils.h']]],
+  ['spherical_5fbessel_5ftransform_5fsetup',['spherical_bessel_transform_setup',['../sbt_8h.html#a452912e299eea941e455a8a1fae00230',1,'sbt.h']]],
+  ['spline_5fcoeff',['spline_coeff',['../utils_8h.html#ae81f454dd306c4e17e90edc884aa90d5',1,'utils.h']]],
+  ['spline_5fintegral',['spline_integral',['../utils_8h.html#abc7aef60adcc3294d6f3120f1aba8a65',1,'utils.h']]]
 ];

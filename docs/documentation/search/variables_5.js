@@ -6,7 +6,6 @@ var searchData=
   ['filenames',['filenames',['../namespacepawpyseed_1_1analysis_1_1prep.html#aba50d882b5aad2f1dd2b52157f9fd219',1,'pawpyseed::analysis::prep']]],
   ['final',['final',['../namespacepawpyseed_1_1core_1_1rayleigh.html#a281751a8eec76157f1018d9193b87abf',1,'pawpyseed::core::rayleigh']]],
   ['fp',['fp',['../structWAVECAR__FILE.html#a34304b795ddca23d4099ebf452da7f23',1,'WAVECAR_FILE']]],
-  ['freed',['freed',['../classpawpyseed_1_1core_1_1projector_1_1Projector.html#a30c25c840db89d546f0e0da1e5986497',1,'pawpyseed.core.projector.Projector.freed()'],['../classpawpyseed_1_1core_1_1wavefunction_1_1Wavefunction.html#a4ea23a67f9035b47ebe81c8c55cfb4c0',1,'pawpyseed.core.wavefunction.Wavefunction.freed()']]],
   ['func_5fnum',['func_num',['../structreal__proj.html#a1c5f9f4d8d811ecdd8c6fbe3e3205aa8',1,'real_proj']]],
   ['funcs',['funcs',['../structppot.html#afcaea17b859d2b8ba0b4a7891e30ef14',1,'ppot']]],
   ['fw_5fid',['fw_id',['../classpawpyseed_1_1analysis_1_1run__pawpy_1_1DummyFirework.html#a9447b1f103d1e5b1cbc336c9f43b69b2',1,'pawpyseed::analysis::run_pawpy::DummyFirework']]]

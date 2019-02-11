@@ -243,21 +243,76 @@ void onto_projector_helper(band_t* band, double complex* x, real_proj_site_t* si
 		CHECK_ALLOCATION(projections[s].ls);
 		CHECK_ALLOCATION(projections[s].ms);
 		CHECK_ALLOCATION(projections[s].overlaps);
+		for (int i = 0; i < num_indices; i++) {
+			index = indices[i];
+			kdotr = dot(kpt_cart, sites[s].paths+i*3);
+			xvals[i] = x[index] * dv * cexp(I * kdotr);
+		}
 		for (int p = 0; p < sites[s].total_projs; p++) {
 			projections[s].ns[p] = sites[s].projs[p].func_num;
 			projections[s].ls[p] = sites[s].projs[p].l;
 			projections[s].ms[p] = sites[s].projs[p].m;
 			values = sites[s].projs[p].values;
-			for (int i = 0; i < num_indices; i++) {
-				index = indices[i];
-				kdotr = dot(kpt_cart, sites[s].paths+i*3);
-				xvals[i] = x[index] * dv * cexp(I * kdotr);
-			}
 			cblas_zdotc_sub(num_indices, values, 1, xvals, 1, &overlap);
 			projections[s].overlaps[p] = overlap;
 		}
 	}
 	free(xvals);
+}
+
+void get_aug_freqs_helper(band_t* band, double complex* x, real_proj_site_t* sites,
+	int num_sites, double* lattice, double* reclattice, double* kpt, int num_cart_gridpts,
+	int* fftg, projection_t* projections) {
+
+	double dv = determinant(lattice) / fftg[0] / fftg[1] / fftg[2];
+
+	double kdotr = 0;
+
+	int gridsize = fftg[0] * fftg[1] * fftg[2];
+	for (int w = 0; w < gridsize; w++) {
+		x[w] = 0;
+	}
+
+	double kpt_cart[3] = {0,0,0};
+	kpt_cart[0] = kpt[0];
+	kpt_cart[1] = kpt[1];
+	kpt_cart[2] = kpt[2];
+	frac_to_cartesian(kpt_cart, reclattice);
+	double complex overlap;
+	double complex* values;
+	int* indices;
+	int i, j, k, ii, jj, kk;
+	double frac[3];
+	double phasecoord[3];
+	double complex phase;
+
+	int num_indices, index;
+	for (int s = 0; s < num_sites; s++) {
+		num_indices = sites[s].num_indices;
+		indices = sites[s].indices;
+
+		for (int ind = 0; ind < num_indices; ind++) {
+			index = indices[ind];
+
+			i = index / (fftg[1]*fftg[2]);
+			j = index % (fftg[1]*fftg[2]);
+			j = j / (fftg[2]);
+			k = index % (fftg[2]);
+			frac[0] = (double) i / fftg[0];
+			frac[1] = (double) j / fftg[1];
+			frac[2] = (double) k / fftg[2];
+			phasecoord[0] = -sites[s].paths[3*ind+0];// + frac[0];
+			phasecoord[1] = -sites[s].paths[3*ind+1];// + frac[1];
+			phasecoord[2] = -sites[s].paths[3*ind+2];// + frac[2];
+			phase = cexp(I*dot(phasecoord, kpt_cart));
+
+			for (int p = 0; p < sites[s].total_projs; p++) {
+				values = sites[s].projs[p].values;
+				x[index] += projections[s].overlaps[p] * values[ind] * phase;
+			}
+		}
+		
+	}
 }
 
 void onto_projector(kpoint_t* kpt, int band_num, real_proj_site_t* sites, int num_sites,
@@ -333,6 +388,34 @@ void onto_smoothpw(kpoint_t* kpt, int band_num, real_proj_site_t* sites, int num
 
 	mkl_free(x);
 }
+
+void get_aug_freqs(kpoint_t* kpt, int band_num, real_proj_site_t* sites, int num_sites,
+	int* G_bounds, double* lattice, double* reclattice, int num_cart_gridpts, int* fftg) {
+
+	double* k = kpt->k;
+	int* Gs = kpt->Gs;
+	float complex* Cs = kpt->bands[band_num]->Cs;
+	int num_waves = kpt->num_waves;
+
+	double complex* x = (double complex*) mkl_calloc(fftg[0]*fftg[1]*fftg[2], sizeof(double complex), 64);
+	CHECK_ALLOCATION(x);
+
+	band_t* band = kpt->bands[band_num];
+
+	get_aug_freqs_helper(kpt->bands[band_num], x, sites, num_sites,
+		lattice, reclattice, k, num_cart_gridpts, fftg, band->projections);
+
+	band->CAs = (float complex*) mkl_calloc(kpt->num_waves, sizeof(float complex), 64);
+	fwd_fft3d(x, G_bounds, lattice, k, Gs, band->CAs, num_waves, fftg);
+	//for (int w = 0; w < kpt->num_waves; w++) {
+	//	band->CAs[w] += band->Cs[w];
+	//		printf("%f %f %f %f\n", creal(band->CAs[w]), cimag(band->CAs[w]),
+	//		creal(band->Cs[w]), cimag(band->Cs[w]));
+	//}
+
+	mkl_free(x);
+}
+
 
 void add_num_cart_gridpts(ppot_t* pp_ptr, double* lattice, int* fftg) {
 
@@ -586,6 +669,123 @@ void overlap_setup_real(pswf_t* wf_R, pswf_t* wf_S,
 	printf("PART 3 DONE\nFINISHED OVERLAP SETUP\n");
 }
 
+void overlap_setup_recip(pswf_t* wf_R, pswf_t* wf_S,
+	int* labels_R, int* labels_S, double* coords_R, double* coords_S,
+	int* N_R, int* N_S, int* N_RS_R, int* N_RS_S, int num_N_R, int num_N_S, int num_N_RS) {
+
+	clean_wave_projections(wf_R);
+	clean_wave_projections(wf_S);
+
+	wf_R->wp_num = num_N_S;
+	wf_S->wp_num = num_N_R;
+
+	double complex** overlaps = NULL;
+	if (num_N_RS > 0) {
+		overlaps = (double complex**) malloc(num_N_RS * sizeof(double complex*));
+		CHECK_ALLOCATION(overlaps);
+	}
+
+	printf("STARTING OVERLAP_SETUP RECIP\n");
+	int NUM_KPTS = wf_R->nwk * wf_R->nspin;
+	int NUM_BANDS = wf_R->nband;
+	int max_num_indices = 0;
+	if (num_N_R > 0) {
+		real_proj_site_t* sites_N_R = smooth_pw_values(num_N_R, N_R, labels_R, coords_R,
+			wf_S->lattice, wf_S->reclattice, wf_R->pps, wf_S->fftg);
+		for (int s = 0; s < num_N_R; s++) {
+			if (sites_N_R[s].num_indices > max_num_indices) {
+				max_num_indices = sites_N_R[s].num_indices;
+			}
+		}
+#if defined(_OPENMP)
+		omp_set_num_threads(omp_get_max_threads());
+#endif
+		#pragma omp parallel for
+		for (int w = 0; w < NUM_BANDS * NUM_KPTS; w++) {
+			kpoint_t* kpt_R = wf_R->kpts[w%NUM_KPTS];
+	
+			get_aug_freqs(kpt_R, w/NUM_KPTS, sites_N_R, num_N_R,
+				wf_R->G_bounds, wf_R->lattice, wf_R->reclattice, max_num_indices, wf_R->fftg);
+		}
+		free_real_proj_site_list(sites_N_R, num_N_R);
+	}
+	max_num_indices = 0;
+	printf("PART 1 DONE RECIP\n");
+	if (num_N_S > 0) {
+		real_proj_site_t* sites_N_S = smooth_pw_values(num_N_S, N_S, labels_S, coords_S,
+			wf_R->lattice, wf_R->reclattice, wf_S->pps, wf_R->fftg);
+		NUM_BANDS = wf_S->nband;
+		for (int s = 0; s < num_N_S; s++) {
+            if (sites_N_S[s].num_indices > max_num_indices) {
+                max_num_indices = sites_N_S[s].num_indices;
+            }
+        }
+#if defined(_OPENMP)
+		omp_set_num_threads(omp_get_max_threads());
+#endif
+		#pragma omp parallel for
+		for (int w = 0; w < NUM_BANDS * NUM_KPTS; w++) {
+			kpoint_t* kpt_S = wf_S->kpts[w%NUM_KPTS];
+
+			get_aug_freqs(kpt_S, w/NUM_KPTS, sites_N_S, num_N_S,
+				wf_S->G_bounds, wf_S->lattice, wf_S->reclattice, max_num_indices, wf_S->fftg);
+		}
+		free_real_proj_site_list(sites_N_S, num_N_S);
+	}
+	printf("PART 2 DONE RECIP\n");
+	
+	double* dcoords =  NULL;
+	if (num_N_RS > 0) {
+		dcoords = (double*) malloc(3 * num_N_RS * sizeof(double));
+		CHECK_ALLOCATION(dcoords);
+	}
+#if defined(_OPENMP)
+	omp_set_num_threads(omp_get_max_threads());
+#endif
+	#pragma omp parallel for
+	for (int i = 0; i < num_N_RS; i++) {
+		double R = 0;
+		int l1, l2;
+		int s1 = N_RS_R[i];
+		int s2 = N_RS_S[i];
+		ppot_t pp1 = wf_R->pps[labels_R[s1]];
+		ppot_t pp2 = wf_S->pps[labels_S[s2]];
+		// CALCULATE THE DIFF COORD HERE, PASS TO offsite_wave_overlap AND SAVE IT FOR USE IN compensation_terms
+		overlaps[i] = (double complex*) calloc(pp1.total_projs * pp2.total_projs, sizeof(double complex));
+		CHECK_ALLOCATION(overlaps[i]);
+		double* coord1 = coords_R + 3 * s1;
+		double* coord2 = coords_S + 3 * s2;
+		min_cart_path(coord2, coord1, wf_R->lattice, dcoords + 3*i, &R);
+		int tj = 0;
+		for (int j = 0; j < pp1.num_projs; j++) {
+			l1 = pp1.funcs[j].l;
+			for (int m1 = -l1; m1 <= l1; m1++) {
+				int tk = 0;
+				for (int k = 0; k < pp2.num_projs; k++) {
+					l2 = pp2.funcs[k].l;
+					for (int m2 = -l2; m2 <= l2; m2++) {
+						overlaps[i][tj*pp2.total_projs+tk] = conj(
+                            reciprocal_offsite_wave_overlap(dcoords + 3*i,
+                            pp1.kwave_grid, pp1.funcs[j].kwave,
+                            pp1.funcs[j].kwave_spline, pp1.wave_gridsize,
+                            pp2.kwave_grid, pp2.funcs[k].kwave,
+                            pp2.funcs[k].kwave_spline, pp2.wave_gridsize,
+                            wf_R->lattice, l1, m1, l2, m2)
+                            );
+						tk++;
+					}
+				}
+				tj++;
+			}
+		}
+	}
+	wf_S->overlaps = overlaps;
+	wf_S->dcoords = dcoords;
+	wf_S->num_aug_overlap_sites = num_N_RS;
+	wf_R->num_aug_overlap_sites = num_N_RS;
+	printf("PART 3 DONE RECIP\nFINISHED OVERLAP SETUP\n");
+}
+
 void compensation_terms(double complex* overlap, int BAND_NUM, pswf_t* wf_S, pswf_t* wf_R,
 	int num_M, int num_N_R, int num_N_S, int num_N_RS,
 	int* M_R, int* M_S, int* N_R, int* N_S, int* N_RS_R, int* N_RS_S,
@@ -687,6 +887,105 @@ void compensation_terms(double complex* overlap, int BAND_NUM, pswf_t* wf_S, psw
 		//overlap[2*w] += creal(temp);
 		//overlap[2*w+1]+= cimag(temp);
 	}
+}
 
-	mkl_free_buffers();
+void compensation_terms_recip(double complex* overlap, int BAND_NUM, pswf_t* wf_S, pswf_t* wf_R,
+	int num_M, int num_N_R, int num_N_S, int num_N_RS,
+	int* M_R, int* M_S, int* N_R, int* N_S, int* N_RS_R, int* N_RS_S,
+	int* proj_labels, double* proj_coords, int* ref_labels, double* ref_coords,
+	int* fft_grid) {
+
+	setbuf(stdout, NULL);
+	
+	int NUM_KPTS = wf_R->nwk * wf_R->nspin;
+	int NUM_BANDS = wf_R->nband;
+
+	//double* overlap = (double*) calloc(2 * NUM_KPTS * NUM_BANDS, sizeof(double));
+	CHECK_ALLOCATION(overlap);
+
+	double complex** N_RS_overlaps = wf_S->overlaps;
+
+#if defined(_OPENMP)
+	omp_set_num_threads(omp_get_max_threads());
+#endif
+	#pragma omp parallel for
+	for (int w = 0; w < NUM_BANDS * NUM_KPTS; w++) {
+
+		int ni = 0, nj = 0;
+
+		kpoint_t* kpt_R = wf_R->kpts[w%NUM_KPTS];
+		kpoint_t* kpt_S = wf_S->kpts[w%NUM_KPTS];
+		band_t* band_R = kpt_R->bands[w/NUM_KPTS];
+		band_t* band_S = kpt_S->bands[BAND_NUM];
+		float complex* C1s = NULL;
+		float complex* C2s = NULL;
+		float complex curr_overlap;
+		int num_waves;
+		
+		if (band_R->CAs != NULL) {
+			curr_overlap = 0;
+			C1s = band_S->Cs;
+			C2s = band_R->CAs;
+			num_waves = kpt_R->num_waves;
+			cblas_cdotc_sub(num_waves, C2s, 1, C1s, 1, &curr_overlap);
+			overlap[w] += (double complex) curr_overlap;
+		}
+
+		if (band_S->CAs != NULL) {
+			curr_overlap = 0;
+			C1s = band_S->CAs;
+			C2s = band_R->Cs;
+			num_waves = kpt_R->num_waves;
+			cblas_cdotc_sub(num_waves, C2s, 1, C1s, 1, &curr_overlap);
+			overlap[w] += (double complex) curr_overlap;
+		}
+		//printf("part 1 %d %d %d %lf %lf %f %f\n", BAND_NUM, w/NUM_KPTS, w%NUM_KPTS,
+		//	creal(overlap[w]), cimag(overlap[w]),
+		//	creal(curr_overlap), cimag(curr_overlap));
+
+		double complex temp = 0 + 0 * I;
+		for (int s = 0; s < num_M; s++) {
+			ppot_t pp = wf_R->pps[ref_labels[M_R[s]]];
+			int s1 = M_R[s];
+			int s2 = M_S[s];
+			projection_t pron = band_R->projections[s1];
+			projection_t ppron = band_S->projections[s2];
+
+			for (int i = 0; i < pron.total_projs; i++) {
+				for (int j = 0; j < ppron.total_projs; j++) {
+					if (pron.ls[i] == ppron.ls[j]  && pron.ms[i] == ppron.ms[j]) {
+						nj = ppron.ns[j];
+						ni = pron.ns[i];
+						temp += conj(pron.overlaps[i])
+							* (pp.aepw_overlap_matrix[pp.num_projs*ni+nj]
+							- pp.pspw_overlap_matrix[pp.num_projs*ni+nj])
+							* ppron.overlaps[j];
+					}
+				}
+			}
+		}
+		overlap[w] += temp;
+		//printf("part 2 %lf %lf\n", creal(overlap[w]), cimag(overlap[w]));
+
+		temp = 0 + 0 * I;
+		for (int s = 0; s < num_N_RS; s++) {
+			int site_num1 = N_RS_R[s];
+			int site_num2 = N_RS_S[s];
+			projection_t pron = band_R->projections[site_num1];
+			projection_t ppron = band_S->projections[site_num2];
+			for (int i = 0; i < pron.total_projs; i++) {
+				for (int j = 0; j < ppron.total_projs; j++) {
+					temp += conj(pron.overlaps[i])
+						* (N_RS_overlaps[s][i*ppron.total_projs+j])
+						* ppron.overlaps[j] * cexp(2*I*PI *
+						dot(kpt_R->k, wf_S->dcoords + 3*s));
+				}
+			}
+		}
+		overlap[w] += temp;
+		//printf("part 3 %lf %lf\n", creal(overlap[w]), cimag(overlap[w]));
+		//overlap[2*w] += creal(temp);
+		//overlap[2*w+1]+= cimag(temp);
+	}
+
 }

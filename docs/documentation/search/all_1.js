@@ -1,7 +1,7 @@
 var searchData=
 [
   ['add_5fnum_5fcart_5fgridpts',['add_num_cart_gridpts',['../projector_8h.html#afe21e5608c3d8091f569a205c9ee7a3b',1,'projector.h']]],
-  ['ae_5fchg_5fdensity',['ae_chg_density',['../density_8h.html#a545fea6d8a5c23815c03f53cc8b41d72',1,'density.h']]],
+  ['ae_5fchg_5fdensity',['ae_chg_density',['../density_8h.html#a7b7feaf46edc5724f9e6dcfbf6c8f71e',1,'density.h']]],
   ['aecorecharge',['aecorecharge',['../classpawpyseed_1_1core_1_1wavefunction_1_1Pseudopotential.html#a23140e7e976c41362dff760a80caed36',1,'pawpyseed::core::wavefunction::Pseudopotential']]],
   ['aepotential',['aepotential',['../classpawpyseed_1_1core_1_1wavefunction_1_1Pseudopotential.html#abb59b60ef0b6bd65467766d0854f2d86',1,'pawpyseed::core::wavefunction::Pseudopotential']]],
   ['aepw_5foverlap_5fmatrix',['aepw_overlap_matrix',['../structppot.html#aeaafee92debea571dfc68585fb5fa58f',1,'ppot']]],
@@ -9,13 +9,8 @@ var searchData=
   ['aewave_5fspline',['aewave_spline',['../structfuncset.html#a71dbd9257ba4818ff3fd7694549819e4',1,'funcset']]],
   ['aewaves',['aewaves',['../classpawpyseed_1_1core_1_1wavefunction_1_1Pseudopotential.html#acdfede30ab359feef02af873049c1c62',1,'pawpyseed::core::wavefunction::Pseudopotential']]],
   ['affine_5ftransform',['affine_transform',['../utils_8h.html#a3438f4e9765829050cb09683504c01d5',1,'utils.h']]],
-  ['all_5faugmentation_5ftime',['ALL_AUGMENTATION_TIME',['../classpawpyseed_1_1core_1_1wavefunction_1_1Timer.html#a8e9d1cdaeb76f8ae81c43a923645894d',1,'pawpyseed::core::wavefunction::Timer']]],
-  ['all_5foverlap_5ftime',['ALL_OVERLAP_TIME',['../classpawpyseed_1_1core_1_1wavefunction_1_1Timer.html#aac27b12d8c1101160bac4be288de2d88',1,'pawpyseed::core::wavefunction::Timer']]],
-  ['all_5fsetup_5ftime',['ALL_SETUP_TIME',['../classpawpyseed_1_1core_1_1wavefunction_1_1Timer.html#a4214c029339bd7a208c3100c9319fe69',1,'pawpyseed::core::wavefunction::Timer']]],
-  ['allocation_5ffailed',['ALLOCATION_FAILED',['../utils_8h.html#a412984889bbdcd15ba821118ce3db863',1,'utils.h']]],
-  ['argtypes',['argtypes',['../namespacepawpyseed_1_1core_1_1utils.html#a2399cf359a5e4279b67e10a40835e401',1,'pawpyseed::core::utils']]],
-  ['as_5fdict',['as_dict',['../classpawpyseed_1_1analysis_1_1defect__composition_1_1PawpyData.html#a5be3a69224bb463f84144282d1faadb0',1,'pawpyseed::analysis::defect_composition::PawpyData']]],
+  ['allocation_5ffailed',['ALLOCATION_FAILED',['../utils_8h.html#ad032a32c6a172a52255dbc1ca74d1136',1,'utils.h']]],
+  ['as_5fdict',['as_dict',['../classpawpyseed_1_1analysis_1_1defect__composition_1_1PawpyData.html#a5be3a69224bb463f84144282d1faadb0',1,'pawpyseed.analysis.defect_composition.PawpyData.as_dict()'],['../classpawpyseed_1_1analysis_1_1defect__composition_1_1BulkCharacter.html#a9eed7b76937d246d81e03824498deea1',1,'pawpyseed.analysis.defect_composition.BulkCharacter.as_dict()']]],
   ['atomicdensity',['atomicdensity',['../classpawpyseed_1_1core_1_1wavefunction_1_1Pseudopotential.html#a8102e7c32389232e1314d8a6f0dfac27',1,'pawpyseed::core::wavefunction::Pseudopotential']]],
-  ['augmentation_5ftime',['augmentation_time',['../classpawpyseed_1_1core_1_1wavefunction_1_1Timer.html#af311a3e5363ff2219b7e060a23e41d0e',1,'pawpyseed::core::wavefunction::Timer']]],
   ['augs',['augs',['../classpawpyseed_1_1core_1_1wavefunction_1_1Pseudopotential.html#a0d324b8c85c3e8cbaeb0a0e27205409f',1,'pawpyseed::core::wavefunction::Pseudopotential']]]
 ];

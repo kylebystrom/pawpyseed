@@ -42,6 +42,10 @@ void onto_projector_helper(band_t* band, double complex* x, real_proj_site_t* si
     int num_sites, double* lattice, double* reclattice, double* kpt, int num_cart_gridpts,
     int* fftg, projection_t* projections);
 
+void get_aug_freqs_helper(band_t* band, double complex* x, real_proj_site_t* sites,
+	int num_sites, double* lattice, double* reclattice, double* kpt, int num_cart_gridpts,
+	int* fftg, projection_t* projections);
+
 /**
 Calculates <p_i|psit_nk> for all i={R,epsilon,l,m} in the structure for one band
 */
@@ -55,6 +59,9 @@ void onto_projector_ncl(kpoint_t* kpt, int band_num, real_proj_site_t* sites, in
 Calculates <(phi_i-phit_i)|psit_nk> for all i={R,epsilon,l,m} in the structure for one band
 */
 void onto_smoothpw(kpoint_t* kpt, int band_num, real_proj_site_t* sites, int num_sites,
+	int* G_bounds, double* lattice, double* reclattice, int num_cart_gridpts, int* fftg);
+
+void get_aug_freqs(kpoint_t* kpt, int band_num, real_proj_site_t* sites, int num_sites,
 	int* G_bounds, double* lattice, double* reclattice, int num_cart_gridpts, int* fftg);
 
 /**
@@ -88,11 +95,21 @@ void overlap_setup_real(pswf_t* wf_R, pswf_t* wf_S,
 	int* labels_R, int* labels_S, double* coords_R, double* coords_S,
 	int* N_R, int* N_S, int* N_RS_R, int* N_RS_S, int num_N_R, int num_N_S, int num_N_RS);
 
+void overlap_setup_recip(pswf_t* wf_R, pswf_t* wf_S,
+	int* labels_R, int* labels_S, double* coords_R, double* coords_S,
+	int* N_R, int* N_S, int* N_RS_R, int* N_RS_S, int num_N_R, int num_N_S, int num_N_RS);
+
 /**
 Calculates the components of the overlap operator in the augmentation
 regions of each ion in the lattice.
 */
 void compensation_terms(double complex* overlap, int BAND_NUM, pswf_t* wf_S, pswf_t* wf_R,
+	int num_M, int num_N_R, int num_N_S, int num_N_RS,
+	int* M_R, int* M_S, int* N_R, int* N_S, int* N_RS_R, int* N_RS_S,
+	int* proj_labels, double* proj_coords, int* ref_labels, double* ref_coords,
+	int* fft_grid);
+
+void compensation_terms_recip(double complex* overlap, int BAND_NUM, pswf_t* wf_S, pswf_t* wf_R,
 	int num_M, int num_N_R, int num_N_S, int num_N_RS,
 	int* M_R, int* M_S, int* N_R, int* N_S, int* N_RS_R, int* N_RS_S,
 	int* proj_labels, double* proj_coords, int* ref_labels, double* ref_coords,

@@ -107,19 +107,25 @@ Include dependency graph for pseudoprojector.h:</div>
 Functions</h2></td></tr>
 <tr class="memitem:a65f2e93da8be90fdc933c927632e5bf8"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="pseudoprojector_8h.html#a65f2e93da8be90fdc933c927632e5bf8">vc_pseudoprojection</a> (<a class="el" href="utils_8h.html#a0d83785e53b058055dd3a6b963dda7e0">pswf_t</a> *wf_ref, <a class="el" href="utils_8h.html#a0d83785e53b058055dd3a6b963dda7e0">pswf_t</a> *wf_proj, int BAND_NUM, double *results)</td></tr>
 <tr class="separator:a65f2e93da8be90fdc933c927632e5bf8"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a5def65f6c38deec9e385114860524d64"><td class="memItemLeft" align="right" valign="top">double *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="pseudoprojector_8h.html#a5def65f6c38deec9e385114860524d64">pseudoprojection</a> (<a class="el" href="utils_8h.html#a0d83785e53b058055dd3a6b963dda7e0">pswf_t</a> *wf_ref, <a class="el" href="utils_8h.html#a0d83785e53b058055dd3a6b963dda7e0">pswf_t</a> *wf_proj, int BAND_NUM)</td></tr>
-<tr class="separator:a5def65f6c38deec9e385114860524d64"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a69b329b96bc2be8bd4db945c05099c45"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="pseudoprojector_8h.html#a69b329b96bc2be8bd4db945c05099c45">pseudoprojection</a> (double complex *projections, <a class="el" href="utils_8h.html#a0d83785e53b058055dd3a6b963dda7e0">pswf_t</a> *wf_ref, <a class="el" href="utils_8h.html#a0d83785e53b058055dd3a6b963dda7e0">pswf_t</a> *wf_proj, int BAND_NUM)</td></tr>
+<tr class="separator:a69b329b96bc2be8bd4db945c05099c45"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p>Routines for calculating the overlaps of pseudowavefunctions (i.e. sums of plane-wave coefficients). </p>
 </div><h2 class="groupheader">Function Documentation</h2>
-<a class="anchor" id="a5def65f6c38deec9e385114860524d64"></a>
+<a class="anchor" id="a69b329b96bc2be8bd4db945c05099c45"></a>
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
         <tr>
-          <td class="memname">double* pseudoprojection </td>
+          <td class="memname">void pseudoprojection </td>
           <td>(</td>
+          <td class="paramtype">double complex *&#160;</td>
+          <td class="paramname"><em>projections</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
           <td class="paramtype"><a class="el" href="utils_8h.html#a0d83785e53b058055dd3a6b963dda7e0">pswf_t</a> *&#160;</td>
           <td class="paramname"><em>wf_ref</em>, </td>
         </tr>
@@ -142,7 +148,7 @@ Functions</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Takes two pswf_t objects and a band number BAND_NUM. For each kpoint and spin, the band BAND_NUM of wf_proj will be projected onto all bands of wf_ref at that kpoint and spin, i.e. th overlap operators are calculated and returned as a double* res, where if I is the imaginary unit and j is an index, res[2*j] + I*res[2*j+1] is the value of an overlap operator.</p>
+<p>Takes two pswf_t objects and a band number BAND_NUM. For each kpoint and spin, the band BAND_NUM of wf_proj will be projected onto all bands of wf_ref at that kpoint and spin, i.e. the overlap operators are calculated and returned as a double complex* res.</p>
 <p>The format of the returned array is as follows: loop over bands loops over spins loop over kpoints </p>
 
 </div>

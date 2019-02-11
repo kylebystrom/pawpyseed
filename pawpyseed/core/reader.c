@@ -217,6 +217,7 @@ pswf_t* read_wavecar(WAVECAR* wc, double* kpt_weights) {
 			band->down_projections = NULL;
 			band->wave_projections = NULL;
 			band->CRs = NULL;
+			band->CAs = NULL;
 			kpt->bands[i] = band;
 		}
 

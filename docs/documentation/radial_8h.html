@@ -104,8 +104,6 @@ Include dependency graph for radial.h:</div>
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="func-members"></a>
 Functions</h2></td></tr>
-<tr class="memitem:ab0793aae717c15b89103dac5cf64c54a"><td class="memItemLeft" align="right" valign="top">double complex&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="radial_8h.html#ab0793aae717c15b89103dac5cf64c54a">spherwave_planewave_overlap</a> (double *center, double *r, double *f, double **spline, int size, double *lattice, double *reclattice, int l, int m, double complex *x, int *fftg, double *k)</td></tr>
-<tr class="separator:ab0793aae717c15b89103dac5cf64c54a"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aecd60aa57fe08e6f58a7294b97c788af"><td class="memItemLeft" align="right" valign="top">double complex&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="radial_8h.html#aecd60aa57fe08e6f58a7294b97c788af">offsite_wave_overlap</a> (double *dcoord, double *r1, double *f1, double **spline1, int size1, double *r2, double *f2, double **spline2, int size2, double *lattice, int l1, int m1, int l2, int m2)</td></tr>
 <tr class="separator:aecd60aa57fe08e6f58a7294b97c788af"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aa36a5b747694c61d79129249630eea3b"><td class="memItemLeft" align="right" valign="top">double complex&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="radial_8h.html#aa36a5b747694c61d79129249630eea3b">reciprocal_offsite_wave_overlap</a> (double *dcoord, double *k1, double *f1, double **s1, int size1, double *k2, double *f2, double **s2, int size2, double *lattice, int l1, int m1, int l2, int m2)</td></tr>
@@ -308,93 +306,7 @@ Functions</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Given dcoord: difference between site locations (R2-R1); k1, the reciprocal radial grid, size size1, of the function f1 interpolated with spline1; likewise for f2; the lattice in which the sites are located, and the angular quantum numbers of the two functions, finds the overlap integral of f1 and f2 in reciprocal space. </p>
-
-</div>
-</div>
-<a class="anchor" id="ab0793aae717c15b89103dac5cf64c54a"></a>
-<div class="memitem">
-<div class="memproto">
-      <table class="memname">
-        <tr>
-          <td class="memname">double complex spherwave_planewave_overlap </td>
-          <td>(</td>
-          <td class="paramtype">double *&#160;</td>
-          <td class="paramname"><em>center</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">double *&#160;</td>
-          <td class="paramname"><em>r</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">double *&#160;</td>
-          <td class="paramname"><em>f</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">double **&#160;</td>
-          <td class="paramname"><em>spline</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">int&#160;</td>
-          <td class="paramname"><em>size</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">double *&#160;</td>
-          <td class="paramname"><em>lattice</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">double *&#160;</td>
-          <td class="paramname"><em>reclattice</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">int&#160;</td>
-          <td class="paramname"><em>l</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">int&#160;</td>
-          <td class="paramname"><em>m</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">double complex *&#160;</td>
-          <td class="paramname"><em>x</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">int *&#160;</td>
-          <td class="paramname"><em>fftg</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">double *&#160;</td>
-          <td class="paramname"><em>k</em>&#160;</td>
-        </tr>
-        <tr>
-          <td></td>
-          <td>)</td>
-          <td></td><td></td>
-        </tr>
-      </table>
-</div><div class="memdoc">
+<p>Given dcoord: difference between site locations (R2-R1); k1, the reciprocal radial grid, size size1, of the function f1 interpolated with spline1; likewise for f2; the lattice in which the sites are located, and the angular quantum numbers of the two functions, finds the overlap integral of f1 and f2 in reciprocal space. Returns integral[f2*(r-R)f1(r)d^3r] </p>
 
 </div>
 </div>

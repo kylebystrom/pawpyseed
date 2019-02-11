@@ -87,6 +87,7 @@ typedef struct band {
 	double energy; ///< energy of the band
 	float complex* Cs; ///< plane wave coefficients (normalized to 1)
 	double complex* CRs; ///< wavefunction in real space
+	float complex* CAs; ///< wavefunction in reciprocal space
 	projection_t* projections; ///< length==number of sites in structure
 	projection_t* up_projections; ///< length==number of sites in structure
 	projection_t* down_projections; ///< length==number of sites in structure

@@ -28,7 +28,7 @@ int fft_check(char* wavecar, double* kpt_weights, int* fftg) {
 	
 	setbuf(stdout, NULL);
 
-	pswf_t* wf = read_wavefunctions("WAVECAR", kpt_weights);
+	pswf_t* wf = read_wavefunctions(wavecar, kpt_weights);
 	double complex* x = (double complex*) mkl_calloc(fftg[0]*fftg[1]*fftg[2],
 		sizeof(double complex), 64);
 	fft3d(x, wf->G_bounds, wf->lattice, wf->kpts[0]->k, wf->kpts[0]->Gs,
@@ -56,17 +56,19 @@ int fft_check(char* wavecar, double* kpt_weights, int* fftg) {
 				int ind = i*fftg[1]*fftg[2]+j*fftg[2]+k;
 				total1 += pow(cabs(x[ind]), 2);
 				total2 += pow(cabs(temp), 2);
-				assert (cabs(x[ind] - temp) < 1e-5);
+				if (cabs(x[ind] - temp) > 1e-5)
+					return -1;
 			}
 		}
 	}
 
-
+	printf("FFTCHECK ASSERTS\n");
 	float complex* CAs = (float complex*) calloc(wf->kpts[0]->num_waves, sizeof(float complex));
 	fwd_fft3d(x, wf->G_bounds, wf->lattice, wf->kpts[0]->k, wf->kpts[0]->Gs,
 		CAs, wf->kpts[0]->bands[0]->num_waves, fftg);
 	for (int w = 0; w < wf->kpts[0]->num_waves; w++) {
-		assert(cabs(CAs[w] - wf->kpts[0]->bands[0]->Cs[w]) < 1e-5);
+		if (cabs(CAs[w] - wf->kpts[0]->bands[0]->Cs[w]) > 1e-5)
+			return -2;
 	}
 	free(CAs);
 

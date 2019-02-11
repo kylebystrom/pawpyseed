@@ -5,7 +5,7 @@
 # AE and PS projection operators.
 
 from pawpyseed.core.wavefunction import *
-import pawpyc
+from pawpyseed.core import pawpyc
 from pawpy import Timer
 import warnings
 
@@ -89,7 +89,7 @@ class Projector(pawpyc.CProjector):
 		if wf.structure.lattice != basis.structure.lattice:
 			raise PAWpyError("Need the lattice to be the same for projections, and they are not")
 
-		if self.method != pseudo:
+		if self.method != "pseudo":
 			basis.check_c_projectors()
 			wf.check_c_projectors()
 
@@ -97,7 +97,8 @@ class Projector(pawpyc.CProjector):
 
 		if "aug" in self.method:
 			self.setup_overlap()
-		self.pseudo = pseudo
+
+		print("METHOD", self.method)
 
 	def make_site_lists(self):
 		"""
@@ -199,7 +200,7 @@ class Projector(pawpyc.CProjector):
 		"""
 		res = self.wf.pseudoprojection(band_num, self.basis)
 		start = time.monotonic()
-		self._add_augmentation_terms(res, band_num, False)
+		self._add_augmentation_terms(res, band_num)
 		end = time.monotonic()
 		Timer.augmentation_time(end-start)
 		#print('---------\nran compensation_terms in %f seconds\n-----------' % (end-start))
@@ -207,8 +208,7 @@ class Projector(pawpyc.CProjector):
 
 	def _single_band_projection_aug_recip(self, band_num):
 		res = self.wf.pseudoprojection(band_num, self.basis)
-		self._add_augmentation_terms_recip(res, band_num, True)
-		Timer.augmentation_time(end-start)
+		self._projection_recip(res, band_num)
 		return res
 
 	def single_band_projection(self, band_num, **kwargs):
@@ -255,7 +255,7 @@ class Projector(pawpyc.CProjector):
 		return bases
 
 	@staticmethod
-	def setup_multiple_projections(basis_dir, wf_dirs, pseudo = False, ignore_errors = False,
+	def setup_multiple_projections(basis_dir, wf_dirs, method = "aug_recip", ignore_errors = False,
 									desymmetrize = False, atomate_compatible = True):
 		"""
 		A convenient generator function for processing the Kohn-Sham wavefunctions
@@ -304,9 +304,9 @@ class Projector(pawpyc.CProjector):
 					wf = Wavefunction.from_directory(wf_dir, False)
 
 				if desymmetrize:
-					pr = Projector(wf, basis, pseudo = pseudo, unsym_wf = True)
+					pr = Projector(wf, basis, method = method, unsym_wf = True)
 				else:
-					pr = Projector(wf, basis, pseudo = pseudo)
+					pr = Projector(wf, basis, method = method)
 
 				yield [wf_dir, pr]
 			except Exception as e:
@@ -361,7 +361,7 @@ class Projector(pawpyc.CProjector):
 					v += np.absolute(res[i]) ** 2 * self.wf.kws[i%nwk] / nspin
 				else:
 					c += np.absolute(res[i]) ** 2 * self.wf.kws[i%nwk] / nspin
-		if self.pseudo:
+		if self.method == "pseudo":
 			t = v+c
 			v /= t
 			c /= t

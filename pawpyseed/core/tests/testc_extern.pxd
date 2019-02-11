@@ -1,7 +1,7 @@
 from libc.stdio cimport FILE
 
 
-cdef extern from "tests/tests.h":
+cdef extern from "tests.h":
 
     cdef int fft_check(char* wavecar, double* kpt_weights, int* fftg)
     cdef void proj_check(int BAND_NUM, int KPOINT_NUM,
@@ -59,6 +59,7 @@ cdef extern from "utils.h":
         double energy
         float complex* Cs
         double complex* CRs
+        float complex* CAs
         projection_t* projections
         projection_t* up_projections
         projection_t* down_projections

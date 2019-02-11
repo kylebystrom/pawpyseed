@@ -8,7 +8,9 @@
 # is unsafe because some of the error
 # catching is in Python.
 
+from pawpyseed.core cimport pawpyc
 from pawpyseed.core cimport pawpyc_extern as ppc
+
 from cpython cimport array
 from libc.stdlib cimport malloc, free
 from libc.stdio cimport FILE
@@ -511,17 +513,17 @@ cdef class CProjector:
 		
 		# choose function
 		if recip:
-			c_setup_routine = ppc.overlap_setup_recip
+			ppc.overlap_setup_recip(self.basis.wf_ptr, self.wf.wf_ptr,
+				&self.basis.nums[0], &self.wf.nums[0], &self.basis.coords[0], &self.wf.coords[0],
+				N_R, N_S, N_RS_R, N_RS_S,
+				self.num_N_R, self.num_N_S, self.num_N_RS_R)
 		else:
-			c_setup_routine = ppc.overlap_setup_real
+			ppc.overlap_setup_real(self.basis.wf_ptr, self.wf.wf_ptr,
+				&self.basis.nums[0], &self.wf.nums[0], &self.basis.coords[0], &self.wf.coords[0],
+				N_R, N_S, N_RS_R, N_RS_S,
+				self.num_N_R, self.num_N_S, self.num_N_RS_R)
 
-		# call C overlap setup routine
-		c_setup_routine(self.basis.wf_ptr, self.wf.wf_ptr,
-			&self.basis.nums[0], &self.wf.nums[0], &self.basis.coords[0], &self.wf.coords[0],
-			N_R, N_S, N_RS_R, N_RS_S,
-			self.num_N_R, self.num_N_S, self.num_N_RS_R)
-
-	def _add_augmentation_terms(self, np.ndarray[double complex, ndim=1] res, band_num, recip):
+	def _add_augmentation_terms(self, np.ndarray[double complex, ndim=1] res, band_num):
 		
 		cdef double complex[::1] resv = res
 
@@ -533,19 +535,57 @@ cdef class CProjector:
 		cdef int* N_RS_R = NULL if self.num_N_RS_R == 0 else &self.N_RS_R[0]
 		cdef int* N_RS_S = NULL if self.num_N_RS_S == 0 else &self.N_RS_S[0]
 
-		# choose function
-		if recip:
-			c_routine = ppc.compensation_terms_recip
-		else:
-			c_routine = ppc.compensation_terms
-
 		# call compensation terms C routine
-		c_routine(&resv[0], band_num, self.wf.wf_ptr, self.basis.wf_ptr,
+		ppc.compensation_terms(&resv[0], band_num, self.wf.wf_ptr, self.basis.wf_ptr,
 			self.num_M_R, self.num_N_R, self.num_N_S, self.num_N_RS_R,
 			M_R, M_S, N_R, N_S, N_RS_R, N_RS_S,
-			#self.M_R, self.M_S, self.N_R, self.N_S, self.N_RS_R, self.N_RS_S,
 			&self.wf.nums[0], &self.wf.coords[0], &self.basis.nums[0], &self.basis.coords[0],
 			&self.wf.dimv[0])
+
+	def _projection_recip(self, np.ndarray[double complex, ndim=1] res, band_num):
+		
+		cdef double complex[::1] resv = res
+
+		# set up site lists
+		cdef int* M_R = NULL if self.num_M_R == 0 else &self.M_R[0]
+		cdef int* M_S = NULL if self.num_M_S == 0 else &self.M_S[0]
+		cdef int* N_R = NULL if self.num_N_R == 0 else &self.N_R[0]
+		cdef int* N_S = NULL if self.num_N_S == 0 else &self.N_S[0]
+		cdef int* N_RS_R = NULL if self.num_N_RS_R == 0 else &self.N_RS_R[0]
+		cdef int* N_RS_S = NULL if self.num_N_RS_S == 0 else &self.N_RS_S[0]
+
+		# call compensation terms C routine
+		ppc.compensation_terms_recip(&resv[0], band_num, self.wf.wf_ptr, self.basis.wf_ptr,
+			self.num_M_R, self.num_N_R, self.num_N_S, self.num_N_RS_R,
+			M_R, M_S, N_R, N_S, N_RS_R, N_RS_S,
+			&self.wf.nums[0], &self.wf.coords[0], &self.basis.nums[0], &self.basis.coords[0],
+			&self.wf.dimv[0])
+
+	"""
+	def _projection_recip(self, band_num, recip):
+		
+		res = np.zeros(self.basis.nband * self.basis.nwk * self.basis.nspin, dtype = np.complex128)
+		cdef double complex[::1] resv = res
+
+		# set up site lists
+		cdef int* M_R = NULL if self.num_M_R == 0 else &self.M_R[0]
+		cdef int* M_S = NULL if self.num_M_S == 0 else &self.M_S[0]
+		cdef int* N_R = NULL if self.num_N_R == 0 else &self.N_R[0]
+		cdef int* N_S = NULL if self.num_N_S == 0 else &self.N_S[0]
+		cdef int* N_RS_R = NULL if self.num_N_RS_R == 0 else &self.N_RS_R[0]
+		cdef int* N_RS_S = NULL if self.num_N_RS_S == 0 else &self.N_RS_S[0]
+
+		sys.stdout.flush()
+
+		# call compensation terms C routine
+		ppc.compensation_terms_recip(&resv[0], band_num, self.wf.wf_ptr, self.basis.wf_ptr,
+			self.num_M_R, self.num_N_R, self.num_N_S, self.num_N_RS_R,
+			M_R, M_S, N_R, N_S, N_RS_R, N_RS_S,
+			&self.wf.nums[0], &self.wf.coords[0], &self.basis.nums[0], &self.basis.coords[0],
+			&self.wf.dimv[0])
+
+		return res
+	"""
 
 	def _realspace_projection(self, int band_num, np.ndarray dim):
 		res = np.zeros(self.basis.nband * self.basis.nwk * self.basis.nspin,

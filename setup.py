@@ -43,17 +43,20 @@ if 'LIBRARY_PATH' in os.environ:
 extra_args = '-std=c11 -lmkl_rt -fopenmp -fPIC -Wall'.split()
 if not DEBUG:
 	extra_args += ['-g0', '-O2']
+if DEBUG:
+	extra_args += ['-g']
 link_args = '-lmkl_sequential -lmkl_intel_lp64 -lmkl_core -lpthread -lm -ldl'.split()
 
-extensions = [Extension('pawpyc', ext_files + ['pawpyseed/core/pawpyc.pyx'],
+extensions = [Extension('pawpyseed.core.pawpyc', ext_files + ['pawpyseed/core/pawpyc.pyx'],
 	define_macros=[('MKL_Complex16', 'double complex'), ('MKL_Complex8', 'float complex')],
 	library_dirs=lib_dirs,
 	extra_link_args=extra_args + link_args,
 	extra_compile_args=extra_args,
 	runtime_library_dirs=lib_dirs,
 	include_dirs=inc_dirs)]
+	#depends=[os.path.join('pawpyseed/core', '*.h'), os.path.join('pawpyseed/core', '*.pxd')])]
 if DEBUG:
-	extensions.append(Extension('testc',
+	extensions.append(Extension('pawpyseed.core.tests.testc',
 		['pawpyseed/core/tests/testc.pyx', 'pawpyseed/core/tests/tests.c'] + ext_files,
 		define_macros=[('MKL_Complex16', 'double complex'), ('MKL_Complex8', 'float complex')],
 		library_dirs=lib_dirs,
@@ -61,6 +64,7 @@ if DEBUG:
 		extra_compile_args=extra_args,
 		runtime_library_dirs=lib_dirs,
 		include_dirs=inc_dirs))
+		#depends=[os.path.join('pawpyseed/core/tests', '*.h'), os.path.join('pawpyseed/core/tests', '*.pxd')]))
 
 packages = ['pawpyseed', 'pawpyseed.core', 'pawpyseed.analysis']
 if DEBUG:
@@ -84,8 +88,8 @@ setup(name='pawpyseed',
 		"Programming Language :: Python :: 3",
 		"License :: OSI Approved :: BSD License"
 	),
-	ext_modules=cythonize(extensions),
-	#	include_path=[os.path.join(os.path.abspath(__file__), 'pawpyseed/core')]),
+	ext_modules=cythonize(extensions,
+		include_path=[os.path.join(os.path.abspath(__file__), 'pawpyseed/core')]),
 	zip_safe=False
 )
 

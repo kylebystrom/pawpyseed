@@ -209,6 +209,9 @@ void free_kpoint(kpoint_t* kpt, int num_elems, int num_sites, int wp_num, int* n
 		if (curr_band->CRs != NULL) {
 			mkl_free(curr_band->CRs);
 		}
+		if (curr_band->CAs != NULL) {
+			mkl_free(curr_band->CAs);
+		}
 		free(curr_band);
 	}
 	if (kpt->expansion != NULL) {
@@ -981,6 +984,7 @@ pswf_t* expand_symm_wf(pswf_t* rwf, int num_kpts, int* maps,
 			kpt->bands[b]->Cs = (float complex*) malloc(
 				kpt->num_waves * sizeof(float complex));
 			kpt->bands[b]->CRs = NULL;
+			kpt->bands[b]->CAs = NULL;
 			kpt->bands[b]->projections = NULL;
 			kpt->bands[b]->up_projections = NULL;
 			kpt->bands[b]->down_projections = NULL;

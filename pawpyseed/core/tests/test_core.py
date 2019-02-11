@@ -6,13 +6,14 @@ import time
 import scipy
 
 import numpy as np
-from numpy.testing import assert_almost_equal
+from numpy.testing import assert_almost_equal, assert_equal
 
 from scipy.special import lpmn, sph_harm
 from nose import SkipTest
 from nose.tools import nottest
 
-import pawpyc, testc
+from pawpyseed.core import pawpyc
+from pawpyseed.core.tests import testc
 
 class PawpyTestError(Exception):
 	"""
@@ -111,9 +112,11 @@ class TestC:
 		sys.stdout.flush()
 
 	def test_fft3d(self):
+		print("TEST FFT")
 		vr = self.vr 
 		weights = np.array(vr.actual_kpoints_weights)
-		testc.fft_check("WAVECAR", weights, np.array([20,20,20], dtype=np.int32, order='C'))
+		res = testc.fft_check("WAVECAR", weights, np.array([20,20,20], dtype=np.int32, order='C'))
+		assert_equal(res, 0)
 
 	def test_sbt(self):
 		from scipy.special import spherical_jn as jn
@@ -485,7 +488,7 @@ class TestPy:
 		# test ps projections
 		wf = Wavefunction.from_directory('.')
 		basis = Wavefunction.from_directory('.')
-		pr = Projector(wf, basis, pseudo = True)
+		pr = Projector(wf, basis, method = "pseudo")
 		res = pr.single_band_projection(6)
 		assert res.shape[0] == basis.nband * basis.nspin * basis.nwk
 		res = pr.defect_band_analysis(4, 10, False)

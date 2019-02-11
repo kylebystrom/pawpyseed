@@ -16,4 +16,7 @@ lattice direction) for storage and computation.
 void fft3d(double complex* x, int* G_bounds, double* lattice,
 	double* kpt, int* Gs, float complex* Cs, int num_waves, int* fftg);
 
+void fwd_fft3d(double complex* x, int* G_bounds, double* lattice,
+	double* kpt, int* Gs, float complex* Cs, int num_waves, int* fftg);
+
 #endif

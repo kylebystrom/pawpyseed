@@ -16,7 +16,7 @@ import json
 
 import sys
 
-import pawpyc
+from pawpyseed.core import pawpyc
 
 class Pseudopotential:
 	"""

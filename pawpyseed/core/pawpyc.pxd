@@ -1,3 +1,5 @@
+# cython : language_level=3
+
 from pawpyseed.core cimport pawpyc_extern as ppc
 cimport numpy as np 
 import numpy as np

@@ -25,21 +25,21 @@ cfiles = [f+'.c' for f in srcfiles]
 #hfiles = [f+'.h' for f in srcfiles]
 ext_files = cfiles
 ext_files = ['pawpyseed/core/' + f for f in ext_files]
-lib_dirs = ['/usr/lib', '/usr/local/lib']
-inc_dirs = ['/usr/include', '/usr/local/include', 'pawpyseed/core', np.get_include()]
+lib_dirs = []
+inc_dirs = ['pawpyseed/core', np.get_include()]
 if DEBUG:
 	inc_dirs.append('pawpyseed/core/tests')
-if 'MKLROOT' in os.environ:
-	MKLROOT = os.environ['MKLROOT']
-	lib_dirs.append('%s/lib/intel64_lin' % MKLROOT)
-	inc_dirs.append('%s/include' % MKLROOT)
+#if 'MKLROOT' in os.environ:
+#	MKLROOT = os.environ['MKLROOT']
+#	lib_dirs.append('%s/lib/intel64_lin' % MKLROOT)
+#	inc_dirs.append('%s/include' % MKLROOT)
 rt_lib_dirs = lib_dirs[:]
-if 'C_INCLUDE_PATH' in os.environ:
-	inc_dirs += os.environ['C_INCLUDE_PATH'].split(':')
-if 'LD_LIBRARY_PATH' in os.environ:
-	lib_dirs += os.environ['LD_LIBRARY_PATH'].split(':')
-if 'LIBRARY_PATH' in os.environ:
-	rt_lib_dirs += os.environ['LIBRARY_PATH'].split(':')
+#if 'C_INCLUDE_PATH' in os.environ:
+#	inc_dirs += os.environ['C_INCLUDE_PATH'].split(':')
+#if 'LD_LIBRARY_PATH' in os.environ:
+#	lib_dirs += os.environ['LD_LIBRARY_PATH'].split(':')
+#if 'LIBRARY_PATH' in os.environ:
+#	rt_lib_dirs += os.environ['LIBRARY_PATH'].split(':')
 extra_args = '-std=c11 -lmkl_rt -fopenmp -fPIC -Wall'.split()
 if not DEBUG:
 	extra_args += ['-g0', '-O2']

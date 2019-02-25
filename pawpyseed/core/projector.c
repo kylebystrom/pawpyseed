@@ -308,7 +308,7 @@ void get_aug_freqs_helper(band_t* band, double complex* x, real_proj_site_t* sit
 
 			for (int p = 0; p < sites[s].total_projs; p++) {
 				values = sites[s].projs[p].values;
-				x[index] += projections[s].overlaps[p] * values[ind] * phase;
+				x[index] += projections[sites[s].index].overlaps[p] * values[ind] * phase;
 			}
 		}
 		
@@ -391,6 +391,10 @@ void onto_smoothpw(kpoint_t* kpt, int band_num, real_proj_site_t* sites, int num
 
 void get_aug_freqs(kpoint_t* kpt, int band_num, real_proj_site_t* sites, int num_sites,
 	int* G_bounds, double* lattice, double* reclattice, int num_cart_gridpts, int* fftg) {
+
+	if (kpt->bands[band_num]->CAs != NULL) {
+		return;
+	}
 
 	double* k = kpt->k;
 	int* Gs = kpt->Gs;

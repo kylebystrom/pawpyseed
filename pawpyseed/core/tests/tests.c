@@ -108,10 +108,12 @@ void proj_check(int BAND_NUM, int KPOINT_NUM,
 
 	double err=0, err2=0;
 	double normx=0, normy=0;
-	int ind;
 	int num_sites = wf->num_sites;
 	#pragma omp parallel for
 	for (int p = 0; p < num_sites; p++) {
+		int ind;
+		double serr=0, serr2=0;
+		double snormx=0, snormy=0;
 		projection_t pros = wf->kpts[KPOINT_NUM]->bands[BAND_NUM]->projections[p];
 		//printf("READ PROJECTIONS\n");
 		ppot_t pp = pps[labels[p]];
@@ -163,13 +165,20 @@ void proj_check(int BAND_NUM, int KPOINT_NUM,
 								testcoord)
 								* pros.overlaps[n] * cexp(2*PI*I*phase);
 						}
-						err += pow(cabs(x[ind] - y[ind]), 2);
-						err2 += pow(cabs(x[ind]) - cabs(y[ind]), 2);
-						normx += pow(cabs(x[ind]), 2);
-						normy += pow(cabs(y[ind]), 2);
+						serr += pow(cabs(x[ind] - y[ind]), 2);
+						serr2 += pow(cabs(x[ind]) - cabs(y[ind]), 2);
+						snormx += pow(cabs(x[ind]), 2);
+						snormy += pow(cabs(y[ind]), 2);
 					}
 				}
 			}
+		}
+		#pragma omp critical
+		{
+			err += serr;
+			err2 += serr2;
+			normx += snormx;
+			normy += snormy;
 		}
 	}
 

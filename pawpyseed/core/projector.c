@@ -691,7 +691,7 @@ void overlap_setup_recip(pswf_t* wf_R, pswf_t* wf_S,
 	int max_num_indices = 0;
 	if (num_N_R > 0) {
 		real_proj_site_t* sites_N_R = smooth_pw_values(num_N_R, N_R, labels_R, coords_R,
-			wf_S->lattice, wf_S->reclattice, wf_R->pps, wf_S->fftg);
+			wf_R->lattice, wf_R->reclattice, wf_R->pps, wf_R->fftg);
 		for (int s = 0; s < num_N_R; s++) {
 			if (sites_N_R[s].num_indices > max_num_indices) {
 				max_num_indices = sites_N_R[s].num_indices;
@@ -713,7 +713,7 @@ void overlap_setup_recip(pswf_t* wf_R, pswf_t* wf_S,
 	printf("PART 1 DONE RECIP\n");
 	if (num_N_S > 0) {
 		real_proj_site_t* sites_N_S = smooth_pw_values(num_N_S, N_S, labels_S, coords_S,
-			wf_R->lattice, wf_R->reclattice, wf_S->pps, wf_R->fftg);
+			wf_S->lattice, wf_S->reclattice, wf_S->pps, wf_S->fftg);
 		NUM_BANDS = wf_S->nband;
 		for (int s = 0; s < num_N_S; s++) {
             if (sites_N_S[s].num_indices > max_num_indices) {

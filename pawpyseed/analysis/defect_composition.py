@@ -211,7 +211,7 @@ class BulkCharacter(PawpyData):
 		else:
 			bs = list(self.energy_levels.keys())
 			bmean = np.mean(bs)
-			cmap = plt.get_cmap('plasma')
+			cmap = plt.get_cmap('rainbow')
 			for b in self.energy_levels:
 				i = 0
 				delta = 0.8 / len(self.energy_levels[b])

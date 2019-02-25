@@ -20,10 +20,32 @@ in VASP.
 
 ## Installation
 
-**Note**: Before installing with pip or the setup script, please
-read about the dependencies and set up your environment correctly!
+### The Easy Way
 
-You can install PAWpySeed with `pip`.
+First, install `mkl-devel`:
+
+```
+pip install mkl-devel (--user)
+```
+
+If you are on a computing cluster with "module" options, or your
+system has different MKL builds (particularly one is built with icc),
+you need to be careful how you link your libraries. Find the directory
+in which MKL was installed (this should correspond to the location of
+your Python packages, e.g. if your Python packages are in
+`~/.local/lib/python3.5/site-packages`, your MKL is in `~/.local/lib`
+and `~/.local/include`).
+
+Installation can also be performed
+by cloning this repository and running the `setup.py` script
+in the root directory of the repository.
+
+```
+python setup.py build
+python setup.py install
+```
+
+OR you can install PAWpySeed with `pip`.
 
 ```
 pip install pawpyseed
@@ -33,15 +55,9 @@ This has been tested on Scientific Linux 7 and Linux Mint 18,
 but should work for systems that have the appropriate
 packages and environment variables defined as described below.
 
-Installation can also be performed
-by cloning this repository and running the `setup.py` script
-in the root directory of the repository.
+### Advanced Options
 
-```
-python setup.py build_ext
-python setup.py build
-python setup.py install
-```
+
 
 ### Dependencies
 
@@ -64,22 +80,12 @@ C requirements:
 icc >= 16.0.4 OR gcc >= 4.8.5
 Intel Math Kernel Library >= 11.3.4
 ```
-Intel MKL is available for free installation on a variety of platforms.
+If you don't want to `pip install` Intel MKL,
+it is available for free installation on a variety of platforms.
 Most computing clusters will have Intel MKL, and you can install it
 on your desktop (or any system to which you have root access) by following
 the relevant instructions at the following URL:
 <https://software.intel.com/en-us/articles/free-ipsxe-tools-and-libraries>.
-After Intel MKL is installed, add the following line to your .bashrc
-to link MKL (NOTE: this might not be the exact directory that MKL is in,
-you need to check that first):
-```
-export MKLROOT=/opt/intel/compilers_and_libraries_2018/linux/mkl
-export LD_LIBRARY_PATH=$MKLROOT/lib/intel64_lin:$LD_LIBRARY_PATH
-export C_INCLUDE_PATH=$MKLROOT/include:$C_INCLUDE_PATH
-```
-The last line is optional but might be useful for future PAWpySeed builds
-and other programs which make use of MKL.
-The setup.py file will now take care of C compilation.
 
 ## Theory and Input
 

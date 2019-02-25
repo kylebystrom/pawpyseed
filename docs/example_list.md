@@ -5,7 +5,7 @@ and formatted in a few lines of code. Example 1 illustrates
 using the Wavefunction class utilities to calculate the overlap
 operators of the pseudowavefunctions of several point defect structures
 with the those of the bulk supercell of the same size (structures
-generated with PyCDT https://bitbucket.org/mbkumar/pycdt). Example 2
+generated with [PyCDT](https://bitbucket.org/mbkumar/pycdt). Example 2
 shows how using the PawpyData subclasses can make some data generation
 and formatting even easier.
 

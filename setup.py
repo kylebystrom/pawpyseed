@@ -5,6 +5,7 @@ import os, subprocess
 import shutil
 import sys
 import codecs
+import configparser
 from Cython.Build import cythonize
 import numpy as np 
 
@@ -21,36 +22,76 @@ reqs = "numpy>=1.14,scipy>=1.0,pymatgen>=2018.2.13,sympy>=1.1.1,matplotlib>=0.2.
 srcfiles = ['density', 'gaunt', 'linalg', 'projector', 'pseudoprojector', 'quadrature',\
 			'radial', 'reader', 'sbt', 'utils']
 
+# READ CONFIGURATION FILE
+config = configparser.ConfigParser()
+user_cfg_file = os.path.expanduser('~/pawpyseed-site.cfg')
+config.read_file(open('site.cfg.default', 'r'))
+if os.path.isfile('site.cfg'):
+	config.read('site.cfg')
+elif os.path.isfile(user_cfg_file):
+	config.read(user_cfg_file)
+
+# SET COMPILER AND LINKER
+if 'compiler_name' in config['compiler']:
+	os.environ['CC'] = config['compiler']['compiler_name']
+	if not 'linker_name' in config['compiler']:
+		os.environ['LDSHARED'] = config['compiler']['linker_name'] + ' -shared'
+if 'linker_name' in config['compiler']:
+	os.environ['LDSHARED'] = config['compiler']['linker_name']
+
+# set parallelization and interface options
+sdl = config['mkl'].getboolean('sdl')
+omp_loops = config['threading'].getboolean('omp_loops')
+threaded_mkl = config['threading'].getboolean('threaded_mkl')
+interface32 = config['mkl'].getboolean('interface32')
+
+if sdl:
+	link_args = '-lmkl_rt -lpthread -lm -ldl'.split()
+else:
+	# interface layer
+	if interface32:
+		interfacelib = '-lmkl_intel_lp64'
+	else:
+		print ("WARNING: Not supporting 64-bit interface currently")
+		interfacelib = '-lmkl_intel_lp64'
+		#interfacelib = '-lmkl_intel_ilp64'
+	# threading
+	if threaded_mkl:
+		threadlib = '-lmkl_intel_thread -liomp5'
+	else:
+		threadlib = '-lmkl_sequential'
+	link_args = '%s %s -lmkl_core -lpthread -lm -ldl' % (interfacelib, threadlib)
+	link_args = link_args.split()
+# set compiler openmp flag
+extra_args = '-std=c11 -fPIC -Wall'.split()
+if omp_loops:
+	extra_args.append('-fopenmp')
+
+# add additional MKL libraries if found in cfg
+lib_dirs = []
+inc_dirs = ['pawpyseed/core', np.get_include()]
+if 'root' in config['mkl']:
+	root_dirs = config['mkl']['root'].split(':')
+	for r in root_dirs:
+		lib_dirs.append(os.path.join(r, 'lib/intel64'))
+		inc_dirs.append(os.path.join(r, 'include'))
+
+# SET UP COMPILE/LINK ARGS AND THREADING
 cfiles = [f+'.c' for f in srcfiles]
-#hfiles = [f+'.h' for f in srcfiles]
 ext_files = cfiles
 ext_files = ['pawpyseed/core/' + f for f in ext_files]
-lib_dirs = ['/usr/lib', '/usr/local/lib']
-inc_dirs = ['/usr/include', '/usr/local/include', 'pawpyseed/core', np.get_include()]
 if DEBUG:
 	inc_dirs.append('pawpyseed/core/tests')
-if 'MKLROOT' in os.environ:
-	MKLROOT = os.environ['MKLROOT']
-	lib_dirs.append('%s/lib/intel64_lin' % MKLROOT)
-	inc_dirs.append('%s/include' % MKLROOT)
 rt_lib_dirs = lib_dirs[:]
-if 'C_INCLUDE_PATH' in os.environ:
-	inc_dirs += os.environ['C_INCLUDE_PATH'].split(':')
-if 'LD_LIBRARY_PATH' in os.environ:
-	lib_dirs += os.environ['LD_LIBRARY_PATH'].split(':')
-if 'LIBRARY_PATH' in os.environ:
-	rt_lib_dirs += os.environ['LIBRARY_PATH'].split(':')
-extra_args = '-std=c11 -lmkl_rt -fopenmp -fPIC -Wall'.split()
 if not DEBUG:
 	extra_args += ['-g0', '-O2']
 if DEBUG:
 	extra_args += ['-g']
-link_args = '-lmkl_sequential -lmkl_intel_lp64 -lmkl_core -lpthread -lm -ldl'.split()
 
 extensions = [Extension('pawpyseed.core.pawpyc', ext_files + ['pawpyseed/core/pawpyc.pyx'],
 	define_macros=[('MKL_Complex16', 'double complex'), ('MKL_Complex8', 'float complex')],
 	library_dirs=lib_dirs,
-	extra_link_args=extra_args + link_args,
+	extra_link_args=link_args,
 	extra_compile_args=extra_args,
 	runtime_library_dirs=lib_dirs,
 	include_dirs=inc_dirs)]

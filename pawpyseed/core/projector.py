@@ -6,7 +6,7 @@
 
 from pawpyseed.core.wavefunction import *
 from pawpyseed.core import pawpyc
-from pawpy import Timer
+from pawpyseed.core.pawpyc import Timer
 import warnings
 
 class Projector(pawpyc.CProjector):
@@ -28,7 +28,7 @@ class Projector(pawpyc.CProjector):
 	METHODS = ["pseudo", "realspace", "aug_recip", "aug_real"]
 
 	def __init__(self, wf, basis,
-		unsym_basis = False, unsym_wf = False, method = "aug_recip"):
+		unsym_basis = False, unsym_wf = False, method = "aug_real"):
 		"""
 		Arguments:
 			wf (Wavefunction): The wavefunction objects whose
@@ -97,8 +97,6 @@ class Projector(pawpyc.CProjector):
 
 		if "aug" in self.method:
 			self.setup_overlap()
-
-		print("METHOD", self.method)
 
 	def make_site_lists(self):
 		"""
@@ -255,7 +253,7 @@ class Projector(pawpyc.CProjector):
 		return bases
 
 	@staticmethod
-	def setup_multiple_projections(basis_dir, wf_dirs, method = "aug_recip", ignore_errors = False,
+	def setup_multiple_projections(basis_dir, wf_dirs, method = "aug_real", ignore_errors = False,
 									desymmetrize = False, atomate_compatible = True):
 		"""
 		A convenient generator function for processing the Kohn-Sham wavefunctions

@@ -11,6 +11,7 @@ from numpy.testing import assert_almost_equal, assert_equal
 from scipy.special import lpmn, sph_harm
 from nose import SkipTest
 from nose.tools import nottest
+from nose.plugins.skip import Skip
 
 from pawpyseed.core import pawpyc
 from pawpyseed.core.tests import testc
@@ -134,11 +135,11 @@ class TestC:
 
 	def test_radial(self):
 		try:
-			import reference as gint
+			import pawpyseed.core.tests.reference as gint
 			from scipy.misc import factorial2 as fac2
 		except ImportError:
 			print("No McMurchie-Davidson installed, skipping radial test")
-			return
+			raise SkipTest()
 
 		h0 = ([1], [0])
 		h1 = ([2], [1])

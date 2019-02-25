@@ -5,6 +5,8 @@ directory = 'pawpyseed/core/'
 
 def write_pxd(pxdname, files):
 	full_file = ''
+	#full_file += '# cython : profile=True\n'
+	full_file += '# cython : language_level=3\n'
 	full_file += 'from libc.stdio cimport FILE\n'
 	for fname in files:
 		f = open(directory + fname + '.h', 'r')

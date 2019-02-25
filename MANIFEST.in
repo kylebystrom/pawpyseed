@@ -1,4 +1,4 @@
-include LICENSE *.txt
+include LICENSE *.txt site.cfg.default
 recursive-include pawpyseed *
 recursive-exclude pawpyseed *.pyc
 recursive-include docs *

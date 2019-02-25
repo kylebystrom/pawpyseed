@@ -6,7 +6,7 @@
 
 from pawpyseed.core.wavefunction import *
 from pawpyseed.core import pawpyc
-from pawpy import Timer
+from pawpyseed.core.pawpyc import Timer
 import warnings
 
 class Projector(pawpyc.CProjector):

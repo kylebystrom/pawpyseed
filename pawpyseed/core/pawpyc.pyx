@@ -190,6 +190,12 @@ cpdef reciprocal_offsite_wave_overlap(np.ndarray[double, ndim=1] dcoord,
 ############################
 
 cdef class PWFPointer:
+	"""
+	Container class for a pointer to a pswf_t* object
+	in C, which can be used to initialize CWavefunction.
+	Also contains a function for get copies of PWFPointer
+	objects without symmetry-reduced k-point sampling.
+	"""
 
 	def __init__(self, filename = None, vr = None):
 		cdef double[::1] kws
@@ -477,6 +483,10 @@ cdef class CWavefunction(PseudoWavefunction):
 
 
 cdef class CProjector:
+	"""
+	Parent class for pawpyseed.core.projector.Projector,
+	used for abstracting the Python-C interface.
+	"""
 
 	def __init__(self, wf, basis):
 		"""
@@ -560,32 +570,6 @@ cdef class CProjector:
 			M_R, M_S, N_R, N_S, N_RS_R, N_RS_S,
 			&self.wf.nums[0], &self.wf.coords[0], &self.basis.nums[0], &self.basis.coords[0],
 			&self.wf.dimv[0])
-
-	"""
-	def _projection_recip(self, band_num, recip):
-		
-		res = np.zeros(self.basis.nband * self.basis.nwk * self.basis.nspin, dtype = np.complex128)
-		cdef double complex[::1] resv = res
-
-		# set up site lists
-		cdef int* M_R = NULL if self.num_M_R == 0 else &self.M_R[0]
-		cdef int* M_S = NULL if self.num_M_S == 0 else &self.M_S[0]
-		cdef int* N_R = NULL if self.num_N_R == 0 else &self.N_R[0]
-		cdef int* N_S = NULL if self.num_N_S == 0 else &self.N_S[0]
-		cdef int* N_RS_R = NULL if self.num_N_RS_R == 0 else &self.N_RS_R[0]
-		cdef int* N_RS_S = NULL if self.num_N_RS_S == 0 else &self.N_RS_S[0]
-
-		sys.stdout.flush()
-
-		# call compensation terms C routine
-		ppc.compensation_terms_recip(&resv[0], band_num, self.wf.wf_ptr, self.basis.wf_ptr,
-			self.num_M_R, self.num_N_R, self.num_N_S, self.num_N_RS_R,
-			M_R, M_S, N_R, N_S, N_RS_R, N_RS_S,
-			&self.wf.nums[0], &self.wf.coords[0], &self.basis.nums[0], &self.basis.coords[0],
-			&self.wf.dimv[0])
-
-		return res
-	"""
 
 	def _realspace_projection(self, int band_num, np.ndarray dim):
 		res = np.zeros(self.basis.nband * self.basis.nwk * self.basis.nspin,

@@ -1,5 +1,9 @@
 # coding: utf-8
 
+## File presenting the PawpyData class
+# and its children for analysis of pawpyseed
+# output primarily from core.projector.Projector
+
 import yaml
 import matplotlib.pyplot as plt 
 import numpy as np 
@@ -175,6 +179,7 @@ class BulkCharacter(PawpyData):
 		bandgap = self.bandgap
 
 		bs = np.array(bs) - np.mean(bs)
+		xticks = bs[:]
 		cs = np.array(cs)
 		vs = np.array(vs)
 		if self.energy_levels == None:
@@ -187,6 +192,7 @@ class BulkCharacter(PawpyData):
 			fig, (ax1, ax3) = plt.subplots(2, 1, gridspec_kw = {'height_ratios': [1, 1]},
 				figsize=[6.4,8])
 		ax1.set_xlabel('band', fontsize=18)
+		ax1.set_xticks(xticks)
 		ax1.set_ylabel('valence', color='b', fontsize=18)
 		ax1.bar(bs-0.2, vs[::2], width=0.4, color='b')
 		ax1.bar(bs+0.2, vs[1::2], width=0.4, color='b')
@@ -234,7 +240,9 @@ class BulkCharacter(PawpyData):
 				ax3.plot([bmin,bmax], [0,0], color='black')
 				ax3.plot([bmin,bmax], [bandgap,bandgap], color='black')
 			ax3.set_xlabel('band', fontsize=18)
+			ax3.set_xticks(xticks)
 			ax3.set_ylabel('Energy (eV)', fontsize=18)
+		plt.tight_layout()
 		plt.savefig(name.replace(' ', '_'))
 
 	@staticmethod

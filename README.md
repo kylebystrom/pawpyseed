@@ -20,32 +20,90 @@ in VASP.
 
 ## Installation
 
+The only tricky part to installing pawpyseed is linking with the Intel Math Kernel Library
+(MKL). There are many ways to do this, as aided by the config file. To make your own,
+make a file in your home directory `~` named `.pawpyseed-site.cfg`. This file allows you
+to customize configuration settings for pawpyseed. It is read using the Python
+configparser module <https://docs.python.org/3/library/configparser.html>. If you don't
+want to learn about the configuration file options, skip to "The Easy Way" to get this done with quickly.
+
+### The customizable way
+
+The options (with their defaults) are as follows:
+
+```
+[compiler]
+# Name of the compiler to be used. By default, let's the setup script choose this.
+compiler_name = <no default> # Examples: icc or gcc
+# Name of the linker to be used. By default, let's the setup script choose this.
+# NOTE: Don't forget the -shared tag for icc or gcc!
+# NOTE: If compiler_name is set and linker_name is not,
+#       linker_name is set to compiler_name with the -shared tag appended.
+linker_name = <no default> # Examples: icc -shared or gcc -shared
+
+[mkl]
+# MKL installation directory. <root>/lib or <root>/lib/intel64 must contain
+# the MKL shared object libraries, while <root>/include must containn the MKL headers.
+# Many systems have the environment variable
+# MKLROOT set for this, so you can set this to the output of:
+#       echo $MKLROOT
+# If you pip install mkl-devel, this goes to /usr or /usr/local.
+# If you pip install mkl-devel --user, this goes to ~/.local
+# (or the equivalents for your system).
+root = <no default>
+# Don't change this. Might be used in the future but currently has no effect.
+interface32 = True
+# Whether to compile with the single dynamic library libmkl_rt.so.
+# If you are having installation/performance problems, try setting sdl=True,
+# pip installing mkl-devel with the --user option, set root=~/.local,
+# and set the environment variable MKL_THREADING_LAYER=sequential
+# when using pawpyseed.
+sdl = False
+
+[threading]
+# Whether to use omp_loops. If False, pawpyseed doesn't do any parallelization
+# on its own, though its calls to MKL, BLAS, LAPACK, etc might be
+# threaded by MKL.
+omp_loops = True
+# Whether to use threading for MKL. OVERRIDDEN if sdl=True, in which case
+# MKL is threaded by default and you can run sequentially by
+# setting the environment variable MKL_THREADING_LAYER=sequential
+# when using pawpyseed.
+# NOTE: ONLY SET THIS TRUE IF COMPILING WITH icc (OR gcc with omp_loops=False),
+# and only if you are very concerned about speed. This is because gcc
+# cannot do nested parallelism with MKL
+threaded_mkl = False
+
+# NOTE: Do not link to icc-compiled MKL libraries when compiling the C
+# extension with gcc or vice versa. Use like type compilers.
+```
+
 ### The Easy Way
 
-First, install `mkl-devel`:
+#### Intel Easy Way
+
+If you have `icc`, set `compiler=icc` in `~/.pawpyseed-site.cfg` and then
+set `root` to your MKL installation directory. Set `sdl=True`. You MKL distribution must have also
+been compiled with the Intel compiler. Run the `setup.py` script or `pip install pawpyseed`.
+
+#### The GNU Easy Way
+
+First, install `mkl-devel` in your local installation:
 
 ```
-pip install mkl-devel (--user)
+pip install mkl-devel --user
 ```
 
-If you are on a computing cluster with "module" options, or your
-system has different MKL builds (particularly one is built with icc),
-you need to be careful how you link your libraries. Find the directory
-in which MKL was installed (this should correspond to the location of
-your Python packages, e.g. if your Python packages are in
-`~/.local/lib/python3.5/site-packages`, your MKL is in `~/.local/lib`
-and `~/.local/include`).
-
-Installation can also be performed
-by cloning this repository and running the `setup.py` script
-in the root directory of the repository.
+Copy `site.cfg.default` from the pawpyseed repository to `~/.pawpyseed-site.cfg`.
+Open it and set `root=<you home directory>/.local` under the `[mkl]` heading
+and uncomment it by removing the `#`. Then run
 
 ```
 python setup.py build
 python setup.py install
 ```
 
-OR you can install PAWpySeed with `pip`.
+OR with `pip`.
 
 ```
 pip install pawpyseed
@@ -55,9 +113,9 @@ This has been tested on Scientific Linux 7 and Linux Mint 18,
 but should work for systems that have the appropriate
 packages and environment variables defined as described below.
 
-### Advanced Options
-
-
+IF you get linking issues at runtime using this method, try setting
+`sdl=True` in the config file and then setting the environment
+variable MKL_THREADING_LAYER=sequential
 
 ### Dependencies
 

@@ -1,6 +1,7 @@
 [compiler]
 # compiler_name = icc
 # linker_name = icc -shared
+# extra_libs = /usr/lib
 
 [mkl]
 # root = ~/.local/lib:/usr/lib

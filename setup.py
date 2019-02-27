@@ -46,7 +46,7 @@ threaded_mkl = config['threading'].getboolean('threaded_mkl')
 interface32 = config['mkl'].getboolean('interface32')
 
 if sdl:
-	link_args = '-lmkl_rt -liomp5 -lpthread -lm -ldl'.split()
+	link_args = '-Wl,--no-as-needed -lmkl_rt -liomp5 -lpthread -lm -ldl'.split()
 else:
 	# interface layer
 	if interface32:
@@ -57,10 +57,12 @@ else:
 		#interfacelib = '-lmkl_intel_ilp64'
 	# threading
 	if threaded_mkl:
-		threadlib = '-lmkl_intel_thread -liomp5'
+		threadlib = '-lmkl_intel_thread'
+		omplib = '-liomp5'
 	else:
 		threadlib = '-lmkl_sequential'
-	link_args = '%s %s -lmkl_core -lpthread -lm -ldl' % (interfacelib, threadlib)
+		omplib = ''
+	link_args = '-Wl,--no-as-needed -lmkl_def %s %s -lmkl_core %s -lpthread -lm -ldl' % (interfacelib, threadlib, omplib)
 	link_args = link_args.split()
 # set compiler openmp flag
 extra_args = '-std=c11 -fPIC -Wall'.split()
@@ -74,6 +76,7 @@ if 'root' in config['mkl']:
 	root_dirs = config['mkl']['root'].split(':')
 	for r in root_dirs:
 		lib_dirs.append(os.path.join(r, 'lib/intel64'))
+		lib_dirs.append(os.path.join(r, 'lib'))
 		inc_dirs.append(os.path.join(r, 'include'))
 if 'extra_libs' in config['compiler']:
 	extra_dirs = config['compiler']['extra_libs'].split(':')

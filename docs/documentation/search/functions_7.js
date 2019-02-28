@@ -1,5 +1,7 @@
 var searchData=
 [
+  ['get_5faug_5ffreqs',['get_aug_freqs',['../projector_8h.html#a00326d023adb88ac4b548a8cd4753839',1,'projector.h']]],
+  ['get_5faug_5ffreqs_5fhelper',['get_aug_freqs_helper',['../projector_8h.html#a9046876ee0b75b6b4104a56b6d9bf899',1,'projector.h']]],
   ['get_5fcorrection',['get_correction',['../classpawpyseed_1_1analysis_1_1corrections_1_1PerturbationCorrection.html#ae9d8103531ea5f924901225d56f1e8b0',1,'pawpyseed::analysis::corrections::PerturbationCorrection']]],
   ['get_5fencut',['get_encut',['../utils_8h.html#ab9620c8506dfaa134aac668d48e6d78e',1,'utils.h']]],
   ['get_5fenergy',['get_energy',['../utils_8h.html#a97f3622fdb711ca9b5a7b36d3cde8310',1,'utils.h']]],

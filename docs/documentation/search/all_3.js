@@ -1,6 +1,7 @@
 var searchData=
 [
   ['cartesian_5fto_5ffrac',['cartesian_to_frac',['../utils_8h.html#a41e77a9284a328f0afa3d5cf8c8b8815',1,'utils.h']]],
+  ['cas',['CAs',['../structband.html#a374958995c3bea8596bc72c4ec1b83f0',1,'band']]],
   ['cbm',['cbm',['../classpawpyseed_1_1analysis_1_1defect__composition_1_1PawpyData.html#a5161ae586691b5add88d825bc2b7e95c',1,'pawpyseed.analysis.defect_composition.PawpyData.cbm()'],['../namespacepawpyseed_1_1analysis_1_1prep.html#ad45ba2859210fd19ccaaa4a890bd967d',1,'pawpyseed.analysis.prep.cbm()']]],
   ['charges',['charges',['../namespacepawpyseed_1_1analysis_1_1prep.html#abac2d802a63dd01b7b1b5a5df5d7a9ef',1,'pawpyseed::analysis::prep']]],
   ['check_5fallocation',['CHECK_ALLOCATION',['../utils_8h.html#a5f2829e97ca50110c8845615aa29db64',1,'utils.h']]],
@@ -9,6 +10,7 @@ var searchData=
   ['check_5fstatus',['CHECK_STATUS',['../utils_8h.html#ad0336b65bc7ec44cb3324cdd5c83d55d',1,'utils.h']]],
   ['clean_5fwave_5fprojections',['clean_wave_projections',['../utils_8h.html#a51022ddcb19e8a386fa80c688fae2aee',1,'utils.h']]],
   ['compensation_5fterms',['compensation_terms',['../projector_8h.html#a66785c7c9ba05a80a152ec6b7273c3e7',1,'projector.h']]],
+  ['compensation_5fterms_5frecip',['compensation_terms_recip',['../projector_8h.html#a091cb5777cf408080acd76ce8040558c',1,'projector.h']]],
   ['coord',['coord',['../structreal__proj__site.html#a5dc643a75ffafb9185e384b622155839',1,'real_proj_site']]],
   ['coords',['coords',['../classpawpyseed_1_1core_1_1noncollinear_1_1NCLWavefunction.html#a4aa6b2462d69b490f41f0c725acc9723',1,'pawpyseed::core::noncollinear::NCLWavefunction']]],
   ['coredensity',['coredensity',['../classpawpyseed_1_1core_1_1wavefunction_1_1Pseudopotential.html#a4ec39d154efaf5631870a67d8575071c',1,'pawpyseed::core::wavefunction::Pseudopotential']]],

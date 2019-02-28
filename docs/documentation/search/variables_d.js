@@ -12,7 +12,6 @@ var searchData=
   ['projgrid',['projgrid',['../classpawpyseed_1_1core_1_1wavefunction_1_1Pseudopotential.html#a81cc5ee9a8d895ea4d37277eeedeb0aa',1,'pawpyseed::core::wavefunction::Pseudopotential']]],
   ['projs',['projs',['../structreal__proj__site.html#a85bbcf665d8d04d90c9df96c5a25e4fb',1,'real_proj_site']]],
   ['pscorecharge',['pscorecharge',['../classpawpyseed_1_1core_1_1wavefunction_1_1Pseudopotential.html#acd350db3a7a921b8af0a018e4e90e1f6',1,'pawpyseed::core::wavefunction::Pseudopotential']]],
-  ['pseudo',['pseudo',['../classpawpyseed_1_1core_1_1projector_1_1Projector.html#a2eac5e0fba9e72121b12a5fa4a8a46ce',1,'pawpyseed::core::projector::Projector']]],
   ['pspotential',['pspotential',['../classpawpyseed_1_1core_1_1wavefunction_1_1Pseudopotential.html#a57a13a3dfeca89b1a393056951742ad9',1,'pawpyseed::core::wavefunction::Pseudopotential']]],
   ['pspw_5foverlap_5fmatrix',['pspw_overlap_matrix',['../structppot.html#a643d27f2561db7d005e92d5a205701ac',1,'ppot']]],
   ['pswave',['pswave',['../structfuncset.html#a5d1549d79af259179ffcc163c52e2874',1,'funcset']]],

@@ -4,6 +4,8 @@ var searchData=
   ['mathnames',['mathnames',['../namespacepawpyseed_1_1analysis_1_1prep.html#a6226b4a284059b3b4b50d751624d103f',1,'pawpyseed::analysis::prep']]],
   ['maxsize',['MAXSIZE',['../namespacepawpyseed_1_1core_1_1quadrature.html#aef702deef3509f6276a5fcbee654186c',1,'pawpyseed::core::quadrature']]],
   ['metadata',['metadata',['../classpawpyseed_1_1analysis_1_1corrections_1_1PerturbationCorrection.html#ae883c908f8e3b762e5a6ea2dc200b5ad',1,'pawpyseed::analysis::corrections::PerturbationCorrection']]],
+  ['method',['method',['../classpawpyseed_1_1core_1_1projector_1_1Projector.html#aff4970f6444cf48c0abd4cccc46b93c6',1,'pawpyseed::core::projector::Projector']]],
+  ['methods',['METHODS',['../classpawpyseed_1_1core_1_1projector_1_1Projector.html#a5ae6a5ebb4f9a8fd4e2b3009e7e9054e',1,'pawpyseed::core::projector::Projector']]],
   ['ms',['ms',['../structprojection.html#a615547149fbea80c07145c32616ab12b',1,'projection']]],
   ['msg',['msg',['../classpawpyseed_1_1core_1_1utils_1_1PAWpyError.html#a67e969f9e79d727dbccb68e1e7c27f46',1,'pawpyseed.core.utils.PAWpyError.msg()'],['../classpawpyseed_1_1core_1_1utils_1_1PAWpyWarning.html#acc19f9ed7ea415b14c1263e22b843fec',1,'pawpyseed.core.utils.PAWpyWarning.msg()']]],
   ['mult_5ftable',['mult_table',['../structsbt__descriptor.html#a670001c291fbfe3897a34fb753de8450',1,'sbt_descriptor']]],

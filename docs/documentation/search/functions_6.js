@@ -2,8 +2,6 @@ var searchData=
 [
   ['fac',['fac',['../utils_8h.html#a75fe42379006bcd22259df3b5f20b770',1,'utils.h']]],
   ['fft3d',['fft3d',['../linalg_8h.html#ae6255b4be7de52e072442ee6c194963a',1,'linalg.h']]],
-  ['fft_5fcalloc',['fft_calloc',['../linalg_8h.html#aedc536e32665ef94c2a745e9da06c112',1,'linalg.h']]],
-  ['fft_5fcheck',['fft_check',['../tests_8h.html#a28064c7cfacbe726a33c0eb6db1ef9de',1,'tests.h']]],
   ['frac_5ffrom_5findex',['frac_from_index',['../utils_8h.html#aa34bddb20040ccfe3033094f1241ea38',1,'utils.h']]],
   ['frac_5fto_5fcartesian',['frac_to_cartesian',['../utils_8h.html#a4b1472eb12d58e8d183ac80bbae7864e',1,'utils.h']]],
   ['free_5fkpoint',['free_kpoint',['../utils_8h.html#aa0317ebd22458911233269eadd542067',1,'utils.h']]],
@@ -21,5 +19,6 @@ var searchData=
   ['from_5fdirectory',['from_directory',['../classpawpyseed_1_1core_1_1noncollinear_1_1NCLWavefunction.html#a48ebe6c9bffadc7b29abcab9a904325e',1,'pawpyseed.core.noncollinear.NCLWavefunction.from_directory()'],['../classpawpyseed_1_1core_1_1wavefunction_1_1Wavefunction.html#ae49d3dabeecb7d216d4b50a6fd49bca7',1,'pawpyseed.core.wavefunction.Wavefunction.from_directory()']]],
   ['from_5ffiles',['from_files',['../classpawpyseed_1_1core_1_1noncollinear_1_1NCLWavefunction.html#a632b4211066aa9c6143ea1d29ae314c9',1,'pawpyseed.core.noncollinear.NCLWavefunction.from_files()'],['../classpawpyseed_1_1core_1_1wavefunction_1_1Wavefunction.html#abb453601793b932925bd2fd7b14fef45',1,'pawpyseed.core.wavefunction.Wavefunction.from_files()']]],
   ['from_5fyaml',['from_yaml',['../classpawpyseed_1_1analysis_1_1defect__composition_1_1PawpyData.html#a413c866e6e07c49dc551102f72913eff',1,'pawpyseed::analysis::defect_composition::PawpyData']]],
-  ['func',['func',['../namespacepawpyseed_1_1core_1_1rayleigh.html#a6728bc607f4eb83afa2dc00ce7f124e9',1,'pawpyseed::core::rayleigh']]]
+  ['func',['func',['../namespacepawpyseed_1_1core_1_1rayleigh.html#a6728bc607f4eb83afa2dc00ce7f124e9',1,'pawpyseed::core::rayleigh']]],
+  ['fwd_5ffft3d',['fwd_fft3d',['../linalg_8h.html#a17b77b100ef8b271c15eb045e5518f9f',1,'linalg.h']]]
 ];

@@ -4,8 +4,6 @@ var searchData=
   ['fac',['fac',['../utils_8h.html#a75fe42379006bcd22259df3b5f20b770',1,'utils.h']]],
   ['facs',['facs',['../namespacepawpyseed_1_1core_1_1gaunt.html#adfc9f1cbb9e1d96d9a0955a2f3adaa77',1,'pawpyseed::core::gaunt']]],
   ['fft3d',['fft3d',['../linalg_8h.html#ae6255b4be7de52e072442ee6c194963a',1,'linalg.h']]],
-  ['fft_5fcalloc',['fft_calloc',['../linalg_8h.html#aedc536e32665ef94c2a745e9da06c112',1,'linalg.h']]],
-  ['fft_5fcheck',['fft_check',['../tests_8h.html#a28064c7cfacbe726a33c0eb6db1ef9de',1,'tests.h']]],
   ['fftg',['fftg',['../structpswf.html#a57627b1af2eb906a0ddf424e09634cd0',1,'pswf']]],
   ['filenames',['filenames',['../namespacepawpyseed_1_1analysis_1_1prep.html#aba50d882b5aad2f1dd2b52157f9fd219',1,'pawpyseed::analysis::prep']]],
   ['final',['final',['../namespacepawpyseed_1_1core_1_1rayleigh.html#a281751a8eec76157f1018d9193b87abf',1,'pawpyseed::core::rayleigh']]],
@@ -32,5 +30,6 @@ var searchData=
   ['funcs',['funcs',['../structppot.html#afcaea17b859d2b8ba0b4a7891e30ef14',1,'ppot']]],
   ['funcset',['funcset',['../structfuncset.html',1,'']]],
   ['funcset_5ft',['funcset_t',['../utils_8h.html#a5d729e3a2f2d20370b1dac877d174a6e',1,'utils.h']]],
-  ['fw_5fid',['fw_id',['../classpawpyseed_1_1analysis_1_1run__pawpy_1_1DummyFirework.html#a9447b1f103d1e5b1cbc336c9f43b69b2',1,'pawpyseed::analysis::run_pawpy::DummyFirework']]]
+  ['fw_5fid',['fw_id',['../classpawpyseed_1_1analysis_1_1run__pawpy_1_1DummyFirework.html#a9447b1f103d1e5b1cbc336c9f43b69b2',1,'pawpyseed::analysis::run_pawpy::DummyFirework']]],
+  ['fwd_5ffft3d',['fwd_fft3d',['../linalg_8h.html#a17b77b100ef8b271c15eb045e5518f9f',1,'linalg.h']]]
 ];

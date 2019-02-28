@@ -116,6 +116,8 @@ Collaboration diagram for pawpyseed.core.wavefunction.Wavefunction:</div>
 Public Member Functions</h2></td></tr>
 <tr class="memitem:ae06eeb3618abdf0879e6a1fa84fd6113"><td class="memItemLeft" align="right" valign="top">def&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classpawpyseed_1_1core_1_1wavefunction_1_1Wavefunction.html#ae06eeb3618abdf0879e6a1fa84fd6113">__init__</a> (self, struct, pwf, <a class="el" href="classpawpyseed_1_1core_1_1wavefunction_1_1Wavefunction.html#af110a16ecb06ab6b2d500643cc937a81">cr</a>, <a class="el" href="classpawpyseed_1_1core_1_1wavefunction_1_1Wavefunction.html#a199bacc42572bed61b7e59d30a00353a">dim</a>, setup_projectors=False)</td></tr>
 <tr class="separator:ae06eeb3618abdf0879e6a1fa84fd6113"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a179a5109f7b258ef9fc75f965de89ad3"><td class="memItemLeft" align="right" valign="top">def&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classpawpyseed_1_1core_1_1wavefunction_1_1Wavefunction.html#a179a5109f7b258ef9fc75f965de89ad3">update_dim</a> (self, <a class="el" href="classpawpyseed_1_1core_1_1wavefunction_1_1Wavefunction.html#a199bacc42572bed61b7e59d30a00353a">dim</a>)</td></tr>
+<tr class="separator:a179a5109f7b258ef9fc75f965de89ad3"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a26afa4540eeed0786ec1e06c366e86d9"><td class="memItemLeft" align="right" valign="top">def&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classpawpyseed_1_1core_1_1wavefunction_1_1Wavefunction.html#a26afa4540eeed0786ec1e06c366e86d9">desymmetrized_copy</a> (self, allkpts=None, weights=None)</td></tr>
 <tr class="separator:a26afa4540eeed0786ec1e06c366e86d9"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ad2f010d34ede122561eb1771a518d268"><td class="memItemLeft" align="right" valign="top">def&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classpawpyseed_1_1core_1_1wavefunction_1_1Wavefunction.html#ad2f010d34ede122561eb1771a518d268">check_c_projectors</a> (self)</td></tr>
@@ -221,7 +223,7 @@ Attributes:
 </div><div class="memdoc">
 <pre class="fragment">Arguments:
     struct (pymatgen.core.Structure): structure that the wavefunction describes
-    pwf (pawpy.PWFPointer): holder class for pswf_t and k-points/k-point weights
+    pwf (pawpyc.PWFPointer): holder class for pswf_t and k-points/k-point weights
     cr (CoreRegion): Contains the pseudopotentials, with projectors and
 partials waves, for the structure
     dim (pymatgen.io.vasp.outputs.Outcar OR np.ndarry OR list of length 3):
@@ -632,6 +634,32 @@ Returns:
     A 3D array (indexed by x,y,z where x,y,z are fractional coordinates)
 with complex double values for the realspace wavefunction
 </pre> 
+</div>
+</div>
+<a class="anchor" id="a179a5109f7b258ef9fc75f965de89ad3"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">def pawpyseed.core.wavefunction.Wavefunction.update_dim </td>
+          <td>(</td>
+          <td class="paramtype">&#160;</td>
+          <td class="paramname"><em>self</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">&#160;</td>
+          <td class="paramname"><em>dim</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
 </div>
 </div>
 <a class="anchor" id="a9c109490dac450fd9aece3d65e757fc0"></a>

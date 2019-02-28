@@ -1,5 +1,6 @@
 var searchData=
 [
+  ['cas',['CAs',['../structband.html#a374958995c3bea8596bc72c4ec1b83f0',1,'band']]],
   ['cbm',['cbm',['../classpawpyseed_1_1analysis_1_1defect__composition_1_1PawpyData.html#a5161ae586691b5add88d825bc2b7e95c',1,'pawpyseed.analysis.defect_composition.PawpyData.cbm()'],['../namespacepawpyseed_1_1analysis_1_1prep.html#ad45ba2859210fd19ccaaa4a890bd967d',1,'pawpyseed.analysis.prep.cbm()']]],
   ['charges',['charges',['../namespacepawpyseed_1_1analysis_1_1prep.html#abac2d802a63dd01b7b1b5a5df5d7a9ef',1,'pawpyseed::analysis::prep']]],
   ['coord',['coord',['../structreal__proj__site.html#a5dc643a75ffafb9185e384b622155839',1,'real_proj_site']]],

@@ -10,6 +10,8 @@ var searchData=
   ['max',['max',['../utils_8h.html#af082905f7eac6d03e92015146bbc1925',1,'utils.h']]],
   ['maxsize',['MAXSIZE',['../namespacepawpyseed_1_1core_1_1quadrature.html#aef702deef3509f6276a5fcbee654186c',1,'pawpyseed::core::quadrature']]],
   ['metadata',['metadata',['../classpawpyseed_1_1analysis_1_1corrections_1_1PerturbationCorrection.html#ae883c908f8e3b762e5a6ea2dc200b5ad',1,'pawpyseed::analysis::corrections::PerturbationCorrection']]],
+  ['method',['method',['../classpawpyseed_1_1core_1_1projector_1_1Projector.html#aff4970f6444cf48c0abd4cccc46b93c6',1,'pawpyseed::core::projector::Projector']]],
+  ['methods',['METHODS',['../classpawpyseed_1_1core_1_1projector_1_1Projector.html#a5ae6a5ebb4f9a8fd4e2b3009e7e9054e',1,'pawpyseed::core::projector::Projector']]],
   ['min',['min',['../utils_8h.html#abd8bbcfabb3ddef2ccaafb9928a37b95',1,'utils.h']]],
   ['min_5fcart_5fpath',['min_cart_path',['../utils_8h.html#a6af345cb085c86faf28ff37002e461bf',1,'utils.h']]],
   ['ms',['ms',['../structprojection.html#a615547149fbea80c07145c32616ab12b',1,'projection']]],

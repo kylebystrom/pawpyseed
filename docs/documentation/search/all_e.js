@@ -46,7 +46,6 @@ var searchData=
   ['projs',['projs',['../structreal__proj__site.html#a85bbcf665d8d04d90c9df96c5a25e4fb',1,'real_proj_site']]],
   ['proportion_5fconduction',['proportion_conduction',['../classpawpyseed_1_1core_1_1projector_1_1Projector.html#ac04dd2adf670bf267f6feca601dce87d',1,'pawpyseed::core::projector::Projector']]],
   ['pscorecharge',['pscorecharge',['../classpawpyseed_1_1core_1_1wavefunction_1_1Pseudopotential.html#acd350db3a7a921b8af0a018e4e90e1f6',1,'pawpyseed::core::wavefunction::Pseudopotential']]],
-  ['pseudo',['pseudo',['../classpawpyseed_1_1core_1_1projector_1_1Projector.html#a2eac5e0fba9e72121b12a5fa4a8a46ce',1,'pawpyseed::core::projector::Projector']]],
   ['pseudopotential',['Pseudopotential',['../classpawpyseed_1_1core_1_1wavefunction_1_1Pseudopotential.html',1,'pawpyseed::core::wavefunction']]],
   ['pseudoprojection',['pseudoprojection',['../pseudoprojector_8h.html#a69b329b96bc2be8bd4db945c05099c45',1,'pseudoprojector.h']]],
   ['pseudoprojector_2eh',['pseudoprojector.h',['../pseudoprojector_8h.html',1,'']]],

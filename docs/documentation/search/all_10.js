@@ -17,7 +17,6 @@ var searchData=
   ['real_5fproj_5fsite_5ft',['real_proj_site_t',['../utils_8h.html#ab775d07eb4baee2c78eafabc65e07f9e',1,'utils.h']]],
   ['real_5fproj_5ft',['real_proj_t',['../utils_8h.html#a041bce1c881914be5c903c178185aa9e',1,'utils.h']]],
   ['realprojs',['realprojs',['../classpawpyseed_1_1core_1_1wavefunction_1_1Pseudopotential.html#a7b9de1ea11550218bbe2e58a56dbf1d1',1,'pawpyseed::core::wavefunction::Pseudopotential']]],
-  ['realspace_5fprojection',['realspace_projection',['../classpawpyseed_1_1core_1_1projector_1_1Projector.html#ad7814eb909991e4f4edcb890e1c2e66c',1,'pawpyseed::core::projector::Projector']]],
   ['realspace_5fstate',['realspace_state',['../density_8h.html#ab8da04ba84ac8c86d9b5aa9b5c867a9a',1,'density.h']]],
   ['realspace_5fstate_5fri',['realspace_state_ri',['../density_8h.html#ac0351c5d0fba06ed95ad452bd52c04bc',1,'density.h']]],
   ['recipprojs',['recipprojs',['../classpawpyseed_1_1core_1_1wavefunction_1_1Pseudopotential.html#ad4b01bafe71f488e5b2cd3a83a3a2ee3',1,'pawpyseed::core::wavefunction::Pseudopotential']]],

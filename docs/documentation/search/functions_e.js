@@ -5,7 +5,6 @@ var searchData=
   ['read_5fwavecar',['read_wavecar',['../reader_8h.html#aa6500159c84b1af9645c8d0ecef9f1d4',1,'reader.h']]],
   ['read_5fwavefunctions',['read_wavefunctions',['../reader_8h.html#af42fe870fdde3e44e0647913ab0fd836',1,'reader.h']]],
   ['read_5fwavefunctions_5ffrom_5fstr',['read_wavefunctions_from_str',['../reader_8h.html#aa92e723d18aa99daa9fb0621d7af76a4',1,'reader.h']]],
-  ['realspace_5fprojection',['realspace_projection',['../classpawpyseed_1_1core_1_1projector_1_1Projector.html#ad7814eb909991e4f4edcb890e1c2e66c',1,'pawpyseed::core::projector::Projector']]],
   ['realspace_5fstate',['realspace_state',['../density_8h.html#ab8da04ba84ac8c86d9b5aa9b5c867a9a',1,'density.h']]],
   ['realspace_5fstate_5fri',['realspace_state_ri',['../density_8h.html#ac0351c5d0fba06ed95ad452bd52c04bc',1,'density.h']]],
   ['reciprocal_5foffsite_5fwave_5foverlap',['reciprocal_offsite_wave_overlap',['../radial_8h.html#aa36a5b747694c61d79129249630eea3b',1,'radial.h']]],

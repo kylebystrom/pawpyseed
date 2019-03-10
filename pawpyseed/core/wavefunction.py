@@ -179,7 +179,7 @@ class Wavefunction(pawpyc.CWavefunction):
 			information as pymatgen.io.vasp.outputs.Vasprun.eigenvalue_band_properties
 	"""
 
-	def __init__(self, struct, pwf, cr, dim, symprec = None, setup_projectors=False):
+	def __init__(self, struct, pwf, cr, dim, symprec = 1e-4, setup_projectors=False):
 		"""
 		Arguments:
 			struct (pymatgen.core.Structure): structure that the wavefunction describes

@@ -164,6 +164,11 @@ class BulkCharacter(PawpyData):
 				and conduction character. Only works if the VASP
 				calculation was spin polarized
 		"""
+		if spinpol:
+			spin = 2
+		else:
+			spin = 1
+
 		if title == None:
 			title = name
 		bs = []
@@ -220,15 +225,32 @@ class BulkCharacter(PawpyData):
 			cmap = plt.get_cmap('rainbow')
 			for b in self.energy_levels:
 				i = 0
-				delta = 0.8 / len(self.energy_levels[b])
-				for en, occ in self.energy_levels[b]:
-					color = cmap(1-occ)
+				delta = 0.8 / spin# len(self.energy_levels[b])
+				enlists = []
+				occlists = []
+				for s in range(spin):
+					length = len(self.energy_levels[b])
+					enlists.append([self.energy_levels[b][t][0] for t in range(s,length,spin)])
+					occlists.append([self.energy_levels[b][t][1] for t in range(s,length,spin)])
+				for i, endat in enumerate(zip(enlists, occlists)):
+					enlist, occlist = endat
+					color = cmap(1-np.mean(occlist))
 					disp = i * delta - 0.4
 					span = [b-bmean+disp, b-bmean+disp+delta]
-					ax3.plot(span,
-						[en - self.efermi] * 2,
+					en = np.mean(enlist)
+					errs = (en-min(enlist), max(enlist)-en)
+					ax3.bar(b-bmean+disp+delta/2, max(enlist)-min(enlist),
+						width=delta, bottom=min(enlist)-self.efermi, color='0.8')
+					ax3.plot(span, [en - self.efermi] * 2,
 						color = color)
-					i += 1
+				#for en, occ in self.energy_levels[b]:
+				#	color = cmap(1-occ)
+				#	disp = i * delta - 0.4
+				#	span = [b-bmean+disp, b-bmean+disp+delta]
+				#	ax3.plot(span,
+				#		[en - self.efermi] * 2,
+				#		color = color)
+				#	i += 1
 			if self.vbm != None and self.cbm != None:
 				bmin = min(bs) - bmean - 0.5
 				bmax = max(bs) - bmean + 0.5

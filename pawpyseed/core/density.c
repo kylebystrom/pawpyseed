@@ -48,12 +48,36 @@ void ae_chg_density(double* P, pswf_t* wf, int* fftg, int* labels, double* coord
 	//double* P = mkl_calloc(gridsize, sizeof(double), 64);
 	int spin_mult = 2 / wf->nspin;
 	for (int k = 0; k < wf->nwk * wf->nspin; k++) {
-		printf("KLOOP %d\n", k);
+		//printf("KLOOP %d\n", k);
 		for (int b = 0; b < wf->nband; b++) {
 			if (wf->kpts[k]->bands[b]->occ > 0) {
 				realspace_state(x, b, k, wf, fftg, labels, coords);
 				for (int i = 0; i < gridsize; i++) {
 					P[i] += creal(x[i] * conj(x[i])) * wf->kpts[k]->weight
+							* wf->kpts[k]->bands[b]->occ * spin_mult;
+				}
+			}
+		}
+	}
+	mkl_free(x);
+	mkl_free_buffers();
+}
+
+void ncl_ae_chg_density(double* P, pswf_t* wf, int* fftg, int* labels, double* coords) {
+
+	int gridsize = fftg[0] * fftg[1] * fftg[2];
+	double complex* x = mkl_malloc(2 * gridsize * sizeof(double complex), 64);
+	//double* P = mkl_calloc(gridsize, sizeof(double), 64);
+	int spin_mult = 2 / wf->nspin;
+	for (int k = 0; k < wf->nwk * wf->nspin; k++) {
+		//printf("KLOOP %d\n", k);
+		for (int b = 0; b < wf->nband; b++) {
+			if (wf->kpts[k]->bands[b]->occ > 0) {
+				ncl_realspace_state(x, b, k, wf, fftg, labels, coords);
+				for (int i = 0; i < gridsize; i++) {
+					P[i] += (creal(x[i] * conj(x[i]))
+								+ creal(x[i+gridsize] * conj(x[i+gridsize])))
+							* wf->kpts[k]->weight
 							* wf->kpts[k]->bands[b]->occ * spin_mult;
 				}
 			}

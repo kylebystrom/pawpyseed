@@ -1,8 +1,24 @@
+# coding: utf-8
+
+## @package pawpyseed.core.symmetry
+# Utilities related to symmetry of the crystal structure,
+# namely finding symmetrically identical k-points and the
+# space group operators that map between them.
+
 from pymatgen.symmetry.analyzer import SpacegroupAnalyzer
 from pymatgen.core.operations import SymmOp
 import numpy as np
 
 def get_symmops(structure, symprec):
+	"""
+	Helper function to get the symmetry operations of the structure
+	in the reciprocal lattice fractional coordinates.
+
+	Args:
+		structure (pymatgen.core.structure.Structure)
+		symprec (number): symmetry precision for pymatgen SpacegroupAnalyzer
+	"""
+
 	sga = SpacegroupAnalyzer(structure, symprec)
 	symmops = sga.get_symmetry_operations(cartesian = True)
 	lattice = structure.lattice.matrix
@@ -16,8 +32,16 @@ def get_symmops(structure, symprec):
 			newrot, newtrans))
 	return newops
 
-def get_nosym_kpoints(kpts, structure, init_kpts = None, symprec=1e-5,
+def get_nosym_kpoints(kpts, structure, init_kpts = None, symprec=1e-4,
 	gen_trsym = True, fil_trsym = True):
+	"""
+	Starting with a set of k-points (kpts), finds all of the k-points
+	that are symmetrically identical to a k-point in kpts by symmetry
+	transformations of a crystal (structure).
+
+	Args:
+		kpts (np.ndarray shape=(n,3))
+	"""
 
 	allkpts = [] if init_kpts == None else [kpt for kpt in init_kpts]
 	orig_kptnums = []
@@ -77,7 +101,7 @@ def get_nosym_kpoints(kpts, structure, init_kpts = None, symprec=1e-5,
 					trs.append(1)
 	return np.array(allkpts), orig_kptnums, op_nums, symmops, trs
 
-def get_kpt_mapping(allkpts, kpts, structure, symprec=1e-5, gen_trsym = True):
+def get_kpt_mapping(allkpts, kpts, structure, symprec=1e-4, gen_trsym = True):
 	symmops = get_symmops(structure, symprec)
 	orig_kptnums = []
 	op_nums = []

@@ -243,7 +243,7 @@ class Wavefunction:
 			has been freed.
 	"""
 
-	def __init__(self, struct, pwf, cr, outcar, setup_projectors=False):
+	def __init__(self, struct, pwf, cr, outcar, symprec = 1e-4, setup_projectors=False):
 		"""
 		Arguments:
 			struct (pymatgen.core.Structure): structure that the wavefunction describes
@@ -251,6 +251,7 @@ class Wavefunction:
 			cr (CoreRegion): Contains the pseudopotentials, with projectors and
 				partials waves, for the structure
 			outcar (pymatgen.io.vasp.outputs.Outcar): Outcar object for reading ngf
+			symprec (float): precision tolerance for symmetry operations
 			setup_projectors (bool, False): Whether to set up the core region
 				components of the wavefunctions (leave as False if passing this
 				object to Projector, which will do the setup automatically)
@@ -282,6 +283,7 @@ class Wavefunction:
 			self.check_c_projectors()
 		self.num_proj_els = None
 		self.freed = False
+		self.symprec = symprec
 
 	@staticmethod
 	def from_files(struct="CONTCAR", pwf="WAVECAR", cr="POTCAR",
@@ -299,10 +301,12 @@ class Wavefunction:
 		Returns:
 			Wavefunction object
 		"""
+		vr = Vasprun(vr)
+		symprec = vr.parameters["SYMPREC"]
 		return Wavefunction(Poscar.from_file(struct).structure,
 			PseudoWavefunction(pwf, vr),
 			CoreRegion(Potcar.from_file(cr)),
-			Outcar(outcar), setup_projectors)
+			Outcar(outcar), symprec, setup_projectors)
 
 	@staticmethod
 	def from_directory(path, setup_projectors = False):
@@ -609,8 +613,11 @@ class Wavefunction:
 				newrot, newtrans))
 		return newops
 
-	def get_nosym_kpoints(self, init_kpts = None, symprec=1e-5,
+	def get_nosym_kpoints(self, init_kpts = None, symprec=None,
 		gen_trsym = True, fil_trsym = True):
+
+		if symprec == None:
+			symprec = self.symprec
 
 		kpts = np.array(self.pwf.kpts)
 		allkpts = [] if init_kpts == None else [kpt for kpt in init_kpts]
@@ -675,7 +682,11 @@ class Wavefunction:
 		self.symmops = symmops
 		return np.array(allkpts), orig_kptnums, op_nums, symmops, trs
 
-	def get_kpt_mapping(self, allkpts, symprec=1e-5, gen_trsym = True):
+	def get_kpt_mapping(self, allkpts, symprec=None, gen_trsym = True):
+
+		if symprec == None:
+			symprec = self.symprec
+
 		symmops = self.get_symmops(symprec)
 		kpts = np.array(self.pwf.kpts)
 		orig_kptnums = []

@@ -179,7 +179,7 @@ class Wavefunction(pawpyc.CWavefunction):
 			information as pymatgen.io.vasp.outputs.Vasprun.eigenvalue_band_properties
 	"""
 
-	def __init__(self, struct, pwf, cr, dim, setup_projectors=False):
+	def __init__(self, struct, pwf, cr, dim, symprec = None, setup_projectors=False):
 		"""
 		Arguments:
 			struct (pymatgen.core.Structure): structure that the wavefunction describes
@@ -188,6 +188,7 @@ class Wavefunction(pawpyc.CWavefunction):
 				partials waves, for the structure
 			dim (pymatgen.io.vasp.outputs.Outcar OR np.ndarry OR list of length 3):
 				Outcar object for reading ngf or the dimensions NG* of the FFT grid
+			symprec (float, 1e-4): precision tolerance for symmetry operations
 			setup_projectors (bool, False): Whether to set up the core region
 				components of the wavefunctions. Pawpyseed will set up the projectors
 				automatically when they are first needed, so this generally
@@ -200,6 +201,7 @@ class Wavefunction(pawpyc.CWavefunction):
 		if self.ncl:
 			raise PAWpyError("Pseudowavefunction is noncollinear! Call NCLWavefunction(...) instead")
 		self.structure = struct
+		self.symprec = symprec
 		self.cr = cr
 		if type(dim) == Outcar:
 			self.dim = dim.ngf
@@ -252,10 +254,12 @@ class Wavefunction(pawpyc.CWavefunction):
 		Returns:
 			Wavefunction object
 		"""
+		vr = Vasprun(vr)
+		symprec = vr.parameters["SYMPREC"]
 		pwf = pawpyc.PWFPointer(wavecar, vr)
 		return Wavefunction(Poscar.from_file(struct).structure,
 			pwf, CoreRegion(Potcar.from_file(cr)),
-			Outcar(outcar), setup_projectors)
+			Outcar(outcar), symprec, setup_projectors)
 
 	@staticmethod
 	def from_directory(path, setup_projectors = False):
@@ -480,21 +484,25 @@ class Wavefunction(pawpyc.CWavefunction):
 		self._convert_to_vasp_volumetric(filename, dim)
 		return res
 
-	def get_nosym_kpoints(self, init_kpts = None, symprec=1e-5,
+	def get_nosym_kpoints(self, init_kpts = None, symprec=None,
 		gen_trsym = True, fil_trsym = True):
 		"""
 		Helper function to get a non-symmetry-reduced k-point
 		mesh based on the symmetry-reduced mesh of self.
 		"""
 
+		if symprec == None:
+			symprec = self.symprec
 		return pawpy_symm.get_nosym_kpoints(kpts, self.structure, init_kpts,
 										symprec, gen_trsym, fil_trsym)
 
-	def get_kpt_mapping(self, allkpts, symprec=1e-5, gen_trsym = True):
+	def get_kpt_mapping(self, allkpts, symprec=None, gen_trsym = True):
 		"""
 		Helper function to find the mappings from self.kpts to
 		allkpts using the symmetry operations of self.structure
 		"""
-
+		
+		if symprec == None:
+			symprec = self.symprec
 		return pawpy_symm.get_kpt_mapping(allkpts, self.kpts, self.structure,
 										symprec, gen_trsym)

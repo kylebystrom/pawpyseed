@@ -482,6 +482,68 @@ cdef class CWavefunction(PseudoWavefunction):
 		return energy_list
 
 
+cdef class CNCLWavefunction(CWavefunction):
+	#-----------------------------------------------------#
+	# HELPER FUNCTION ROUTINES FOR REAL SPACE PROJECTIONS #
+	#-----------------------------------------------------#
+
+	def _get_realspace_state(self, int b, int k, int s):
+		res = np.zeros(self.gridsize * 2, dtype = np.complex128, order='C')
+		cdef double complex[::1] resv = res
+		ppc.ncl_realspace_state(&resv[0], b, k+s*self.nwk,
+			self.wf_ptr, &self.dimv[0], &self.nums[0], &self.coords[0])
+		res0, res1 = res[:self.gridsize], res[self.gridsize:]
+		res0.shape = self.dimv
+		res1.shape = self.dimv
+		return res0, res1
+
+	def _get_realspace_density(self):
+		res = np.zeros(self.gridsize, dtype = np.float64, order='C')
+		cdef double[::1] resv = res
+		ppc.ncl_ae_chg_density(&resv[0], self.wf_ptr,
+			&self.dimv[0], &self.nums[0], &self.coords[0])
+		res.shape = self.dimv
+		return res
+
+	def _write_realspace_state(self, filename1, filename2, filename3, filename4,
+								double scale, int b, int k, int s):
+		filename1 = bytes(filename1.encode('utf-8'))
+		filename2 = bytes(filename2.encode('utf-8'))
+		filename3 = bytes(filename1.encode('utf-8'))
+		filename4 = bytes(filename2.encode('utf-8'))
+		res0, res1 = self._get_realspace_state(b, k, s)
+
+		res2 = res0.view()
+		res2.shape = self.gridsize
+		resr = np.ascontiguousarray(np.real(res2))
+		resi = np.ascontiguousarray(np.imag(res2))
+		cdef double[::1] resv = resr
+		ppc.write_volumetric(filename1, &resv[0], &self.dimv[0], scale)
+		resv = resi
+		ppc.write_volumetric(filename2, &resv[0], &self.dimv[0], scale)
+
+		res2 = res1.view()
+		res2.shape = self.gridsize
+		resr = np.ascontiguousarray(np.real(res2))
+		resi = np.ascontiguousarray(np.imag(res2))
+		resv = resr
+		ppc.write_volumetric(filename1, &resv[0], &self.dimv[0], scale)
+		resv = resi
+		ppc.write_volumetric(filename2, &resv[0], &self.dimv[0], scale)
+
+		return res0, res1
+
+	def _write_realspace_density(self, filename1, filename2, double scale):
+		filename = bytes(filename.encode('utf-8'))
+		res = self._get_realspace_density()
+		res2 = res.view()
+		res2.shape = self.gridsize
+		cdef double[::1] resv = res2
+		ppc.write_volumetric(filename1, &resv[0], &self.dimv[0], scale);
+		ppc.write_volumetric(filename2, &resv[0], &self.dimv[0], scale);
+		return res
+
+
 cdef class CProjector:
 	"""
 	Parent class for pawpyseed.core.projector.Projector,

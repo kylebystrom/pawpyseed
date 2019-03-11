@@ -3,9 +3,6 @@ import numpy as np
 from pymatgen.analysis.defects.corrections import DefectCorrection
 from pawpyseed.analysis.defect_composition import BulkCharacter
 
-from pycdt.utils.plotter import SingleParticlePlotter
-from pycdt.utils.parse_calculations import SingleDefectParser
-
 class PerturbationCorrection(DefectCorrection):
 
 	def __init__(self):
@@ -58,7 +55,7 @@ class PerturbationCorrection(DefectCorrection):
 				proj_amounts[band][spin] = (defect[band][0][spin], defect[band][1][spin])
 				corr_term = (proj_amounts[band][spin][0] * (hybrid_vbm - bulk_vbm) \
 					+ proj_amounts[band][spin][1] * (hybrid_cbm - bulk_cbm))
-				new_en = np.mean(ens[band][spin::spin+1]) + corr_term
+				new_en = np.mean(ens[band][spin*nwk:(spin+1)*nwk]) + corr_term
 				if new_en < hybrid_vbm + potalign:
 					num_vbm += band_occ
 					print('HOLE IN VB', band, spin, band_occ*(hybrid_vbm-bulk_vbm))
@@ -121,17 +118,17 @@ class DelocalizedStatePerturbationCorrection(DefectCorrection):
 		for band in defect.keys():
 			proj_amounts[band] = {}
 			for spin in range(nspin):
-				frac = ((en - (bulk_vbm+bulk_cbm)/2 - potalign) / (bulk_cbm-bulk_vbm)*2)**2
-				print('LOCALIZED LOCALIZATION', band, spin, frac)
-				if frac > 1:
-					frac = 1
-				print (frac)
 				band_occ = np.sum(occs[band*nwk*nspin+spin*nwk : band*nwk*nspin+(spin+1)*nwk] * weights)
 				proj_amounts[band][spin] = (defect[band][0][spin], defect[band][1][spin])
+				en = np.mean(ens[band][spin*nwk:(spin+1)*nwk])
+				frac = ((en - (bulk_vbm+bulk_cbm)/2 - potalign) / (bulk_cbm-bulk_vbm)*2)**2
+				print('LOCALIZATION', band, spin, frac)
+				if frac > 1:
+					frac = 1
 				corr_term = (proj_amounts[band][spin][0] * (hybrid_vbm - bulk_vbm) \
 					+ proj_amounts[band][spin][1] * (hybrid_cbm - bulk_cbm))
 				corr_term *= frac
-				new_en = np.mean(ens[band][spin::spin+1]) + corr_term
+				new_en = en + corr_term
 				if new_en < hybrid_vbm + potalign:
 					num_vbm += band_occ
 					print('HOLE IN VB', band, spin, band_occ*(hybrid_vbm-bulk_vbm))
@@ -140,7 +137,7 @@ class DelocalizedStatePerturbationCorrection(DefectCorrection):
 					print('ELEC IN CB', band, spin, band_occ*(hybrid_cbm-bulk_cbm))
 					corr += band_occ * (hybrid_cbm - bulk_cbm)
 				else:
-					print('STATE IN GAP', band, spin, corr_term)
+					print('STATE IN GAP', band, spin, corr_term, band_occ)
 					corr += band_occ * corr_term
 
 		return corr, proj_amounts, num_vbm
@@ -151,6 +148,8 @@ class DelocalizedStatePerturbationCorrection2(DefectCorrection):
 		self.metadata = {"defect_levels": [], "potalign": 0}
 
 	def get_correction(self, d, filename):
+		from pycdt.utils.plotter import SingleParticlePlotter
+		from pycdt.utils.parse_calculations import SingleDefectParser
 
 		defect_path = d.parameters["path"]
 
@@ -215,7 +214,7 @@ class DelocalizedStatePerturbationCorrection2(DefectCorrection):
 				corr_term = (proj_amounts[band][spin][0] * (hybrid_vbm - bulk_vbm) \
 					+ proj_amounts[band][spin][1] * (hybrid_cbm - bulk_cbm))
 				corr_term *= frac
-				new_en = np.mean(ens[band][spin::spin+1]) + corr_term
+				new_en = new_en = np.mean(ens[band][spin*nwk:(spin+1)*nwk]) + corr_term
 				if new_en < hybrid_vbm + potalign:
 					num_vbm += band_occ
 					print('HOLE IN VB', band, spin, band_occ*(hybrid_vbm-bulk_vbm))

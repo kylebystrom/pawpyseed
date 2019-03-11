@@ -500,8 +500,8 @@ cdef class CNCLWavefunction(CWavefunction):
 	def _get_realspace_density(self):
 		res = np.zeros(self.gridsize, dtype = np.float64, order='C')
 		cdef double[::1] resv = res
-		ppc.ncl_ae_chg_density(&resv[0], self.wf_ptr,
-			&self.dimv[0], &self.nums[0], &self.coords[0])
+		#ppc.ncl_ae_chg_density(&resv[0], self.wf_ptr,
+		#	&self.dimv[0], &self.nums[0], &self.coords[0])
 		res.shape = self.dimv
 		return res
 
@@ -533,7 +533,7 @@ cdef class CNCLWavefunction(CWavefunction):
 
 		return res0, res1
 
-	def _write_realspace_density(self, filename1, filename2, double scale):
+	def _write_realspace_density(self, filename, double scale):
 		filename = bytes(filename.encode('utf-8'))
 		res = self._get_realspace_density()
 		res2 = res.view()

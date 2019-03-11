@@ -1,5 +1,4 @@
 # cython : language_level=3
-
 from libc.stdio cimport FILE
 
 
@@ -296,6 +295,8 @@ cdef extern from "sbt.h":
 cdef extern from "linalg.h":
 
     cdef void fft3d(double complex* x, int* G_bounds, double* lattice,
+        double* kpt, int* Gs, float complex* Cs, int num_waves, int* fftg)
+    cdef void fwd_fft3d(double complex* x, int* G_bounds, double* lattice,
         double* kpt, int* Gs, float complex* Cs, int num_waves, int* fftg)
     
 

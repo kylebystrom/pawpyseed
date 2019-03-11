@@ -600,7 +600,7 @@ class Wavefunction:
 		return res
 
 	def get_symmops(self, symprec):
-		sga = SpacegroupAnalyzer(self.structure, symprec)
+		sga = SpacegroupAnalyzer(self.structure, symprec * max(self.structure.lattice.abc))
 		symmops = sga.get_symmetry_operations(cartesian = True)
 		lattice = self.structure.lattice.matrix
 		invlattice = self.structure.lattice.inv_matrix

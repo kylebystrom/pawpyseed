@@ -19,7 +19,7 @@ def get_symmops(structure, symprec):
 		symprec (number): symmetry precision for pymatgen SpacegroupAnalyzer
 	"""
 
-	sga = SpacegroupAnalyzer(structure, symprec)
+	sga = SpacegroupAnalyzer(structure, symprec * max(structure.lattice.abc))
 	symmops = sga.get_symmetry_operations(cartesian = True)
 	lattice = structure.lattice.matrix
 	invlattice = structure.lattice.inv_matrix

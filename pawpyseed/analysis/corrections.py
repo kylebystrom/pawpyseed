@@ -122,12 +122,16 @@ class DelocalizedStatePerturbationCorrection(DefectCorrection):
 				proj_amounts[band][spin] = (defect[band][0][spin], defect[band][1][spin])
 				en = np.mean(ens[band][spin*nwk:(spin+1)*nwk])
 				frac = ((en - (bulk_vbm+bulk_cbm)/2 - potalign) / (bulk_cbm-bulk_vbm)*2)**2
+				vfrac = np.exp((bulk_vbm-en)/(bulk_cbm-bulk_vbm))
+				cfrac = np.exp((en-bulk_cbm)/(bulk_cbm-bulk_vbm))
 				print('LOCALIZATION', band, spin, frac)
-				if frac > 1:
-					frac = 1
-				corr_term = (proj_amounts[band][spin][0] * (hybrid_vbm - bulk_vbm) \
-					+ proj_amounts[band][spin][1] * (hybrid_cbm - bulk_cbm))
-				corr_term *= frac
+				if vfrac > 1:
+					vfrac = 1
+				if cfrac > 1:
+					cfrac = 1
+				corr_term = (vfrac * proj_amounts[band][spin][0] * (hybrid_vbm - bulk_vbm) \
+					+ cfrac * proj_amounts[band][spin][1] * (hybrid_cbm - bulk_cbm))
+				#corr_term *= frac
 				new_en = en + corr_term
 				if new_en < hybrid_vbm + potalign:
 					num_vbm += band_occ
@@ -137,7 +141,7 @@ class DelocalizedStatePerturbationCorrection(DefectCorrection):
 					print('ELEC IN CB', band, spin, band_occ*(hybrid_cbm-bulk_cbm))
 					corr += band_occ * (hybrid_cbm - bulk_cbm)
 				else:
-					print('STATE IN GAP', band, spin, corr_term, band_occ)
+					print('STATE IN GAP', band, spin, corr_term, band_occ, vfrac, cfrac)
 					corr += band_occ * corr_term
 
 		return corr, proj_amounts, num_vbm

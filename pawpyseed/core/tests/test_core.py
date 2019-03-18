@@ -33,6 +33,7 @@ from pymatgen.core.structure import Structure
 from pawpyseed.core.utils import *
 from pawpyseed.core.wavefunction import *
 from pawpyseed.core.projector import Projector
+from pawpyseed.core.noncollinear import NCLWavefunction
 
 class DummyProjector(Projector):
 
@@ -625,3 +626,43 @@ class TestPy:
 		wf = Wavefunction.from_directory('.')
 		wf.check_c_projectors()
 		testc.proj_check(wf)
+
+	def test_writestate_ncl(self):
+		print("TEST WRITE NCL")
+		sys.stdout.flush()
+		wf = NCLWavefunction.from_directory('noncollinear')
+		fileprefix = ''
+		b, k, s = 10, 1, 0
+		state1 = wf.write_state_realspace(b, k, s, fileprefix = "", 
+			dim=np.array([30,30,30]))
+		wf = Wavefunction.from_directory('.', False)
+		state2 = wf.write_state_realspace(b, k, s, fileprefix = "", 
+			dim=np.array([30,30,30]))
+		assert_almost_equal(np.linalg.norm(state1-state2),0)
+		assert state1.shape[0] == 30
+		assert state1.shape[1] == 30
+		assert state1.shape[2] == 30
+		assert state1.dtype == np.complex128
+		filename_base = "%sB%dK%dS%d" % (fileprefix, b, k, s)
+		filename1 = "%s_REAL" % filename_base
+		filename2 = "%s_IMAG" % filename_base
+		os.remove(filename1)
+		os.remove(filename2)
+
+	def test_density_ncl(self):
+		print("TEST DENSITY NCL")
+		sys.stdout.flush()
+		print("LOAD WAVEFUNCTION")
+		sys.stdout.flush()
+		wf = NCLWavefunction.from_directory('noncollinear')
+		print("FINISHED LOAD WAVEFUNCTION")
+		sys.stdout.flush()
+		#wf = wf.desymmetrized_copy()
+		wf.write_density_realspace(dim=np.array([40,40,40]), scale = wf.structure.lattice.volume)
+		tstchg = Chgcar.from_file("AECCAR2").data['total']# / wf.structure.volume
+		chg = Chgcar.from_file("PYAECCAR").data['total']
+		reldiff = np.sqrt(np.mean(((chg-tstchg)/tstchg)**2))
+		newchg = chg-tstchg
+		Chgcar(Poscar(wf.structure), {'total': newchg}).write_file('DIFFCHGCAR.vasp')
+		print(np.sum(chg)/40**3, np.sum(tstchg)/40**3)
+		assert_almost_equal(reldiff, 0, decimal=3)

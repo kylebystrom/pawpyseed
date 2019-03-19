@@ -68,7 +68,7 @@ void ncl_ae_chg_density(double* P, pswf_t* wf, int* fftg, int* labels, double* c
 	int gridsize = fftg[0] * fftg[1] * fftg[2];
 	double complex* x = mkl_malloc(2 * gridsize * sizeof(double complex), 64);
 	//double* P = mkl_calloc(gridsize, sizeof(double), 64);
-	int spin_mult = 2 / wf->nspin;
+	int spin_mult = 1;
 	for (int k = 0; k < wf->nwk * wf->nspin; k++) {
 		//printf("KLOOP %d\n", k);
 		for (int b = 0; b < wf->nband; b++) {

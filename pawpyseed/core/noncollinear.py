@@ -1,6 +1,6 @@
 from pawpyseed.core.wavefunction import *
 
-class NCLWavefunction(CNCLWavefunction, Wavefunction):
+class NCLWavefunction(pawpyc.CNCLWavefunction, Wavefunction):
 
 	def __init__(self, struct, pwf, cr, dim, setup_projectors=False):
 		"""
@@ -19,7 +19,7 @@ class NCLWavefunction(CNCLWavefunction, Wavefunction):
 			Wavefunction object
 		"""
 		self.band_props = pwf.band_props.copy(order = 'C')
-		super(NCLWavefunction, self).__init__(pwf)
+		super(Wavefunction, self).__init__(pwf)
 		if not self.ncl:
 			raise PAWpyError("Pseudowavefunction is collinear! Call Wavefunction(...) instead")
 		self.structure = struct
@@ -110,8 +110,6 @@ class NCLWavefunction(CNCLWavefunction, Wavefunction):
 		filename2 = "%s_DOWN_REAL" % filename_base
 		filename3 = "%s_UP_IMAG" % filename_base
 		filename4 = "%s_DOWN_IMAG" % filename_base
-		print("PARAMETERS", self.nums, self.coords, dim)
-		sys.stdout.flush()
 		res0, res1 = self._write_realspace_state(filename1, filename2, filename3, filename4,
 											scale, b, k, s)
 		self._convert_to_vasp_volumetric(filename1, dim)

@@ -633,21 +633,21 @@ class TestPy:
 		wf = NCLWavefunction.from_directory('noncollinear')
 		fileprefix = ''
 		b, k, s = 10, 1, 0
-		state1 = wf.write_state_realspace(b, k, s, fileprefix = "", 
+		state1, state2 = wf.write_state_realspace(b, k, s, fileprefix = "", 
 			dim=np.array([30,30,30]))
-		wf = Wavefunction.from_directory('.', False)
-		state2 = wf.write_state_realspace(b, k, s, fileprefix = "", 
-			dim=np.array([30,30,30]))
-		assert_almost_equal(np.linalg.norm(state1-state2),0)
 		assert state1.shape[0] == 30
 		assert state1.shape[1] == 30
 		assert state1.shape[2] == 30
 		assert state1.dtype == np.complex128
 		filename_base = "%sB%dK%dS%d" % (fileprefix, b, k, s)
-		filename1 = "%s_REAL" % filename_base
-		filename2 = "%s_IMAG" % filename_base
+		filename1 = "%s_UP_REAL" % filename_base
+		filename2 = "%s_UP_IMAG" % filename_base
+		filename3 = "%s_DOWN_REAL" % filename_base
+		filename4 = "%s_DOWN_IMAG" % filename_base
 		os.remove(filename1)
 		os.remove(filename2)
+		os.remove(filename3)
+		os.remove(filename4)
 
 	def test_density_ncl(self):
 		print("TEST DENSITY NCL")

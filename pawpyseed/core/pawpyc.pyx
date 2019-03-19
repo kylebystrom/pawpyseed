@@ -217,6 +217,8 @@ cdef class PWFPointer:
 					contents, &kws[0])
 			else:
 				self.ptr = ppc.read_wavefunctions(filename.encode('utf-8'), &kws[0])
+			print ("INITIALIZED PWFP")
+			sys.stdout.flush()
 
 	@staticmethod
 	cdef PWFPointer from_pointer_and_kpts(ppc.pswf_t* ptr,
@@ -284,6 +286,8 @@ cdef class PseudoWavefunction:
 		"""
 		Initializes a PseudoWavefunction from a PWFPointer
 		"""
+		print("START INIT PWF")
+		sys.stdout.flush()
 		if pwf.ptr is NULL:
 			raise Exception("NULL PWFPointer ptr!")
 		self.wf_ptr = pwf.ptr
@@ -294,6 +298,8 @@ cdef class PseudoWavefunction:
 		self.nwk = ppc.get_nwk(self.wf_ptr)
 		self.nspin = ppc.get_nspin(self.wf_ptr)
 		self.encut = ppc.get_encut(self.wf_ptr)
+		print("INITIALIZED PWF")
+		sys.stdout.flush()
 
 	def __dealloc__(self):
 		ppc.free_pswf(self.wf_ptr)
@@ -341,16 +347,7 @@ cdef class CWavefunction(PseudoWavefunction):
 	def _c_projector_setup(self, int num_elems, int num_sites,
 							double grid_encut, nums, coords, dim, pps):
 		"""
-		Returns a point to a list of ppot_t objects in C,
-		to be used for high performance parts of the code
-
-		Args:
-			pps (dict of Pseudopotential objects): keys are integers,
-				values of Pseudopotential objects
-
-		Returns:
-			c_void_p object pointing to ppot_t list with each Pseudopotential,
-			ordered in the list by their numerical keys
+		Sets up the projector functions for AE components.
 		"""
 
 		start = time.monotonic()
@@ -399,6 +396,8 @@ cdef class CWavefunction(PseudoWavefunction):
 		self.coords = np.array(coords, dtype = np.float64, copy = True)
 		self.update_dimv(dim)
 
+		print("STARTING PROJSETUP")
+		sys.stdout.flush()
 		ppc.setup_projections(
 			self.wf_ptr, projector_list,
 			num_elems, num_sites, &self.dimv[0],
@@ -500,8 +499,8 @@ cdef class CNCLWavefunction(CWavefunction):
 	def _get_realspace_density(self):
 		res = np.zeros(self.gridsize, dtype = np.float64, order='C')
 		cdef double[::1] resv = res
-		#ppc.ncl_ae_chg_density(&resv[0], self.wf_ptr,
-		#	&self.dimv[0], &self.nums[0], &self.coords[0])
+		ppc.ncl_ae_chg_density(&resv[0], self.wf_ptr,
+			&self.dimv[0], &self.nums[0], &self.coords[0])
 		res.shape = self.dimv
 		return res
 
@@ -509,8 +508,8 @@ cdef class CNCLWavefunction(CWavefunction):
 								double scale, int b, int k, int s):
 		filename1 = bytes(filename1.encode('utf-8'))
 		filename2 = bytes(filename2.encode('utf-8'))
-		filename3 = bytes(filename1.encode('utf-8'))
-		filename4 = bytes(filename2.encode('utf-8'))
+		filename3 = bytes(filename3.encode('utf-8'))
+		filename4 = bytes(filename4.encode('utf-8'))
 		res0, res1 = self._get_realspace_state(b, k, s)
 
 		res2 = res0.view()
@@ -527,9 +526,9 @@ cdef class CNCLWavefunction(CWavefunction):
 		resr = np.ascontiguousarray(np.real(res2))
 		resi = np.ascontiguousarray(np.imag(res2))
 		resv = resr
-		ppc.write_volumetric(filename1, &resv[0], &self.dimv[0], scale)
+		ppc.write_volumetric(filename3, &resv[0], &self.dimv[0], scale)
 		resv = resi
-		ppc.write_volumetric(filename2, &resv[0], &self.dimv[0], scale)
+		ppc.write_volumetric(filename4, &resv[0], &self.dimv[0], scale)
 
 		return res0, res1
 
@@ -539,8 +538,7 @@ cdef class CNCLWavefunction(CWavefunction):
 		res2 = res.view()
 		res2.shape = self.gridsize
 		cdef double[::1] resv = res2
-		ppc.write_volumetric(filename1, &resv[0], &self.dimv[0], scale);
-		ppc.write_volumetric(filename2, &resv[0], &self.dimv[0], scale);
+		ppc.write_volumetric(filename, &resv[0], &self.dimv[0], scale);
 		return res
 
 

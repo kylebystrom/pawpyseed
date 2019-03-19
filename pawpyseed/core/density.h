@@ -26,6 +26,7 @@ Calculates the all electron charge density by adding up realspace_state for all 
 at each kpoint. Equivalent to the grid in AECCAR of VASP except x is the slow index instead of z.
 */
 void ae_chg_density(double* P, pswf_t* wf, int* fftg, int* labels, double* coords);
+void ncl_ae_chg_density(double* P, pswf_t* wf, int* fftg, int* labels, double* coords);
 
 /**
 Projects one band of wf onto all the bands of wf_R in real space. Very slow for large systems,

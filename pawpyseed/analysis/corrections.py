@@ -210,6 +210,7 @@ class DelocalizedStatePerturbationCorrection2(DefectCorrection):
 					print('LOCALIZED BAND', band, spin, local_dat[spin][band])
 					x = local_dat[spin][band]
 					frac = (1+np.exp(10*(x-0.75)))**-1
+					frac = min(1, max(1 - x, 0))
 					print(frac)
 				else:
 					frac = 1

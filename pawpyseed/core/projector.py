@@ -346,12 +346,10 @@ class Projector(pawpyc.CProjector):
 			c, v = np.zeros(nspin), np.zeros(nspin)
 			for b in range(nband):
 				for s in range(nspin):
-					for k in range(nwk):
-						i = b*nspin*nwk + s*nwk + k
-						if occs[i] > 0.5:
-							v[s] += np.absolute(res[i]) ** 2 * self.wf.kws[i%nwk]
-						else:
-							c[s] += np.absolute(res[i]) ** 2 * self.wf.kws[i%nwk]
+					ind = b*nspin+s
+					prop = np.absolute(res[ind*nwk:(ind+1)*nwk])**2
+					c[s] += np.dot(prop, (1-occs[ind*nwk:(ind+1)*nwk]) * self.wf.kws)
+					v[s] += np.dot(prop, occs[ind*nwk:(ind+1)*nwk] * self.wf.kws)
 		else:
 			c, v = 0, 0
 			for i in range(nband*nwk*nspin):

@@ -217,7 +217,6 @@ cdef class PWFPointer:
 					contents, &kws[0])
 			else:
 				self.ptr = ppc.read_wavefunctions(filename.encode('utf-8'), &kws[0])
-			print ("INITIALIZED PWFP")
 			sys.stdout.flush()
 
 	@staticmethod
@@ -241,7 +240,6 @@ cdef class PWFPointer:
 
 		kpts = np.array(allkpts, np.float64, order='C', copy=False)
 		weights = np.array(weights, np.float64, order='C', copy=False)
-		print(kpts, weights, "hihi")
 		sys.stdout.flush()
 		cdef double[::1] weights_v = weights
 		cdef int[::1] orig_kptnums_v = np.array(orig_kptnums, np.int32, order='C', copy=False)
@@ -286,7 +284,6 @@ cdef class PseudoWavefunction:
 		"""
 		Initializes a PseudoWavefunction from a PWFPointer
 		"""
-		print("START INIT PWF")
 		sys.stdout.flush()
 		if pwf.ptr is NULL:
 			raise Exception("NULL PWFPointer ptr!")
@@ -298,7 +295,6 @@ cdef class PseudoWavefunction:
 		self.nwk = ppc.get_nwk(self.wf_ptr)
 		self.nspin = ppc.get_nspin(self.wf_ptr)
 		self.encut = ppc.get_encut(self.wf_ptr)
-		print("INITIALIZED PWF")
 		sys.stdout.flush()
 
 	def __dealloc__(self):

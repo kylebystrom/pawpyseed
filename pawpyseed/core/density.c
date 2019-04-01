@@ -210,7 +210,6 @@ void ncl_realspace_state(double complex* x, int BAND_NUM, int KPOINT_NUM,
 	ppot_t* pps = wf->pps;
 	double complex* xup = x;//mkl_calloc(2*fftg[0]*fftg[1]*fftg[2], sizeof(double complex), 64);
 	double complex* xdown = x + fftg[0]*fftg[1]*fftg[2];
-	printf("START FT\n");
 	int num_waves = wf->kpts[KPOINT_NUM]->bands[BAND_NUM]->num_waves / 2;
 	fft3d(xup, wf->G_bounds, wf->lattice, wf->kpts[KPOINT_NUM]->k,
 		wf->kpts[KPOINT_NUM]->Gs, wf->kpts[KPOINT_NUM]->bands[BAND_NUM]->Cs,
@@ -218,7 +217,6 @@ void ncl_realspace_state(double complex* x, int BAND_NUM, int KPOINT_NUM,
 	fft3d(xdown, wf->G_bounds, wf->lattice, wf->kpts[KPOINT_NUM]->k,
 		wf->kpts[KPOINT_NUM]->Gs, wf->kpts[KPOINT_NUM]->bands[BAND_NUM]->Cs + num_waves,
 		num_waves, fftg);
-	printf("FINISH FT\n");
 	double* lattice = wf->lattice;
 	double vol = determinant(lattice);
 	for (int i = 0; i < fftg[0]; i++) {
@@ -243,7 +241,6 @@ void ncl_realspace_state(double complex* x, int BAND_NUM, int KPOINT_NUM,
 			wf->kpts[KPOINT_NUM]->bands[BAND_NUM]->up_projections[p];
 		projection_t down_pros =
 			wf->kpts[KPOINT_NUM]->bands[BAND_NUM]->down_projections[p];
-		printf("READ PROJECTIONS\n");
 		ppot_t pp = pps[labels[p]];
 		double rmax = pp.wave_grid[pp.wave_gridsize-1];
 		double res[3] = {0,0,0};
@@ -256,7 +253,6 @@ void ncl_realspace_state(double complex* x, int BAND_NUM, int KPOINT_NUM,
 		int center1 = (int) round(coords[3*p+0] * fftg[0]);
 		int center2 = (int) round(coords[3*p+1] * fftg[1]);
 		int center3 = (int) round(coords[3*p+2] * fftg[2]);
-		printf("FINISH SETUP %d\n",p);
 		for (int i = -grid1 + center1; i <= grid1 + center1; i++) {
 			double frac[3] = {0,0,0};
 			double testcoord[3] = {0,0,0};

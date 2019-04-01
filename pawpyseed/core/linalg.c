@@ -30,7 +30,6 @@ void fft3d(double complex* x, int* G_bounds, double* lattice,
 		g3 = (Gs[3*w+2]+fftg[2]) % fftg[2];
 		x[g1*fftg[1]*fftg[2] + g2*fftg[2] + g3] = Cs[w];
 	}
-
 	double inv_sqrt_vol = pow(determinant(lattice), -0.5);
 
 	status = DftiCreateDescriptor(&handle, DFTI_DOUBLE, DFTI_COMPLEX, dim, length);
@@ -41,7 +40,6 @@ void fft3d(double complex* x, int* G_bounds, double* lattice,
 	CHECK_STATUS(status);
 	status = DftiComputeBackward(handle, x);
 	CHECK_STATUS(status);
-	
 	DftiFreeDescriptor(&handle);
 }
 

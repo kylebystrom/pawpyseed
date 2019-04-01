@@ -431,32 +431,37 @@ void add_num_cart_gridpts(ppot_t* pp_ptr, double* lattice, int* fftg) {
 
 	double vtemp[3];
 	double vmag, sinphi123;
+
+	double rmax = pp.rmax;
+	if (pp.wave_grid[pp.wave_gridsize-1] > rmax) {
+		rmax = pp.wave_grid[pp.wave_gridsize-1];
+	}
 	
 	double phi12 = acos(dot(lattice+0, lattice+3) / (maga1 * maga2));
 	vcross(vtemp, lattice+0, lattice+3);
 	vmag = mag(vtemp);
 	sinphi123 = dot(lattice+6, vtemp) / (vmag * maga3);
-	double na1maxA = pp.rmax * fftg[0] / (maga1 * fabs(sin(phi12))) + 1;
-	double na2maxA = pp.rmax * fftg[1] / (maga2 * fabs(sin(phi12))) + 1;
-	double na3maxA = pp.rmax * fftg[2] / (maga3 * fabs(sinphi123)) + 1;
+	double na1maxA = rmax * fftg[0] / (maga1 * fabs(sin(phi12))) + 1;
+	double na2maxA = rmax * fftg[1] / (maga2 * fabs(sin(phi12))) + 1;
+	double na3maxA = rmax * fftg[2] / (maga3 * fabs(sinphi123)) + 1;
 	int npmaxA = (int)(4.0/3.0*PI*na1maxA*na2maxA*na3maxA) + 1;
 
 	double phi13 = acos(dot(lattice+0, lattice+6) / (maga1 * maga3));
 	vcross(vtemp, lattice+0, lattice+6);
 	vmag = mag(vtemp);
 	sinphi123 = dot(lattice+3, vtemp) / (vmag * maga2);
-	double na1maxB = pp.rmax * fftg[0] / (maga1 * fabs(sin(phi13))) + 1;
-	double na2maxB = pp.rmax * fftg[1] / (maga2 * fabs(sinphi123)) + 1;
-	double na3maxB = pp.rmax * fftg[2] / (maga3 * fabs(sin(phi13))) + 1;
+	double na1maxB = rmax * fftg[0] / (maga1 * fabs(sin(phi13))) + 1;
+	double na2maxB = rmax * fftg[1] / (maga2 * fabs(sinphi123)) + 1;
+	double na3maxB = rmax * fftg[2] / (maga3 * fabs(sin(phi13))) + 1;
 	int npmaxB = (int)(4.0/3.0*PI*na1maxB*na2maxB*na3maxB) + 1;
 
 	double phi23 = acos(dot(lattice+3, lattice+6) / (maga2 * maga3));
 	vcross(vtemp, lattice+3, lattice+6);
 	vmag = mag(vtemp);
 	sinphi123 = dot(lattice, vtemp) / (vmag * maga1);
-	double na1maxC = pp.rmax * fftg[0] / (maga1 * fabs(sinphi123)) + 1;
-	double na2maxC = pp.rmax * fftg[1] / (maga2 * fabs(sin(phi23))) + 1;
-	double na3maxC = pp.rmax * fftg[2] / (maga3 * fabs(sin(phi23))) + 1;
+	double na1maxC = rmax * fftg[0] / (maga1 * fabs(sinphi123)) + 1;
+	double na2maxC = rmax * fftg[1] / (maga2 * fabs(sin(phi23))) + 1;
+	double na3maxC = rmax * fftg[2] / (maga3 * fabs(sin(phi23))) + 1;
 	int npmaxC = (int)(4.0/3.0*PI*na1maxC*na2maxC*na3maxC) + 1;
 
 	int npmax = npmaxA;

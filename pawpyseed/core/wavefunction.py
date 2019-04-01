@@ -203,8 +203,7 @@ class Wavefunction(pawpyc.CWavefunction):
 		self.structure = struct
 		self.symprec = symprec
 		self.cr = cr
-		self.dim = dim
-		self.dim = np.array(self.dim).astype(np.int32)
+		self.dim = np.array(dim).astype(np.int32)
 		if setup_projectors:
 			self.check_c_projectors()
 

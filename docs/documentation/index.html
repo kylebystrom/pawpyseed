@@ -81,8 +81,7 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
 <div class="contents">
 <div class="textblock"><p><a href="https://kylebystrom.github.io/pawpyseed/">https://kylebystrom.github.io/pawpyseed/</a> <br />
 </p>
-<p><b>Pawpyseed has converted from ctypes to Cython for its C interface!!! This should make the code more portable and easier to use.</b></p>
-<p><b>WARNING: PAWpySeed is still in early development. Documentation is incomplete, and some features are not yet thoroughly tested. The evaluation of overlap operators is tested, but a standard test suite is not yet published, and some features still require more thorough testing. Also, the setup.py script is only tested on a couple systems, and same with the pip command.</b></p>
+<p><b>WARNING: PAWpySeed is still in early development: Some features are not yet thoroughly tested. The evaluation of overlap operators is tested, but some features still require more thorough testing. Also, installation has only been tested on a couple systems (all Linux).</b></p>
 <p>PAWpySeed is a parallelized Python and C tool for reading and analyzing the optimized band structure and wave functions of VASP DFT calculations. The code is written for the PAW formalism developed by P.E. Blochl and implemented in VASP.</p>
 <h2>Installation</h2>
 <p>The only tricky part to installing pawpyseed is linking with the Intel Math Kernel Library (MKL). There are many ways to do this, as aided by the config file. To make your own, make a file in your home directory <code>~</code> named <code>.pawpyseed-site.cfg</code>. This file allows you to customize configuration settings for pawpyseed. It is read using the Python configparser module <a href="https://docs.python.org/3/library/configparser.html">https://docs.python.org/3/library/configparser.html</a>. If you don't want to learn about the configuration file options, skip to "The Easy Way" to get this done with quickly.</p>
@@ -93,7 +92,7 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
 <p>If you have <code>icc</code>, set <code>compiler=icc</code> in <code>~/.pawpyseed-site.cfg</code> and then set <code>root</code> to your MKL installation directory. Set <code>sdl=True</code>. You MKL distribution must have also been compiled with the Intel compiler. Run the <code>setup.py</code> script or <code>pip install pawpyseed</code>.</p>
 <h4>The GNU Easy Way</h4>
 <p>First, install <code>mkl-devel</code> in your local installation:</p>
-<div class="fragment"><div class="line"><a name="l00001"></a><span class="lineno">    1</span>&#160;pip install mkl-devel --user</div></div><!-- fragment --><p>Copy <code>site.cfg.default</code> from the pawpyseed repository to <code>~/.pawpyseed-site.cfg</code>. Open it and set <code>root=&lt;you home directory&gt;/.local</code> under the <code>[mkl]</code> heading and uncomment it by removing the <code>#</code>. Then run</p>
+<div class="fragment"><div class="line"><a name="l00001"></a><span class="lineno">    1</span>&#160;pip install mkl-devel --user</div></div><!-- fragment --><p>Copy <code>site.cfg.default</code> from the pawpyseed repository to <code>~/.pawpyseed-site.cfg</code>. Open it and set <code>root=&lt;your home directory&gt;/.local</code> under the <code>[mkl]</code> heading and uncomment it by removing the <code>#</code>. Then run</p>
 <div class="fragment"><div class="line"><a name="l00001"></a><span class="lineno">    1</span>&#160;python setup.py build</div><div class="line"><a name="l00002"></a><span class="lineno">    2</span>&#160;python setup.py install</div></div><!-- fragment --><p>OR with <code>pip</code>.</p>
 <div class="fragment"><div class="line"><a name="l00001"></a><span class="lineno">    1</span>&#160;pip install pawpyseed</div></div><!-- fragment --><p>This has been tested on Scientific Linux 7 and Linux Mint 18, but should work for systems that have the appropriate packages and environment variables defined as described below.</p>
 <p>IF you get linking issues at runtime using this method, try setting <code>sdl=True</code> in the config file and then setting the environment variable MKL_THREADING_LAYER=sequential</p>
@@ -102,7 +101,7 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
 <p>Python requirements: </p><div class="fragment"><div class="line"><a name="l00001"></a><span class="lineno">    1</span>&#160;Python&gt;=3.5</div><div class="line"><a name="l00002"></a><span class="lineno">    2</span>&#160;numpy&gt;=1.14</div><div class="line"><a name="l00003"></a><span class="lineno">    3</span>&#160;scipy&gt;=1.0</div><div class="line"><a name="l00004"></a><span class="lineno">    4</span>&#160;pymatgen&gt;=2018.2.13</div><div class="line"><a name="l00005"></a><span class="lineno">    5</span>&#160;sympy&gt;=1.1.1</div><div class="line"><a name="l00006"></a><span class="lineno">    6</span>&#160;matplotlib&gt;=0.2.5</div></div><!-- fragment --><p>C requirements: </p><div class="fragment"><div class="line"><a name="l00001"></a><span class="lineno">    1</span>&#160;icc &gt;= 16.0.4 OR gcc &gt;= 4.8.5</div><div class="line"><a name="l00002"></a><span class="lineno">    2</span>&#160;Intel Math Kernel Library &gt;= 11.3.4</div></div><!-- fragment --><p> If you don't want to <code>pip install</code> Intel MKL, it is available for free installation on a variety of platforms. Most computing clusters will have Intel MKL, and you can install it on your desktop (or any system to which you have root access) by following the relevant instructions at the following URL: <a href="https://software.intel.com/en-us/articles/free-ipsxe-tools-and-libraries">https://software.intel.com/en-us/articles/free-ipsxe-tools-and-libraries</a>.</p>
 <h2>Theory and Input</h2>
 <h3>PAW</h3>
-<p>The projector augmented wave (PAW) method is a technique used in plane wave density functional theory to simplify the description of the wavefunctions near the nuclei of a system. The strong Coulombic forces near an atomic nucleus creates quickly oscillating wavefunctions that are not well described by plane waves without prohibitively large basis sets, so a "pseudopotential" is introduced near the atomic nuclei which results in smooth "pseudowavefunctions" well described by plane waves. The full wavefunctions can be recovered by a linear transform of the pseudowavefunctions. The PAW method requires three sets of functions: projector functions, onto which pseudowavefunctions are projected to probe their character; full partial waves, which describe atomic valence states derived from the true potential; and pseudo partial waves, which are derived from the full partial waves and pseudopotential.</p>
+<p>The projector augmented wave (PAW) method is a technique used in plane wave density functional theory to simplify the description of the wavefunctions near the nuclei of a system. The strong Coulombic forces near an atomic nucleus creates quickly oscillating wavefunctions that are not well described by plane waves without prohibitively large basis sets, so a "pseudopotential" is introduced near the atomic nuclei which results in smooth "pseudo wavefunctions" well described by plane waves. The full wavefunctions can be recovered by a linear transform of the pseudowavefunctions. The PAW method requires three sets of functions: projector functions, onto which pseudowavefunctions are projected to probe their character; full partial waves, which describe atomic valence states derived from the true potential; and pseudo partial waves, which are derived from the full partial waves and pseudopotential.</p>
 <h3>Files</h3>
 <p>The projector functions and partial waves are unique to each element and stored in the POTCAR file used in a VASP calculation. The pseudowavefunction is the part of the wavefunction optimized during a DFT calculation and is stored in the WAVECAR output file in VASP. PAWpySeed parses both files to retrieve all parts of the full Kohn Sham wavefunctions.</p>
 <h2>The Code</h2>
@@ -120,16 +119,15 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
 <li>Evaluate overlap operators between bands, including when bands belong to different structures with the same lattice</li>
 <li>Project point defect levels onto bulk valence and conduction bands</li>
 <li>Convenient pycdt interface</li>
+<li>Perturbation-extrapolation correction for point defect calculations</li>
+<li>Read noncollinear pseudo wavefunctions and construct all-electron wavefunctions (no overlap operator evaluation for noncollinear data)</li>
 </ul>
 <h3>Future Functionality</h3>
 <ul>
 <li>Localize orbitals with SCDM-k</li>
 <li>Atomic Hartree Fock and GGA DFT database for use in charge corrections and other applications</li>
-<li>Read noncollinear pseudowavefunctions</li>
 <li>Convert PAW wavefunctions to NC wavefunctions (for use in GW calculations)</li>
-<li>Perturbative charge corrections</li>
-<li>Read pseudopotential, atomic charge density, and other POTCAR data</li>
-<li>Perform general operator expectation values on full wavefunctions</li>
+<li>Perform general operator expectation values on all-electron wavefunctions</li>
 </ul>
 <h2>Acknowledgments</h2>
 <p>The code in PAWpySeed is based on a several algorithms and codes, which are enumerated here.</p>
@@ -154,7 +152,7 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
 <li><b>Doxygen</b>: Doxygen is a documentation generator from which I built the docs for PAWpySeed. It is an excellent tool that allows for clean, up-to-date documentaton that is easy to make and navigate. Check it out at <a href="http://www.stack.nl/~dimitri/doxygen/">http://www.stack.nl/~dimitri/doxygen/</a>.</li>
 </ol>
 <h2>Questions and Comments</h2>
-<p>Find a bug? Areas of code unclearly documented? Other questions? Feel free to contact Kyle Bystrom at <a href="#" onclick="location.href='mai'+'lto:'+'kyl'+'eb'+'yst'+'ro'+'m@b'+'er'+'kel'+'ey'+'.ed'+'u'; return false;">kyleb<span style="display: none;">.nosp@m.</span>ystr<span style="display: none;">.nosp@m.</span>om@be<span style="display: none;">.nosp@m.</span>rkel<span style="display: none;">.nosp@m.</span>ey.ed<span style="display: none;">.nosp@m.</span>u</a> with the subject "pawpyseed: &lt;Topic&gt;". </p>
+<p>Find a bug? Areas of code unclearly documented? Other questions? Feel free to contact Kyle Bystrom at <a href="#" onclick="location.href='mai'+'lto:'+'kyl'+'eb'+'yst'+'ro'+'m@g'+'ma'+'il.'+'co'+'m'; return false;">kyleb<span style="display: none;">.nosp@m.</span>ystr<span style="display: none;">.nosp@m.</span>om@gm<span style="display: none;">.nosp@m.</span>ail.<span style="display: none;">.nosp@m.</span>com</a> with the subject "pawpyseed: &lt;Topic&gt;" AND/OR create an issue on the Github page at <a href="https://github.com/kylebystrom/pawpyseed">https://github.com/kylebystrom/pawpyseed</a>. </p>
 </div></div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>

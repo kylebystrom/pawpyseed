@@ -1,28 +1,26 @@
 var searchData=
 [
-  ['n',['n',['../structband.html#a369826acad76f9f5996c414faa4bd748',1,'band::n()'],['../structsbt__descriptor.html#a307bfb987bfd0ca448ec575238099da8',1,'sbt_descriptor::N()'],['../structband.html#ac2a7172884359ed472390ad449bf216d',1,'band::N()']]],
+  ['n',['N',['../structsbt__descriptor.html#a307bfb987bfd0ca448ec575238099da8',1,'sbt_descriptor::N()'],['../structband.html#ac2a7172884359ed472390ad449bf216d',1,'band::N()'],['../structband.html#a369826acad76f9f5996c414faa4bd748',1,'band::n()']]],
   ['name',['name',['../classpawpyseed_1_1analysis_1_1run__pawpy_1_1DummyFirework.html#a3d593e2718d77d8daad4b5672b5b5edf',1,'pawpyseed.analysis.run_pawpy.DummyFirework.name()'],['../namespacepawpyseed_1_1analysis_1_1prep.html#a949ecb560c63c54c6b7833e819b831ae',1,'pawpyseed.analysis.prep.name()']]],
   ['names',['names',['../namespacepawpyseed_1_1analysis_1_1prep.html#a52f3b78f0949ead42c658551a69c1d6c',1,'pawpyseed::analysis::prep']]],
-  ['nband',['nband',['../classpawpyseed_1_1core_1_1noncollinear_1_1NCLWavefunction.html#ad88c63dfec749aa93addfabed60e67fa',1,'pawpyseed.core.noncollinear.NCLWavefunction.nband()'],['../structpswf.html#a4848baae41a701bc7e3268b0cda710f3',1,'pswf::nband()']]],
+  ['nband',['nband',['../structpswf.html#a4848baae41a701bc7e3268b0cda710f3',1,'pswf']]],
+  ['ncl_5fae_5fchg_5fdensity',['ncl_ae_chg_density',['../density_8h.html#a2a484068c54b31247158fbab9edd7c0d',1,'density.h']]],
   ['ncl_5frealspace_5fstate',['ncl_realspace_state',['../density_8h.html#a60d5417a86495000dea6e47b30f9394f',1,'density.h']]],
-  ['nclpseudowavefunction',['NCLPseudoWavefunction',['../classpawpyseed_1_1core_1_1noncollinear_1_1NCLPseudoWavefunction.html',1,'pawpyseed::core::noncollinear']]],
   ['nclwavefunction',['NCLWavefunction',['../classpawpyseed_1_1core_1_1noncollinear_1_1NCLWavefunction.html',1,'pawpyseed::core::noncollinear']]],
   ['ndata',['ndata',['../classpawpyseed_1_1core_1_1wavefunction_1_1Pseudopotential.html#a7d051a2399d2c4b185eadeb1ab9ee2b1',1,'pawpyseed::core::wavefunction::Pseudopotential']]],
   ['noncollinear_2epy',['noncollinear.py',['../noncollinear_8py.html',1,'']]],
   ['nonlocalprojs',['nonlocalprojs',['../classpawpyseed_1_1core_1_1wavefunction_1_1Pseudopotential.html#a8b72e2aa1fd8062943a9aa547afd497e',1,'pawpyseed::core::wavefunction::Pseudopotential']]],
   ['ns',['ns',['../structprojection.html#a0fdb916e8e6b066703e8e75d593d68e2',1,'projection']]],
-  ['nspin',['nspin',['../classpawpyseed_1_1core_1_1noncollinear_1_1NCLWavefunction.html#a018183954122b98eb13908163f5705c9',1,'pawpyseed.core.noncollinear.NCLWavefunction.nspin()'],['../structpswf.html#a87138ec6bc0206028ff1bd2c34c9e74d',1,'pswf::nspin()']]],
+  ['nspin',['nspin',['../structpswf.html#a87138ec6bc0206028ff1bd2c34c9e74d',1,'pswf']]],
   ['num_5faug_5foverlap_5fsites',['num_aug_overlap_sites',['../structpswf.html#af7873e979454933c75be409488d04fb0',1,'pswf']]],
   ['num_5fbands',['num_bands',['../structkpoint.html#a78357708f84e6ad9d75d7b21ef13193b',1,'kpoint']]],
   ['num_5fcart_5fgridpts',['num_cart_gridpts',['../structppot.html#a3fb02b8c43b8b05660e11a52f5e618b1',1,'ppot']]],
   ['num_5felems',['num_elems',['../structpswf.html#a98515bf1f5697b801376cdefbde79cb3',1,'pswf::num_elems()'],['../classpawpyseed_1_1core_1_1wavefunction_1_1Wavefunction.html#a985b539943e91b6804fd93ff065e07ff',1,'pawpyseed.core.wavefunction.Wavefunction.num_elems()']]],
   ['num_5findices',['num_indices',['../structreal__proj__site.html#ad496068d5c6b07b801576d5cf2d7ef1c',1,'real_proj_site']]],
-  ['num_5fproj_5fels',['num_proj_els',['../classpawpyseed_1_1core_1_1noncollinear_1_1NCLWavefunction.html#a2ec74e00a5d65cc5cf926173c400e418',1,'pawpyseed::core::noncollinear::NCLWavefunction']]],
   ['num_5fprojs',['num_projs',['../structppot.html#a34434d5399369e2168a2241634531770',1,'ppot::num_projs()'],['../structprojection.html#a63bca96dd1151dcadb98b9619f10314a',1,'projection::num_projs()'],['../structpswf.html#a26ee3fb440dfb8f668808581f6c3586b',1,'pswf::num_projs()'],['../structreal__proj__site.html#a70d1c809514eff71d9ee8d37ecba498f',1,'real_proj_site::num_projs()']]],
   ['num_5fsites',['num_sites',['../structpswf.html#ad012ccfddb6357bdfc221136a2c5eed9',1,'pswf::num_sites()'],['../classpawpyseed_1_1core_1_1wavefunction_1_1Wavefunction.html#a2400b6c1e710f9391b9c9fdcf9c86d29',1,'pawpyseed.core.wavefunction.Wavefunction.num_sites()']]],
   ['num_5fwaves',['num_waves',['../structband.html#a2b0616a63ec87f90b9d836673dcc6c37',1,'band::num_waves()'],['../structkpoint.html#a53edce13bbcbce7f8f7eb39e1322538b',1,'kpoint::num_waves()']]],
   ['numphi',['numphi',['../namespacepawpyseed_1_1core_1_1quad__check.html#a57bdf3134ba53f9da203c589014d6727',1,'pawpyseed::core::quad_check']]],
-  ['nums',['nums',['../classpawpyseed_1_1core_1_1noncollinear_1_1NCLWavefunction.html#a3c155a940e863fba9f4de39f83da7259',1,'pawpyseed::core::noncollinear::NCLWavefunction']]],
   ['numtheta',['numtheta',['../namespacepawpyseed_1_1core_1_1quad__check.html#ab2b3e63afd5981a7d6add3bb55c86efe',1,'pawpyseed::core::quad_check']]],
-  ['nwk',['nwk',['../classpawpyseed_1_1core_1_1noncollinear_1_1NCLWavefunction.html#a10a8f6039f0a23b976556cdec5716db1',1,'pawpyseed.core.noncollinear.NCLWavefunction.nwk()'],['../structpswf.html#a26e0b9647124f09b6ee0a6264c1af3df',1,'pswf::nwk()']]]
+  ['nwk',['nwk',['../structpswf.html#a26e0b9647124f09b6ee0a6264c1af3df',1,'pswf']]]
 ];

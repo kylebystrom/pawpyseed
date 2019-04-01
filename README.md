@@ -2,15 +2,9 @@
 
 <https://kylebystrom.github.io/pawpyseed/> <br/>
 
-**Pawpyseed has converted from ctypes to Cython for its C interface!!! This should
-make the code more portable and easier to use.**
-
-**WARNING: PAWpySeed is still in early development. Documentation is
-incomplete, and some features are not yet thoroughly tested.
-The evaluation of overlap operators is tested, but a standard test
-suite is not yet published, and some features still require more thorough testing.
-Also, the setup.py script is only tested on a couple systems, and same
-with the pip command.**
+**WARNING: PAWpySeed is still in early development: Some features are not yet thoroughly tested.
+The evaluation of overlap operators is tested, but some features still require more thorough testing.
+Also, installation has only been tested on a couple systems (all Linux).**
 
 PAWpySeed is a parallelized Python and C tool for reading and
 analyzing the optimized band structure and wave functions
@@ -95,7 +89,7 @@ pip install mkl-devel --user
 ```
 
 Copy `site.cfg.default` from the pawpyseed repository to `~/.pawpyseed-site.cfg`.
-Open it and set `root=<you home directory>/.local` under the `[mkl]` heading
+Open it and set `root=<your home directory>/.local` under the `[mkl]` heading
 and uncomment it by removing the `#`. Then run
 
 ```
@@ -157,7 +151,7 @@ nucleus creates quickly oscillating wavefunctions that are
 not well described by plane waves without prohibitively
 large basis sets, so a "pseudopotential" is introduced
 near the atomic nuclei which results in smooth 
-"pseudowavefunctions" well described by plane waves. The
+"pseudo wavefunctions" well described by plane waves. The
 full wavefunctions can be recovered by a linear transform
 of the pseudowavefunctions. The PAW method requires
 three sets of functions: projector functions, onto which
@@ -202,21 +196,15 @@ with the same lattice
 * Project point defect levels onto bulk valence
 and conduction bands
 * Convenient pycdt interface
+* Perturbation-extrapolation correction for point defect calculations
+* Read noncollinear pseudo wavefunctions and construct all-electron wavefunctions (no overlap operator evaluation for noncollinear data)
 
 ### Future Functionality
 
 * Localize orbitals with SCDM-k
-* Atomic Hartree Fock and GGA DFT
-database for use in charge corrections
-and other applications
-* Read noncollinear pseudowavefunctions
-* Convert PAW wavefunctions to NC wavefunctions
-(for use in GW calculations)
-* Perturbative charge corrections
-* Read pseudopotential, atomic charge
-density, and other POTCAR data
-* Perform general operator
-expectation values on full wavefunctions
+* Atomic Hartree Fock and GGA DFT database for use in charge corrections and other applications
+* Convert PAW wavefunctions to NC wavefunctions (for use in GW calculations)
+* Perform general operator expectation values on all-electron wavefunctions
 
 ## Acknowledgments
 
@@ -269,4 +257,5 @@ that is easy to make and navigate. Check it out at <http://www.stack.nl/~dimitri
 ## Questions and Comments
 
 Find a bug? Areas of code unclearly documented? Other questions? Feel free to contact
-Kyle Bystrom at kylebystrom@berkeley.edu with the subject "pawpyseed: <Topic>".
+Kyle Bystrom at kylebystrom@gmail.com with the subject "pawpyseed: <Topic>"
+AND/OR create an issue on the Github page at <https://github.com/kylebystrom/pawpyseed>.

@@ -168,15 +168,21 @@ class Projector(pawpyc.CProjector):
 		print('-------------\nran overlap_setup in %f seconds\n---------------' % (end-start))
 
 	def _single_band_projection_pseudo(self, band_num):
+		"""
+		Very rough approximation for the projection of the band_num band of self
+		onto all the bands of basis. Simply sums over the plane
+		waves of the pseudo wavefunctions to calculate overlaps,
+		and the pseudo wavefunctions are not orthonormal. Only use if
+		you just want a quick, rough look at band character.
+		"""
 		return self.wf.pseudoprojection(band_num, self.basis)
 
 	def _single_band_projection_realspace(self, band_num, dim = None):
 		"""
-		Same operation as single_band_projection, but performed
-		by projecting the wavefunctions onto a realspace grid,
-		which can be set by the length=3 list or np.ndarray dim.
-		If dim is None (default), the FFT grid dimensions
-		of self.wf are used.
+		All electron projection of the band_num band of self
+		onto all the bands of basis. The wavefunctions are evaluated
+		and integrated on a real space FFT grid, with the default
+		dimension being the fine FFT grid from VASP.
 		"""
 		if dim == None:
 			dim = self.wf.dim * 2
@@ -185,18 +191,9 @@ class Projector(pawpyc.CProjector):
 	def _single_band_projection_aug_real(self, band_num):
 		"""
 		All electron projection of the band_num band of self
-		onto all the bands of basis. Returned as a numpy array,
-		with the overlap operator matrix elements ordered as follows:
-		loop over band
-			loop over spin
-				loop over kpoint
-
-		Arguments:
-			band_num (int): band which is projected onto basis
-
-		Returns:
-			res (np.array): overlap operator expectation values
-				as described above
+		onto all the bands of basis. High frequency components
+		are filtered out from the partial waves, which are then
+		projected onto the pseudo wavefunctions in real space.
 		"""
 		res = self.wf.pseudoprojection(band_num, self.basis)
 		start = time.monotonic()
@@ -207,11 +204,34 @@ class Projector(pawpyc.CProjector):
 		return res
 
 	def _single_band_projection_aug_recip(self, band_num):
+		"""
+		All electron projection of the band_num band of self
+		onto all the bands of basis. High frequency components
+		are filtered out from the partial waves, which are then
+		projected into real space, summed, projected back into reciprocal
+		space, and then projected onto the pseudo wavefunction
+		in reciprocal space.
+		"""
 		res = self.wf.pseudoprojection(band_num, self.basis)
 		self._projection_recip(res, band_num)
 		return res
 
 	def single_band_projection(self, band_num, **kwargs):
+		"""
+		Projection of the band_num band of self
+		onto all the bands of basis. Returned as a numpy array,
+		with the overlap operator matrix elements ordered as follows:
+		loop over band
+			loop over spin
+				loop over kpoint
+
+		Arguments:
+			band_num (int): band which is projected onto basis
+
+		Returns:
+			(np.array): overlap operator expectation values
+				as described above
+		"""
 		if band_num >= self.wf.nband or band_num < 0:
 			raise PAWpyError("Band index out of range (0-indexed)")
 		return self._single_band_projection(band_num, **kwargs)

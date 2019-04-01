@@ -1,7 +1,7 @@
 var searchData=
 [
   ['band',['band',['../structband.html',1,'']]],
-  ['band_5fprops',['band_props',['../classpawpyseed_1_1core_1_1wavefunction_1_1Wavefunction.html#acd24ab7acbddb9135f3efa4dc049a122',1,'pawpyseed::core::wavefunction::Wavefunction']]],
+  ['band_5fprops',['band_props',['../classpawpyseed_1_1core_1_1noncollinear_1_1NCLWavefunction.html#a86b004cc9e14485847a8d41652a27108',1,'pawpyseed.core.noncollinear.NCLWavefunction.band_props()'],['../classpawpyseed_1_1core_1_1wavefunction_1_1Wavefunction.html#acd24ab7acbddb9135f3efa4dc049a122',1,'pawpyseed.core.wavefunction.Wavefunction.band_props()']]],
   ['band_5ft',['band_t',['../utils_8h.html#a35f43d7fba66d31ffe5b9f7bf1b80660',1,'utils.h']]],
   ['bandedges',['bandedges',['../namespacepawpyseed_1_1analysis_1_1prep.html#a74c5a999d0789641e2786b7e46de8afc',1,'pawpyseed::analysis::prep']]],
   ['bandgap',['bandgap',['../classpawpyseed_1_1analysis_1_1defect__composition_1_1PawpyData.html#ad038a1eadafcd41b2232260682fb3577',1,'pawpyseed::analysis::defect_composition::PawpyData']]],

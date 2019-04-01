@@ -7,8 +7,6 @@ var searchData=
   ['proj_5fgridsize',['proj_gridsize',['../structppot.html#a09361297874596f77c923e5add09c036',1,'ppot']]],
   ['proj_5fspline',['proj_spline',['../structfuncset.html#a6e9d7d44c4439fd93bf745bdab45e596',1,'funcset']]],
   ['projections',['projections',['../structband.html#a7b4852a24f9ec6170cde01495f2085eb',1,'band']]],
-  ['projector_5flist',['projector_list',['../classpawpyseed_1_1core_1_1noncollinear_1_1NCLWavefunction.html#a21816c97b5835a0987d27900e0544dce',1,'pawpyseed::core::noncollinear::NCLWavefunction']]],
-  ['projector_5fowner',['projector_owner',['../classpawpyseed_1_1core_1_1noncollinear_1_1NCLWavefunction.html#a0c064b7456fc85ebce8ee794da68bf53',1,'pawpyseed::core::noncollinear::NCLWavefunction']]],
   ['projgrid',['projgrid',['../classpawpyseed_1_1core_1_1wavefunction_1_1Pseudopotential.html#a81cc5ee9a8d895ea4d37277eeedeb0aa',1,'pawpyseed::core::wavefunction::Pseudopotential']]],
   ['projs',['projs',['../structreal__proj__site.html#a85bbcf665d8d04d90c9df96c5a25e4fb',1,'real_proj_site']]],
   ['pscorecharge',['pscorecharge',['../classpawpyseed_1_1core_1_1wavefunction_1_1Pseudopotential.html#acd350db3a7a921b8af0a018e4e90e1f6',1,'pawpyseed::core::wavefunction::Pseudopotential']]],
@@ -17,6 +15,5 @@ var searchData=
   ['pswave',['pswave',['../structfuncset.html#a5d1549d79af259179ffcc163c52e2874',1,'funcset']]],
   ['pswave_5fspline',['pswave_spline',['../structfuncset.html#a7f5d43986491237d8c42622a0902778c',1,'funcset']]],
   ['pswaves',['pswaves',['../classpawpyseed_1_1core_1_1wavefunction_1_1Pseudopotential.html#a82603d80da6c58feba40469c54a1980f',1,'pawpyseed::core::wavefunction::Pseudopotential']]],
-  ['pts',['pts',['../namespacepawpyseed_1_1core_1_1quad__check.html#a53e482efc400bb78e27b4df968420529',1,'pawpyseed::core::quad_check']]],
-  ['pwf',['pwf',['../classpawpyseed_1_1core_1_1noncollinear_1_1NCLWavefunction.html#a6d21207a90436939f001301a44ad0db8',1,'pawpyseed::core::noncollinear::NCLWavefunction']]]
+  ['pts',['pts',['../namespacepawpyseed_1_1core_1_1quad__check.html#a53e482efc400bb78e27b4df968420529',1,'pawpyseed::core::quad_check']]]
 ];

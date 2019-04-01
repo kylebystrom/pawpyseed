@@ -9,12 +9,12 @@ var searchData=
   ['wcread',['wcread',['../reader_8h.html#afb1721460239960f9878b4aa698f2528',1,'reader.h']]],
   ['wcseek',['wcseek',['../reader_8h.html#a6b5af17bca6e450fc5c58d40c2f82e5d',1,'reader.h']]],
   ['write_5fdensity_5fnoreturn',['write_density_noreturn',['../density_8h.html#ac9206643498f87bc22ae547f913c4a71',1,'density.h']]],
-  ['write_5fdensity_5frealspace',['write_density_realspace',['../classpawpyseed_1_1core_1_1wavefunction_1_1Wavefunction.html#a9c109490dac450fd9aece3d65e757fc0',1,'pawpyseed::core::wavefunction::Wavefunction']]],
+  ['write_5fdensity_5frealspace',['write_density_realspace',['../classpawpyseed_1_1core_1_1noncollinear_1_1NCLWavefunction.html#a959d35b6f6ac01990ba1d821e243adda',1,'pawpyseed.core.noncollinear.NCLWavefunction.write_density_realspace()'],['../classpawpyseed_1_1core_1_1wavefunction_1_1Wavefunction.html#a9c109490dac450fd9aece3d65e757fc0',1,'pawpyseed.core.wavefunction.Wavefunction.write_density_realspace()']]],
   ['write_5fdensity_5freturn',['write_density_return',['../density_8h.html#acfbd7f9a27eebd5c401f5bf92b9b8c61',1,'density.h']]],
   ['write_5frealspace_5fstate_5fncl_5fri',['write_realspace_state_ncl_ri',['../density_8h.html#a0752a5e780f70b059cc31e5bde420891',1,'density.h']]],
   ['write_5frealspace_5fstate_5fri_5fnoreturn',['write_realspace_state_ri_noreturn',['../density_8h.html#ad3dcb0fb3370b82476f2a85ae4605311',1,'density.h']]],
   ['write_5frealspace_5fstate_5fri_5freturn',['write_realspace_state_ri_return',['../density_8h.html#a305d331f989ea9a33953682ff0cf5c5c',1,'density.h']]],
-  ['write_5fstate_5frealspace',['write_state_realspace',['../classpawpyseed_1_1core_1_1noncollinear_1_1NCLWavefunction.html#a784466a84d8b1eb22ec341f9a3c784c5',1,'pawpyseed.core.noncollinear.NCLWavefunction.write_state_realspace()'],['../classpawpyseed_1_1core_1_1wavefunction_1_1Wavefunction.html#a3e4aaad4dab046c32c6b4248902e210b',1,'pawpyseed.core.wavefunction.Wavefunction.write_state_realspace()']]],
+  ['write_5fstate_5frealspace',['write_state_realspace',['../classpawpyseed_1_1core_1_1noncollinear_1_1NCLWavefunction.html#abfb8cef4ef63a51b6347e890b6e597b6',1,'pawpyseed.core.noncollinear.NCLWavefunction.write_state_realspace()'],['../classpawpyseed_1_1core_1_1wavefunction_1_1Wavefunction.html#a3e4aaad4dab046c32c6b4248902e210b',1,'pawpyseed.core.wavefunction.Wavefunction.write_state_realspace()']]],
   ['write_5fvolumetric',['write_volumetric',['../density_8h.html#afaf51ca488301a9c2780494e13afe055',1,'density.h']]],
   ['write_5fyaml',['write_yaml',['../classpawpyseed_1_1analysis_1_1defect__composition_1_1PawpyData.html#adf54d52e750a126fe225a0175dfae165',1,'pawpyseed::analysis::defect_composition::PawpyData']]]
 ];

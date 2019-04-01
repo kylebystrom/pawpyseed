@@ -90,18 +90,23 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
 <div class="title">pawpyseed.core.symmetry Namespace Reference</div>  </div>
 </div><!--header-->
 <div class="contents">
+
+<p>Utilities related to symmetry of the crystal structure, namely finding symmetrically identical k-points and the space group operators that map between them.  
+<a href="#details">More...</a></p>
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="func-members"></a>
 Functions</h2></td></tr>
 <tr class="memitem:a3c87397abca035df64811f516901262c"><td class="memItemLeft" align="right" valign="top">def&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacepawpyseed_1_1core_1_1symmetry.html#a3c87397abca035df64811f516901262c">get_symmops</a> (structure, symprec)</td></tr>
 <tr class="separator:a3c87397abca035df64811f516901262c"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:afadba3833f3e73d2962a0281ad7c52a9"><td class="memItemLeft" align="right" valign="top">def&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacepawpyseed_1_1core_1_1symmetry.html#afadba3833f3e73d2962a0281ad7c52a9">get_nosym_kpoints</a> (kpts, structure, init_kpts=None, symprec=1e-5, gen_trsym=True, fil_trsym=True)</td></tr>
-<tr class="separator:afadba3833f3e73d2962a0281ad7c52a9"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a6aa4b7034cd7ef6b3b640f745d8911e2"><td class="memItemLeft" align="right" valign="top">def&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacepawpyseed_1_1core_1_1symmetry.html#a6aa4b7034cd7ef6b3b640f745d8911e2">get_kpt_mapping</a> (allkpts, kpts, structure, symprec=1e-5, gen_trsym=True)</td></tr>
-<tr class="separator:a6aa4b7034cd7ef6b3b640f745d8911e2"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a14d58aeffa75aeb4fd7c2c763ec69726"><td class="memItemLeft" align="right" valign="top">def&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacepawpyseed_1_1core_1_1symmetry.html#a14d58aeffa75aeb4fd7c2c763ec69726">get_nosym_kpoints</a> (kpts, structure, init_kpts=None, symprec=1e-4, gen_trsym=True, fil_trsym=True)</td></tr>
+<tr class="separator:a14d58aeffa75aeb4fd7c2c763ec69726"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a52e8b73fe5b04d06c63a6d367415dc7e"><td class="memItemLeft" align="right" valign="top">def&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacepawpyseed_1_1core_1_1symmetry.html#a52e8b73fe5b04d06c63a6d367415dc7e">get_kpt_mapping</a> (allkpts, kpts, structure, symprec=1e-4, gen_trsym=True)</td></tr>
+<tr class="separator:a52e8b73fe5b04d06c63a6d367415dc7e"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
-<h2 class="groupheader">Function Documentation</h2>
-<a class="anchor" id="a6aa4b7034cd7ef6b3b640f745d8911e2"></a>
+<a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
+<div class="textblock"><p>Utilities related to symmetry of the crystal structure, namely finding symmetrically identical k-points and the space group operators that map between them. </p>
+</div><h2 class="groupheader">Function Documentation</h2>
+<a class="anchor" id="a52e8b73fe5b04d06c63a6d367415dc7e"></a>
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
@@ -127,7 +132,7 @@ Functions</h2></td></tr>
           <td class="paramkey"></td>
           <td></td>
           <td class="paramtype">&#160;</td>
-          <td class="paramname"><em>symprec</em> = <code>1e-5</code>, </td>
+          <td class="paramname"><em>symprec</em> = <code>1e-4</code>, </td>
         </tr>
         <tr>
           <td class="paramkey"></td>
@@ -145,7 +150,7 @@ Functions</h2></td></tr>
 
 </div>
 </div>
-<a class="anchor" id="afadba3833f3e73d2962a0281ad7c52a9"></a>
+<a class="anchor" id="a14d58aeffa75aeb4fd7c2c763ec69726"></a>
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
@@ -171,7 +176,7 @@ Functions</h2></td></tr>
           <td class="paramkey"></td>
           <td></td>
           <td class="paramtype">&#160;</td>
-          <td class="paramname"><em>symprec</em> = <code>1e-5</code>, </td>
+          <td class="paramname"><em>symprec</em> = <code>1e-4</code>, </td>
         </tr>
         <tr>
           <td class="paramkey"></td>
@@ -192,7 +197,13 @@ Functions</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
+<pre class="fragment">Starting with a set of k-points (kpts), finds all of the k-points
+that are symmetrically identical to a k-point in kpts by symmetry
+transformations of a crystal (structure).
 
+Args:
+    kpts (np.ndarray shape=(n,3))
+</pre> 
 </div>
 </div>
 <a class="anchor" id="a3c87397abca035df64811f516901262c"></a>
@@ -218,7 +229,13 @@ Functions</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
+<pre class="fragment">Helper function to get the symmetry operations of the structure
+in the reciprocal lattice fractional coordinates.
 
+Args:
+    structure (pymatgen.core.structure.Structure)
+    symprec (number): symmetry precision for pymatgen SpacegroupAnalyzer
+</pre> 
 </div>
 </div>
 </div><!-- contents -->

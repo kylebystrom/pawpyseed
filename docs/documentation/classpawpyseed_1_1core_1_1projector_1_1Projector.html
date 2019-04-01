@@ -578,7 +578,20 @@ when needed
         </tr>
       </table>
 </div><div class="memdoc">
+<pre class="fragment">Projection of the band_num band of self
+onto all the bands of basis. Returned as a numpy array,
+with the overlap operator matrix elements ordered as follows:
+loop over band
+    loop over spin
+loop over kpoint
 
+Arguments:
+    band_num (int): band which is projected onto basis
+
+Returns:
+    (np.array): overlap operator expectation values
+as described above
+</pre> 
 </div>
 </div>
 <h2 class="groupheader">Member Data Documentation</h2>

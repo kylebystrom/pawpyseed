@@ -203,12 +203,8 @@ class Wavefunction(pawpyc.CWavefunction):
 		self.structure = struct
 		self.symprec = symprec
 		self.cr = cr
-		if type(dim) == Outcar:
-			self.dim = dim.ngf
-			self.dim = np.array(self.dim).astype(np.int32) // 2
-		else:
-			self.dim = dim
-			self.dim = np.array(self.dim).astype(np.int32)
+		self.dim = dim
+		self.dim = np.array(self.dim).astype(np.int32)
 		if setup_projectors:
 			self.check_c_projectors()
 
@@ -236,7 +232,7 @@ class Wavefunction(pawpyc.CWavefunction):
 
 	@staticmethod
 	def from_files(struct="CONTCAR", wavecar="WAVECAR", cr="POTCAR",
-		vr="vasprun.xml", outcar="OUTCAR", setup_projectors=False):
+		vr="vasprun.xml", setup_projectors=False):
 		"""
 		Construct a Wavefunction object from file paths.
 
@@ -255,11 +251,12 @@ class Wavefunction(pawpyc.CWavefunction):
 			Wavefunction object
 		"""
 		vr = Vasprun(vr)
+		dim = np.array([vr.parameters["NGX"], vr.parameters["NGY"], vr.parameters["NGZ"]])
 		symprec = vr.parameters["SYMPREC"]
 		pwf = pawpyc.PWFPointer(wavecar, vr)
 		return Wavefunction(Poscar.from_file(struct).structure,
 			pwf, CoreRegion(Potcar.from_file(cr)),
-			Outcar(outcar), symprec, setup_projectors)
+			dim, symprec, setup_projectors)
 
 	@staticmethod
 	def from_directory(path, setup_projectors = False):
@@ -278,7 +275,7 @@ class Wavefunction(pawpyc.CWavefunction):
 			Wavefunction object
 		"""
 		filepaths = []
-		for d in ["CONTCAR", "WAVECAR", "POTCAR", "vasprun.xml", "OUTCAR"]:
+		for d in ["CONTCAR", "WAVECAR", "POTCAR", "vasprun.xml"]:
 			filepaths.append(str(os.path.join(path, d)))
 		args = filepaths + [setup_projectors]
 		return Wavefunction.from_files(*args)
@@ -301,7 +298,7 @@ class Wavefunction(pawpyc.CWavefunction):
 			Wavefunction object
 		"""
 
-		files = ["CONTCAR", "WAVECAR", "POTCAR", "vasprun.xml", "OUTCAR"]
+		files = ["CONTCAR", "WAVECAR", "POTCAR", "vasprun.xml"]
 		paths = []
 
 		for file in files:

@@ -436,11 +436,11 @@ class TestPy:
 		wf = Wavefunction.from_directory('.', True)
 		wf = Wavefunction.from_directory('.', False)
 		wf = Wavefunction.from_files('CONTCAR', 'WAVECAR',
-			'POTCAR', 'vasprun.xml', 'OUTCAR', True)
+			'POTCAR', 'vasprun.xml', True)
 		wf = Wavefunction.from_files('CONTCAR', 'WAVECAR',
-			'POTCAR', 'vasprun.xml', 'OUTCAR', False)
+			'POTCAR', 'vasprun.xml', False)
 		wf = Wavefunction.from_files('CONTCAR', 'WAVECAR2.gz',
-			'POTCAR', 'vasprun.xml', 'OUTCAR', False)
+			'POTCAR', 'vasprun.xml', False)
 
 	def test_writestate(self):
 		print("TEST WRITE")
@@ -544,7 +544,7 @@ class TestPy:
 		sys.stdout.flush()
 		# test ae projections
 		wf1 = Wavefunction.from_files('CONTCAR', 'WAVECAR2.gz',
-			'POTCAR', 'vasprun.xml', 'OUTCAR', False)
+			'POTCAR', 'vasprun.xml', False)
 		basis = Wavefunction.from_directory('.', False)
 		pr = Projector(wf1, basis)
 		for b in range(wf1.nband):

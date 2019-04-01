@@ -178,6 +178,8 @@ class Projector(pawpyc.CProjector):
 		If dim is None (default), the FFT grid dimensions
 		of self.wf are used.
 		"""
+		if dim == None:
+			dim = self.wf.dim * 2
 		return self._realspace_projection(band_num, dim)
 
 	def _single_band_projection_aug_real(self, band_num):

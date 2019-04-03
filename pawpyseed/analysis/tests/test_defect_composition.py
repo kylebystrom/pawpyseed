@@ -38,6 +38,7 @@ class TestBulkCharacter:
 
 	def test_plot(self):
 		self.bcs['.'].plot('tst')
+		self.bcs['.'].plot('tst', spinpol=True)
 
 	def test_read_write(self):
 		self.bcs['.'].write_yaml('test_file.yaml') 
@@ -51,6 +52,9 @@ class TestBulkCharacter:
 		assert tst.vbm == self.bcs['.'].vbm
 		assert tst.cbm == self.bcs['.'].cbm
 		assert tst.energy_levels == self.bcs['.'].energy_levels
+		assert tst.nspin == 2
+		assert tst.kws[0] == 0.5
+		assert tst.kws[1] == 0.5
 
 class TestBasisExpansion:
 

@@ -115,7 +115,7 @@ class BulkCharacter(PawpyData):
 	"""
 
 	def __init__(self, structure, data, energy_levels = None,
-		dos = None, vbm = None, cbm = None):
+		dos = None, vbm = None, cbm = None, metadata=None):
 		"""
 		Arguments:
 			structure (pymatgen.core.structure.Structure): crystal structure
@@ -132,11 +132,24 @@ class BulkCharacter(PawpyData):
 		"""
 
 		self.energy_levels = energy_levels
+		self.kws = None
+		self.nspin = None
+		if metadata is not None:
+			if 'kws' in metadata:
+				self.kws = metadata['kws']
+			if 'nspin' in metadata:
+				self.nspin = metadata['nspin']
+		self.metadata = metadata
 		super(BulkCharacter, self).__init__(structure, data, dos, vbm, cbm)
 
 	def as_dict(self):
 		data = super(BulkCharacter, self).as_dict()
 		data['energy_levels'] = self.energy_levels
+		data['metadata'] = {}
+		if self.nspin is not None:
+			data['metadata']['nspin'] = self.nspin
+		if self.kws is not None:
+			data['metadata']['kws'] = self.kws
 		return data
 
 	@classmethod
@@ -145,9 +158,13 @@ class BulkCharacter(PawpyData):
 		Takes the dictionary--data--and
 		returns a PawpyData instance.
 		"""
+		if 'metadata' in data:
+			metadata = data['metadata']
+		else:
+			metadata = None
 		return cls(data['structure'], data['data'], energy_levels = data['energy_levels'],
 				dos = [data['energies'], data['densities'], data['efermi']],
-				vbm = data['vbm'], cbm = data['cbm'])
+				vbm = data['vbm'], cbm = data['cbm'], metadata = metadata)
 
 	def plot(self, name, title=None, spinpol = False):
 		"""
@@ -164,10 +181,21 @@ class BulkCharacter(PawpyData):
 				and conduction character. Only works if the VASP
 				calculation was spin polarized
 		"""
+		kws = self.kws if (self.kws is not None) else np.array([])
 		if spinpol:
-			spin = 2
+			if self.nspin == 2:
+				spin = 2
+			else:
+				raise ValueError('Must verify that nspin==2 to use spinpol')
 		else:
 			spin = 1
+			if self.nspin == 2:
+				kws = np.append(kws, kws)
+			elif self.nspin == None and len(kws) == len(list(self.energy_levels.values())[0])//2:
+				kws = np.append(kws, kws)
+
+		if (kws is not None) and (len(kws) != len(list(self.energy_levels.values())[0]))//spin:
+			raise ValueError('kws is the wrong shape')
 
 		if title == None:
 			title = name
@@ -230,14 +258,19 @@ class BulkCharacter(PawpyData):
 				occlists = []
 				for s in range(spin):
 					length = len(self.energy_levels[b])
-					enlists.append([self.energy_levels[b][t][0] for t in range(s,length,spin)])
-					occlists.append([self.energy_levels[b][t][1] for t in range(s,length,spin)])
+					interval = (s*length//spin, (s+1)*length//spin)
+					enlists.append([self.energy_levels[b][t][0] for t in range(*interval)])
+					occlists.append([self.energy_levels[b][t][1] for t in range(*interval)])
 				for i, endat in enumerate(zip(enlists, occlists)):
 					enlist, occlist = endat
 					color = cmap(1-np.mean(occlist))
 					disp = i * delta - 0.4
 					span = [b-bmean+disp, b-bmean+disp+delta]
-					en = np.mean(enlist)
+					if self.kws is None:
+						en = np.mean(enlist)
+					else:
+						print("KWS AND ENLIST", enlist, kws)
+						en = np.dot(enlist, kws)
 					errs = (en-min(enlist), max(enlist)-en)
 					ax3.bar(b-bmean+disp+delta/2, max(enlist)-min(enlist),
 						width=delta, bottom=min(enlist)-self.efermi, color='0.8')
@@ -283,7 +316,8 @@ class BulkCharacter(PawpyData):
 			data, energy_levels = pr.defect_band_analysis(num_above_ef=5, num_below_ef=5,
 				spinpol = True, return_energies=True)
 			bcs[wf_dir] = BulkCharacter(pr.wf.structure, data,
-				energy_levels = energy_levels, dos = dos, vbm = vbm, cbm = cbm)
+				energy_levels = energy_levels, dos = dos, vbm = vbm, cbm = cbm,
+				metadata = {'nspin': pr.wf.nspin, 'kws': pr.wf.kws})
 
 		return bcs
 

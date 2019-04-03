@@ -470,8 +470,8 @@ cdef class CWavefunction(PseudoWavefunction):
 		energy_list = {}
 		for b in bands:
 			energy_list[b] = []
-			for k in range(self.nwk):
-				for s in range(self.nspin):
+			for s in range(self.nspin):
+				for k in range(self.nwk):
 					energy_list[b].append([ppc.get_energy(self.wf_ptr, b, k, s),\
 										ppc.get_occ(self.wf_ptr, b, k, s)])
 		return energy_list

@@ -105,8 +105,11 @@ class Pseudopotential:
 		except:
 			corechgstr = "0 0"
 			settingstr, localstr = topstr.split("local part", 1)
-		localstr, self.gradxc = localstr.split("gradient corrections used for XC", 1)
-		self.gradxc = int(self.gradxc)
+		if "gradient corrections used for XC" in localstr:
+			localstr, self.gradxc = localstr.split("gradient corrections used for XC", 1)
+			self.gradxc = int(self.gradxc)
+		else:
+			self.gradxc = None
 		self.localpart = self.make_nums(localstr)
 		self.localnum = self.localpart[0]
 		self.localpart = self.localpart[1:]

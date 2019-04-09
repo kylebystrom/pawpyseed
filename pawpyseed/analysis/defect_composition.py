@@ -269,7 +269,6 @@ class BulkCharacter(PawpyData):
 					if self.kws is None:
 						en = np.mean(enlist)
 					else:
-						print("KWS AND ENLIST", enlist, kws)
 						en = np.dot(enlist, kws)
 					errs = (en-min(enlist), max(enlist)-en)
 					ax3.bar(b-bmean+disp+delta/2, max(enlist)-min(enlist),

@@ -325,6 +325,7 @@ cdef class CWavefunction(PseudoWavefunction):
 
 	Attributes:
 		int[::1] dimv: FFT grid dimensions
+		int[::1] fdimv: dense FFT grid dimensions
 		int gridsize: dimv[0]*dimv[1]*dimv[2]
 		int[::1] nums: element label of each site in the structure
 		double[::1] coords: flattened list of coordinates for each site
@@ -405,32 +406,69 @@ cdef class CWavefunction(PseudoWavefunction):
 	def update_dimv(self, dim):
 		dim = np.array(dim, dtype = np.int32, order = 'C', copy = False)
 		self.dimv = dim
+		self.fdimv = dim * 2
 		self.gridsize = np.cumprod(dim)[-1]
+		self.fgridsize = np.cumprod(dim*2)[-1]
 
 	#-----------------------------------------------------#
 	# HELPER FUNCTION ROUTINES FOR REAL SPACE PROJECTIONS #
 	#-----------------------------------------------------#
 
-	def _get_realspace_state(self, int b, int k, int s):
+	def _get_realspace_state(self, int b, int k, int s, remove_phase=False):
+		if b < 0 or b >= self.nband:
+			raise ValueError("Invalid band choice")
+		if k < 0 or k >= self.nwk:
+			raise ValueError("Invalid k-point choice")
+		if s < 0 or s >= self.nspin:
+			raise ValueError("Invalid spin choice")
 		res = np.zeros(self.gridsize, dtype = np.complex128, order='C')
 		cdef double complex[::1] resv = res
 		ppc.realspace_state(&resv[0], b, k+s*self.nwk,
 			self.wf_ptr, &self.dimv[0], &self.nums[0], &self.coords[0])
+		if remove_phase:
+			ppc.remove_phase(&resv[0], k+s*self.nwk, self.wf_ptr, &self.dimv[0])
 		res.shape = self.dimv
 		return res
 
-	def _get_realspace_density(self):
-		res = np.zeros(self.gridsize, dtype = np.float64, order='C')
+	def _get_realspace_density(self, bands = None):
+		res = np.zeros(self.fgridsize, dtype = np.float64, order='C')
 		cdef double[::1] resv = res
-		ppc.ae_chg_density(&resv[0], self.wf_ptr,
-			&self.dimv[0], &self.nums[0], &self.coords[0])
-		res.shape = self.dimv
+		if bands is None:
+			ppc.ae_chg_density(&resv[0], self.wf_ptr,
+				&self.fdimv[0], &self.nums[0], &self.coords[0])
+		elif type(bands) == int:
+			if bands < 0 or bands >= self.nband:
+				raise ValueError("Invalid band choice")
+			for k in range(self.nwk * self.nspin):
+				ppc.ae_state_density(&resv[0], bands, k, self.wf_ptr,
+					&self.fdimv[0], &self.nums[0], &self.coords[0])
+		else:
+			for b in bands:
+				if type(b) == int:
+					if bands < 0 or bands >= self.nband:
+						raise ValueError("Invalid band choice")
+					for k in range(self.nwk * self.nspin):
+						ppc.ae_state_density(&resv[0], b, k, self.wf_ptr,
+							&self.fdimv[0], &self.nums[0], &self.coords[0])
+				#elif len(b) == 2:
+				#	if b[1] > self.nspin:
+				#		raise ValueError("Invalid spin")
+				#	for k in range(self.nwk):
+				#		ppc.ae_state_density(&resv[0], b[0], k+b[1]*self.nwk, self.wf_ptr,
+				#			&self.fdimv[0], &self.nums[0], &self.coords[0])
+				#elif len(b) == 3:
+				#	ppc.ae_state_density(&resv[0], b[0], b[1]+b[0]*self.nwk, self.wf_ptr,
+				#		&self.fdimv[0], &self.nums[0], &self.coords[0])
+				#else:
+				#	raise ValueError("Invalid band arguments for _get_realspace_density")
+		res.shape = self.fdimv
 		return res
 
-	def _write_realspace_state(self, filename1, filename2, double scale, int b, int k, int s):
+	def _write_realspace_state(self, filename1, filename2, double scale,
+							   int b, int k, int s, remove_phase = False):
 		filename1 = bytes(filename1.encode('utf-8'))
 		filename2 = bytes(filename2.encode('utf-8'))
-		res = self._get_realspace_state(b, k, s)
+		res = self._get_realspace_state(b, k, s, remove_phase)
 		res2 = res.view()
 		res2.shape = self.gridsize
 		resr = np.ascontiguousarray(np.real(res2))
@@ -441,13 +479,13 @@ cdef class CWavefunction(PseudoWavefunction):
 		ppc.write_volumetric(filename2, &resv[0], &self.dimv[0], scale)
 		return res
 
-	def _write_realspace_density(self, filename, double scale):
+	def _write_realspace_density(self, filename, double scale, bands = None):
 		filename = bytes(filename.encode('utf-8'))
-		res = self._get_realspace_density()
+		res = self._get_realspace_density(bands)
 		res2 = res.view()
-		res2.shape = self.gridsize
+		res2.shape = self.fgridsize
 		cdef double[::1] resv = res2
-		ppc.write_volumetric(filename, &resv[0], &self.dimv[0], scale);
+		ppc.write_volumetric(filename, &resv[0], &self.fdimv[0], scale);
 		return res
 
 	def _desymmetrized_pwf(self, structure, band_props, allkpts = None, weights = None):

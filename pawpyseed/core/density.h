@@ -13,6 +13,11 @@ on fractional coordinate real-space grid fftg. x is the slow index.
 void realspace_state(double complex* x, int BAND_NUM, int KPOINT_NUM,
 	pswf_t* wf, int* fftg, int* labels, double* coords);
 
+void remove_phase(double complex* x, int KPOINT_NUM, pswf_t* wf, int* fftg);
+
+void ae_state_density(double* P, int BAND_NUM, int KPOINT_NUM, pswf_t* wf,
+	int* fftg, int* labels, double* coords);
+
 /**
 Calculates the AE Kohn Sham state of band BAND_NUM at kpoint KPOINT_NUM in real space,
 on fractional coordinate real-space grid fftg, for a noncollinear VASP run.

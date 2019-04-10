@@ -28,6 +28,7 @@ cdef class PseudoWavefunction:
 cdef class CWavefunction(PseudoWavefunction):
 
     cdef int[::1] dimv
+    cdef int[::1] fdimv
     cdef int gridsize
 
     cdef int[::1] nums

@@ -204,6 +204,22 @@ void realspace_state(double complex* x, int BAND_NUM, int KPOINT_NUM,
 	}
 }
 
+void remove_phase(double complex* x, int KPOINT_NUM, pswf_t* wf, int* fftg) {
+	for (int i = 0; i < fftg[0]; i++) {
+		double frac[3] = {0,0,0};
+		double kdotr = 0;
+		for (int j = 0; j < fftg[1]; j++) {
+			for (int k = 0; k < fftg[2]; k++) {
+				frac[0] = (double) i / fftg[0];
+				frac[1] = (double) j / fftg[1];
+				frac[2] = (double) k / fftg[2];
+				kdotr = dot(wf->kpts[KPOINT_NUM]->k, frac);
+				x[i*fftg[1]*fftg[2] + j*fftg[2] + k] *= cexp(-2*PI*I*kdotr);
+			}
+		}
+	}
+}
+
 void ncl_realspace_state(double complex* x, int BAND_NUM, int KPOINT_NUM,
 	pswf_t* wf, int* fftg, int* labels, double* coords) {
 

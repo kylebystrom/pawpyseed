@@ -250,6 +250,9 @@ cdef extern from "density.h":
 
     cdef void realspace_state(double complex* x, int BAND_NUM, int KPOINT_NUM,
         pswf_t* wf, int* fftg, int* labels, double* coords)
+    cdef void remove_phase(double complex* x, int KPOINT_NUM, pswf_t* wf, int* fftg)
+    cdef void ae_state_density(double* P, int BAND_NUM, int KPOINT_NUM, pswf_t* wf,
+        int* fftg, int* labels, double* coords)
     cdef void ncl_realspace_state(double complex* x, int BAND_NUM, int KPOINT_NUM,
         pswf_t* wf, int* fftg, int* labels, double* coords)
     cdef void ae_chg_density(double* P, pswf_t* wf, int* fftg, int* labels, double* coords)

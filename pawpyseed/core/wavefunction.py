@@ -207,6 +207,8 @@ class Wavefunction(pawpyc.CWavefunction):
 		self.symprec = symprec
 		self.cr = cr
 		self.dim = np.array(dim).astype(np.int32)
+		if len(dim) != 3:
+			raise PAWpyError("Grid dimensions must be length 3")
 		if setup_projectors:
 			self.check_c_projectors()
 
@@ -363,7 +365,7 @@ class Wavefunction(pawpyc.CWavefunction):
 			end = time.monotonic()
 			print('--------------\nran setup_projections in %f seconds\n---------------' % (end-start))
 
-	def get_state_realspace(self, b, k, s, dim=None):
+	def get_state_realspace(self, b, k, s, dim=None, remove_phase = False):
 		"""
 		Returns the real and imaginary parts of a given band.
 		Args:
@@ -379,9 +381,9 @@ class Wavefunction(pawpyc.CWavefunction):
 		self.check_c_projectors()
 		if dim != None:
 			self.update_dim(np.array(dim))
-		return self._get_realspace_state(b, k, s)
+		return self._get_realspace_state(b, k, s, remove_phase)
 
-	def get_realspace_density(self, dim = None):
+	def get_realspace_density(self, dim = None, bands = None):
 		"""
 		Returns the all electron charge density.
 		Args:
@@ -392,7 +394,7 @@ class Wavefunction(pawpyc.CWavefunction):
 		"""
 		self.check_c_projectors()
 		if dim is not None:
-			self.update_dim(np.array(dim))
+			self.update_dim(np.array(dim)//2)
 		return self._get_realspace_density()
 
 	def _convert_to_vasp_volumetric(self, filename, dim):
@@ -426,7 +428,8 @@ class Wavefunction(pawpyc.CWavefunction):
 		f.write(lines + dimstr + nums)
 		f.close()
 
-	def write_state_realspace(self, b, k, s, fileprefix = "", dim=None, scale = 1):
+	def write_state_realspace(self, b, k, s, fileprefix = "", dim=None,
+							  scale = 1, remove_phase=False):
 		"""
 		Writes the real and imaginary parts of a given band to two files,
 		prefixed by fileprefix
@@ -440,6 +443,11 @@ class Wavefunction(pawpyc.CWavefunction):
 			scale (scalar, 1): number to multiply the realspace wavefunction by.
 				For example, VASP multiplies charge density by the volume
 				of the structure.
+			remove_phase (False): If True, removes the e^(ikr) phase
+				from the wavefunction (this does not necessarily mean
+				the wavefunction is real). This is useful if you want
+				to visualize the wavefunction because the e^(ikr) phase
+				makes the wavefunction non-periodic
 		Returns:
 			A 3D array (indexed by x,y,z where x,y,z are fractional coordinates)
 				with complex double values for the realspace wavefunction
@@ -451,12 +459,14 @@ class Wavefunction(pawpyc.CWavefunction):
 		filename_base = "%sB%dK%dS%d" % (fileprefix, b, k, s)
 		filename1 = "%s_REAL" % filename_base
 		filename2 = "%s_IMAG" % filename_base
-		res = self._write_realspace_state(filename1, filename2, scale, b, k, s)
+		res = self._write_realspace_state(filename1, filename2, scale,
+										  b, k, s, remove_phase)
 		self._convert_to_vasp_volumetric(filename1, dim)
 		self._convert_to_vasp_volumetric(filename2, dim)
 		return res
 
-	def write_density_realspace(self, filename = "PYAECCAR", dim=None, scale = 1):
+	def write_density_realspace(self, filename = "PYAECCAR", dim=None,
+								scale = 1, bands=None):
 		"""
 		Writes the real and imaginary parts of a given band to two files,
 		prefixed by fileprefix
@@ -470,6 +480,8 @@ class Wavefunction(pawpyc.CWavefunction):
 			scale (scalar, 1): number to multiply the realspace wavefunction by.
 				For example, VASP multiplies charge density by the volume
 				of the structure.
+			bands (int or [int], None): Only calculate the density for a specific
+				band or set of bands
 		Returns:
 			A 3D array (indexed by x,y,z where x,y,z are fractional coordinates)
 				with complex double values for the realspace wavefunction
@@ -478,8 +490,8 @@ class Wavefunction(pawpyc.CWavefunction):
 
 		self.check_c_projectors()
 		if dim is not None:
-			self.update_dim(np.array(dim))
-		res = self._write_realspace_density(filename, scale)
+			self.update_dim(np.array(dim)//2)
+		res = self._write_realspace_density(filename, scale, bands)
 		self._convert_to_vasp_volumetric(filename, dim)
 		return res
 

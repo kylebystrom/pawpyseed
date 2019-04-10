@@ -454,6 +454,8 @@ class TestPy:
 		state2 = wf.write_state_realspace(b, k, s, fileprefix = "", 
 			dim=np.array([30,30,30]))
 		assert_almost_equal(np.linalg.norm(state1-state2),0)
+		state2 = wf.write_state_realspace(b, k, s, fileprefix = "", 
+			dim=np.array([30,30,30]), remove_phase=True)
 		assert state1.shape[0] == 30
 		assert state1.shape[1] == 30
 		assert state1.shape[2] == 30
@@ -461,17 +463,13 @@ class TestPy:
 		filename_base = "%sB%dK%dS%d" % (fileprefix, b, k, s)
 		filename1 = "%s_REAL" % filename_base
 		filename2 = "%s_IMAG" % filename_base
-		os.remove(filename1)
-		os.remove(filename2)
+		#os.remove(filename1)
+		#os.remove(filename2)
 
 	def test_density(self):
 		print("TEST DENSITY")
 		sys.stdout.flush()
-		print("LOAD WAVEFUNCTION")
-		sys.stdout.flush()
 		wf = Wavefunction.from_directory('nosym')
-		print("FINISHED LOAD WAVEFUNCTION")
-		sys.stdout.flush()
 		#wf = wf.desymmetrized_copy()
 		wf.write_density_realspace(dim=np.array([40,40,40]), scale = wf.structure.lattice.volume)
 		tstchg = Chgcar.from_file("AECCAR2").data['total']# / wf.structure.volume
@@ -480,7 +478,8 @@ class TestPy:
 		newchg = chg-tstchg
 		Chgcar(Poscar(wf.structure), {'total': newchg}).write_file('DIFFCHGCAR.vasp')
 		print(np.sum(chg)/40**3, np.sum(tstchg)/40**3)
-		assert_almost_equal(reldiff, 0, decimal=3)
+		assert_almost_equal(reldiff, 0, decimal=2)
+		wf.write_density_realspace(filename="BAND4DENS", dim=np.array([40,40,40]), bands=4)
 		#os.remove('PYAECCAR')
 
 	def test_pseudoprojector(self):
@@ -623,7 +622,7 @@ class TestPy:
 				assert_almost_equal(test_vals[b][1], 1, decimal=3)
 
 	def test_norm(self):
-		wf = Wavefunction.from_directory('.')
+		wf = Wavefunction.from_directory('.', setup_projectors=True)
 		wf.check_c_projectors()
 		testc.proj_check(wf)
 

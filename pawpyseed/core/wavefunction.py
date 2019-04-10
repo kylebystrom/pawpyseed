@@ -461,8 +461,8 @@ class Wavefunction(pawpyc.CWavefunction):
 		filename2 = "%s_IMAG" % filename_base
 		res = self._write_realspace_state(filename1, filename2, scale,
 										  b, k, s, remove_phase)
-		self._convert_to_vasp_volumetric(filename1, dim)
-		self._convert_to_vasp_volumetric(filename2, dim)
+		self._convert_to_vasp_volumetric(filename1, self.dim)
+		self._convert_to_vasp_volumetric(filename2, self.dim)
 		return res
 
 	def write_density_realspace(self, filename = "PYAECCAR", dim=None,
@@ -492,7 +492,7 @@ class Wavefunction(pawpyc.CWavefunction):
 		if dim is not None:
 			self.update_dim(np.array(dim)//2)
 		res = self._write_realspace_density(filename, scale, bands)
-		self._convert_to_vasp_volumetric(filename, dim)
+		self._convert_to_vasp_volumetric(filename, self.dim*2)
 		return res
 
 	def get_nosym_kpoints(self, init_kpts = None, symprec=None,

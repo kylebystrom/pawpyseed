@@ -479,8 +479,11 @@ class TestPy:
 		Chgcar(Poscar(wf.structure), {'total': newchg}).write_file('DIFFCHGCAR.vasp')
 		print(np.sum(chg)/40**3, np.sum(tstchg)/40**3)
 		assert_almost_equal(reldiff, 0, decimal=2)
-		wf.write_density_realspace(filename="BAND4DENS", dim=np.array([40,40,40]), bands=4)
+		wf = Wavefunction.from_directory('nosym')
+		res = wf.write_density_realspace(filename="BAND4DENS", bands=4)
 		#os.remove('PYAECCAR')
+		print("DENS shape", res.shape)
+		assert_almost_equal(np.sum(res)*wf.structure.lattice.volume/np.cumprod(res.shape)[-1], 1)
 
 	def test_pseudoprojector(self):
 		print("TEST PSEUDO")

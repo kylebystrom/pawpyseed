@@ -433,6 +433,7 @@ cdef class CWavefunction(PseudoWavefunction):
 	def _get_realspace_density(self, bands = None):
 		res = np.zeros(self.fgridsize, dtype = np.float64, order='C')
 		cdef double[::1] resv = res
+		cdef double[::1] workv
 		if bands is None:
 			ppc.ae_chg_density(&resv[0], self.wf_ptr,
 				&self.fdimv[0], &self.nums[0], &self.coords[0])
@@ -440,16 +441,22 @@ cdef class CWavefunction(PseudoWavefunction):
 			if bands < 0 or bands >= self.nband:
 				raise ValueError("Invalid band choice")
 			for k in range(self.nwk * self.nspin):
-				ppc.ae_state_density(&resv[0], bands, k, self.wf_ptr,
+				work = np.zeros(self.fgridsize, dtype = np.float64, order='C')
+				workv = work
+				ppc.ae_state_density(&workv[0], bands, k, self.wf_ptr,
 					&self.fdimv[0], &self.nums[0], &self.coords[0])
+				res += work * self.kws[k%self.nwk] / self.nspin
 		else:
 			for b in bands:
 				if type(b) == int:
 					if bands < 0 or bands >= self.nband:
 						raise ValueError("Invalid band choice")
 					for k in range(self.nwk * self.nspin):
-						ppc.ae_state_density(&resv[0], b, k, self.wf_ptr,
+						work = np.zeros(self.fgridsize, dtype = np.float64, order='C')
+						workv = work
+						ppc.ae_state_density(&workv[0], b, k, self.wf_ptr,
 							&self.fdimv[0], &self.nums[0], &self.coords[0])
+						res += work * self.kws[k%self.nwk] / self.nspin
 				#elif len(b) == 2:
 				#	if b[1] > self.nspin:
 				#		raise ValueError("Invalid spin")

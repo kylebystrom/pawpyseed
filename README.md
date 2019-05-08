@@ -253,6 +253,32 @@ Doxygen is a documentation generator from which I built the docs for PAWpySeed.
 It is an excellent tool that allows for clean, up-to-date documentaton
 that is easy to make and navigate. Check it out at <http://www.stack.nl/~dimitri/doxygen/>.
 
+## Citing
+
+If you find pawpyseed useful, please encourage its development by
+citing the following paper in your research:
+
+```
+@ARTICLE{2019arXiv190411572B,
+       author = {{Bystrom}, Kyle and {Broberg}, Danny and {Dwaraknath}, Shyam and
+         {Persson}, Kristin A. and {Asta}, Mark},
+        title = "{Pawpyseed: Perturbation-extrapolation band shifting corrections for point defect calculations}",
+      journal = {arXiv e-prints},
+     keywords = {Condensed Matter - Materials Science},
+         year = "2019",
+        month = "Apr",
+          eid = {arXiv:1904.11572},
+        pages = {arXiv:1904.11572},
+archivePrefix = {arXiv},
+       eprint = {1904.11572},
+ primaryClass = {cond-mat.mtrl-sci},
+       adsurl = {https://ui.adsabs.harvard.edu/abs/2019arXiv190411572B},
+      adsnote = {Provided by the SAO/NASA Astrophysics Data System}
+}
+
+```
+
+You can view the paper here: <https://arxiv.org/abs/1904.11572>
 
 ## Questions and Comments
 

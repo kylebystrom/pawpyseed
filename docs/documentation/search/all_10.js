@@ -22,6 +22,7 @@ var searchData=
   ['recipprojs',['recipprojs',['../classpawpyseed_1_1core_1_1wavefunction_1_1Pseudopotential.html#ad4b01bafe71f488e5b2cd3a83a3a2ee3',1,'pawpyseed::core::wavefunction::Pseudopotential']]],
   ['reciprocal_5foffsite_5fwave_5foverlap',['reciprocal_offsite_wave_overlap',['../radial_8h.html#aa36a5b747694c61d79129249630eea3b',1,'radial.h']]],
   ['reclattice',['reclattice',['../structpswf.html#a2a0453d35e9c128eb71a3d4158c361ae',1,'pswf']]],
+  ['remove_5fphase',['remove_phase',['../density_8h.html#a21648732930eef3fabdf0de7dcf8ce01',1,'density.h']]],
   ['rhomin',['rhomin',['../structsbt__descriptor.html#a44b46c781837878634bbdc35ab3b3096',1,'sbt_descriptor']]],
   ['rmax',['rmax',['../structppot.html#a5e04d074f79b2f7d3c993239d575cbd3',1,'ppot::rmax()'],['../structreal__proj__site.html#a28b96f97cb72845d3814dd0d6d8c907b',1,'real_proj_site::rmax()'],['../classpawpyseed_1_1core_1_1wavefunction_1_1Pseudopotential.html#a924e508f4686918771f174a5650b0d79',1,'pawpyseed.core.wavefunction.Pseudopotential.rmax()']]],
   ['rmin',['rmin',['../structsbt__descriptor.html#a9fc1844c1b2e1513ddeac8ecd15ef47d',1,'sbt_descriptor']]],

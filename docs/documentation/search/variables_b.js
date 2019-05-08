@@ -7,7 +7,7 @@ var searchData=
   ['ndata',['ndata',['../classpawpyseed_1_1core_1_1wavefunction_1_1Pseudopotential.html#a7d051a2399d2c4b185eadeb1ab9ee2b1',1,'pawpyseed::core::wavefunction::Pseudopotential']]],
   ['nonlocalprojs',['nonlocalprojs',['../classpawpyseed_1_1core_1_1wavefunction_1_1Pseudopotential.html#a8b72e2aa1fd8062943a9aa547afd497e',1,'pawpyseed::core::wavefunction::Pseudopotential']]],
   ['ns',['ns',['../structprojection.html#a0fdb916e8e6b066703e8e75d593d68e2',1,'projection']]],
-  ['nspin',['nspin',['../structpswf.html#a87138ec6bc0206028ff1bd2c34c9e74d',1,'pswf']]],
+  ['nspin',['nspin',['../structpswf.html#a87138ec6bc0206028ff1bd2c34c9e74d',1,'pswf::nspin()'],['../classpawpyseed_1_1analysis_1_1defect__composition_1_1BulkCharacter.html#ac57a108417b6a9b9d9c7ebfd1f7eb4b8',1,'pawpyseed.analysis.defect_composition.BulkCharacter.nspin()']]],
   ['num_5faug_5foverlap_5fsites',['num_aug_overlap_sites',['../structpswf.html#af7873e979454933c75be409488d04fb0',1,'pswf']]],
   ['num_5fbands',['num_bands',['../structkpoint.html#a78357708f84e6ad9d75d7b21ef13193b',1,'kpoint']]],
   ['num_5fcart_5fgridpts',['num_cart_gridpts',['../structppot.html#a3fb02b8c43b8b05660e11a52f5e618b1',1,'ppot']]],

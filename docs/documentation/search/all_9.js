@@ -10,5 +10,6 @@ var searchData=
   ['ks',['ks',['../structsbt__descriptor.html#ae9669ec7ae8646caa74212d2822e2e4b',1,'sbt_descriptor']]],
   ['kwave',['kwave',['../structfuncset.html#a9dcd53c46ea813a9e805d9795729dc71',1,'funcset']]],
   ['kwave_5fgrid',['kwave_grid',['../structppot.html#a159da879325c513c6aea23e5222165b1',1,'ppot']]],
-  ['kwave_5fspline',['kwave_spline',['../structfuncset.html#a26d8c098ba6ee0fefcbb8a9c79285923',1,'funcset']]]
+  ['kwave_5fspline',['kwave_spline',['../structfuncset.html#a26d8c098ba6ee0fefcbb8a9c79285923',1,'funcset']]],
+  ['kws',['kws',['../classpawpyseed_1_1analysis_1_1defect__composition_1_1BulkCharacter.html#af3d520e3b4b97e9a9ebad6fe5ac23bf7',1,'pawpyseed::analysis::defect_composition::BulkCharacter']]]
 ];

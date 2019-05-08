@@ -2,6 +2,7 @@ var searchData=
 [
   ['add_5fnum_5fcart_5fgridpts',['add_num_cart_gridpts',['../projector_8h.html#afe21e5608c3d8091f569a205c9ee7a3b',1,'projector.h']]],
   ['ae_5fchg_5fdensity',['ae_chg_density',['../density_8h.html#a7b7feaf46edc5724f9e6dcfbf6c8f71e',1,'density.h']]],
+  ['ae_5fstate_5fdensity',['ae_state_density',['../density_8h.html#af74e631e33e24f99745c43ae21943b20',1,'density.h']]],
   ['aecorecharge',['aecorecharge',['../classpawpyseed_1_1core_1_1wavefunction_1_1Pseudopotential.html#a23140e7e976c41362dff760a80caed36',1,'pawpyseed::core::wavefunction::Pseudopotential']]],
   ['aepotential',['aepotential',['../classpawpyseed_1_1core_1_1wavefunction_1_1Pseudopotential.html#abb59b60ef0b6bd65467766d0854f2d86',1,'pawpyseed::core::wavefunction::Pseudopotential']]],
   ['aepw_5foverlap_5fmatrix',['aepw_overlap_matrix',['../structppot.html#aeaafee92debea571dfc68585fb5fa58f',1,'ppot']]],

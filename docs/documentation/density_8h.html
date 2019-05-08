@@ -98,6 +98,10 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
 Functions</h2></td></tr>
 <tr class="memitem:ab8da04ba84ac8c86d9b5aa9b5c867a9a"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="density_8h.html#ab8da04ba84ac8c86d9b5aa9b5c867a9a">realspace_state</a> (double complex *x, int BAND_NUM, int KPOINT_NUM, <a class="el" href="utils_8h.html#a0d83785e53b058055dd3a6b963dda7e0">pswf_t</a> *wf, int *fftg, int *labels, double *coords)</td></tr>
 <tr class="separator:ab8da04ba84ac8c86d9b5aa9b5c867a9a"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a21648732930eef3fabdf0de7dcf8ce01"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="density_8h.html#a21648732930eef3fabdf0de7dcf8ce01">remove_phase</a> (double complex *x, int KPOINT_NUM, <a class="el" href="utils_8h.html#a0d83785e53b058055dd3a6b963dda7e0">pswf_t</a> *wf, int *fftg)</td></tr>
+<tr class="separator:a21648732930eef3fabdf0de7dcf8ce01"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:af74e631e33e24f99745c43ae21943b20"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="density_8h.html#af74e631e33e24f99745c43ae21943b20">ae_state_density</a> (double *P, int BAND_NUM, int KPOINT_NUM, <a class="el" href="utils_8h.html#a0d83785e53b058055dd3a6b963dda7e0">pswf_t</a> *wf, int *fftg, int *labels, double *coords)</td></tr>
+<tr class="separator:af74e631e33e24f99745c43ae21943b20"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a60d5417a86495000dea6e47b30f9394f"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="density_8h.html#a60d5417a86495000dea6e47b30f9394f">ncl_realspace_state</a> (double complex *x, int BAND_NUM, int KPOINT_NUM, <a class="el" href="utils_8h.html#a0d83785e53b058055dd3a6b963dda7e0">pswf_t</a> *wf, int *fftg, int *labels, double *coords)</td></tr>
 <tr class="separator:a60d5417a86495000dea6e47b30f9394f"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a7b7feaf46edc5724f9e6dcfbf6c8f71e"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="density_8h.html#a7b7feaf46edc5724f9e6dcfbf6c8f71e">ae_chg_density</a> (double *P, <a class="el" href="utils_8h.html#a0d83785e53b058055dd3a6b963dda7e0">pswf_t</a> *wf, int *fftg, int *labels, double *coords)</td></tr>
@@ -166,6 +170,62 @@ Functions</h2></td></tr>
       </table>
 </div><div class="memdoc">
 <p>Calculates the all electron charge density by adding up realspace_state for all the bands at each kpoint. Equivalent to the grid in AECCAR of VASP except x is the slow index instead of z. </p>
+
+</div>
+</div>
+<a class="anchor" id="af74e631e33e24f99745c43ae21943b20"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void ae_state_density </td>
+          <td>(</td>
+          <td class="paramtype">double *&#160;</td>
+          <td class="paramname"><em>P</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">int&#160;</td>
+          <td class="paramname"><em>BAND_NUM</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">int&#160;</td>
+          <td class="paramname"><em>KPOINT_NUM</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="utils_8h.html#a0d83785e53b058055dd3a6b963dda7e0">pswf_t</a> *&#160;</td>
+          <td class="paramname"><em>wf</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">int *&#160;</td>
+          <td class="paramname"><em>fftg</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">int *&#160;</td>
+          <td class="paramname"><em>labels</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">double *&#160;</td>
+          <td class="paramname"><em>coords</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
 
 </div>
 </div>
@@ -444,6 +504,44 @@ Functions</h2></td></tr>
       </table>
 </div><div class="memdoc">
 <p>Separates the result of realspace_state into a real part and an imaginary part, then returns it. Utilizied by the Python code. </p>
+
+</div>
+</div>
+<a class="anchor" id="a21648732930eef3fabdf0de7dcf8ce01"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void remove_phase </td>
+          <td>(</td>
+          <td class="paramtype">double complex *&#160;</td>
+          <td class="paramname"><em>x</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">int&#160;</td>
+          <td class="paramname"><em>KPOINT_NUM</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="utils_8h.html#a0d83785e53b058055dd3a6b963dda7e0">pswf_t</a> *&#160;</td>
+          <td class="paramname"><em>wf</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">int *&#160;</td>
+          <td class="paramname"><em>fftg</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
 
 </div>
 </div>

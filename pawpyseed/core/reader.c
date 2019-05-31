@@ -52,8 +52,8 @@ void wcclose(WAVECAR* wc) {
 	free(wc);
 }
 
-void setup(int nrecl, int nprec, int nspin, int nwk, int nband,
-	double* nb1, double* nb2, double* nb3, double encut,
+void setup(int nspin, int nwk, int nband,
+	double* nb1, double* nb2, double* nb3, int* np, double encut,
 	double* lattice, double* reclattice) {
 
 	vcross(reclattice+0, lattice+3, lattice+6);
@@ -118,6 +118,7 @@ void setup(int nrecl, int nprec, int nspin, int nwk, int nband,
 	//printf(" %lf %lf %lf\n", reclattice[6], reclattice[7], reclattice[8]);
 	//printf("\n %lf %lf %lf %d %d %d\n", nb1max, nb2max, nb3max, npmaxA, npmaxB, npmaxC);
 
+	*np = npmax;
 	*nb1 = nb1max;
 	*nb2 = nb2max;
 	*nb3 = nb3max;
@@ -127,6 +128,7 @@ pswf_t* read_wavecar(WAVECAR* wc, double* kpt_weights) {
 
 	int nrecli, nspin, nwk, nband, nprec;
 	double nb1max, nb2max, nb3max, encut;
+	int npmax;
 	double* lattice = (double*) malloc(9*sizeof(double));
 	double* reclattice = (double*) malloc(9*sizeof(double));
 
@@ -151,8 +153,8 @@ pswf_t* read_wavecar(WAVECAR* wc, double* kpt_weights) {
 		lattice[i] = readarr[i+3];
 	}
 
-	setup(nrecli, nprec, nspin, nwk, nband, &nb1max, &nb2max, &nb3max,
-		encut, lattice, reclattice);
+	setup(nspin, nwk, nband, &nb1max, &nb2max, &nb3max,
+		&npmax, encut, lattice, reclattice);
 	double* b1 = reclattice;
 	double* b2 = reclattice+3;
 	double* b3 = reclattice+6;

@@ -28,8 +28,8 @@ void wcclose(WAVECAR* wc);
 /**
 Sets up variables to be used to read the pseudowavefunctions from WAVECAR
 */
-void setup(int nrecl, int nprec, int nspin, int nwk, int nband,
-	double* nb1, double* nb2, double* nb3, double ecut,
+void setup(int nspin, int nwk, int nband,
+	double* nb1, double* nb2, double* nb3, int* np, double ecut,
 	double* lattice, double* reclattice);
 
 /**

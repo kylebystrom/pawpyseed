@@ -12,6 +12,7 @@ typedef struct density_ft {
 	int l2;
 	int m2;
 	int size;
+	double* ks;
 	transform_spline_t* transforms; // size: sum(l1,l2)-diff(l1,l2)
 } density_ft_t;
 

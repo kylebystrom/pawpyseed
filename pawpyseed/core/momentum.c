@@ -44,23 +44,39 @@ void mul_partial_waves(double* product, int size, double* r, double* f1, double*
 	}
 }
 
-double** spher_transforms(int size, double* r, double* f1, double** s1, int l1, int m1,
-												  double* f2, double** s2, int l2, int m2) {
+void make_rho(double* rho, int size, double* aewave1, double* pswave1, double* aewave2, double* pswave2) {
+	for (int i = 0; i < size; i++) {
+		rho[i] = aewave1[i] * aewave2[i] - pswave1[i] * pswave2[i];
+	}
+}
+
+density_ft_t spher_transforms(int size, double* r, double* f, int l1, int m1, int l2, int m2) {
+
+	density_ft_t density;
+	density.l1 = l1;
+	density.l2 = l2;
+	density.m1 = m1;
+	density.m2 = m2;
+	density.transforms = (transform_spline_t*) malloc((l1+l2+1 - abs(l1-l2)) * sizeof(transform_spline_t));
 
 	double* ks = (double*) calloc(size, sizeof(double));
 	sbt_descriptor_t* d = spherical_bessel_transform_setup(encut, 0, l1+l2, size, r, ks);
 
+	density.ks = ks;
+
 	double* product = (double*) calloc(size, sizeof(double));
-	mul_partial_waves(product, size, r, f1, f2);
-	double** transforms = (double**) malloc(l1+l2+1-abs(l1-l2) * sizeof(double*));
+	//double** transforms = (double**) malloc(l1+l2+1-abs(l1-l2) * sizeof(double*));
 
 	for (int L = abs(l1-l2); L <= l1+l2; L++) {
-		transforms[L-abs(l1-l2)] = wave_spherical_bessel_transform(d, product, L);
+		density.transforms[L-abs(l1-l2)].transform = wave_spherical_bessel_transform(d, f, L);
+		density.transforms[L-abs(l1-l2)].spline = spline_coeff(ks, density.transforms[L-abs(l1-l2)].transform);
 
 		//total += SBTFACS[lx][ly][(L-abs(l1-l2))/2][lx+mx][my] * integral
 	}
 
-	return transforms;
+	free_sbt_descriptor(d);
+
+	return density;
 
 	// < f1 | G | f2 >
 	/*
@@ -110,9 +126,12 @@ double complex spher_momentum(density_ft_t densities, int* GP) {
 	return total;
 }
 
-double*** get_transforms(ppot_t pp) {
+density_ft_elem_t get_transforms(ppot_t pp) {
 
-	double*** transforms_list = (double***) malloc(pp.total_projs * pp.total_projs * sizeof(double**));
+	density_ft_elem_t elem;
+	elem.total_projs = pp.total_projs;
+	elem.num_densities = pp.total_projs * pp.total_projs;
+	elem.densities = (density_ft_t*) malloc(elem.num_densities * sizeof(density_ft_t));
 
 	for (int n1 = 0; n1 < pp.num_projs; n1++) {
 		int l1 = pp.funcs[n1].l;
@@ -122,12 +141,12 @@ double*** get_transforms(ppot_t pp) {
 				int l2 = pp.funcs[n2].l;
 				funcset_t func2 = pp.funcs[n2];
 				for (int m2 = -l2; m2 <= l2; m2++) {
+
+					double* rho = (double*) malloc(pp.wave_gridsize * sizeof(double));
+					double* rho = make_rho(rho, pp.wave_gridsize, func1.aewave,
+									func1.pswave, func2.aewave, func2.pswave);
 					double** aetransforms = spher_transforms(pp.wave_gridsize, pp.wave_grid,
-														func1.aewave, func1.aewave_spline, l1, m1,
-														func2.aewave, func2.aewave_spline, l2, m2);
-					double** pstransforms = spher_transforms(pp.wave_gridsize, pp.wave_grid,
-														func1.pswave, func1.pswave_spline, l1, m1,
-														func2.pswave, func2.pswave_spline, l2, m2);
+															rho, l1, m1, l2, m2);
 					transforms_list[i*pp.total_projs+j] = aetransforms - pstransforms;
 				}
 			}
@@ -139,34 +158,84 @@ double*** get_transforms(ppot_t pp) {
 
 double complex get_momentum_matrix_element(pswf_t* wf, int b1, int k1, int s1,
 													   int b2, int k2, int s2,
-													   int* GP, density_ft_elem_t* transforms_list) {
+													   int* GP, density_ft_elem_t* elems) {
+
 	band_t* band1 = wf->kpts[k1+s1*wf->nwk]->bands[b1];
 	band_t* band2 = wf->kpts[k2+s2*wf->nwk]->bands[b2];
-	pseudo_momentum(GP, G_bounds, wf->lattice, band1->Gs, band1->Cs, band1->num_waves,
+	double complex total = pseudo_momentum(GP, G_bounds, wf->lattice, band1->Gs, band1->Cs, band1->num_waves,
 											band2->Gs, band2->Cs, band2->num_waves, wf->fftg);
 
+	double complex phase;
 	for (int s = 0; s < num_sites; s++) {
-		density_ft_elem_t transforms = transforms_list[labels[s]];
+		density_ft_elem_t elem = elems[labels[s]];
 		phase = cexp(2 * PI * I * dot(GP, coords[s]));
-		for (int i = 0; i < transforms.total_projs; i++) {
-			for (int j = 0; j < transforms.total_projs; j++) {
-				spher_momentum(transforms.densities[i*tranforms.total_projs+j], GP)
-				* conj(band1->projections[s].overlaps[i]) * band2->projections[s].overlaps[j]
-				* phase;
+		for (int i = 0; i < elem.total_projs; i++) {
+			for (int j = 0; j < elem.total_projs; j++) {
+				total += spher_momentum(elem.densities[i*tranforms.total_projs+j], GP)
+						* conj(band1->projections[s].overlaps[i]) * band2->projections[s].overlaps[j]
+						* phase;
 			}
 		}
-
 	}
+
+	return total;
+
 }
 
-double complex** get_momentum_matrix(pswf_t* wf, int b1, int k1, int s1,
+double complex* get_momentum_matrix(pswf_t* wf, int b1, int k1, int s1,
 												int b2, in k2, int s2,
 												density_ft_elem_t* transforms_list,
 												double encut) {
-	get_momentum_grid(wf, encut);
-	for (int i = 0; i < numg; i++) {
+	double nb1max, nb2max, nb3max, npmax;
+	setup(wf->nspin, wf->nwk, wf->nband,
+		  &nb1max, &nb2max, &nb3max, &npmax, encut,
+		  wf->lattice, wf->reclattice);
+	int* igall = malloc(3*npmax*sizeof(int));
+	if (igall == NULL) {
+	    ALLOCATION_FAILED();
+	}
+
+	int ncnt = -1;
+	for (int ig3 = 0; ig3 <= 2 * nb3max; ig3++) {
+		int ig3p = ig3;
+		if (ig3 > nb3max) ig3p = ig3 - 2 * nb3max - 1;
+		for (int ig2 = 0; ig2 <= 2 * nb2max; ig2++) {
+			int ig2p = ig2;
+			if (ig2 > nb2max) ig2p = ig2 - 2 * nb2max - 1;
+			for (int ig1 = 0; ig1 <= 2 * nb1max; ig1++) {
+				int ig1p = ig1;
+				if (ig1 > nb1max) ig1p = ig1 - 2 * nb1max - 1;
+				double sumkg[3];
+				for (int j = 0; j < 3; j++) {
+					sumkg[j] = (kx+ig1p) * b1[j]
+								+ (ky+ig2p) * b2[j]
+								+ (kz+ig3p) * b3[j];
+				}
+				double gtot = mag(sumkg);
+				double etot = pow(gtot,2.0) / c;
+				//printf("%lf %lf\n", etot, gtot);
+				if (etot <= encut) {
+					ncnt++;
+					igall[ncnt*3+0] = ig1p;
+					igall[ncnt*3+1] = ig2p;
+					igall[ncnt*3+2] = ig3p;
+					if (ig1p < wf->G_bounds[0]) wf->G_bounds[0] = ig1p;
+					else if (ig1p > wf->G_bounds[1]) wf->G_bounds[1] = ig1p;
+					if (ig2p < wf->G_bounds[2]) wf->G_bounds[2] = ig2p;
+					else if (ig2p > wf->G_bounds[3]) wf->G_bounds[3] = ig2p;
+					if (ig3p < wf->G_bounds[4]) wf->G_bounds[4] = ig3p;
+					else if (ig3p > wf->G_bounds[5]) wf->G_bounds[5] = ig3p;
+				}
+			}
+		}
+	}
+	ncnt++;
+
+	double complex* matrix = (double complex*) malloc(ncnt * sizeof(double complex));
+	// NEED TO GIVE BACK INFO ABOUT ncnt
+	for (int i = 0; i < ncnt; i++) {
 		int* GP = igall[3*i];
-		get_momentum_matrix_element(wf, b1,k1,s1, b2,k2,s2, GP, transforms_list);
+		matrix[i] = get_momentum_matrix_element(wf, b1,k1,s1, b2,k2,s2, GP, transforms_list);
 	}
 
 	return matrix;

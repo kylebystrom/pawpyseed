@@ -1,3 +1,11 @@
+/** \file
+Momentum matrix elements
+*/
+
+#ifndef MOMENTUM_H
+#define MOMENTUM_H
+#include <complex.h>
+#include <math.h>
 
 typedef struct transform_spline {
 	double* transform;
@@ -21,3 +29,32 @@ typedef struct density_ft_elem {
 	int total_projs;
 	density_ft_t* densities;
 } density_ft_elem_t;
+
+float complex pseudo_momentum(int* GP, int* G_bounds, double* lattice,
+	int* G1s, float complex* C1s, int num_waves1,
+	int* G2s, float complex* C2s, int num_waves2, int* fftg);
+
+void mul_partial_waves(double* product, int size, double* r, double* f1, double* f2);
+
+void make_rho(double* rho, int size, double* aewave1, double* pswave1, double* aewave2, double* pswave2);
+
+density_ft_t spher_transforms(int size, double* r, double* f, int l1, int m1, int l2, int m2, double encut);
+
+double complex spher_momentum(density_ft_t densities, double* G, double* lattice);
+
+density_ft_elem_t get_transforms(ppot_t pp, double encut);
+
+double complex get_momentum_matrix_element(pswf_t* wf, int* labels, double* coords,
+											int b1, int k1, int s1,
+											int b2, int k2, int s2,
+											int* GP, density_ft_elem_t* elems);
+
+double complex* get_momentum_matrix(pswf_t* wf, int* labels, double* coords,
+									int band1, int kpt1, int spin1,
+									int band2, int kpt2, int spin2,
+									density_ft_elem_t* transforms_list,
+									double encut);
+
+int* get_momentum_grid(pswf_t* wf, double encut);
+
+#endif

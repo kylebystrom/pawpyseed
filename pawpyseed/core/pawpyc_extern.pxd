@@ -237,8 +237,8 @@ cdef extern from "reader.h":
     cdef void wcseek(WAVECAR* wc, long loc)
     cdef void wcread(void* ptr0, long size, long nmemb, WAVECAR* wc)
     cdef void wcclose(WAVECAR* wc)
-    cdef void setup(int nrecl, int nprec, int nspin, int nwk, int nband,
-        double* nb1, double* nb2, double* nb3, double ecut,
+    cdef void setup(int nspin, int nwk, int nband,
+        double* nb1, double* nb2, double* nb3, int* np, double ecut,
         double* lattice, double* reclattice)
     cdef pswf_t* read_wavecar(WAVECAR* wc, double* kpt_weights)
     cdef pswf_t* read_wavefunctions(char* filename, double* kpt_weights)
@@ -313,4 +313,47 @@ cdef extern from "radial.h":
         double* k1, double* f1, double** s1, int size1,
         double* k2, double* f2, double** s2, int size2,
         double* lattice, int l1, int m1, int l2, int m2)
+    
+
+cdef extern from "momentum.h":
+
+    ctypedef struct  transform_spline_t:
+        double* transform
+        double** spline
+    ctypedef struct  density_ft_t:
+        int n1
+        int l1
+        int m1
+        int n2
+        int l2
+        int m2
+        int size
+        double* ks
+        transform_spline_t* transforms
+    ctypedef struct  density_ft_elem_t:
+        int num_densities
+        int total_projs
+        density_ft_t* densities
+    cdef float complex pseudo_momentum(int* GP, int* G_bounds, double* lattice,
+        int* G1s, float complex* C1s, int num_waves1,
+        int* G2s, float complex* C2s, int num_waves2, int* fftg)
+    cdef void mul_partial_waves(double* product, int size, double* r, double* f1, double* f2)
+    cdef void make_rho(double* rho, int size, double* aewave1, double* pswave1, double* aewave2, double* pswave2)
+    cdef density_ft_t spher_transforms(int size, double* r, double* f, int l1, int m1, int l2, int m2, double encut)
+    cdef double complex spher_momentum(density_ft_t densities, double* G, double* lattice)
+    cdef density_ft_elem_t get_transforms(ppot_t pp, double encut)
+    cdef density_ft_elem_t* get_all_transforms(pswf_t* wf, double encut)
+    cdef double complex get_momentum_matrix_element(pswf_t* wf, int* labels, double* coords,
+                                                int b1, int k1, int s1,
+                                                int b2, int k2, int s2,
+                                                int* GP, density_ft_elem_t* elems)
+    cdef void get_momentum_matrix(double complex* matrix, int numg, int* igall,
+                            pswf_t* wf, int* labels, double* coords,
+                            int band1, int kpt1, int spin1,
+                            int band2, int kpt2, int spin2,
+                            density_ft_elem_t* transforms_list,
+                            double encut)
+    cdef void momentum_grid_size(pswf_t* wf, double* nb1max, double* nb2max, double* nb3max,
+                            int* npmax, double encut)
+    cdef int get_momentum_grid(int* igall, pswf_t* wf, double nb1max, double nb2max, double nb3max, double encut)
     

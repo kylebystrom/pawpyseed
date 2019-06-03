@@ -36,6 +36,10 @@ cdef class CWavefunction(PseudoWavefunction):
     cdef int number_projector_elements
     cdef readonly int projector_owner
 
+    cdef np.ndarray ggrid
+    cdef ppc.density_ft_elem_t* elem_density_transforms
+    cdef double momentum_encut
+
 cdef class CProjector:
 
     cdef public CWavefunction wf

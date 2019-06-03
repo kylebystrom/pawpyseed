@@ -521,6 +521,40 @@ cdef class CWavefunction(PseudoWavefunction):
 										ppc.get_occ(self.wf_ptr, b, k, s)])
 		return energy_list
 
+	def _setup_momentum_grid(self, double encut):
+		cdef double nb1max = 0
+		cdef double nb2max = 0
+		cdef double nb3max = 0
+		cdef int npmax = 0
+		self.momentum_encut = encut
+		ppc.momentum_grid_size(self.wf_ptr, &nb1max, &nb2max, &nb3max, &npmax, encut)
+		grid = np.ascontiguousarray(np.zeros(3 * npmax, dtype=np.int32))
+		cdef int[::1] gridv = grid
+		actual_size = ppc.get_momentum_grid(&gridv[0], self.wf_ptr, nb1max, nb2max, nb3max, encut)
+		self.ggrid = grid[:3*actual_size]
+
+	def _setup_transforms(self):
+		self.elem_density_transforms = ppc.get_all_transforms(self.wf_ptr, self.momentum_encut)
+
+	def _get_ggrid(self):
+		return self.ggrid.copy()
+
+	def _get_momentum_matrix_elems(self, int b1, int k1, int s1, int b2, int k2, int s2):
+		cdef int numg = self.ggrid.shape[0] // 3
+		res = np.zeros(numg, dtype=np.complex128)
+		cdef double complex[::1] matrix = res
+		cdef int[::1] ggrid = self.ggrid
+		ppc.get_momentum_matrix(&matrix[0], numg, &ggrid[0],
+								self.wf_ptr, &self.nums[0], &self.coords[0],
+								b1, k1, s1, b2, k2, s2,
+								self.elem_density_transforms, self.momentum_encut)
+		return res
+
+	#def _setup_partial_wave_transforms(self, encut):
+	#	self.pw_ft_densities = ppc.get_transforms()
+	#	self._setup_momentum_grid(encut)
+	#	self._setup_partial_wave_transforms(encut)
+
 
 cdef class CNCLWavefunction(CWavefunction):
 	#-----------------------------------------------------#

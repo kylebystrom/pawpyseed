@@ -20,7 +20,7 @@ DEBUG = True
 reqs = "numpy>=1.14,scipy>=1.0,pymatgen>=2018.2.13,sympy>=1.1.1,matplotlib>=0.2.5".split(',')
 
 srcfiles = ['density', 'gaunt', 'linalg', 'projector', 'pseudoprojector', 'quadrature',\
-			'radial', 'reader', 'sbt', 'utils']
+			'radial', 'reader', 'sbt', 'utils', 'momentum']
 
 # READ CONFIGURATION FILE
 config = configparser.ConfigParser()

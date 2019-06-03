@@ -55,5 +55,5 @@ def write_pxd(pxdname, files):
 	f.close()
 
 write_pxd('pawpyc_extern.pxd',
-	['utils', 'projector', 'pseudoprojector', 'reader', 'density', 'sbt', 'linalg', 'radial'])
+	['utils', 'projector', 'pseudoprojector', 'reader', 'density', 'sbt', 'linalg', 'radial', 'momentum'])
 write_pxd('tests/testc_extern.pxd', ['tests/tests', 'utils'])

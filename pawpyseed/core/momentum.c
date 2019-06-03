@@ -56,9 +56,9 @@ void mul_partial_waves(double* product, int size, double* r, double* f1, double*
 	}
 }
 
-void make_rho(double* rho, int size, double* aewave1, double* pswave1, double* aewave2, double* pswave2) {
+void make_rho(double* rho, int size, double* grid, double* aewave1, double* pswave1, double* aewave2, double* pswave2) {
 	for (int i = 0; i < size; i++) {
-		rho[i] = aewave1[i] * aewave2[i] - pswave1[i] * pswave2[i];
+		rho[i] = (aewave1[i] * aewave2[i] - pswave1[i] * pswave2[i]) / grid[i];
 	}
 }
 
@@ -132,12 +132,14 @@ double complex spher_momentum(density_ft_t densities, double* G, double* lattice
 		double* k = densities.ks;
 		double* f = transforms[L-abs(l1-l2)].transform;
 		double** s = transforms[L-abs(l1-l2)].spline;
-		frac_to_cartesian(G, lattice);
 
 		double complex sph_val;
 		double magG = mag(G);
 		if (magG == 0) {
-			sph_val = Ylm(L, m2-m1, 0, 0);
+			if (L == 0)
+				sph_val = Ylm(L, m2-m1, 0, 0);
+			else
+				sph_val = 0;
 		}
 		else {
 			double theta = 0, phi = 0;
@@ -175,7 +177,7 @@ density_ft_elem_t get_transforms(ppot_t pp, double encut) {
 				for (int m2 = -l2; m2 <= l2; m2++) {
 
 					double* rho = (double*) malloc(pp.wave_gridsize * sizeof(double));
-					make_rho(rho, pp.wave_gridsize, func1.aewave,
+					make_rho(rho, pp.wave_gridsize, pp.wave_grid, func1.aewave,
 							func1.pswave, func2.aewave, func2.pswave);
 					elem.densities[i*pp.total_projs+j] = spher_transforms(pp.wave_gridsize, pp.wave_grid,
 															rho, l1, m1, l2, m2, encut);
@@ -189,16 +191,24 @@ density_ft_elem_t get_transforms(ppot_t pp, double encut) {
 	return elem;
 }
 
+density_ft_elem_t* get_all_transforms(pswf_t* wf, double encut) {
+	density_ft_elem_t* elems = (density_ft_elem_t*) malloc(wf->num_elems * sizeof(density_ft_elem_t));
+	for (int i = 0; i < wf->num_elems; i++) {
+		elems[i] = get_transforms(wf->pps[i], encut);
+	}
+	return elems;
+}
+
 double complex get_momentum_matrix_element(pswf_t* wf, int* labels, double* coords,
 											int b1, int k1, int s1,
 											int b2, int k2, int s2,
 											int* GP, density_ft_elem_t* elems) {
 	// Find < psi_{b1,k1,s1} | GP + k1 - k2 | psi_{b2,k2,s2} >
-
 	kpoint_t* kpoint1 = wf->kpts[k1+s1*wf->nwk];
 	kpoint_t* kpoint2 = wf->kpts[k2+s2*wf->nwk];
 	band_t* band1 = kpoint1->bands[b1];
 	band_t* band2 = kpoint2->bands[b2];
+
 	double complex total = pseudo_momentum(GP, wf->G_bounds, wf->lattice, kpoint1->Gs, band1->Cs, kpoint1->num_waves,
 											kpoint2->Gs, band2->Cs, kpoint2->num_waves, wf->fftg);
 
@@ -207,15 +217,27 @@ double complex get_momentum_matrix_element(pswf_t* wf, int* labels, double* coor
 	G[1] = kpoint1->k[1] - kpoint2->k[1] + GP[1];
 	G[2] = kpoint1->k[2] - kpoint2->k[2] + GP[2];
 
+	if (mag(G) == 0) {
+		printf("CHECK PSEUDO MOM %lf %lf", creal(total), cimag(total));
+	}
+
+	double Gcart[3];
+	Gcart[0] = G[0];
+	Gcart[1] = G[1];
+	Gcart[2] = G[2];
+	frac_to_cartesian(Gcart, wf->reclattice);
+
 	double complex phase;
 	for (int s = 0; s < wf->num_sites; s++) {
 		density_ft_elem_t elem = elems[labels[s]];
 		phase = cexp(2 * PI * I * dot(G, coords+s*3));
 		for (int i = 0; i < elem.total_projs; i++) {
 			for (int j = 0; j < elem.total_projs; j++) {
-				total += spher_momentum(elem.densities[i*elem.total_projs+j], G, wf->lattice)
+				//printf("spher_momentum %d %d %d %lf %lf %lf\n", s, i, j, Gcart[0], Gcart[1], Gcart[2]);
+				total += spher_momentum(elem.densities[i*elem.total_projs+j], Gcart, wf->lattice)
 						* conj(band1->projections[s].overlaps[i]) * band2->projections[s].overlaps[j]
 						* phase;
+				//printf("done\n");
 			}
 		}
 	}
@@ -224,84 +246,31 @@ double complex get_momentum_matrix_element(pswf_t* wf, int* labels, double* coor
 
 }
 
-double complex* get_momentum_matrix(pswf_t* wf, int* labels, double* coords,
-									int band1, int kpt1, int spin1,
-									int band2, int kpt2, int spin2,
-									density_ft_elem_t* transforms_list,
-									double encut) {
-	double nb1max, nb2max, nb3max;
-	int npmax;
-	setup(wf->nspin, wf->nwk, wf->nband,
-		  &nb1max, &nb2max, &nb3max, &npmax, encut,
-		  wf->lattice, wf->reclattice);
-	int* igall = malloc(3*npmax*sizeof(int));
-	if (igall == NULL) {
-	    ALLOCATION_FAILED();
-	}
-
-	double* b1 = wf->reclattice + 0;
-	double* b2 = wf->reclattice + 3;
-	double* b3 = wf->reclattice + 6;
-
-	int ncnt = -1;
-	for (int ig3 = 0; ig3 <= 2 * nb3max; ig3++) {
-		int ig3p = ig3;
-		if (ig3 > nb3max) ig3p = ig3 - 2 * nb3max - 1;
-		for (int ig2 = 0; ig2 <= 2 * nb2max; ig2++) {
-			int ig2p = ig2;
-			if (ig2 > nb2max) ig2p = ig2 - 2 * nb2max - 1;
-			for (int ig1 = 0; ig1 <= 2 * nb1max; ig1++) {
-				int ig1p = ig1;
-				if (ig1 > nb1max) ig1p = ig1 - 2 * nb1max - 1;
-				double sumkg[3];
-				for (int j = 0; j < 3; j++) {
-					sumkg[j] = (ig1p) * b1[j]
-								+ (ig2p) * b2[j]
-								+ (ig3p) * b3[j];
-				}
-				double gtot = mag(sumkg);
-				double etot = pow(gtot,2.0) / c;
-				//printf("%lf %lf\n", etot, gtot);
-				if (etot <= encut) {
-					ncnt++;
-					igall[ncnt*3+0] = ig1p;
-					igall[ncnt*3+1] = ig2p;
-					igall[ncnt*3+2] = ig3p;
-					if (ig1p < wf->G_bounds[0]) wf->G_bounds[0] = ig1p;
-					else if (ig1p > wf->G_bounds[1]) wf->G_bounds[1] = ig1p;
-					if (ig2p < wf->G_bounds[2]) wf->G_bounds[2] = ig2p;
-					else if (ig2p > wf->G_bounds[3]) wf->G_bounds[3] = ig2p;
-					if (ig3p < wf->G_bounds[4]) wf->G_bounds[4] = ig3p;
-					else if (ig3p > wf->G_bounds[5]) wf->G_bounds[5] = ig3p;
-				}
-			}
-		}
-	}
-	ncnt++;
-
-	double complex* matrix = (double complex*) malloc(ncnt * sizeof(double complex));
+void get_momentum_matrix(double complex* matrix, int numg, int* igall,
+						pswf_t* wf, int* labels, double* coords,
+						int band1, int kpt1, int spin1,
+						int band2, int kpt2, int spin2,
+						density_ft_elem_t* transforms_list,
+						double encut) {
+	//double complex* matrix = (double complex*) malloc(ncnt * sizeof(double complex));
 	// NEED TO GIVE BACK INFO ABOUT ncnt
-	for (int i = 0; i < ncnt; i++) {
+	for (int i = 0; i < numg; i++) {
+		if (i%100==0)
+			printf("ayo %d %d\n", i, numg);
 		int* GP = igall + 3*i;
 		matrix[i] = get_momentum_matrix_element(wf, labels, coords, band1, kpt1, spin1,
 												band2, kpt2, spin2, GP, transforms_list);
 	}
-
-	return matrix;
 }
 
-
-int* get_momentum_grid(pswf_t* wf, double encut) {
-
-	double nb1max, nb2max, nb3max;
-	int npmax;
+void momentum_grid_size(pswf_t* wf, double* nb1max, double* nb2max, double* nb3max,
+						int* npmax, double encut) {
 	setup(wf->nspin, wf->nwk, wf->nband,
-		  &nb1max, &nb2max, &nb3max, &npmax, encut,
+		  nb1max, nb2max, nb3max, npmax, encut,
 		  wf->lattice, wf->reclattice);
-	int* igall = malloc(3*npmax*sizeof(int));
-	if (igall == NULL) {
-	    ALLOCATION_FAILED();
-	}
+}
+
+int get_momentum_grid(int* igall, pswf_t* wf, double nb1max, double nb2max, double nb3max, double encut) {
 
 	double* b1 = wf->reclattice + 0;
 	double* b2 = wf->reclattice + 3;
@@ -343,5 +312,5 @@ int* get_momentum_grid(pswf_t* wf, double encut) {
 	}
 	ncnt++;
 
-	return igall;
+	return ncnt;
 }

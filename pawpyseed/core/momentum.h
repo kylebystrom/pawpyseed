@@ -40,7 +40,7 @@ void make_rho(double* rho, int size, double* grid, double* aewave1, double* pswa
 
 density_ft_t spher_transforms(int size, double* r, double* f, int l1, int m1, int l2, int m2, double encut);
 
-double complex spher_momentum(density_ft_t densities, double* G, double* lattice);
+double complex spher_momentum(density_ft_t densities, double* G);
 
 density_ft_elem_t get_transforms(ppot_t pp, double encut);
 

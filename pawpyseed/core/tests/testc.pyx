@@ -17,6 +17,7 @@ import time
 import sys
 from libc.stdint cimport uintptr_t
 from pawpyseed.core.symmetry import *
+import matplotlib.pyplot as plt 
 
 cpdef fft_check(str wavecar, np.ndarray[double, ndim=1] kpt_weights,
 	np.ndarray[int, ndim=1] fftgrid):
@@ -33,3 +34,17 @@ cpdef proj_check(pawpyc.CWavefunction wf):
 			tc.proj_check(b, k, wf.wf_ptr, &wf.dimv[0],
 				&wf.nums[0], &wf.coords[0])
 	print("FINISHED PROJ CHECK")
+
+cpdef plot_momentum(pawpyc.CWavefunction wf, int i, int j):
+	ks = wf.elem_density_transforms[0].densities[i].ks
+	size = wf.elem_density_transforms[0].densities[i].size
+	y = wf.elem_density_transforms[0].densities[i].transforms[0].transform
+	pk = np.zeros(size)
+	py = np.zeros(size)
+	for i in range(size):
+		pk[i] = ks[i]
+		py[i] = y[i]
+	#	print(ks[i], y[i])
+	#print(pk, py)
+	plt.plot(pk, py)
+	plt.show()

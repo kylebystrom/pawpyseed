@@ -76,6 +76,7 @@ density_ft_t spher_transforms(int size, double* r, double* f, int l1, int m1, in
 	density.l2 = l2;
 	density.m1 = m1;
 	density.m2 = m2;
+	density.size = size;
 	density.transforms = (transform_spline_t*) malloc(((l1+l2 - abs(l1-l2))/2 + 1) * sizeof(transform_spline_t));
 
 	double* ks = (double*) calloc(size, sizeof(double));
@@ -107,11 +108,11 @@ density_ft_t spher_transforms(int size, double* r, double* f, int l1, int m1, in
 	*/
 }
 
-double complex spher_momentum(density_ft_t densities, double* G, double* lattice) {
+double complex spher_momentum(density_ft_t densities, double* G) {
 	// NOTE: maybe change G->double so it can contain delta_k component?
 
 	int l1=densities.l1, l2=densities.l2,
-		m1=-densities.m1, m2=densities.m2;
+		m1=densities.m1, m2=densities.m2;
 	transform_spline_t* transforms = densities.transforms;
 	
 	double complex total = 0;
@@ -162,7 +163,11 @@ double complex spher_momentum(density_ft_t densities, double* G, double* lattice
 		//	printf("%lf %lf\n", SBTFACS[lx][ly][(L-abs(l1-l2))/2][lx+mx][my]);
 		//}
 		total += SBTFACS[lx][ly][(L-abs(l1-l2))/2][lx+mx][my] * sph_val
-				 * 4 * PI * cpow(I, L) * wave_interpolate(magG, size, k, f, s);
+				 * 4 * PI * cpow(I, L) * pow(-1, m2) * wave_interpolate(magG, size, k, f, s);
+
+		//total += 8 * cpow(I, -L) * pow(-1, m1) * SBTFACS[lx][ly][(L-abs(l1-l2))/2][lx+mx][my]
+		//			* sph_val * wave_interpolate(magG, size, k, f, s);
+
 	}
 
 	return total;
@@ -229,17 +234,19 @@ double complex get_momentum_matrix_element(pswf_t* wf, int* labels, double* coor
 	G[1] = GP[1];
 	G[2] = GP[2];
 
-	if ((GP[1] == 0) && (GP[2] == 0)) {
-		printf("CHECK PSEUDO MOM %lf %lf\n", creal(total), cimag(total));
-	}
-
 	double Gcart[3];
 	Gcart[0] = kpoint1->k[0] - kpoint2->k[0] + G[0];
 	Gcart[1] = kpoint1->k[1] - kpoint2->k[1] + G[1];
 	Gcart[2] = kpoint1->k[2] - kpoint2->k[2] + G[2];
 	frac_to_cartesian(Gcart, wf->reclattice);
 
+	if ((GP[1] == 0) && (GP[2] == 0)) {
+		printf("CHECK PSEUDO MOM %lf %lf %lf %lf %lf\n", creal(total), cimag(total),
+			Gcart[0], Gcart[1], Gcart[2]);
+	}
+
 	double complex phase;
+	int ni, nj;
 	for (int s = 0; s < wf->num_sites; s++) {
 		density_ft_elem_t elem = elems[labels[s]];
 		phase = cexp(2 * PI * I * dot(G, coords+s*3));
@@ -248,8 +255,8 @@ double complex get_momentum_matrix_element(pswf_t* wf, int* labels, double* coor
 				//printf("spher_momentum %d %d %d %lf %lf %lf\n", s, i, j, Gcart[0], Gcart[1], Gcart[2]);
 				if (mag(Gcart) <= 1e-10) {
 					ppot_t pp = wf->pps[labels[s]];
-					int ni = elem.densities[i*elem.total_projs+j].n1;
-					int nj = elem.densities[i*elem.total_projs+j].n2;
+					ni = elem.densities[i*elem.total_projs+j].n1;
+					nj = elem.densities[i*elem.total_projs+j].n2;
 					if (elem.densities[i*elem.total_projs+j].l1 == elem.densities[i*elem.total_projs+j].l2
 						&& elem.densities[i*elem.total_projs+j].m1 == elem.densities[i*elem.total_projs+j].m2) {
 						total += (pp.aepw_overlap_matrix[pp.num_projs*ni+nj]
@@ -260,7 +267,7 @@ double complex get_momentum_matrix_element(pswf_t* wf, int* labels, double* coor
 				else {
 					//if (elem.densities[i*elem.total_projs+j].l1 == elem.densities[i*elem.total_projs+j].l2
 					//	&& elem.densities[i*elem.total_projs+j].m1 == elem.densities[i*elem.total_projs+j].m2){
-					total += spher_momentum(elem.densities[i*elem.total_projs+j], Gcart, wf->lattice)
+					total += spher_momentum(elem.densities[i*elem.total_projs+j], Gcart)
 						* conj(band1->projections[s].overlaps[i]) * band2->projections[s].overlaps[j]
 						* phase;
 				}
@@ -287,7 +294,6 @@ void get_momentum_matrix(double complex* matrix, int numg, int* igall,
 		int* GP = igall + 3*i;
 		matrix[i] = get_momentum_matrix_element(wf, labels, coords, band1, kpt1, spin1,
 												band2, kpt2, spin2, GP, transforms_list);
-		break;
 	}
 }
 

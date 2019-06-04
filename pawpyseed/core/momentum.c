@@ -14,10 +14,14 @@
 
 float complex pseudo_momentum(int* GP, int* G_bounds, double* lattice,
 	int* G1s, float complex* C1s, int num_waves1,
-	int* G2s, float complex* C2s, int num_waves2, int* fftg) {
+	int* G2s, float complex* C2s, int num_waves2, int* fftgrid) {
 	// sum(u_1'*(k'+G+G') u_2(k+G)) = <u_1 |   >
 	// NOTE: NEED TO CHECK THAT G2s+GP IS NOT TOO BIG OR TOO SMALL
 
+	int fftg[3];
+	fftg[0] = fftgrid[0]*2;
+	fftg[1] = fftgrid[1]*2;
+	fftg[2] = fftgrid[2]*2;
 	float complex* x = (float complex*) mkl_calloc(fftg[0]*fftg[1]*fftg[2], sizeof(float complex), 64);
 
 	float complex total = 0;
@@ -30,7 +34,7 @@ float complex pseudo_momentum(int* GP, int* G_bounds, double* lattice,
 		g1 = (G1s[3*w+0]+fftg[0]) % fftg[0];
 		g2 = (G1s[3*w+1]+fftg[1]) % fftg[1];
 		g3 = (G1s[3*w+2]+fftg[2]) % fftg[2];
-		x[g1*fftg[1]*fftg[2] + g2*fftg[2] + g3] = C1s[w];
+		x[g1*fftg[1]*fftg[2] + g2*fftg[2] + g3] = conj(C1s[w]);
 	}
 	for (int w = 0; w < num_waves2; w++) {
 		if ( G2s[3*w+0]+GP[0] >= G_bounds[0] && G2s[3*w+0]+GP[0] <= G_bounds[1] 
@@ -39,14 +43,17 @@ float complex pseudo_momentum(int* GP, int* G_bounds, double* lattice,
 			g1 = (G2s[3*w+0]+GP[0] +fftg[0]) % fftg[0];
 			g2 = (G2s[3*w+1]+GP[1] +fftg[1]) % fftg[1];
 			g3 = (G2s[3*w+2]+GP[2] +fftg[2]) % fftg[2];
-			x[g1*fftg[1]*fftg[2] + g2*fftg[2] + g3] *= conj(C2s[w]);
-		} else {
-			x[g1*fftg[1]*fftg[2] + g2*fftg[2] + g3] = 0;
+			total += C2s[w] * x[g1*fftg[1]*fftg[2] + g2*fftg[2] + g3];
 		}
+		//else {
+		//	x[g1*fftg[1]*fftg[2] + g2*fftg[2] + g3] = 0;
+		//}
 	}
-	for (int w = 0; w < fftg[0] * fftg[1] * fftg[2]; w++) {
-		total += x[w];
-	}
+	//for (int w = 0; w < gridsize; w++) {
+	//	total += x[w];
+	//}
+
+	mkl_free(x);
 	return total;
 }
 
@@ -69,17 +76,17 @@ density_ft_t spher_transforms(int size, double* r, double* f, int l1, int m1, in
 	density.l2 = l2;
 	density.m1 = m1;
 	density.m2 = m2;
-	density.transforms = (transform_spline_t*) malloc((l1+l2+1 - abs(l1-l2)) * sizeof(transform_spline_t));
+	density.transforms = (transform_spline_t*) malloc(((l1+l2 - abs(l1-l2))/2 + 1) * sizeof(transform_spline_t));
 
 	double* ks = (double*) calloc(size, sizeof(double));
-	sbt_descriptor_t* d = spherical_bessel_transform_setup(encut, 0, l1+l2, size, r, ks);
+	sbt_descriptor_t* d = spherical_bessel_transform_setup(encut, 1e7, l1+l2, size, r, ks);
 
 	density.ks = ks;
 
-	for (int L = abs(l1-l2); L <= l1+l2; L++) {
-		density.transforms[L-abs(l1-l2)].transform = wave_spherical_bessel_transform(d, f, L);
-		density.transforms[L-abs(l1-l2)].spline = spline_coeff(ks, density.transforms[L-abs(l1-l2)].transform, size);
-
+	for (int L = abs(l1-l2); L <= l1+l2; L+=2) {
+		density.transforms[(L-abs(l1-l2))/2].transform = wave_spherical_bessel_transform(d, f, L);
+		density.transforms[(L-abs(l1-l2))/2].spline = spline_coeff(ks,
+			density.transforms[(L-abs(l1-l2))/2].transform, size);
 		//total += SBTFACS[lx][ly][(L-abs(l1-l2))/2][lx+mx][my] * integral
 	}
 
@@ -104,7 +111,7 @@ double complex spher_momentum(density_ft_t densities, double* G, double* lattice
 	// NOTE: maybe change G->double so it can contain delta_k component?
 
 	int l1=densities.l1, l2=densities.l2,
-		m1=densities.m1, m2=densities.m2;
+		m1=-densities.m1, m2=densities.m2;
 	transform_spline_t* transforms = densities.transforms;
 	
 	double complex total = 0;
@@ -127,16 +134,16 @@ double complex spher_momentum(density_ft_t densities, double* G, double* lattice
 		my = -my;
 	}
 
-	for (int L = abs(l1-l2); L <= l1+l2; L++) {
+	for (int L = abs(l1-l2); L <= l1+l2; L+=2) {
 		int size = densities.size;
 		double* k = densities.ks;
-		double* f = transforms[L-abs(l1-l2)].transform;
-		double** s = transforms[L-abs(l1-l2)].spline;
+		double* f = transforms[(L-abs(l1-l2))/2].transform;
+		double** s = transforms[(L-abs(l1-l2))/2].spline;
 
-		double complex sph_val;
+		double complex sph_val = 0;
 		double magG = mag(G);
 		if (magG == 0) {
-			if (L == 0)
+			if (L == 0 && m1 == m2)
 				sph_val = Ylm(L, m2-m1, 0, 0);
 			else
 				sph_val = 0;
@@ -151,8 +158,11 @@ double complex spher_momentum(density_ft_t densities, double* G, double* lattice
 		}
 
 		//NOTE: issue with scaling r^-1
+		//if (L == 0) {
+		//	printf("%lf %lf\n", SBTFACS[lx][ly][(L-abs(l1-l2))/2][lx+mx][my]);
+		//}
 		total += SBTFACS[lx][ly][(L-abs(l1-l2))/2][lx+mx][my] * sph_val
-				 * 4 * PI * cpow(I, L) * wave_interpolate(mag(G), size, k, f, s);
+				 * 4 * PI * cpow(I, L) * wave_interpolate(magG, size, k, f, s);
 	}
 
 	return total;
@@ -181,6 +191,8 @@ density_ft_elem_t get_transforms(ppot_t pp, double encut) {
 							func1.pswave, func2.aewave, func2.pswave);
 					elem.densities[i*pp.total_projs+j] = spher_transforms(pp.wave_gridsize, pp.wave_grid,
 															rho, l1, m1, l2, m2, encut);
+					elem.densities[i*pp.total_projs+j].n1 = n1;
+					elem.densities[i*pp.total_projs+j].n2 = n2;
 					j++;
 				}
 			}
@@ -213,18 +225,18 @@ double complex get_momentum_matrix_element(pswf_t* wf, int* labels, double* coor
 											kpoint2->Gs, band2->Cs, kpoint2->num_waves, wf->fftg);
 
 	double G[3];
-	G[0] = kpoint1->k[0] - kpoint2->k[0] + GP[0];
-	G[1] = kpoint1->k[1] - kpoint2->k[1] + GP[1];
-	G[2] = kpoint1->k[2] - kpoint2->k[2] + GP[2];
+	G[0] = GP[0];
+	G[1] = GP[1];
+	G[2] = GP[2];
 
-	if (mag(G) == 0) {
-		printf("CHECK PSEUDO MOM %lf %lf", creal(total), cimag(total));
+	if ((GP[1] == 0) && (GP[2] == 0)) {
+		printf("CHECK PSEUDO MOM %lf %lf\n", creal(total), cimag(total));
 	}
 
 	double Gcart[3];
-	Gcart[0] = G[0];
-	Gcart[1] = G[1];
-	Gcart[2] = G[2];
+	Gcart[0] = kpoint1->k[0] - kpoint2->k[0] + G[0];
+	Gcart[1] = kpoint1->k[1] - kpoint2->k[1] + G[1];
+	Gcart[2] = kpoint1->k[2] - kpoint2->k[2] + G[2];
 	frac_to_cartesian(Gcart, wf->reclattice);
 
 	double complex phase;
@@ -234,9 +246,24 @@ double complex get_momentum_matrix_element(pswf_t* wf, int* labels, double* coor
 		for (int i = 0; i < elem.total_projs; i++) {
 			for (int j = 0; j < elem.total_projs; j++) {
 				//printf("spher_momentum %d %d %d %lf %lf %lf\n", s, i, j, Gcart[0], Gcart[1], Gcart[2]);
-				total += spher_momentum(elem.densities[i*elem.total_projs+j], Gcart, wf->lattice)
+				if (mag(Gcart) <= 1e-10) {
+					ppot_t pp = wf->pps[labels[s]];
+					int ni = elem.densities[i*elem.total_projs+j].n1;
+					int nj = elem.densities[i*elem.total_projs+j].n2;
+					if (elem.densities[i*elem.total_projs+j].l1 == elem.densities[i*elem.total_projs+j].l2
+						&& elem.densities[i*elem.total_projs+j].m1 == elem.densities[i*elem.total_projs+j].m2) {
+						total += (pp.aepw_overlap_matrix[pp.num_projs*ni+nj]
+							- pp.pspw_overlap_matrix[pp.num_projs*ni+nj])
+							* conj(band1->projections[s].overlaps[i]) * band2->projections[s].overlaps[j];
+					}
+				}
+				else {
+					//if (elem.densities[i*elem.total_projs+j].l1 == elem.densities[i*elem.total_projs+j].l2
+					//	&& elem.densities[i*elem.total_projs+j].m1 == elem.densities[i*elem.total_projs+j].m2){
+					total += spher_momentum(elem.densities[i*elem.total_projs+j], Gcart, wf->lattice)
 						* conj(band1->projections[s].overlaps[i]) * band2->projections[s].overlaps[j]
 						* phase;
+				}
 				//printf("done\n");
 			}
 		}
@@ -260,6 +287,7 @@ void get_momentum_matrix(double complex* matrix, int numg, int* igall,
 		int* GP = igall + 3*i;
 		matrix[i] = get_momentum_matrix_element(wf, labels, coords, band1, kpt1, spin1,
 												band2, kpt2, spin2, GP, transforms_list);
+		break;
 	}
 }
 
@@ -300,12 +328,12 @@ int get_momentum_grid(int* igall, pswf_t* wf, double nb1max, double nb2max, doub
 					igall[ncnt*3+0] = ig1p;
 					igall[ncnt*3+1] = ig2p;
 					igall[ncnt*3+2] = ig3p;
-					if (ig1p < wf->G_bounds[0]) wf->G_bounds[0] = ig1p;
-					else if (ig1p > wf->G_bounds[1]) wf->G_bounds[1] = ig1p;
-					if (ig2p < wf->G_bounds[2]) wf->G_bounds[2] = ig2p;
-					else if (ig2p > wf->G_bounds[3]) wf->G_bounds[3] = ig2p;
-					if (ig3p < wf->G_bounds[4]) wf->G_bounds[4] = ig3p;
-					else if (ig3p > wf->G_bounds[5]) wf->G_bounds[5] = ig3p;
+					//if (ig1p < wf->G_bounds[0]) wf->G_bounds[0] = ig1p;
+					//else if (ig1p > wf->G_bounds[1]) wf->G_bounds[1] = ig1p;
+					//if (ig2p < wf->G_bounds[2]) wf->G_bounds[2] = ig2p;
+					//else if (ig2p > wf->G_bounds[3]) wf->G_bounds[3] = ig2p;
+					//if (ig3p < wf->G_bounds[4]) wf->G_bounds[4] = ig3p;
+					//else if (ig3p > wf->G_bounds[5]) wf->G_bounds[5] = ig3p;
 				}
 			}
 		}

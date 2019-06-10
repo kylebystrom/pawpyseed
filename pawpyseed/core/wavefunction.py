@@ -517,18 +517,3 @@ class Wavefunction(pawpyc.CWavefunction):
 			symprec = self.symprec
 		return pawpy_symm.get_kpt_mapping(allkpts, self.kpts, self.structure,
 										symprec, gen_trsym)
-
-	def setup_momentum_calculations(self, encut=None):
-		if encut == None:
-			encut = 4 * self.encut
-
-		self._setup_momentum_grid(encut)
-		self._setup_transforms()
-
-	@property
-	def momentum_grid(self):
-		grid = self._get_ggrid()
-		return grid.reshape((grid.shape[0]//3, 3))
-
-	def get_momentum_matrix_elems(self, b1, k1, s1, b2, k2, s2):
-		return self._get_momentum_matrix_elems(b1, k1, s1, b2, k2, s2)

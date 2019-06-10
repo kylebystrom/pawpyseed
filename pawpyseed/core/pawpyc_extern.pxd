@@ -356,4 +356,13 @@ cdef extern from "momentum.h":
     cdef void momentum_grid_size(pswf_t* wf, double* nb1max, double* nb2max, double* nb3max,
                             int* npmax, double encut)
     cdef int get_momentum_grid(int* igall, pswf_t* wf, double nb1max, double nb2max, double nb3max, double encut)
+    cdef void grid_bounds(int* G_bounds, int* gdim, int* igall, int num_waves)
+    cdef void list_to_grid_map(int* grid, int* G_bounds, int* gdim, int* igall, int num_waves)
+    cdef void fill_grid(float complex* x, int* Gs, float complex* Cs, int* fftg, int numg)
+    cdef void fullwf_reciprocal(double complex* Cs, int* igall, pswf_t* wf, int numg,
+        int band_num, int kpt_num, int* labels, double* coords)
+    cdef double complex kwave_value(double* x, double* wave, double** spline, int size,
+        int l, int m, double* pos)
+    cdef double complex quick_overlap(int* dG, double complex* C1s, double complex* C2s, int numg,
+        int* Gs, int* gmap, int* G_bounds, int* gdim)
     

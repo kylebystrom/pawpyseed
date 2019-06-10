@@ -35,10 +35,10 @@ cpdef proj_check(pawpyc.CWavefunction wf):
 				&wf.nums[0], &wf.coords[0])
 	print("FINISHED PROJ CHECK")
 
-cpdef plot_momentum(pawpyc.CWavefunction wf, int i, int j):
-	ks = wf.elem_density_transforms[0].densities[i].ks
-	size = wf.elem_density_transforms[0].densities[i].size
-	y = wf.elem_density_transforms[0].densities[i].transforms[0].transform
+cpdef plot_momentum(pawpyc.CMomentumMatrix mm, int i, int j):
+	ks = mm.elem_density_transforms[0].densities[i].ks
+	size = mm.elem_density_transforms[0].densities[i].size
+	y = mm.elem_density_transforms[0].densities[i].transforms[0].transform
 	pk = np.zeros(size)
 	py = np.zeros(size)
 	for i in range(size):
@@ -47,4 +47,8 @@ cpdef plot_momentum(pawpyc.CWavefunction wf, int i, int j):
 	#	print(ks[i], y[i])
 	#print(pk, py)
 	plt.plot(pk, py)
+	plt.show()
+	ty = np.cumsum(py**2)
+	ty /= np.max(ty)
+	plt.plot(pk, ty)
 	plt.show()

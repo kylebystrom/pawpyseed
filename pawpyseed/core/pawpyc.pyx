@@ -521,39 +521,14 @@ cdef class CWavefunction(PseudoWavefunction):
 										ppc.get_occ(self.wf_ptr, b, k, s)])
 		return energy_list
 
-	def _setup_momentum_grid(self, double encut):
-		cdef double nb1max = 0
-		cdef double nb2max = 0
-		cdef double nb3max = 0
-		cdef int npmax = 0
-		self.momentum_encut = encut
-		ppc.momentum_grid_size(self.wf_ptr, &nb1max, &nb2max, &nb3max, &npmax, encut)
-		grid = np.ascontiguousarray(np.zeros(3 * npmax, dtype=np.int32))
-		cdef int[::1] gridv = grid
-		actual_size = ppc.get_momentum_grid(&gridv[0], self.wf_ptr, nb1max, nb2max, nb3max, encut)
-		self.ggrid = grid[:3*actual_size]
-
-	def _setup_transforms(self):
-		self.elem_density_transforms = ppc.get_all_transforms(self.wf_ptr, self.momentum_encut)
-
-	def _get_ggrid(self):
-		return self.ggrid.copy()
-
-	def _get_momentum_matrix_elems(self, int b1, int k1, int s1, int b2, int k2, int s2):
-		cdef int numg = self.ggrid.shape[0] // 3
-		res = np.zeros(numg, dtype=np.complex128)
-		cdef double complex[::1] matrix = res
-		cdef int[::1] ggrid = self.ggrid
-		ppc.get_momentum_matrix(&matrix[0], numg, &ggrid[0],
-								self.wf_ptr, &self.nums[0], &self.coords[0],
-								b1, k1, s1, b2, k2, s2,
-								self.elem_density_transforms, self.momentum_encut)
-		return res
-
 	#def _setup_partial_wave_transforms(self, encut):
 	#	self.pw_ft_densities = ppc.get_transforms()
 	#	self._setup_momentum_grid(encut)
 	#	self._setup_partial_wave_transforms(encut)
+
+
+	#def _spher_momentum_test(self, int d):
+	#	return pp.spher_momentum()
 
 
 cdef class CNCLWavefunction(CWavefunction):
@@ -721,3 +696,73 @@ cdef class CProjector:
 			&self.basis.nums[0], &self.basis.coords[0])
 		return res
 
+cdef class CMomentumMatrix:
+
+	def __init__(self, CWavefunction wf, double encut):
+		self.wf = wf
+		self.momentum_encut = encut
+		self._setup_momentum_grid()
+		self._setup_transforms()
+
+	def _setup_momentum_grid(self):
+		cdef double nb1max = 0
+		cdef double nb2max = 0
+		cdef double nb3max = 0
+		cdef int npmax = 0
+		ppc.momentum_grid_size(self.wf.wf_ptr, &nb1max, &nb2max, &nb3max, &npmax, self.momentum_encut)
+		grid = np.ascontiguousarray(np.zeros(3 * npmax, dtype=np.int32))
+		cdef int[::1] gridv = grid
+		actual_size = ppc.get_momentum_grid(&gridv[0], self.wf.wf_ptr,
+											nb1max, nb2max, nb3max, self.momentum_encut)
+		self.ggrid = grid[:3*actual_size]
+
+		self.gbounds = np.zeros(6, dtype=np.int32)
+		self.gdim = np.zeros(3, dtype=np.int32)
+		cdef int[::1] gbv = self.gbounds
+		cdef int[::1] gdv = self.gdim
+		gridv = self.ggrid
+		print(self.ggrid.shape[0], actual_size)
+		print(np.max(self.ggrid), np.min(self.ggrid))
+		ppc.grid_bounds(&gbv[0], &gdv[0], &gridv[0], actual_size)
+		print(self.gdim)
+		grid3d = -1 * np.ones(self.gdim[0]*self.gdim[1]*self.gdim[2], dtype=np.int32)
+		cdef int[::1] g3v = grid3d
+		ppc.list_to_grid_map(&g3v[0], &gbv[0], &gdv[0], &gridv[0], actual_size)
+		self.grid3d = grid3d
+
+	def _setup_transforms(self):
+		self.elem_density_transforms = ppc.get_all_transforms(self.wf.wf_ptr, self.momentum_encut)
+
+	def _get_ggrid(self):
+		return self.ggrid.copy()
+
+	def _get_momentum_matrix_elems(self, int b1, int k1, int s1, int b2, int k2, int s2):
+		cdef int numg = self.ggrid.shape[0] // 3
+		res = np.zeros(numg, dtype=np.complex128)
+		cdef double complex[::1] matrix = res
+		cdef int[::1] ggrid = self.ggrid
+		ppc.get_momentum_matrix(&matrix[0], numg, &ggrid[0],
+								self.wf.wf_ptr, &self.wf.nums[0], &self.wf.coords[0],
+								b1, k1, s1, b2, k2, s2,
+								self.elem_density_transforms, self.momentum_encut)
+		return res
+
+	def _get_reciprocal_fullfw(self, int b, int k, int s):
+		cdef int numg = self.ggrid.shape[0] // 3
+		res = np.zeros(numg, dtype=np.complex128)
+		cdef double complex[::1] matrix = res
+		cdef int[::1] ggrid = self.ggrid
+		ppc.fullwf_reciprocal(&matrix[0], &ggrid[0], self.wf.wf_ptr, numg,
+								b, k+s*self.wf.nwk, &self.wf.nums[0], &self.wf.coords[0])
+		return res
+
+	def _get_g_from_fullfw(self, int b1, int k1, int s1, int b2, int k2, int s2, G):
+		cdef double complex[::1] vec1 = self._get_reciprocal_fullfw(b1,k1,s1)
+		cdef double complex[::1] vec2 = self._get_reciprocal_fullfw(b2,k2,s2)
+		cdef int[::1] GP = np.array(G, dtype=np.int32)
+		cdef int[::1] gridv = self.ggrid
+		cdef int[::1] gbv = self.gbounds
+		cdef int[::1] gdv = self.gdim
+		cdef int[::1] g3v = self.grid3d
+		return ppc.quick_overlap(&GP[0], &vec1[0], &vec2[0], self.ggrid.shape[0]//3,
+			&gridv[0], &g3v[0], &gbv[0], &gdv[0])

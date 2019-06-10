@@ -36,10 +36,6 @@ cdef class CWavefunction(PseudoWavefunction):
     cdef int number_projector_elements
     cdef readonly int projector_owner
 
-    cdef np.ndarray ggrid
-    cdef ppc.density_ft_elem_t* elem_density_transforms
-    cdef double momentum_encut
-
 cdef class CProjector:
 
     cdef public CWavefunction wf
@@ -58,3 +54,13 @@ cdef class CProjector:
     cdef int num_N_S
     cdef int num_N_RS_R
     cdef int num_N_RS_S
+
+cdef class CMomentumMatrix:
+
+    cdef public CWavefunction wf
+    cdef np.ndarray ggrid
+    cdef ppc.density_ft_elem_t* elem_density_transforms
+    cdef double momentum_encut
+    cdef np.ndarray gdim
+    cdef np.ndarray gbounds
+    cdef np.ndarray grid3d

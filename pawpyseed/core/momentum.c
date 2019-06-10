@@ -80,7 +80,8 @@ density_ft_t spher_transforms(int size, double* r, double* f, int l1, int m1, in
 	density.transforms = (transform_spline_t*) malloc(((l1+l2 - abs(l1-l2))/2 + 1) * sizeof(transform_spline_t));
 
 	double* ks = (double*) calloc(size, sizeof(double));
-	sbt_descriptor_t* d = spherical_bessel_transform_setup(encut, 1e7, l1+l2, size, r, ks);
+	sbt_descriptor_t* d = spherical_bessel_transform_setup(encut, 1e5, l1+l2, size, r, ks);
+	//printf("MINK %lf\n", ks[0]);
 
 	density.ks = ks;
 
@@ -198,6 +199,7 @@ density_ft_elem_t get_transforms(ppot_t pp, double encut) {
 															rho, l1, m1, l2, m2, encut);
 					elem.densities[i*pp.total_projs+j].n1 = n1;
 					elem.densities[i*pp.total_projs+j].n2 = n2;
+					free(rho);
 					j++;
 				}
 			}
@@ -253,7 +255,8 @@ double complex get_momentum_matrix_element(pswf_t* wf, int* labels, double* coor
 		for (int i = 0; i < elem.total_projs; i++) {
 			for (int j = 0; j < elem.total_projs; j++) {
 				//printf("spher_momentum %d %d %d %lf %lf %lf\n", s, i, j, Gcart[0], Gcart[1], Gcart[2]);
-				if (mag(Gcart) <= 1e-10) {
+				if(0) {
+				//if (mag(Gcart) <= 1e-10) {
 					ppot_t pp = wf->pps[labels[s]];
 					ni = elem.densities[i*elem.total_projs+j].n1;
 					nj = elem.densities[i*elem.total_projs+j].n2;
@@ -304,6 +307,34 @@ void momentum_grid_size(pswf_t* wf, double* nb1max, double* nb2max, double* nb3m
 		  wf->lattice, wf->reclattice);
 }
 
+void grid_bounds(int* G_bounds, int* gdim, int* igall, int num_waves) {
+	int* G = NULL;
+	for (int w = 0; w < num_waves; w++) {
+		G = igall + 3*w;
+		if (G[0] < G_bounds[0]) G_bounds[0] = G[0];
+		else if (G[0] > G_bounds[1]) G_bounds[1] = G[0];
+		if (G[1] < G_bounds[2]) G_bounds[2] = G[1];
+		else if (G[1] > G_bounds[3]) G_bounds[3] = G[1];
+		if (G[2] < G_bounds[4]) G_bounds[4] = G[2];
+		else if (G[2] > G_bounds[5]) G_bounds[5] = G[2];
+	}
+	printf("%d %d %d %d %d %d %d\n", G_bounds[0], G_bounds[1], G_bounds[2], G_bounds[3], G_bounds[4], G_bounds[5], num_waves);
+	gdim[0] = G_bounds[1] - G_bounds[0] + 1;
+	gdim[1] = G_bounds[3] - G_bounds[2] + 1;
+	gdim[2] = G_bounds[5] - G_bounds[4] + 1;
+	printf("%d %d %d\n", gdim[0], gdim[1], gdim[2]);
+}
+
+void list_to_grid_map(int* grid, int* G_bounds, int* gdim, int* igall, int num_waves) {
+	int G[3];
+	for (int w = 0; w < num_waves; w++) {
+		G[0] = (igall[3*w+0]%gdim[0] + gdim[0]) % gdim[0];
+		G[1] = (igall[3*w+1]%gdim[1] + gdim[1]) % gdim[1];
+		G[2] = (igall[3*w+2]%gdim[2] + gdim[2]) % gdim[2];
+		grid[G[0]*gdim[1]*gdim[2] + G[1]*gdim[2] + G[2]] = w;
+	}
+}
+
 int get_momentum_grid(int* igall, pswf_t* wf, double nb1max, double nb2max, double nb3max, double encut) {
 
 	double* b1 = wf->reclattice + 0;
@@ -347,4 +378,144 @@ int get_momentum_grid(int* igall, pswf_t* wf, double nb1max, double nb2max, doub
 	ncnt++;
 
 	return ncnt;
+}
+
+void fill_grid(float complex* x, int* Gs, float complex* Cs, int* fftg, int numg) {
+
+	int gridsize = fftg[0] * fftg[1] * fftg[2];
+	for (int w = 0; w < gridsize; w++) {
+		x[w] = 0;
+	}
+	int g1 = 0, g2 = 0, g3 = 0;
+	for (int w = 0; w < numg; w++) {
+		g1 = (Gs[3*w+0]+fftg[0]) % fftg[0];
+		g2 = (Gs[3*w+1]+fftg[1]) % fftg[1];
+		g3 = (Gs[3*w+2]+fftg[2]) % fftg[2];
+		x[g1*fftg[1]*fftg[2] + g2*fftg[2] + g3] = Cs[w];
+	}
+	
+}
+
+void fullwf_reciprocal(double complex* Cs, int* igall, pswf_t* wf, int numg,
+	int band_num, int kpt_num, int* labels, double* coords) {
+
+	int G[3];
+	int g1, g2, g3;
+	double magG;
+	double Gcart[3];
+	int size;
+	double* k;
+	double* f;
+	double** spline;
+	ppot_t pp;
+	int p;
+	double complex sph_val;
+	double complex phase;
+	int l;
+	double cart_coord[3];
+	double inv_sqrt_vol = pow(determinant(wf->lattice), -0.5);
+
+	int fftg[3];
+	fftg[0] = wf->G_bounds[1] - wf->G_bounds[0] + 1;
+	fftg[1] = wf->G_bounds[3] - wf->G_bounds[2] + 1;
+	fftg[2] = wf->G_bounds[5] - wf->G_bounds[4] + 1;
+	int gridsize = fftg[0] * fftg[1] * fftg[2];
+	float complex* x = (float complex*) malloc(gridsize * sizeof(float complex));
+	kpoint_t* kpt = wf->kpts[kpt_num];
+	band_t* band = wf->kpts[kpt_num]->bands[band_num];
+	fill_grid(x, kpt->Gs, band->Cs, fftg, kpt->num_waves);
+
+	for (int w = 0; w < numg; w++) {
+		G[0] = igall[3*w+0];
+		G[1] = igall[3*w+1];
+		G[2] = igall[3*w+2];
+		g1 = (G[0]+fftg[0]) % fftg[0];
+		g2 = (G[1]+fftg[1]) % fftg[1];
+		g3 = (G[2]+fftg[2]) % fftg[2];
+		if (   G[0] >= wf->G_bounds[0] && G[0] <= wf->G_bounds[1]
+			&& G[1] >= wf->G_bounds[2] && G[1] <= wf->G_bounds[3]
+			&& G[2] >= wf->G_bounds[4] && G[2] <= wf->G_bounds[5]) {
+			Cs[w] += x[g1*fftg[1]*fftg[2] + g2*fftg[2] + g3];
+		}
+
+		Gcart[0] = G[0] + kpt->k[0];
+		Gcart[1] = G[1] + kpt->k[1];
+		Gcart[2] = G[2] + kpt->k[2];
+		frac_to_cartesian(Gcart, wf->reclattice);
+		magG = mag(Gcart);
+
+		for (int s = 0; s < wf->num_sites; s++) {
+			pp = wf->pps[labels[s]];
+			p = 0;
+			size = pp.wave_gridsize;
+			k = pp.kwave_grid;
+
+			//cart_coord[0] = coords[3*s+0];
+			//cart_coord[1] = coords[3*s+1];
+			//cart_coord[2] = coords[3*s+2];
+			//frac_to_cartesian(cart_coord, wf->lattice);
+			phase = G[0] * coords[3*s+0] + G[1] * coords[3*s+1] + G[2] * coords[3*s+2];
+			phase = cexp(-2 * PI * I * phase);
+
+			for (int n = 0; n < band->projections[s].num_projs; n++) {
+				l = pp.funcs[n].l;
+				for (int m = -l; m <= l; m++) {
+					f = pp.funcs[n].kwave;
+					spline = pp.funcs[n].kwave_spline;
+
+					Cs[w] += band->projections[s].overlaps[p]
+							* kwave_value(k, f, spline, size, l, m, Gcart)
+							* 4 * PI * cpow(-I, l) * phase
+							* inv_sqrt_vol;
+					p++;
+				}
+			} 
+		}
+	}
+
+	free(x);
+}
+
+double complex kwave_value(double* x, double* wave, double** spline, int size,
+	int l, int m, double* pos) {
+	double r = mag(pos);
+
+	double radial_val = wave_interpolate(r, size, x, wave, spline);
+
+	if (r==0) return Ylm(l, m, 0, 0) * radial_val;
+	double theta = 0, phi = 0;
+	theta = acos(pos[2]/r);
+	if (r - fabs(pos[2]) == 0) phi = 0;
+	else phi = acos(pos[0] / pow(pos[0]*pos[0] + pos[1]*pos[1], 0.5));
+	if (pos[1] < 0) phi = 2*PI - phi;
+	double complex sph_val = Ylm(l, m, theta, phi);
+	return radial_val * sph_val;
+}
+
+double complex quick_overlap(int* dG, double complex* C1s, double complex* C2s, int numg,
+	int* Gs, int* gmap, int* G_bounds, int* gdim) {
+
+	int wp;
+	int GP[3];
+	double complex total = 0;
+	for (int w = 0; w < numg; w++) {
+		GP[0] = Gs[3*w+0] + dG[0];
+		GP[1] = Gs[3*w+1] + dG[1];
+		GP[2] = Gs[3*w+2] + dG[2];
+
+		if (   GP[0] >= G_bounds[0] && GP[0] <= G_bounds[1]
+			&& GP[1] >= G_bounds[2] && GP[1] <= G_bounds[3]
+			&& GP[2] >= G_bounds[4] && GP[2] <= G_bounds[5]) {
+			GP[0] = (GP[0]%gdim[0] + gdim[0]) % gdim[0];
+			GP[1] = (GP[1]%gdim[1] + gdim[1]) % gdim[1];
+			GP[2] = (GP[2]%gdim[2] + gdim[2]) % gdim[2];
+			wp = gmap[GP[0]*gdim[1]*gdim[2] + GP[1]*gdim[2] + GP[2]];
+			if (wp >= 0) {
+				total += conj(C1s[wp]) * C2s[w];
+			}
+		}
+	}
+
+	return total;
+
 }

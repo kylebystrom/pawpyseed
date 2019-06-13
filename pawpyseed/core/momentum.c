@@ -12,6 +12,35 @@
 #define c 0.262465831
 #define PI 3.14159265358979323846
 
+void free_transform_spline_list(transform_spline_t* transforms, int num_transforms) {
+	for (int i = 0; i < num_transforms; i++) {
+		free(transforms[i].transform);
+		free(transforms[i].spline[0]);
+		free(transforms[i].spline[1]);
+		free(transforms[i].spline[2]);
+		free(transforms[i].spline);
+	}
+	free(transforms);
+}
+
+void free_density_ft_list(density_ft_t* densities, int total_projs) {
+	int total_densities = total_projs * total_projs;
+	for (int i = 0; i < total_densities; i++) {
+		int num_transforms = (densities[i].l1 + densities[i].l2
+							- abs(densities[i].l1 - densities[i].l2)) / 2 + 1;
+		free(densities[i].ks);
+		free_transform_spline_list(densities[i].transforms, num_transforms);
+	}
+	free(densities);
+}
+
+void free_density_ft_elem_list(density_ft_elem_t* elems, int num_elems) {
+	for (int i = 0; i < num_elems; i++) {
+		free_density_ft_list(elems[i].densities, elems[i].total_projs);
+	}
+	free(elems);
+}
+
 float complex pseudo_momentum(int* GP, int* G_bounds, double* lattice,
 	int* G1s, float complex* C1s, int num_waves1,
 	int* G2s, float complex* C2s, int num_waves2, int* fftgrid) {
@@ -64,6 +93,7 @@ void mul_partial_waves(double* product, int size, double* r, double* f1, double*
 }
 
 void make_rho(double* rho, int size, double* grid, double* aewave1, double* pswave1, double* aewave2, double* pswave2) {
+
 	for (int i = 0; i < size; i++) {
 		rho[i] = (aewave1[i] * aewave2[i] - pswave1[i] * pswave2[i]) / grid[i];
 	}
@@ -80,7 +110,7 @@ density_ft_t spher_transforms(int size, double* r, double* f, int l1, int m1, in
 	density.transforms = (transform_spline_t*) malloc(((l1+l2 - abs(l1-l2))/2 + 1) * sizeof(transform_spline_t));
 
 	double* ks = (double*) calloc(size, sizeof(double));
-	sbt_descriptor_t* d = spherical_bessel_transform_setup(encut, 1e5, l1+l2, size, r, ks);
+	sbt_descriptor_t* d = spherical_bessel_transform_setup(encut, 1e4, l1+l2, size, r, ks);
 	//printf("MINK %lf\n", ks[0]);
 
 	density.ks = ks;
@@ -195,7 +225,8 @@ density_ft_elem_t get_transforms(ppot_t pp, double encut) {
 					double* rho = (double*) malloc(pp.wave_gridsize * sizeof(double));
 					make_rho(rho, pp.wave_gridsize, pp.wave_grid, func1.aewave,
 							func1.pswave, func2.aewave, func2.pswave);
-					elem.densities[i*pp.total_projs+j] = spher_transforms(pp.wave_gridsize, pp.wave_grid,
+					elem.densities[i*pp.total_projs+j] = spher_transforms(pp.wave_gridsize,
+															pp.wave_grid,
 															rho, l1, m1, l2, m2, encut);
 					elem.densities[i*pp.total_projs+j].n1 = n1;
 					elem.densities[i*pp.total_projs+j].n2 = n2;
@@ -388,9 +419,9 @@ void fill_grid(float complex* x, int* Gs, float complex* Cs, int* fftg, int numg
 	}
 	int g1 = 0, g2 = 0, g3 = 0;
 	for (int w = 0; w < numg; w++) {
-		g1 = (Gs[3*w+0]+fftg[0]) % fftg[0];
-		g2 = (Gs[3*w+1]+fftg[1]) % fftg[1];
-		g3 = (Gs[3*w+2]+fftg[2]) % fftg[2];
+		g1 = (Gs[3*w+0]%fftg[0] + fftg[0]) % fftg[0];
+		g2 = (Gs[3*w+1]%fftg[1] + fftg[1]) % fftg[1];
+		g3 = (Gs[3*w+2]%fftg[2] + fftg[2]) % fftg[2];
 		x[g1*fftg[1]*fftg[2] + g2*fftg[2] + g3] = Cs[w];
 	}
 	
@@ -438,9 +469,9 @@ void fullwf_reciprocal(double complex* Cs, int* igall, pswf_t* wf, int numg,
 			Cs[w] += x[g1*fftg[1]*fftg[2] + g2*fftg[2] + g3];
 		}
 
-		Gcart[0] = G[0] + kpt->k[0];
-		Gcart[1] = G[1] + kpt->k[1];
-		Gcart[2] = G[2] + kpt->k[2];
+		Gcart[0] = -G[0] - kpt->k[0];
+		Gcart[1] = -G[1] - kpt->k[1];
+		Gcart[2] = -G[2] - kpt->k[2];
 		frac_to_cartesian(Gcart, wf->reclattice);
 		magG = mag(Gcart);
 
@@ -465,8 +496,8 @@ void fullwf_reciprocal(double complex* Cs, int* igall, pswf_t* wf, int numg,
 
 					Cs[w] += band->projections[s].overlaps[p]
 							* kwave_value(k, f, spline, size, l, m, Gcart)
-							* 4 * PI * cpow(-I, l) * phase
-							* inv_sqrt_vol;
+							* cpow(I, l) * phase
+							* 4 * PI * inv_sqrt_vol;
 					p++;
 				}
 			} 

@@ -383,6 +383,24 @@ class Wavefunction(pawpyc.CWavefunction):
 			self.update_dim(np.array(dim))
 		return self._get_realspace_state(b, k, s, remove_phase)
 
+	def get_state_realspace_density(self, b, k, s, dim=None):
+		"""
+		Returns the real and imaginary parts of a given band.
+		Args:
+			b (int): band number
+			k (int): kpoint number
+			s (int): spin number
+			dim (numpy array of 3 ints): dimensions of the FFT grid
+		Returns:
+			A 3D array (indexed by x,y,z where x,y,z are fractional coordinates)
+				with complex double values for the realspace wavefunction
+		"""
+
+		self.check_c_projectors()
+		if dim != None:
+			self.update_dim(np.array(dim))
+		return self._get_realspace_state_density(b, k, s)
+
 	def get_realspace_density(self, dim = None, bands = None):
 		"""
 		Returns the all electron charge density.

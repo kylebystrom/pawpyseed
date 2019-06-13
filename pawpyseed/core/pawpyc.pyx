@@ -430,6 +430,20 @@ cdef class CWavefunction(PseudoWavefunction):
 		res.shape = self.dimv
 		return res
 
+	def _get_realspace_state_density(self, int b, int k, int s, remove_phase=False):
+		if b < 0 or b >= self.nband:
+			raise ValueError("Invalid band choice")
+		if k < 0 or k >= self.nwk:
+			raise ValueError("Invalid k-point choice")
+		if s < 0 or s >= self.nspin:
+			raise ValueError("Invalid spin choice")
+		res = np.zeros(self.fgridsize, dtype = np.float64, order='C')
+		cdef double [::1] resv = res
+		ppc.ae_state_density(&resv[0], b, k+s*self.nwk,
+			self.wf_ptr, &self.fdimv[0], &self.nums[0], &self.coords[0])
+		res.shape = self.fdimv
+		return res
+
 	def _get_realspace_density(self, bands = None):
 		res = np.zeros(self.fgridsize, dtype = np.float64, order='C')
 		cdef double[::1] resv = res
@@ -703,6 +717,9 @@ cdef class CMomentumMatrix:
 		self.momentum_encut = encut
 		self._setup_momentum_grid()
 		self._setup_transforms()
+
+	def __dealloc__(self):
+		ppc.free_density_ft_elem_list(self.elem_density_transforms, self.wf.num_elems)
 
 	def _setup_momentum_grid(self):
 		cdef double nb1max = 0

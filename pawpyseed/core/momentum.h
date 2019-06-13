@@ -30,6 +30,12 @@ typedef struct density_ft_elem {
 	density_ft_t* densities;
 } density_ft_elem_t;
 
+void free_transform_spline_list(transform_spline_t* transforms, int num_transforms);
+
+void free_density_ft_list(density_ft_t* densities, int total_projs);
+
+void free_density_ft_elem_list(density_ft_elem_t* elems, int num_elems);
+
 float complex pseudo_momentum(int* GP, int* G_bounds, double* lattice,
 	int* G1s, float complex* C1s, int num_waves1,
 	int* G2s, float complex* C2s, int num_waves2, int* fftg);

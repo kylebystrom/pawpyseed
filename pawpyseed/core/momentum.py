@@ -4,6 +4,7 @@ from pawpyseed.core import pawpyc
 class MomentumMatrix(pawpyc.CMomentumMatrix):
 
 	def __init__(self, wf, encut = None):
+		wf.check_c_projectors()
 		if encut == None:
 			encut = 4 * wf.encut
 		super(MomentumMatrix, self).__init__(wf, encut)

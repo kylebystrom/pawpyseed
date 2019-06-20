@@ -273,10 +273,10 @@ double complex get_momentum_matrix_element(pswf_t* wf, int* labels, double* coor
 	Gcart[2] = kpoint1->k[2] - kpoint2->k[2] + G[2];
 	frac_to_cartesian(Gcart, wf->reclattice);
 
-	if ((GP[1] == 0) && (GP[2] == 0)) {
-		printf("CHECK PSEUDO MOM %lf %lf %lf %lf %lf\n", creal(total), cimag(total),
-			Gcart[0], Gcart[1], Gcart[2]);
-	}
+	//if ((GP[1] == 0) && (GP[2] == 0)) {
+	//	printf("CHECK PSEUDO MOM %lf %lf %lf %lf %lf\n", creal(total), cimag(total),
+	//		Gcart[0], Gcart[1], Gcart[2]);
+	//}
 
 	double complex phase;
 	int ni, nj;
@@ -323,8 +323,8 @@ void get_momentum_matrix(double complex* matrix, int numg, int* igall,
 	//double complex* matrix = (double complex*) malloc(ncnt * sizeof(double complex));
 	// NEED TO GIVE BACK INFO ABOUT ncnt
 	for (int i = 0; i < numg; i++) {
-		if (i%100==0)
-			printf("ayo %d %d\n", i, numg);
+		//if (i%100==0)
+		//	printf("ayo %d %d\n", i, numg);
 		int* GP = igall + 3*i;
 		matrix[i] = get_momentum_matrix_element(wf, labels, coords, band1, kpt1, spin1,
 												band2, kpt2, spin2, GP, transforms_list);

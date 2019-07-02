@@ -80,11 +80,11 @@ class Pseudopotential:
 			corechgstr, pspotstr = corechgstr.split("pspotential", 1)
 		pspotstr, pscorechgstr = pspotstr.split("core charge-density (pseudized)", 1)
 		self.grid = self.make_nums(gridstr)
-		self.aepotential = self.make_nums(aepotstr)
-		self.aecorecharge = self.make_nums(corechgstr)
-		self.kinetic = self.make_nums(kenstr)
-		self.pspotential = self.make_nums(pspotstr)
-		self.pscorecharge = self.make_nums(pscorechgstr)
+		#self.aepotential = self.make_nums(aepotstr)
+		#self.aecorecharge = self.make_nums(corechgstr)
+		#self.kinetic = self.make_nums(kenstr)
+		#self.pspotential = self.make_nums(pspotstr)
+		#self.pscorecharge = self.make_nums(pscorechgstr)
 
 		augstr, uccstr = auguccstr.split('uccopancies in atom', 1)
 		head, augstr = augstr.split('augmentation charges (non sperical)', 1)
@@ -105,6 +105,7 @@ class Pseudopotential:
 		except:
 			corechgstr = "0 0"
 			settingstr, localstr = topstr.split("local part", 1)
+		"""
 		if "gradient corrections used for XC" in localstr:
 			localstr, self.gradxc = localstr.split("gradient corrections used for XC", 1)
 			self.gradxc = int(self.gradxc)
@@ -115,6 +116,7 @@ class Pseudopotential:
 		self.localpart = self.localpart[1:]
 		self.coredensity = self.make_nums(corechgstr)
 		self.atomicdensity = self.make_nums(atpschgstr)
+		"""
 
 		for projstr in projstrs:
 			lst = projstr.split("Reciprocal Space Part")
@@ -132,7 +134,7 @@ class Pseudopotential:
 
 		settingstr, projgridstr = settingstr.split("STEP   =")
 		self.ndata = int(settingstr.split()[-1])
-		projgridstr = projgridstr.split("END")[0]
+		#projgridstr = projgridstr.split("END")[0]
 		self.projgrid = np.arange(len(self.realprojs[0])) * self.rmax / len(self.realprojs[0])
 		self.step = (self.projgrid[0], self.projgrid[1])
 

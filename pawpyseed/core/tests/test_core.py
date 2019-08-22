@@ -133,6 +133,12 @@ class TestC:
 		print (ks[180])
 		print (res[180])
 		assert_almost_equal(integral, res[180], decimal=3)
+		perc = ks**2 * res**2
+		perc = np.cumsum(perc)
+		perc /= np.max(perc)
+		import matplotlib.pyplot as plt
+		plt.plot(ks, perc)
+		plt.show()
 
 	def test_radial(self):
 		try:
@@ -236,7 +242,7 @@ class TestC:
 		b = 1
 		A = [0,0,0]
 		Bs = ([0,0,0], [0.5,0.5,0.5], [-0.5,0.5,-0.5], [0.123,0.543,-0.96])
-		r = np.exp(np.linspace(np.log(0.001),np.log(3),300))
+		r = np.exp(np.linspace(np.log(0.001),np.log(4), 600))
 		init_f1 = np.exp(-a * r**2)
 		init_f2 = np.exp(-b * r**2)
 		for B in Bs:
@@ -265,11 +271,12 @@ class TestC:
 					ov2 = pawpyc.reciprocal_offsite_wave_overlap(Barr,
 						r, f1, r, f2,
 						l1, m1, l2, m2)
-					#print(ov1, ov2)
+					if (np.abs(ov1) > 1e-10 and (np.abs(ov1 - ov2))/np.abs(ov1) > 1e-4):
+						print(l1, m1, l2, m2, B, ov1, ov2)
 					if np.abs(ov1) < 1e-10:
 						assert_almost_equal(np.abs(ov2), 0, 10)
 					else:
-						assert_almost_equal((np.abs(ov1 - ov2))/np.abs(ov1), 0, 2)
+						assert_almost_equal((np.abs(ov1 - ov2))/np.abs(ov1), 0, 4)
 
 	@nottest
 	def test_sphagain(self):
@@ -483,7 +490,7 @@ class TestPy:
 		res = wf.write_density_realspace(filename="BAND4DENS", bands=4)
 		#os.remove('PYAECCAR')
 		print("DENS shape", res.shape)
-		assert_almost_equal(np.sum(res)*wf.structure.lattice.volume/np.cumprod(res.shape)[-1], 1)
+		assert_almost_equal(np.sum(res)*wf.structure.lattice.volume/np.cumprod(res.shape)[-1], 1, 4)
 
 	def test_pseudoprojector(self):
 		print("TEST PSEUDO")

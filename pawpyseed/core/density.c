@@ -26,7 +26,7 @@ double* ncl_ae_state_density(int BAND_NUM, pswf_t* wf, int* fftg, int* labels, d
     return P;	
 }
 */
-/*
+
 void ae_state_density(double* P, int BAND_NUM, int KPOINT_NUM, pswf_t* wf,
 	int* fftg, int* labels, double* coords) {
 
@@ -40,8 +40,8 @@ void ae_state_density(double* P, int BAND_NUM, int KPOINT_NUM, pswf_t* wf,
 	}
 	mkl_free(x);
 }
-*/
 
+/*
 void ae_state_density(double* P, int BAND_NUM, int KPOINT_NUM, pswf_t* wf,
 	int* fftg, int* labels, double* coords) {
 
@@ -153,6 +153,7 @@ void ae_state_density(double* P, int BAND_NUM, int KPOINT_NUM, pswf_t* wf,
 	}
 	mkl_free(x);
 }
+*/
 
 void ae_chg_density(double* P, pswf_t* wf, int* fftg, int* labels, double* coords) {
 

@@ -381,7 +381,7 @@ class Wavefunction(pawpyc.CWavefunction):
 		"""
 
 		self.check_c_projectors()
-		if dim != None:
+		if dim is not None:
 			self.update_dim(np.array(dim))
 		return self._get_realspace_state(b, k, s, remove_phase)
 
@@ -399,8 +399,8 @@ class Wavefunction(pawpyc.CWavefunction):
 		"""
 
 		self.check_c_projectors()
-		if dim != None:
-			self.update_dim(np.array(dim))
+		if dim is not None:
+			self.update_dim(np.array(dim)//2)
 		return self._get_realspace_state_density(b, k, s)
 
 	def get_realspace_density(self, dim = None, bands = None):

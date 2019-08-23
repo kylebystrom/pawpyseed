@@ -24,6 +24,7 @@ for l1 in range(4):
 					val2 = N(wigner_3j(l1,l2,l3,0,0,0)) * N(wigner_3j(l1,l2,l3,-m1,m2,m1-m2))
 					val3 = np.sqrt((2*l1+1)*(2*l2+1)*(2*l3+1)/4/np.pi)
 					facs[l1][l2][(l3-abs(l1-l2))//2][l1+m1][m2] = val2 * val3
+					print(val, val2 * val3)
 
 f = open('gaunt.c', 'w')
 f.write('#include "quadrature.h"\n\n')

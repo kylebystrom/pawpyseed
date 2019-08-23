@@ -39,34 +39,47 @@ class TestMomentumMatrix:
 	def initiate_wf_and_mm(self):
 		SIZE = 60
 		self.wf = Wavefunction.from_directory('.')
-		self.realspace_wf = self.wf.get_state_realspace(0,0,0, dim=(SIZE,SIZE,SIZE), remove_phase=True)
-		self.realspace_chg = np.abs(self.realspace_wf)**2
-		self.recipspace_wf = np.fft.fftn(self.realspace_wf) / SIZE**3 * np.sqrt(wf.structure.volume)
-		self.recipspace_chg = np.fft.fftn(self.realspace_chg) / SIZE**3 * wf.structure.volume
-		self.mm_real = MomentumMatrix(wf, encut=3000)
-		self.mm_direct = MomentumMatrix(wf)
+		vol = self.wf.structure.volume
+		self.realspace_wf = self.wf.get_state_realspace(0,0,0,
+					dim=(SIZE,SIZE,SIZE), remove_phase=True)
+		#self.realspace_chg = np.abs(self.realspace_wf)**2
+		self.realspace_chg = self.wf.get_state_realspace_density(0,0,0,
+									dim=(SIZE,SIZE,SIZE))
+		self.recipspace_wf = np.fft.fftn(self.realspace_wf) / SIZE**3 * np.sqrt(vol)
+		self.recipspace_chg = np.fft.fftn(self.realspace_chg) / SIZE**3 * vol
+		self.mm_real = MomentumMatrix(self.wf, encut=3000)
+		self.mm_direct = MomentumMatrix(self.wf)
 
 	def teardown(self):
 		os.chdir(self.currdir)
 
 	def test_get_momentum_matrix_elems(self):
 		res = self.mm_direct.get_momentum_matrix_elems(0,0,0,0,0,0)
-		grid = self.mm_real.momentum_grid
+		grid = self.mm_direct.momentum_grid
 		for i in range(grid.shape[0]):
-		    if (np.abs(grid[i]) < 2).all():
-		        print(grid[i], res[i], self.recipspace_chg[grid[i][0],grid[i][1],grid[i][2]])
+			if (np.abs(grid[i]) < 3).all():
+				#print(grid[i], res[i], self.recipspace_chg[grid[i][0],grid[i][1],grid[i][2]])
+				assert_almost_equal(res[i],
+					self.recipspace_chg[grid[i][0],grid[i][1],grid[i][2]],
+					3)
 
 	def test_get_reciprocal_fullfw(self):
 		res = self.mm_real.get_reciprocal_fullfw(0,0,0)
 		print("check size", np.sum(np.abs(res)**2))
 		grid = self.mm_real.momentum_grid
 		for i in range(grid.shape[0]):
-		    if (np.abs(grid[i]) < 2).all():
-		        print(grid[i], res[i], self.recipspace_wf[grid[i][0],grid[i][1],grid[i][2]])
+			if (np.abs(grid[i]) < 2).all():
+				#print(grid[i], res[i], self.recipspace_wf[grid[i][0],grid[i][1],grid[i][2]])
+				assert_almost_equal(res[i],
+					self.recipspace_wf[grid[i][0],grid[i][1],grid[i][2]],
+					3)
 
 	def test_g_from_wf(self):
 		grid = self.mm_real.momentum_grid
 		for i in range(grid.shape[0]):
-		    if (np.abs(grid[i]) < 2).all():
-		        print(grid[i], self.mm_real.g_from_wf(0,0,0,0,0,0,grid[i]), self.recipspace_chg[grid[i][0],grid[i][1],grid[i][2]])
+			if (np.abs(grid[i]) < 2).all():
+				#print(grid[i], self.mm_real.g_from_wf(0,0,0,0,0,0,grid[i]), self.recipspace_chg[grid[i][0],grid[i][1],grid[i][2]])
+				assert_almost_equal(self.mm_real.g_from_wf(0,0,0,0,0,0,grid[i]),
+					self.recipspace_chg[grid[i][0],grid[i][1],grid[i][2]],
+					3)
 		

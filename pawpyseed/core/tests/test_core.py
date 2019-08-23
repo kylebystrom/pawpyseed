@@ -136,9 +136,6 @@ class TestC:
 		perc = ks**2 * res**2
 		perc = np.cumsum(perc)
 		perc /= np.max(perc)
-		import matplotlib.pyplot as plt
-		plt.plot(ks, perc)
-		plt.show()
 
 	def test_radial(self):
 		try:
@@ -491,6 +488,16 @@ class TestPy:
 		#os.remove('PYAECCAR')
 		print("DENS shape", res.shape)
 		assert_almost_equal(np.sum(res)*wf.structure.lattice.volume/np.cumprod(res.shape)[-1], 1, 4)
+
+	def test_state_wf_and_density(self):
+		wf = Wavefunction.from_directory('.')
+		chg = wf.get_state_realspace_density(0,0,0)
+		chg_from_wf = np.abs(wf.get_state_realspace(0, 0, 0, dim=wf.dim*2))**2
+		assert_equal(chg.shape, chg_from_wf.shape)
+		assert_almost_equal(np.sum(chg_from_wf)/np.cumprod(chg_from_wf.shape)[-1], 1, 3)
+		assert_almost_equal(np.sum(chg)/np.cumprod(chg.shape)[-1], 1, 3)
+		reldiff = np.sqrt(np.mean(np.abs(chg-chg_from_wf)))
+		assert_almost_equal(reldiff, 0, decimal=2)
 
 	def test_pseudoprojector(self):
 		print("TEST PSEUDO")

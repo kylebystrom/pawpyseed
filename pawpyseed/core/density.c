@@ -26,7 +26,7 @@ double* ncl_ae_state_density(int BAND_NUM, pswf_t* wf, int* fftg, int* labels, d
     return P;	
 }
 */
-
+/*
 void ae_state_density(double* P, int BAND_NUM, int KPOINT_NUM, pswf_t* wf,
 	int* fftg, int* labels, double* coords) {
 
@@ -37,6 +37,119 @@ void ae_state_density(double* P, int BAND_NUM, int KPOINT_NUM, pswf_t* wf,
 		wf, fftg, labels, coords);
 	for (int i = 0; i < gridsize; i++) {
 		P[i] += creal(x[i] * conj(x[i]));
+	}
+	mkl_free(x);
+}
+*/
+
+void ae_state_density(double* P, int BAND_NUM, int KPOINT_NUM, pswf_t* wf,
+	int* fftg, int* labels, double* coords) {
+
+	ppot_t* pps = wf->pps;
+	int num_sites = wf->num_sites;
+
+	double complex* x = (double complex*) mkl_malloc(fftg[0]*fftg[1]*fftg[2]*sizeof(double complex), 64);
+	fft3d(x, wf->G_bounds, wf->lattice, wf->kpts[KPOINT_NUM]->k,
+		wf->kpts[KPOINT_NUM]->Gs, wf->kpts[KPOINT_NUM]->bands[BAND_NUM]->Cs,
+		wf->kpts[KPOINT_NUM]->bands[BAND_NUM]->num_waves, fftg);
+	//printf("FINISH FT\n");
+	double* lattice = wf->lattice;
+	double vol = determinant(lattice);
+	for (int i = 0; i < fftg[0]; i++) {
+		double frac[3] = {0,0,0};
+		double kdotr = 0;
+		for (int j = 0; j < fftg[1]; j++) {
+			for (int k = 0; k < fftg[2]; k++) {
+				P[i*fftg[1]*fftg[2] + j*fftg[2] + k] = creal(x[i*fftg[1]*fftg[2] + j*fftg[2] + k]
+													* conj(x[i*fftg[1]*fftg[2] + j*fftg[2] + k]));
+			}
+		}
+	}
+
+	for (int p = 0; p < num_sites; p++) {
+		projection_t pros = wf->kpts[KPOINT_NUM]->bands[BAND_NUM]->projections[p];
+		//printf("READ PROJECTIONS\n");
+		ppot_t pp = pps[labels[p]];
+		double rmax = pp.wave_grid[pp.wave_gridsize-1];
+		double res[3] = {0,0,0};
+		vcross(res, lattice+3, lattice+6);
+		int grid1 = (int) (mag(res) * rmax / vol * fftg[0]) + 1;
+		vcross(res, lattice+0, lattice+6);
+		int grid2 = (int) (mag(res) * rmax / vol * fftg[1]) + 1;
+		vcross(res, lattice+0, lattice+3);
+		int grid3 = (int) (mag(res) * rmax / vol * fftg[2]) + 1;
+		int center1 = (int) round(coords[3*p+0] * fftg[0]);
+		int center2 = (int) round(coords[3*p+1] * fftg[1]);
+		int center3 = (int) round(coords[3*p+2] * fftg[2]);
+		//printf("FINISH SETUP %d\n%d %d %d\n%d %d %d\n",p, center1, center2, center3, grid1, grid2, grid3);
+		for (int i = -grid1 + center1; i <= grid1 + center1; i++) {
+			double frac[3] = {0,0,0};
+			double testcoord[3] = {0,0,0};
+			int ii=0, jj=0, kk=0;
+			double phasecoord[3] = {0,0,0};
+			double phase = 0;
+			for (int j = -grid2 + center2; j <= grid2 + center2; j++) {
+				for (int k = -grid3 + center3; k <= grid3 + center3; k++) {
+					testcoord[0] = (double) i / fftg[0] - coords[3*p+0];
+					testcoord[1] = (double) j / fftg[1] - coords[3*p+1];
+					testcoord[2] = (double) k / fftg[2] - coords[3*p+2];
+					frac_to_cartesian(testcoord, lattice);
+					if (mag(testcoord) < rmax) {
+						ii = (i%fftg[0] + fftg[0]) % fftg[0];
+						jj = (j%fftg[1] + fftg[1]) % fftg[1];
+						kk = (k%fftg[2] + fftg[2]) % fftg[2];
+						frac[0] = (double) ii / fftg[0];
+						frac[1] = (double) jj / fftg[1];
+						frac[2] = (double) kk / fftg[2];
+						phasecoord[0] = coords[3*p+0] + ((ii-i) / fftg[0]);
+						phasecoord[1] = coords[3*p+1] + ((jj-j) / fftg[1]);
+						phasecoord[2] = coords[3*p+2] + ((kk-k) / fftg[2]);
+						phase = dot(phasecoord, wf->kpts[KPOINT_NUM]->k);
+						for (int n = 0; n < pros.total_projs; n++) {
+							for (int m = 0; m < pros.total_projs; m++) {
+								P[ii*fftg[1]*fftg[2] + jj*fftg[2] + kk] += creal(
+									wave_value2(pp.wave_grid,
+									pp.funcs[pros.ns[n]].aewave,
+									pp.funcs[pros.ns[n]].aewave_spline,
+									pp.wave_gridsize,
+									pros.ls[n], pros.ms[n],
+									testcoord)
+									* conj(wave_value2(pp.wave_grid,
+									pp.funcs[pros.ns[m]].aewave,
+									pp.funcs[pros.ns[m]].aewave_spline,
+									pp.wave_gridsize,
+									pros.ls[m], pros.ms[m],
+									testcoord))
+									* pros.overlaps[n] * conj(pros.overlaps[m])
+									);
+
+								P[ii*fftg[1]*fftg[2] + jj*fftg[2] + kk] -= creal(
+									wave_value2(pp.wave_grid,
+									pp.funcs[pros.ns[n]].pswave,
+									pp.funcs[pros.ns[n]].pswave_spline,
+									pp.wave_gridsize,
+									pros.ls[n], pros.ms[n],
+									testcoord)
+									* conj(wave_value2(pp.wave_grid,
+									pp.funcs[pros.ns[m]].pswave,
+									pp.funcs[pros.ns[m]].pswave_spline,
+									pp.wave_gridsize,
+									pros.ls[m], pros.ms[m],
+									testcoord))
+									* pros.overlaps[n] * conj(pros.overlaps[m])
+									);
+							}
+								
+							//	wave_value(pp.funcs[pros.ns[n]],
+							//	pp.wave_gridsize, pp.wave_grid,
+							//	pros.ms[n], coords+3*p, frac, lattice)
+							//	* pros.overlaps[n] * cexp(2*PI*I*phase);
+							//	* Ylm(thetaphi[0], thetaphi[1]);
+						}
+					}
+				}
+			}
+		}
 	}
 	mkl_free(x);
 }
@@ -170,7 +283,6 @@ void realspace_state(double complex* x, int BAND_NUM, int KPOINT_NUM,
 					testcoord[2] = (double) k / fftg[2] - coords[3*p+2];
 					frac_to_cartesian(testcoord, lattice);
 					if (mag(testcoord) < rmax) {
-						
 						ii = (i%fftg[0] + fftg[0]) % fftg[0];
 						jj = (j%fftg[1] + fftg[1]) % fftg[1];
 						kk = (k%fftg[2] + fftg[2]) % fftg[2];

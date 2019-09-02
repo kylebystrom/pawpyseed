@@ -81,7 +81,8 @@ class NCLWavefunction(pawpyc.CNCLWavefunction, Wavefunction):
 	def desymmetrized_copy(self, allkpts = None, weights = None):
 		raise NotImplementedError()
 
-	def write_state_realspace(self, b, k, s, fileprefix = "", dim=None, scale = 1):
+	def write_state_realspace(self, b, k, s, fileprefix = "", dim=None, scale = 1,
+								remove_phase=False):
 		"""
 		Writes the real and imaginary parts of a given band to two files,
 		prefixed by fileprefix
@@ -95,6 +96,11 @@ class NCLWavefunction(pawpyc.CNCLWavefunction, Wavefunction):
 			scale (scalar, 1): number to multiply the realspace wavefunction by.
 				For example, VASP multiplies charge density by the volume
 				of the structure.
+			remove_phase (False): If True, removes the e^(ikr) phase
+				from the wavefunction (this does not necessarily mean
+				the wavefunction is real). This is useful if you want
+				to visualize the wavefunction because the e^(ikr) phase
+				makes the wavefunction non-periodic
 		Returns:
 			A 3D array (indexed by x,y,z where x,y,z are fractional coordinates)
 				with complex double values for the realspace wavefunction

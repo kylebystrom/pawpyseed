@@ -430,7 +430,7 @@ cdef class CWavefunction(PseudoWavefunction):
 		res.shape = self.dimv
 		return res
 
-	def _get_realspace_state_density(self, int b, int k, int s, remove_phase=False):
+	def _get_realspace_state_density(self, int b, int k, int s):
 		if b < 0 or b >= self.nband:
 			raise ValueError("Invalid band choice")
 		if k < 0 or k >= self.nwk:
@@ -550,11 +550,20 @@ cdef class CNCLWavefunction(CWavefunction):
 	# HELPER FUNCTION ROUTINES FOR REAL SPACE PROJECTIONS #
 	#-----------------------------------------------------#
 
-	def _get_realspace_state(self, int b, int k, int s):
+	def _get_realspace_state(self, int b, int k, int s, remove_phase=False):
+		if b < 0 or b >= self.nband:
+			raise ValueError("Invalid band choice")
+		if k < 0 or k >= self.nwk:
+			raise ValueError("Invalid k-point choice")
+		if s < 0 or s >= self.nspin:
+			raise ValueError("Invalid spin choice")
 		res = np.zeros(self.gridsize * 2, dtype = np.complex128, order='C')
 		cdef double complex[::1] resv = res
 		ppc.ncl_realspace_state(&resv[0], b, k+s*self.nwk,
 			self.wf_ptr, &self.dimv[0], &self.nums[0], &self.coords[0])
+		if remove_phase:
+			ppc.remove_phase(&resv[0], k+s*self.nwk, self.wf_ptr, &self.dimv[0])
+			ppc.remove_phase(&resv[self.gridsize], k+s*self.nwk, self.wf_ptr, &self.dimv[0])
 		res0, res1 = res[:self.gridsize], res[self.gridsize:]
 		res0.shape = self.dimv
 		res1.shape = self.dimv

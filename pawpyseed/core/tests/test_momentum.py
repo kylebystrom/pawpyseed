@@ -27,6 +27,7 @@ class PawpyTestError(Exception):
 MODULE_DIR = os.path.dirname(os.path.abspath(__file__))
 
 from pawpyseed.core.wavefunction import Wavefunction
+from pawpyseed.core.noncollinear import NCLWavefunction
 from pawpyseed.core.momentum import MomentumMatrix
 
 class TestMomentumMatrix:
@@ -50,8 +51,19 @@ class TestMomentumMatrix:
 		self.mm_real = MomentumMatrix(self.wf, encut=3000)
 		self.mm_direct = MomentumMatrix(self.wf)
 
+		self.ncl_wf = NCLWavefunction.from_directory('noncollinear')
+		self.ncl_realspace_wf = self.ncl_wf.get_state_realspace(0,0,0,
+					dim=(SIZE,SIZE,SIZE), remove_phase=True)
+		self.ncl_recipspace_wf = (np.fft.fftn(self.ncl_realspace_wf[0]) / SIZE**3 * np.sqrt(vol),\
+							np.fft.fftn(self.ncl_realspace_wf[1]) / SIZE**3 * np.sqrt(vol))
+
 	def teardown(self):
 		os.chdir(self.currdir)
+
+	def test_ncl_transform(self):
+		chg = np.sum(np.abs(self.ncl_recipspace_wf[0])**2) +\
+				np.sum(np.abs(self.ncl_recipspace_wf[1])**2)
+		assert_almost_equal(chg, 1, 5)
 
 	def test_get_momentum_matrix_elems(self):
 		res = self.mm_direct.get_momentum_matrix_elems(0,0,0,0,0,0)

@@ -19,10 +19,24 @@ class Projector(pawpyc.CProjector):
 		wf (Wavefunction): Wavefunction object
 		basis (Wavefunction): Wavefunction object onto which the
 			wavefunctions of wf are to be projected
-		pseudo (bool): Whether to perform projections
-			using only plane-wave coefficient components of the
-			wavefunctions. Sacrifices orthogonalization and
-			normalization for speed
+		method (str): The method used to perform the projections.
+			'aug_real' (default): Filter high-frequency components out
+				of the partial waves and then project them onto
+				the pseudo wavefunctions in real space inside
+				the augmentation spheres
+			'aug_recip': Filter high-frequency components out of
+				the partial waves, then sum all the partial wave components
+				in real space on the FFT grid. Fourier transform
+				the result and project it onto the pseudowavefunctions
+				in reciprocal space.
+			'realspace': Project the full wavefunctions onto realspace
+				grids, then integrate over real space.
+			'pseudo': Perform projections
+				using only plane-wave coefficient components of the
+				wavefunctions (pseudo wavefunctions).
+				Sacrifices orthogonalization and
+				normalization for speed. Not recommended except for
+				very rough, qualitative informtation.
 	"""
 
 	METHODS = ["pseudo", "realspace", "aug_recip", "aug_real"]
@@ -41,12 +55,9 @@ class Projector(pawpyc.CProjector):
 			unsym_wf (bool, False): If True, makes a copy of
 				wf in which the k-point mesh is not symmetrically
 				reduced, and the frees the original wf
-			pseudo (bool, False): Whether to perform projections
-				using only plane-wave coefficient components of the
-				wavefunctions. Sacrifices orthogonalization and
-				normalization for speed
 			method (str, "aug_recip"): Options: "pseudo", "realspace", "aug_recip", "aug_real";
-				The method to use for the projections
+				The method to use for the projections. See method
+				options in the Attributes section.
 
 		Returns:
 			Projector object
@@ -231,6 +242,14 @@ class Projector(pawpyc.CProjector):
 		Returns:
 			(np.array): overlap operator expectation values
 				as described above
+		
+		Example:
+			# Get overlap of band b0, k-point k, spin s (0 or 1 index)
+			# of wf with band b, k-point k, spin s of basis
+			# <basis;b,k,s|wf;b0,k,s>
+			>>> pr = Projector(wf, basis)
+			>>> res = pr.single_band_projection(b0)
+			>>> print(res[b*pr.nwk*pr.nspin + s*pr.nwk + k])
 		"""
 		if band_num >= self.wf.nband or band_num < 0:
 			raise PAWpyError("Band index out of range (0-indexed)")

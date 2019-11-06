@@ -1,11 +1,17 @@
 var searchData=
 [
+  ['g_5ffrom_5fwf',['g_from_wf',['../classpawpyseed_1_1core_1_1momentum_1_1MomentumMatrix.html#a9e15690eda06beaac81af95ce8b2af76',1,'pawpyseed::core::momentum::MomentumMatrix']]],
+  ['get_5fall_5ftransforms',['get_all_transforms',['../momentum_8h.html#a190ecfa0d74033d10c39fef043600757',1,'momentum.h']]],
   ['get_5faug_5ffreqs',['get_aug_freqs',['../projector_8h.html#a00326d023adb88ac4b548a8cd4753839',1,'projector.h']]],
   ['get_5faug_5ffreqs_5fhelper',['get_aug_freqs_helper',['../projector_8h.html#a9046876ee0b75b6b4104a56b6d9bf899',1,'projector.h']]],
   ['get_5fcorrection',['get_correction',['../classpawpyseed_1_1analysis_1_1corrections_1_1PerturbationCorrection.html#ae9d8103531ea5f924901225d56f1e8b0',1,'pawpyseed.analysis.corrections.PerturbationCorrection.get_correction()'],['../classpawpyseed_1_1analysis_1_1corrections_1_1DelocalizedStatePerturbationCorrection.html#a3462031ea5ac899f3c695256af35f457',1,'pawpyseed.analysis.corrections.DelocalizedStatePerturbationCorrection.get_correction()']]],
   ['get_5fencut',['get_encut',['../utils_8h.html#ab9620c8506dfaa134aac668d48e6d78e',1,'utils.h']]],
   ['get_5fenergy',['get_energy',['../utils_8h.html#a97f3622fdb711ca9b5a7b36d3cde8310',1,'utils.h']]],
   ['get_5fkpt_5fmapping',['get_kpt_mapping',['../classpawpyseed_1_1core_1_1wavefunction_1_1Wavefunction.html#a995722fcf25b17a36fd09f291cf48db0',1,'pawpyseed.core.wavefunction.Wavefunction.get_kpt_mapping()'],['../namespacepawpyseed_1_1core_1_1symmetry.html#a52e8b73fe5b04d06c63a6d367415dc7e',1,'pawpyseed.core.symmetry.get_kpt_mapping()']]],
+  ['get_5fmomentum_5fgrid',['get_momentum_grid',['../momentum_8h.html#ab4812db1f36aa0ee69a4f569e6ff9c4d',1,'momentum.h']]],
+  ['get_5fmomentum_5fmatrix',['get_momentum_matrix',['../momentum_8h.html#a9e0eaac1b51df764c857c92fed8eea09',1,'momentum.h']]],
+  ['get_5fmomentum_5fmatrix_5felement',['get_momentum_matrix_element',['../momentum_8h.html#a21a7675ec0d22b6b54e8186614efa0a5',1,'momentum.h']]],
+  ['get_5fmomentum_5fmatrix_5felems',['get_momentum_matrix_elems',['../classpawpyseed_1_1core_1_1momentum_1_1MomentumMatrix.html#a3136acb66d02930ee6a09b39352573ec',1,'pawpyseed::core::momentum::MomentumMatrix']]],
   ['get_5fnband',['get_nband',['../utils_8h.html#a15b9061bb716b2369929860ae3ef7164',1,'utils.h']]],
   ['get_5fnosym_5fkpoints',['get_nosym_kpoints',['../classpawpyseed_1_1core_1_1wavefunction_1_1Wavefunction.html#a766dbd9171e2ba1b301cffbf45a6568d',1,'pawpyseed.core.wavefunction.Wavefunction.get_nosym_kpoints()'],['../namespacepawpyseed_1_1core_1_1symmetry.html#a14d58aeffa75aeb4fd7c2c763ec69726',1,'pawpyseed.core.symmetry.get_nosym_kpoints()']]],
   ['get_5fnspin',['get_nspin',['../utils_8h.html#aadf2ad6487546bb1ddf6abca8fdd2e7c',1,'utils.h']]],
@@ -14,6 +20,10 @@ var searchData=
   ['get_5foccs',['get_occs',['../utils_8h.html#a7fedbc8d3c707ff010535e257a46d7f2',1,'utils.h']]],
   ['get_5fprojector_5flist',['get_projector_list',['../projector_8h.html#a25d754c433de907c083c3236ba01648e',1,'projector.h']]],
   ['get_5frealspace_5fdensity',['get_realspace_density',['../classpawpyseed_1_1core_1_1wavefunction_1_1Wavefunction.html#a69d52bf06e9c84f6a19fdbe7466aeaa6',1,'pawpyseed::core::wavefunction::Wavefunction']]],
+  ['get_5freciprocal_5ffullfw',['get_reciprocal_fullfw',['../classpawpyseed_1_1core_1_1momentum_1_1MomentumMatrix.html#a5e7ccceab264aa8ccb9f924186d3180b',1,'pawpyseed::core::momentum::MomentumMatrix']]],
   ['get_5fstate_5frealspace',['get_state_realspace',['../classpawpyseed_1_1core_1_1wavefunction_1_1Wavefunction.html#a3d4b5bf5de728d391081db17ec9197f7',1,'pawpyseed::core::wavefunction::Wavefunction']]],
-  ['get_5fsymmops',['get_symmops',['../namespacepawpyseed_1_1core_1_1symmetry.html#a3c87397abca035df64811f516901262c',1,'pawpyseed::core::symmetry']]]
+  ['get_5fstate_5frealspace_5fdensity',['get_state_realspace_density',['../classpawpyseed_1_1core_1_1wavefunction_1_1Wavefunction.html#a4b4711b70954148bfe37f1879ff9d3ee',1,'pawpyseed::core::wavefunction::Wavefunction']]],
+  ['get_5fsymmops',['get_symmops',['../namespacepawpyseed_1_1core_1_1symmetry.html#a3c87397abca035df64811f516901262c',1,'pawpyseed::core::symmetry']]],
+  ['get_5ftransforms',['get_transforms',['../momentum_8h.html#abbe9f74be37b80459d0b2d3c41be953c',1,'momentum.h']]],
+  ['grid_5fbounds',['grid_bounds',['../momentum_8h.html#a2e2449e66c5204204e3e63943fb9af04',1,'momentum.h']]]
 ];

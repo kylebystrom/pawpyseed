@@ -198,13 +198,7 @@ and conduction bands
 * Convenient pycdt interface
 * Perturbation-extrapolation correction for point defect calculations
 * Read noncollinear pseudo wavefunctions and construct all-electron wavefunctions (no overlap operator evaluation for noncollinear data)
-
-### Future Functionality
-
-* Localize orbitals with SCDM-k
-* Atomic Hartree Fock and GGA DFT database for use in charge corrections and other applications
-* Convert PAW wavefunctions to NC wavefunctions (for use in GW calculations)
-* Perform general operator expectation values on all-electron wavefunctions
+* Calculate plane-wave matrix elements between bands.
 
 ## Acknowledgments
 

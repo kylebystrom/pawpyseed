@@ -125,8 +125,8 @@ Functions</h2></td></tr>
 <tr class="separator:afb1721460239960f9878b4aa698f2528"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a244c80ed46808322e740e2aa255e58ce"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="reader_8h.html#a244c80ed46808322e740e2aa255e58ce">wcclose</a> (<a class="el" href="reader_8h.html#a8160ade3fdc58a0952793833e9daada4">WAVECAR</a> *wc)</td></tr>
 <tr class="separator:a244c80ed46808322e740e2aa255e58ce"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:aa33bbe96c9e588b2f964f62e31d4ee4e"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="reader_8h.html#aa33bbe96c9e588b2f964f62e31d4ee4e">setup</a> (int nrecl, int nprec, int nspin, int nwk, int nband, double *nb1, double *nb2, double *nb3, double ecut, double *lattice, double *reclattice)</td></tr>
-<tr class="separator:aa33bbe96c9e588b2f964f62e31d4ee4e"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a0daa04c7598941718109092833393551"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="reader_8h.html#a0daa04c7598941718109092833393551">setup</a> (int nspin, int nwk, int nband, double *nb1, double *nb2, double *nb3, int *np, double ecut, double *lattice, double *reclattice)</td></tr>
+<tr class="separator:a0daa04c7598941718109092833393551"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aa6500159c84b1af9645c8d0ecef9f1d4"><td class="memItemLeft" align="right" valign="top"><a class="el" href="utils_8h.html#a0d83785e53b058055dd3a6b963dda7e0">pswf_t</a> *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="reader_8h.html#aa6500159c84b1af9645c8d0ecef9f1d4">read_wavecar</a> (<a class="el" href="reader_8h.html#a8160ade3fdc58a0952793833e9daada4">WAVECAR</a> *wc, double *kpt_weights)</td></tr>
 <tr class="separator:aa6500159c84b1af9645c8d0ecef9f1d4"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:af42fe870fdde3e44e0647913ab0fd836"><td class="memItemLeft" align="right" valign="top"><a class="el" href="utils_8h.html#a0d83785e53b058055dd3a6b963dda7e0">pswf_t</a> *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="reader_8h.html#af42fe870fdde3e44e0647913ab0fd836">read_wavefunctions</a> (char *filename, double *kpt_weights)</td></tr>
@@ -290,25 +290,13 @@ Functions</h2></td></tr>
 
 </div>
 </div>
-<a class="anchor" id="aa33bbe96c9e588b2f964f62e31d4ee4e"></a>
+<a class="anchor" id="a0daa04c7598941718109092833393551"></a>
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
         <tr>
           <td class="memname">void setup </td>
           <td>(</td>
-          <td class="paramtype">int&#160;</td>
-          <td class="paramname"><em>nrecl</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">int&#160;</td>
-          <td class="paramname"><em>nprec</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
           <td class="paramtype">int&#160;</td>
           <td class="paramname"><em>nspin</em>, </td>
         </tr>
@@ -341,6 +329,12 @@ Functions</h2></td></tr>
           <td></td>
           <td class="paramtype">double *&#160;</td>
           <td class="paramname"><em>nb3</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">int *&#160;</td>
+          <td class="paramname"><em>np</em>, </td>
         </tr>
         <tr>
           <td class="paramkey"></td>

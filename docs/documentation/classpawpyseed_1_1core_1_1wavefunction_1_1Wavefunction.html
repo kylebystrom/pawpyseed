@@ -124,6 +124,8 @@ Public Member Functions</h2></td></tr>
 <tr class="separator:ad2f010d34ede122561eb1771a518d268"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a3d4b5bf5de728d391081db17ec9197f7"><td class="memItemLeft" align="right" valign="top">def&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classpawpyseed_1_1core_1_1wavefunction_1_1Wavefunction.html#a3d4b5bf5de728d391081db17ec9197f7">get_state_realspace</a> (self, b, k, s, <a class="el" href="classpawpyseed_1_1core_1_1wavefunction_1_1Wavefunction.html#a199bacc42572bed61b7e59d30a00353a">dim</a>=None, <a class="el" href="density_8h.html#a21648732930eef3fabdf0de7dcf8ce01">remove_phase</a>=False)</td></tr>
 <tr class="separator:a3d4b5bf5de728d391081db17ec9197f7"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a4b4711b70954148bfe37f1879ff9d3ee"><td class="memItemLeft" align="right" valign="top">def&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classpawpyseed_1_1core_1_1wavefunction_1_1Wavefunction.html#a4b4711b70954148bfe37f1879ff9d3ee">get_state_realspace_density</a> (self, b, k, s, <a class="el" href="classpawpyseed_1_1core_1_1wavefunction_1_1Wavefunction.html#a199bacc42572bed61b7e59d30a00353a">dim</a>=None)</td></tr>
+<tr class="separator:a4b4711b70954148bfe37f1879ff9d3ee"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a69d52bf06e9c84f6a19fdbe7466aeaa6"><td class="memItemLeft" align="right" valign="top">def&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classpawpyseed_1_1core_1_1wavefunction_1_1Wavefunction.html#a69d52bf06e9c84f6a19fdbe7466aeaa6">get_realspace_density</a> (self, <a class="el" href="classpawpyseed_1_1core_1_1wavefunction_1_1Wavefunction.html#a199bacc42572bed61b7e59d30a00353a">dim</a>=None, bands=None)</td></tr>
 <tr class="separator:a69d52bf06e9c84f6a19fdbe7466aeaa6"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ab33e7cf0a02e1fb3caf8fbd023bddc1b"><td class="memItemLeft" align="right" valign="top">def&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classpawpyseed_1_1core_1_1wavefunction_1_1Wavefunction.html#ab33e7cf0a02e1fb3caf8fbd023bddc1b">write_state_realspace</a> (self, b, k, s, fileprefix=&quot;&quot;, <a class="el" href="classpawpyseed_1_1core_1_1wavefunction_1_1Wavefunction.html#a199bacc42572bed61b7e59d30a00353a">dim</a>=None, scale=1, <a class="el" href="density_8h.html#a21648732930eef3fabdf0de7dcf8ce01">remove_phase</a>=False)</td></tr>
@@ -631,6 +633,59 @@ with real double values for the all electron charge density
           <td></td>
           <td class="paramtype">&#160;</td>
           <td class="paramname"><em>remove_phase</em> = <code>False</code>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+<pre class="fragment">Returns the real and imaginary parts of a given band.
+Args:
+    b (int): band number
+    k (int): kpoint number
+    s (int): spin number
+    dim (numpy array of 3 ints): dimensions of the FFT grid
+Returns:
+    A 3D array (indexed by x,y,z where x,y,z are fractional coordinates)
+with complex double values for the realspace wavefunction
+</pre> 
+</div>
+</div>
+<a class="anchor" id="a4b4711b70954148bfe37f1879ff9d3ee"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">def pawpyseed.core.wavefunction.Wavefunction.get_state_realspace_density </td>
+          <td>(</td>
+          <td class="paramtype">&#160;</td>
+          <td class="paramname"><em>self</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">&#160;</td>
+          <td class="paramname"><em>b</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">&#160;</td>
+          <td class="paramname"><em>k</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">&#160;</td>
+          <td class="paramname"><em>s</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">&#160;</td>
+          <td class="paramname"><em>dim</em> = <code>None</code>&#160;</td>
         </tr>
         <tr>
           <td></td>

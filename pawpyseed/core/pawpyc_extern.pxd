@@ -211,19 +211,20 @@ cdef extern from "projector.h":
         int num_M, int num_N_R, int num_N_S, int num_N_RS,
         int* M_R, int* M_S, int* N_R, int* N_S, int* N_RS_R, int* N_RS_S,
         int* proj_labels, double* proj_coords, int* ref_labels, double* ref_coords,
-        int* fft_grid)
+        int* fft_grid, int spin_flip)
     cdef void compensation_terms_recip(double complex* overlap, int BAND_NUM, pswf_t* wf_S, pswf_t* wf_R,
         int num_M, int num_N_R, int num_N_S, int num_N_RS,
         int* M_R, int* M_S, int* N_R, int* N_S, int* N_RS_R, int* N_RS_S,
         int* proj_labels, double* proj_coords, int* ref_labels, double* ref_coords,
-        int* fft_grid)
+        int* fft_grid, int spin_flip)
     cdef double* besselt(double* r, double* k, double* f, double encut, int N, int l)
     
 
 cdef extern from "pseudoprojector.h":
 
     cdef void vc_pseudoprojection(pswf_t* wf_ref, pswf_t* wf_proj, int BAND_NUM, double* results)
-    cdef void pseudoprojection(double complex* projections, pswf_t* wf_ref, pswf_t* wf_proj, int BAND_NUM)
+    cdef void pseudoprojection(double complex* projections, pswf_t* wf_ref, pswf_t* wf_proj, int BAND_NUM,
+                            int flip_spin)
     
 
 cdef extern from "reader.h":

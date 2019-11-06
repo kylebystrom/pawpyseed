@@ -35,9 +35,9 @@ class TestMomentumMatrix:
 	def setup(self):
 		self.currdir = os.getcwd()
 		os.chdir(os.path.join(MODULE_DIR, '../../../test_files'))
-		self.initiate_wf_and_mm()
+		self.initialize_wf_and_mm()
 
-	def initiate_wf_and_mm(self):
+	def initialize_wf_and_mm(self):
 		SIZE = 60
 		self.wf = Wavefunction.from_directory('.')
 		vol = self.wf.structure.volume
@@ -63,7 +63,7 @@ class TestMomentumMatrix:
 	def test_ncl_transform(self):
 		chg = np.sum(np.abs(self.ncl_recipspace_wf[0])**2) +\
 				np.sum(np.abs(self.ncl_recipspace_wf[1])**2)
-		assert_almost_equal(chg, 1, 5)
+		assert_almost_equal(chg, 1, 3)
 
 	def test_get_momentum_matrix_elems(self):
 		res = self.mm_direct.get_momentum_matrix_elems(0,0,0,0,0,0)

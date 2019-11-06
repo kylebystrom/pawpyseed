@@ -62,7 +62,8 @@ void vc_pseudoprojection(pswf_t* wf_ref, pswf_t* wf_proj, int BAND_NUM, double* 
 
 }
 
-void pseudoprojection(double complex* projections, pswf_t* wf_ref, pswf_t* wf_proj, int BAND_NUM) {
+void pseudoprojection(double complex* projections, pswf_t* wf_ref, pswf_t* wf_proj, int BAND_NUM,
+						int flip_spin) {
 
 	kpoint_t** kpts = wf_ref->kpts;
 	kpoint_t** kptspro = wf_proj->kpts;
@@ -74,9 +75,17 @@ void pseudoprojection(double complex* projections, pswf_t* wf_ref, pswf_t* wf_pr
 	{
 		for (int kpt_num = 0; kpt_num < NUM_KPTS; kpt_num++)
 		{
+			int kpt_ind_p = kpt_num;
+			if (wf_ref->nspin == 2 && flip_spin) {
+				if (kpt_ind_p < wf_ref->nwk) {
+					kpt_ind_p += wf_ref->nwk;
+				} else {
+					kpt_ind_p -= wf_ref->nwk;
+				}
+			}
 			float complex curr_overlap = 0;
 			float complex* C1s = kptspro[kpt_num]->bands[BAND_NUM]->Cs;
-			float complex* C2s = kpts[kpt_num]->bands[b]->Cs;
+			float complex* C2s = kpts[kpt_ind_p]->bands[b]->Cs;
 			int num_waves = kpts[kpt_num]->bands[b]->num_waves;
 			cblas_cdotc_sub(num_waves, C2s, 1, C1s, 1, &curr_overlap);
 			projections[b*NUM_KPTS+kpt_num] = curr_overlap;

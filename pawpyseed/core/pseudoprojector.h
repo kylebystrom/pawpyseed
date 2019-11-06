@@ -22,6 +22,7 @@ loop over bands
 	loops over spins
 		loop over kpoints
 */
-void pseudoprojection(double complex* projections, pswf_t* wf_ref, pswf_t* wf_proj, int BAND_NUM);
+void pseudoprojection(double complex* projections, pswf_t* wf_ref, pswf_t* wf_proj, int BAND_NUM,
+						int flip_spin);
 
 #endif

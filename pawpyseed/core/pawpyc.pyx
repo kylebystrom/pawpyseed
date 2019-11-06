@@ -300,7 +300,7 @@ cdef class PseudoWavefunction:
 	def __dealloc__(self):
 		ppc.free_pswf(self.wf_ptr)
 
-	def pseudoprojection(self, band_num, PseudoWavefunction basis):
+	def pseudoprojection(self, band_num, PseudoWavefunction basis, flip_spin=False):
 		"""
 		Computes <psibt_n1k|psit_n2k> for all n1 and k
 		and a given n2, where psibt are basis structures
@@ -313,7 +313,7 @@ cdef class PseudoWavefunction:
 		"""
 		res = np.zeros(basis.nband * basis.nwk * basis.nspin, dtype = np.complex128)
 		cdef double complex[::1] resv = res
-		ppc.pseudoprojection(&resv[0], basis.wf_ptr, self.wf_ptr, band_num)
+		ppc.pseudoprojection(&resv[0], basis.wf_ptr, self.wf_ptr, band_num, flip_spin)
 		return res
 
 
@@ -666,7 +666,7 @@ cdef class CProjector:
 				N_R, N_S, N_RS_R, N_RS_S,
 				self.num_N_R, self.num_N_S, self.num_N_RS_R)
 
-	def _add_augmentation_terms(self, np.ndarray[double complex, ndim=1] res, band_num):
+	def _add_augmentation_terms(self, np.ndarray[double complex, ndim=1] res, band_num, flip_spin):
 		
 		cdef double complex[::1] resv = res
 
@@ -683,9 +683,9 @@ cdef class CProjector:
 			self.num_M_R, self.num_N_R, self.num_N_S, self.num_N_RS_R,
 			M_R, M_S, N_R, N_S, N_RS_R, N_RS_S,
 			&self.wf.nums[0], &self.wf.coords[0], &self.basis.nums[0], &self.basis.coords[0],
-			&self.wf.dimv[0])
+			&self.wf.dimv[0], int(flip_spin))
 
-	def _projection_recip(self, np.ndarray[double complex, ndim=1] res, band_num):
+	def _projection_recip(self, np.ndarray[double complex, ndim=1] res, band_num, flip_spin):
 		
 		cdef double complex[::1] resv = res
 
@@ -702,7 +702,7 @@ cdef class CProjector:
 			self.num_M_R, self.num_N_R, self.num_N_S, self.num_N_RS_R,
 			M_R, M_S, N_R, N_S, N_RS_R, N_RS_S,
 			&self.wf.nums[0], &self.wf.coords[0], &self.basis.nums[0], &self.basis.coords[0],
-			&self.wf.dimv[0])
+			&self.wf.dimv[0], int(flip_spin))
 
 	def _realspace_projection(self, int band_num, np.ndarray dim):
 		res = np.zeros(self.basis.nband * self.basis.nwk * self.basis.nspin,

@@ -5,7 +5,7 @@ var searchData=
   ['corrections',['corrections',['../namespacepawpyseed_1_1analysis_1_1corrections.html',1,'pawpyseed::analysis']]],
   ['defect_5fcomposition',['defect_composition',['../namespacepawpyseed_1_1analysis_1_1defect__composition.html',1,'pawpyseed::analysis']]],
   ['gaunt',['gaunt',['../namespacepawpyseed_1_1core_1_1gaunt.html',1,'pawpyseed::core']]],
-  ['pawpyseed',['PAWpySeed',['../index.html',1,'']]],
+  ['pawpyseed',['pawpyseed',['../index.html',1,'']]],
   ['momentum',['momentum',['../namespacepawpyseed_1_1core_1_1momentum.html',1,'pawpyseed::core']]],
   ['noncollinear',['noncollinear',['../namespacepawpyseed_1_1core_1_1noncollinear.html',1,'pawpyseed::core']]],
   ['pathholder',['PathHolder',['../classpawpyseed_1_1analysis_1_1run__pawpy_1_1PathHolder.html',1,'pawpyseed::analysis::run_pawpy']]],

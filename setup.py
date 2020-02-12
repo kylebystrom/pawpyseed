@@ -45,14 +45,24 @@ omp_loops = config['threading'].getboolean('omp_loops')
 threaded_mkl = config['threading'].getboolean('threaded_mkl')
 interface32 = config['mkl'].getboolean('interface32')
 
+if sys.platform == 'darwin':
+	# platform_link_args = ['-lmkl_avx512']
+	platform_link_args = []
+	sdl_platform_link_args = []
+	os.environ["CPATH"] = "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include"
+else:
+	platform_link_args = ['-Wl,--no-as-needed', "-lmkl_def"]
+	sdl_platform_link_args = ['lmkl_def']
+
+
 if sdl:
-	link_args = '-Wl,--no-as-needed -lmkl_rt -liomp5 -lpthread -lm -ldl'.split()
+	link_args = sdl_platform_link_args + '-lmkl_rt -liomp5 -lpthread -lm -ldl'.split()
 else:
 	# interface layer
 	if interface32:
 		interfacelib = '-lmkl_intel_lp64'
 	else:
-		print ("WARNING: Not supporting 64-bit interface currently")
+		print("WARNING: Not supporting 64-bit interface currently")
 		interfacelib = '-lmkl_intel_lp64'
 		#interfacelib = '-lmkl_intel_ilp64'
 	# threading
@@ -62,8 +72,9 @@ else:
 	else:
 		threadlib = '-lmkl_sequential'
 		omplib = ''
-	link_args = '-Wl,--no-as-needed -lmkl_def %s %s -lmkl_core %s -lpthread -lm -ldl' % (interfacelib, threadlib, omplib)
-	link_args = link_args.split()
+	link_args = '%s %s -lmkl_core %s -lpthread -lm -ldl' % (interfacelib, threadlib, omplib)
+	link_args = platform_link_args + link_args.split()
+
 # set compiler openmp flag
 extra_args = '-std=c11 -fPIC -Wall'.split()
 if omp_loops:

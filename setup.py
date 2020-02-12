@@ -52,7 +52,7 @@ if sys.platform == 'darwin':
 	os.environ["CPATH"] = "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include"
 else:
 	platform_link_args = ['-Wl,--no-as-needed', "-lmkl_def"]
-	sdl_platform_link_args = ['lmkl_def']
+	sdl_platform_link_args = ['-Wl,--no-as-needed']
 
 
 if sdl:

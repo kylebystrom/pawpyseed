@@ -13,7 +13,8 @@ cdef class PWFPointer:
 
     @staticmethod
     cdef PWFPointer from_pointer_and_kpts(ppc.pswf_t* ptr,
-        structure, kpts, band_props, allkpts, weights)
+        structure, kpts, band_props, allkpts, weights, symprec,
+        time_reversal_symmetry)
 
 cdef class PseudoWavefunction:
 

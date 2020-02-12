@@ -218,12 +218,11 @@ class Wavefunction(pawpyc.CWavefunction):
 		self.dim = np.array(dim, dtype=np.int32)
 		self.update_dimv(dim)
 
-	def desymmetrized_copy(self, allkpts = None, weights = None):
+	def desymmetrized_copy(self, allkpts=None, weights=None, symprec=None,
+							time_reversal_symmetry=True):
 		"""
 		Returns a copy of self with a k-point mesh that is not reduced
-		using crystal symmetry (time reversal symmetry is still used;
-		an option to not use time reversal symmetry will be added in
-		the future).
+		using crystal symmetry.
 
 		Arguments:
 			allkpts (optional, None): An optional k-point mesh to map
@@ -231,9 +230,17 @@ class Wavefunction(pawpyc.CWavefunction):
 			weights (optional, None): If allkpts is not None, weights
 				should contain the k-point weights of each k-point,
 				with the sum normalized to 1.
+			symprec: Symmetry precision to use when determining the space group.
+				If None, the symmetry precision used to generate the
+				Wavefunction will be used (the default).
+			time_reversal_symmetry: Whether time reversal symmetry is used.
 		"""
-		pwf = self._desymmetrized_pwf(self.structure, self.band_props, allkpts, weights)
-		new_wf = Wavefunction(self.structure, pwf, self.cr, self.dim)
+		if not symprec:
+			symprec = self.symprec
+
+		pwf = self._desymmetrized_pwf(self.structure, self.band_props, allkpts, weights,
+										symprec, time_reversal_symmetry)
+		new_wf = Wavefunction(self.structure, pwf, self.cr, self.dim, symprec=symprec)
 		return new_wf
 
 	@staticmethod

@@ -221,12 +221,14 @@ cdef class PWFPointer:
 
 	@staticmethod
 	cdef PWFPointer from_pointer_and_kpts(ppc.pswf_t* ptr,
-		structure, kpts, band_props, allkpts, weights):
+		structure, kpts, band_props, allkpts, weights, symprec,
+		time_reversal_symmetry):
 
 		return_kpts_and_weights = False
 		if (allkpts is None) or (weights is None):
 			return_kpts_and_weights = True
-			allkpts, orig_kptnums, op_nums, symmops, trs = get_nosym_kpoints(kpts, structure)
+			allkpts, orig_kptnums, op_nums, symmops, trs = get_nosym_kpoints(
+			    kpts, structure, symprec=symprec, fil_trsym=time_reversal_symmetry)
 			weights = np.ones(allkpts.shape[0], dtype=np.float64, order='C')
 			# need to change this if spin orbit coupling is added in later
 			for i in range(allkpts.shape[0]):
@@ -234,7 +236,8 @@ cdef class PWFPointer:
 					weights[i] *= 0.5
 			weights /= np.sum(weights)
 		else:
-			orig_kptnums, op_nums, symmops, trs = get_kpt_mapping(allkpts, kpts, structure)
+			orig_kptnums, op_nums, symmops, trs = get_kpt_mapping(
+			allkpts, kpts, structure, symprec=symprec)
 
 		ops, drs = make_c_ops(op_nums, symmops)
 
@@ -509,9 +512,11 @@ cdef class CWavefunction(PseudoWavefunction):
 		ppc.write_volumetric(filename, &resv[0], &self.fdimv[0], scale);
 		return res
 
-	def _desymmetrized_pwf(self, structure, band_props, allkpts = None, weights = None):
+	def _desymmetrized_pwf(self, structure, band_props, allkpts=None, weights=None,
+	                       symprec=1e-4, time_reversal_symmetry=True):
 		return PWFPointer.from_pointer_and_kpts(<ppc.pswf_t*> self.wf_ptr, structure,
-							self.kpts, band_props, allkpts, weights)
+							self.kpts, band_props, allkpts, weights, symprec,
+							time_reversal_symmetry)
 
 	def _get_occs(self):
 		nk = self.nwk * self.nspin

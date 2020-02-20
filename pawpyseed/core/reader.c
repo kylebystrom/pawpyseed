@@ -260,7 +260,7 @@ pswf_t* read_wavecar(WAVECAR* wc, double* kpt_weights) {
 		ncnt++;
 
 		if (ncnt * 2 == nplane) {
-			printf("This is an NCL wavefunction!\n");
+			//printf("This is an NCL wavefunction!\n");
 			wf->is_ncl = 1;
 			for (int iplane = 0; iplane < nplane/2; iplane++) {
 				igall[3*(nplane/2+iplane)+0] = igall[3*iplane+0];

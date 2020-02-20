@@ -758,10 +758,7 @@ cdef class CMomentumMatrix:
 		cdef int[::1] gbv = self.gbounds
 		cdef int[::1] gdv = self.gdim
 		gridv = self.ggrid
-		print(self.ggrid.shape[0], actual_size)
-		print(np.max(self.ggrid), np.min(self.ggrid))
 		ppc.grid_bounds(&gbv[0], &gdv[0], &gridv[0], actual_size)
-		print(self.gdim)
 		grid3d = -1 * np.ones(self.gdim[0]*self.gdim[1]*self.gdim[2], dtype=np.int32)
 		cdef int[::1] g3v = grid3d
 		ppc.list_to_grid_map(&g3v[0], &gbv[0], &gdv[0], &gridv[0], actual_size)

@@ -141,6 +141,7 @@ class Pseudopotential:
 	def make_nums(self, numstring):
 		return np.fromstring(numstring, dtype = np.float64, sep = ' ')
 
+
 class CoreRegion:
 	"""
 	List of Pseudopotential objects to describe the core region of a structure.
@@ -214,6 +215,25 @@ class Wavefunction(pawpyc.CWavefunction):
 		if setup_projectors:
 			self.check_c_projectors()
 
+	def check_band_index(self, b):
+		if b < 0 or b >= self.nband:
+			raise ValueError("Invalid band {}. Should be in range [{}, {}]".format(
+								b, 0, self.nband-1))
+
+	def check_kpoint_index(self, k):
+		if k < 0 or k >= self.nwk:
+			raise ValueError("Invalid kpoint index {}. Should be in range [{}, {}]".format(
+								k, 0, self.nwk-1))
+
+	def check_spin_index(self, s):
+		if s < 0 or s >= self.nspin:
+			raise ValueError("Spin must be 0 for non-spin-polarized or 0 or 1 for spin-polarized.")
+
+	def check_bks_spec(self, b, k, s):
+		self.check_band_index(b)
+		self.check_kpoint_index(k)
+		self.check_spin_index(s)
+
 	def update_dim(self, dim):
 		self.dim = np.array(dim, dtype=np.int32)
 		self.update_dimv(dim)
@@ -263,6 +283,9 @@ class Wavefunction(pawpyc.CWavefunction):
 		Returns:
 			Wavefunction object
 		"""
+		for fname in [struct, wavecar, cr, vr]:
+			if not os.path.isfile(fname):
+				raise FileNotFoundError("File {} does not exist.".format(fname))
 		vr = Vasprun(vr)
 		dim = np.array([vr.parameters["NGX"], vr.parameters["NGY"], vr.parameters["NGZ"]])
 		symprec = vr.parameters["SYMPREC"]

@@ -252,7 +252,7 @@ class Projector(pawpyc.CProjector):
 			>>> print(res[b*pr.nwk*pr.nspin + s*pr.nwk + k])
 		"""
 		if band_num >= self.wf.nband or band_num < 0:
-			raise PAWpyError("Band index out of range (0-indexed)")
+			raise ValueError("Band index out of range (0-indexed)")
 		return self._single_band_projection(band_num, **kwargs)
 
 	@staticmethod
@@ -294,8 +294,10 @@ class Projector(pawpyc.CProjector):
 		return bases
 
 	@staticmethod
-	def setup_multiple_projections(basis_dir, wf_dirs, method = "aug_real", ignore_errors = False,
-									desymmetrize = False, atomate_compatible = True):
+	def setup_multiple_projections(basis_dir, wf_dirs, method = "aug_real",
+									ignore_errors = False,
+									desymmetrize = False,
+									atomate_compatible = True):
 		"""
 		A convenient generator function for processing the Kohn-Sham wavefunctions
 		of multiple structures with respect to one structure used as the basis.
@@ -435,7 +437,7 @@ class Projector(pawpyc.CProjector):
 				analysis on all bands in wf
 		"""
 		if num_below_ef < 0 or num_above_ef < 0:
-			raise PAWpyError("num_above_ef and num_below_ef must both be nonnegative.")
+			raise ValueError("num_above_ef and num_below_ef must both be nonnegative.")
 
 		basis = self.basis
 		nband = basis.nband

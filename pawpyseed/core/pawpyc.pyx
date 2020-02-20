@@ -490,6 +490,12 @@ cdef class CWavefunction(PseudoWavefunction):
 
 	def _write_realspace_state(self, filename1, filename2, double scale,
 							   int b, int k, int s, remove_phase = False):
+		if b < 0 or b >= self.nband:
+			raise ValueError("Invalid band choice")
+		if k < 0 or k >= self.nwk:
+			raise ValueError("Invalid k-point choice")
+		if s < 0 or s >= self.nspin:
+			raise ValueError("Invalid spin choice")
 		filename1 = bytes(filename1.encode('utf-8'))
 		filename2 = bytes(filename2.encode('utf-8'))
 		res = self._get_realspace_state(b, k, s, remove_phase)
@@ -531,6 +537,9 @@ cdef class CWavefunction(PseudoWavefunction):
 		Helper function to get a list of energy levels for a given list
 		of bands. Used by defect_band_analysis in the Projector class.
 		"""
+		for b in bands:
+			if b < 0 or b >= self.nband:
+				raise ValueError("Invalid band choice")
 		energy_list = {}
 		for b in bands:
 			energy_list[b] = []
@@ -539,15 +548,6 @@ cdef class CWavefunction(PseudoWavefunction):
 					energy_list[b].append([ppc.get_energy(self.wf_ptr, b, k, s),\
 										ppc.get_occ(self.wf_ptr, b, k, s)])
 		return energy_list
-
-	#def _setup_partial_wave_transforms(self, encut):
-	#	self.pw_ft_densities = ppc.get_transforms()
-	#	self._setup_momentum_grid(encut)
-	#	self._setup_partial_wave_transforms(encut)
-
-
-	#def _spher_momentum_test(self, int d):
-	#	return pp.spher_momentum()
 
 
 cdef class CNCLWavefunction(CWavefunction):
@@ -584,6 +584,12 @@ cdef class CNCLWavefunction(CWavefunction):
 
 	def _write_realspace_state(self, filename1, filename2, filename3, filename4,
 								double scale, int b, int k, int s):
+		if b < 0 or b >= self.nband:
+			raise ValueError("Invalid band choice")
+		if k < 0 or k >= self.nwk:
+			raise ValueError("Invalid k-point choice")
+		if s < 0 or s >= self.nspin:
+			raise ValueError("Invalid spin choice")
 		filename1 = bytes(filename1.encode('utf-8'))
 		filename2 = bytes(filename2.encode('utf-8'))
 		filename3 = bytes(filename3.encode('utf-8'))

@@ -102,7 +102,7 @@ class PawpyData:
 		a file called filename.
 		"""
 		f = open(filename, 'r')
-		data = yaml.load(f.read().encode('utf-8'))
+		data = yaml.load(f.read().encode('utf-8'), Loader=yaml.Loader)
 		return cls.from_dict(data)
 
 

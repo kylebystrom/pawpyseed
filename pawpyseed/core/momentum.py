@@ -60,6 +60,8 @@ class MomentumMatrix(pawpyc.CMomentumMatrix):
 			containing the above matrix elements in the same
 			order as self.momentum_grid.
 		"""
+		self.wf.check_bks_spec(b1, k1, s1)
+		self.wf.check_bks_spec(b2, k2, s2)
 		return self._get_momentum_matrix_elems(b1, k1, s1, b2, k2, s2)
 
 	def get_reciprocal_fullfw(self, b, k, s):
@@ -75,6 +77,7 @@ class MomentumMatrix(pawpyc.CMomentumMatrix):
 			containing C(b,k,s,G) in the same
 			order as self.momentum_grid.
 		"""
+		self.wf.check_bks_spec(b, k, s)
 		return self._get_reciprocal_fullfw(b, k, s)
 
 	def g_from_wf(self, b1, k1, s1, b2, k2, s2, G):
@@ -84,4 +87,6 @@ class MomentumMatrix(pawpyc.CMomentumMatrix):
 		then takes the dot product of the coefficients to calculate
 		< b1, k1, s1 | exp(i * (G + k1 - k2) * r) | b2, k2, s2 >.
 		"""
-		return self._get_g_from_fullfw(b1,k1,s1,b2,k2,s2,G)
+		self.wf.check_bks_spec(b1, k1, s1)
+		self.wf.check_bks_spec(b2, k2, s2)
+		return self._get_g_from_fullfw(b1, k1, s1, b2, k2, s2, G)

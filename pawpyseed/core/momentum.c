@@ -110,7 +110,7 @@ density_ft_t spher_transforms(int size, double* r, double* f, int l1, int m1, in
 	density.transforms = (transform_spline_t*) malloc(((l1+l2 - abs(l1-l2))/2 + 1) * sizeof(transform_spline_t));
 
 	double* ks = (double*) calloc(size, sizeof(double));
-	sbt_descriptor_t* d = spherical_bessel_transform_setup(encut, 1e4, l1+l2, size, r, ks);
+	sbt_descriptor_t* d = spherical_bessel_transform_setup(1e7, 0, l1+l2, size, r, ks);
 	//printf("MINK %lf\n", ks[0]);
 
 	density.ks = ks;

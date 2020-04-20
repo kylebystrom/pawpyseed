@@ -184,6 +184,7 @@ void clean_wave_projections(pswf_t* wf) {
 		for (int b = 0; b < kpt->num_bands; b++) {
 			if (kpt->bands[b]->wave_projections != NULL) {
 				free_projection_list(kpt->bands[b]->wave_projections, wf->wp_num);
+				kpt->bands[b]->wave_projections = NULL;
 			}
 		}
 	}

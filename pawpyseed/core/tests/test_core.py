@@ -711,3 +711,15 @@ class TestPy:
 				for k in range(basis.nspin * basis.nwk):
 					assert_almost_equal(np.sum(res[br*basis.nwk*basis.nspin + k]),
 										expected, decimal=decimal)
+
+		pr = Projector(wf, basis, method='aug_recip')
+		for b in range(wf.nband):
+			res = pr.single_band_projection(b, flip_spin=True)
+			res = np.abs(res)**2
+			print(b,res)
+			for br in range(basis.nband):
+				expected = 1 if b == br else 0
+				decimal = 4 if b == br else 8
+				for k in range(basis.nspin * basis.nwk):
+					assert_almost_equal(np.sum(res[br*basis.nwk*basis.nspin + k]),
+										expected, decimal=decimal)

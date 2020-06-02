@@ -141,6 +141,7 @@ class Pseudopotential:
 	def make_nums(self, numstring):
 		return np.fromstring(numstring, dtype = np.float64, sep = ' ')
 
+
 class CoreRegion:
 	"""
 	List of Pseudopotential objects to describe the core region of a structure.
@@ -214,16 +215,34 @@ class Wavefunction(pawpyc.CWavefunction):
 		if setup_projectors:
 			self.check_c_projectors()
 
+	def check_band_index(self, b):
+		if b < 0 or b >= self.nband:
+			raise ValueError("Invalid band {}. Should be in range [{}, {}]".format(
+								b, 0, self.nband-1))
+
+	def check_kpoint_index(self, k):
+		if k < 0 or k >= self.nwk:
+			raise ValueError("Invalid kpoint index {}. Should be in range [{}, {}]".format(
+								k, 0, self.nwk-1))
+
+	def check_spin_index(self, s):
+		if s < 0 or s >= self.nspin:
+			raise ValueError("Spin must be 0 for non-spin-polarized or 0 or 1 for spin-polarized.")
+
+	def check_bks_spec(self, b, k, s):
+		self.check_band_index(b)
+		self.check_kpoint_index(k)
+		self.check_spin_index(s)
+
 	def update_dim(self, dim):
 		self.dim = np.array(dim, dtype=np.int32)
 		self.update_dimv(dim)
 
-	def desymmetrized_copy(self, allkpts = None, weights = None):
+	def desymmetrized_copy(self, allkpts=None, weights=None, symprec=None,
+							time_reversal_symmetry=True):
 		"""
 		Returns a copy of self with a k-point mesh that is not reduced
-		using crystal symmetry (time reversal symmetry is still used;
-		an option to not use time reversal symmetry will be added in
-		the future).
+		using crystal symmetry.
 
 		Arguments:
 			allkpts (optional, None): An optional k-point mesh to map
@@ -231,9 +250,17 @@ class Wavefunction(pawpyc.CWavefunction):
 			weights (optional, None): If allkpts is not None, weights
 				should contain the k-point weights of each k-point,
 				with the sum normalized to 1.
+			symprec: Symmetry precision to use when determining the space group.
+				If None, the symmetry precision used to generate the
+				Wavefunction will be used (the default).
+			time_reversal_symmetry: Whether time reversal symmetry is used.
 		"""
-		pwf = self._desymmetrized_pwf(self.structure, self.band_props, allkpts, weights)
-		new_wf = Wavefunction(self.structure, pwf, self.cr, self.dim)
+		if not symprec:
+			symprec = self.symprec
+
+		pwf = self._desymmetrized_pwf(self.structure, self.band_props, allkpts, weights,
+										symprec, time_reversal_symmetry)
+		new_wf = Wavefunction(self.structure, pwf, self.cr, self.dim, symprec=symprec)
 		return new_wf
 
 	@staticmethod
@@ -256,6 +283,9 @@ class Wavefunction(pawpyc.CWavefunction):
 		Returns:
 			Wavefunction object
 		"""
+		for fname in [struct, wavecar, cr, vr]:
+			if not os.path.isfile(fname):
+				raise FileNotFoundError("File {} does not exist.".format(fname))
 		vr = Vasprun(vr)
 		dim = np.array([vr.parameters["NGX"], vr.parameters["NGY"], vr.parameters["NGZ"]])
 		symprec = vr.parameters["SYMPREC"]

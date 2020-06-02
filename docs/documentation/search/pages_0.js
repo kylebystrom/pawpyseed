@@ -1,4 +1,4 @@
 var searchData=
 [
-  ['pawpyseed',['PAWpySeed',['../index.html',1,'']]]
+  ['pawpyseed',['pawpyseed',['../index.html',1,'']]]
 ];

@@ -1,6 +1,8 @@
 var searchData=
 [
   ['n',['N',['../structsbt__descriptor.html#a307bfb987bfd0ca448ec575238099da8',1,'sbt_descriptor::N()'],['../structband.html#ac2a7172884359ed472390ad449bf216d',1,'band::N()'],['../structband.html#a369826acad76f9f5996c414faa4bd748',1,'band::n()']]],
+  ['n1',['n1',['../structdensity__ft.html#aded88d6b396361391afd534df95d4780',1,'density_ft']]],
+  ['n2',['n2',['../structdensity__ft.html#a5b0fa5419c0d52e53cc1c7a8c197eb11',1,'density_ft']]],
   ['name',['name',['../classpawpyseed_1_1analysis_1_1run__pawpy_1_1DummyFirework.html#a3d593e2718d77d8daad4b5672b5b5edf',1,'pawpyseed.analysis.run_pawpy.DummyFirework.name()'],['../namespacepawpyseed_1_1analysis_1_1prep.html#a949ecb560c63c54c6b7833e819b831ae',1,'pawpyseed.analysis.prep.name()']]],
   ['names',['names',['../namespacepawpyseed_1_1analysis_1_1prep.html#a52f3b78f0949ead42c658551a69c1d6c',1,'pawpyseed::analysis::prep']]],
   ['nband',['nband',['../structpswf.html#a4848baae41a701bc7e3268b0cda710f3',1,'pswf']]],
@@ -11,6 +13,7 @@ var searchData=
   ['num_5faug_5foverlap_5fsites',['num_aug_overlap_sites',['../structpswf.html#af7873e979454933c75be409488d04fb0',1,'pswf']]],
   ['num_5fbands',['num_bands',['../structkpoint.html#a78357708f84e6ad9d75d7b21ef13193b',1,'kpoint']]],
   ['num_5fcart_5fgridpts',['num_cart_gridpts',['../structppot.html#a3fb02b8c43b8b05660e11a52f5e618b1',1,'ppot']]],
+  ['num_5fdensities',['num_densities',['../structdensity__ft__elem.html#a35dfc8fe08842675197d6c401ed8c05d',1,'density_ft_elem']]],
   ['num_5felems',['num_elems',['../structpswf.html#a98515bf1f5697b801376cdefbde79cb3',1,'pswf::num_elems()'],['../classpawpyseed_1_1core_1_1wavefunction_1_1Wavefunction.html#a985b539943e91b6804fd93ff065e07ff',1,'pawpyseed.core.wavefunction.Wavefunction.num_elems()']]],
   ['num_5findices',['num_indices',['../structreal__proj__site.html#ad496068d5c6b07b801576d5cf2d7ef1c',1,'real_proj_site']]],
   ['num_5fprojs',['num_projs',['../structppot.html#a34434d5399369e2168a2241634531770',1,'ppot::num_projs()'],['../structprojection.html#a63bca96dd1151dcadb98b9619f10314a',1,'projection::num_projs()'],['../structpswf.html#a26ee3fb440dfb8f668808581f6c3586b',1,'pswf::num_projs()'],['../structreal__proj__site.html#a70d1c809514eff71d9ee8d37ecba498f',1,'real_proj_site::num_projs()']]],

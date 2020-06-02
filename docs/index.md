@@ -1,10 +1,6 @@
-# PAWpySeed
+# pawpyseed
 
 <https://kylebystrom.github.io/pawpyseed/> <br/>
-
-**WARNING: PAWpySeed is still in early development: Some features are not yet thoroughly tested.
-The evaluation of overlap operators is tested, but some features still require more thorough testing.
-Also, installation has only been tested on a couple systems (all Linux).**
 
 PAWpySeed is a parallelized Python and C tool for reading and
 analyzing the optimized band structure and wave functions
@@ -14,15 +10,67 @@ in VASP.
 
 ## Installation
 
-The only tricky part to installing pawpyseed is linking with the Intel Math Kernel Library
-(MKL). There are many ways to do this, as aided by the config file. To make your own,
+TO compile the C code, pawpyseed needs to link with the Intel Math Kernel Library
+(MKL). You can customize how this is done via the config file (see "The customizable way").
+However, for most users, the easy way described below is adequate.
+
+### The easy way
+
+First, install `mkl-devel` in your local installation:
+
+```
+pip install mkl-devel --user
+```
+
+Next, find your Python installation directory (call it `INST_DIR`) and add the `include` and `lib` to your
+C compiler paths to link with MKL:
+```
+export C_INCLUDE_PATH=$INST_DIR/include:$C_INCLUDE_PATH
+export LIBRARY_PATH=$INST_DIR/lib:$LIBRARY_PATH
+export LD_LIBRARY_PATH=$INST_DIR/lib:$LD_LIBRARY_PATH
+```
+
+Then run
+```
+python setup.py build
+python setup.py install
+```
+
+OR with `pip`.
+
+```
+pip install pawpyseed
+```
+
+This has been tested on Scientific Linux 7 and Linux Mint 18,
+but should work for systems that have the appropriate
+packages and environment variables defined as described below.
+
+#### Simple site.cfg approach
+
+After installing MKL locally with `pip`,
+copy `site.cfg.default` from the pawpyseed repository to `~/.pawpyseed-site.cfg`.
+Open it and set `root=<your home directory>/.local` under the `[mkl]` heading
+and uncomment it by removing the `#`.
+
+IF you get linking issues at runtime using this method, try setting
+`sdl=True` in the config file and then setting the environment
+variable `MKL_THREADING_LAYER=sequential`.
+
+#### Intel easy way
+
+If you have `icc` and prefer to use it to compile pawpyseed's C libraries,
+set `compiler=icc` in `~/.pawpyseed-site.cfg` and then
+set `root` to your MKL installation directory. Set `sdl=True`. You MKL distribution must have also
+been compiled with the Intel compiler. Run the `setup.py` script or `pip install pawpyseed`.
+
+### The customizable way
+
+To make your own config file,
 make a file in your home directory `~` named `.pawpyseed-site.cfg`. This file allows you
 to customize configuration settings for pawpyseed. It is read using the Python
 configparser module <https://docs.python.org/3/library/configparser.html>. If you don't
 want to learn about the configuration file options, skip to "The Easy Way" to get this done with quickly.
-
-### The customizable way
-
 The options (with their defaults) are as follows:
 
 ```
@@ -71,45 +119,6 @@ threaded_mkl = False
 # NOTE: Do not link to icc-compiled MKL libraries when compiling the C
 # extension with gcc or vice versa. Use like type compilers.
 ```
-
-### The Easy Way
-
-#### Intel Easy Way
-
-If you have `icc`, set `compiler=icc` in `~/.pawpyseed-site.cfg` and then
-set `root` to your MKL installation directory. Set `sdl=True`. You MKL distribution must have also
-been compiled with the Intel compiler. Run the `setup.py` script or `pip install pawpyseed`.
-
-#### The GNU Easy Way
-
-First, install `mkl-devel` in your local installation:
-
-```
-pip install mkl-devel --user
-```
-
-Copy `site.cfg.default` from the pawpyseed repository to `~/.pawpyseed-site.cfg`.
-Open it and set `root=<your home directory>/.local` under the `[mkl]` heading
-and uncomment it by removing the `#`. Then run
-
-```
-python setup.py build
-python setup.py install
-```
-
-OR with `pip`.
-
-```
-pip install pawpyseed
-```
-
-This has been tested on Scientific Linux 7 and Linux Mint 18,
-but should work for systems that have the appropriate
-packages and environment variables defined as described below.
-
-IF you get linking issues at runtime using this method, try setting
-`sdl=True` in the config file and then setting the environment
-variable MKL_THREADING_LAYER=sequential
 
 ### Dependencies
 
@@ -198,13 +207,7 @@ and conduction bands
 * Convenient pycdt interface
 * Perturbation-extrapolation correction for point defect calculations
 * Read noncollinear pseudo wavefunctions and construct all-electron wavefunctions (no overlap operator evaluation for noncollinear data)
-
-### Future Functionality
-
-* Localize orbitals with SCDM-k
-* Atomic Hartree Fock and GGA DFT database for use in charge corrections and other applications
-* Convert PAW wavefunctions to NC wavefunctions (for use in GW calculations)
-* Perform general operator expectation values on all-electron wavefunctions
+* Calculate plane-wave matrix elements between bands.
 
 ## Acknowledgments
 
@@ -283,5 +286,5 @@ You can view the paper here: <https://arxiv.org/abs/1904.11572>
 ## Questions and Comments
 
 Find a bug? Areas of code unclearly documented? Other questions? Feel free to contact
-Kyle Bystrom at kylebystrom@gmail.com with the subject "pawpyseed: <Topic>"
+Kyle Bystrom at kylebystrom@gmail.com with the subject "pawpyseed: (Your Topic)"
 AND/OR create an issue on the Github page at <https://github.com/kylebystrom/pawpyseed>.

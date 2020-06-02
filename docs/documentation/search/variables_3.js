@@ -6,7 +6,7 @@ var searchData=
   ['dense_5fkgrid',['dense_kgrid',['../structppot.html#aeb36a85ea11cb576bdb9172dd859f20c',1,'ppot']]],
   ['dense_5fkwave',['dense_kwave',['../structfuncset.html#a44f2e964fe5c8b77ba6bf61e804b7f8a',1,'funcset']]],
   ['dense_5fkwave_5fspline',['dense_kwave_spline',['../structfuncset.html#addf53457b4ed7603c1874cccdd2d71fe',1,'funcset']]],
-  ['densities',['densities',['../classpawpyseed_1_1analysis_1_1defect__composition_1_1PawpyData.html#a8d08edcb1c6789cfa42bfdd59c647d35',1,'pawpyseed::analysis::defect_composition::PawpyData']]],
+  ['densities',['densities',['../structdensity__ft__elem.html#a056a44427ff6832ba7f875f32b27ea27',1,'density_ft_elem::densities()'],['../classpawpyseed_1_1analysis_1_1defect__composition_1_1PawpyData.html#a8d08edcb1c6789cfa42bfdd59c647d35',1,'pawpyseed.analysis.defect_composition.PawpyData.densities()']]],
   ['diff_5foverlap_5fmatrix',['diff_overlap_matrix',['../structppot.html#a5013a7c2196707da205e9cc8bdc4def5',1,'ppot']]],
   ['diffwave',['diffwave',['../structfuncset.html#a99c9a2b5865446c4d2773ed48237642e',1,'funcset']]],
   ['diffwave_5fspline',['diffwave_spline',['../structfuncset.html#a5e093dcd02ccba7b6deaa4aade3e336f',1,'funcset']]],

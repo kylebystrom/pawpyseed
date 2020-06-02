@@ -12,7 +12,6 @@ var searchData=
   ['compensation_5fterms',['compensation_terms',['../projector_8h.html#a66785c7c9ba05a80a152ec6b7273c3e7',1,'projector.h']]],
   ['compensation_5fterms_5frecip',['compensation_terms_recip',['../projector_8h.html#a091cb5777cf408080acd76ce8040558c',1,'projector.h']]],
   ['coord',['coord',['../structreal__proj__site.html#a5dc643a75ffafb9185e384b622155839',1,'real_proj_site']]],
-  ['coredensity',['coredensity',['../classpawpyseed_1_1core_1_1wavefunction_1_1Pseudopotential.html#a4ec39d154efaf5631870a67d8575071c',1,'pawpyseed::core::wavefunction::Pseudopotential']]],
   ['coreregion',['CoreRegion',['../classpawpyseed_1_1core_1_1wavefunction_1_1CoreRegion.html',1,'pawpyseed::core::wavefunction']]],
   ['corrections_2epy',['corrections.py',['../corrections_8py.html',1,'']]],
   ['cr',['cr',['../classpawpyseed_1_1core_1_1noncollinear_1_1NCLWavefunction.html#a98c4b30488194ffb28cabe9afd865283',1,'pawpyseed.core.noncollinear.NCLWavefunction.cr()'],['../classpawpyseed_1_1core_1_1wavefunction_1_1Wavefunction.html#af110a16ecb06ab6b2d500643cc937a81',1,'pawpyseed.core.wavefunction.Wavefunction.cr()']]],

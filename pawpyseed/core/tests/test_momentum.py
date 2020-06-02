@@ -6,7 +6,8 @@ import time
 import scipy
 
 import numpy as np
-from numpy.testing import assert_almost_equal, assert_equal
+from numpy.testing import assert_almost_equal, assert_equal,\
+						assert_raises, assert_array_almost_equal
 
 from scipy.special import lpmn, sph_harm
 from nose import SkipTest
@@ -50,6 +51,7 @@ class TestMomentumMatrix:
 		self.recipspace_chg = np.fft.fftn(self.realspace_chg) / SIZE**3 * vol
 		self.mm_real = MomentumMatrix(self.wf, encut=3000)
 		self.mm_direct = MomentumMatrix(self.wf)
+		self.mm_direct2 = MomentumMatrix(self.wf, encut=self.wf.encut)
 
 		self.ncl_wf = NCLWavefunction.from_directory('noncollinear')
 		self.ncl_realspace_wf = self.ncl_wf.get_state_realspace(0,0,0,
@@ -63,7 +65,14 @@ class TestMomentumMatrix:
 	def test_ncl_transform(self):
 		chg = np.sum(np.abs(self.ncl_recipspace_wf[0])**2) +\
 				np.sum(np.abs(self.ncl_recipspace_wf[1])**2)
-		assert_almost_equal(chg, 1, 3)
+		assert_array_almost_equal(chg, 1, 3)
+
+	def test_encut_insensitivity(self):
+		res = self.mm_direct.get_momentum_matrix_elems(0,0,0,0,0,0)
+		res2 = self.mm_direct2.get_momentum_matrix_elems(0,0,0,0,0,0)
+		assert_almost_equal(res[0], 1, 4)
+		assert_almost_equal(res2[0], 1, 4)
+		assert_almost_equal(res[:6], res2[:6], 7)
 
 	def test_get_momentum_matrix_elems(self):
 		res = self.mm_direct.get_momentum_matrix_elems(0,0,0,0,0,0)
@@ -74,6 +83,8 @@ class TestMomentumMatrix:
 				assert_almost_equal(res[i],
 					self.recipspace_chg[grid[i][0],grid[i][1],grid[i][2]],
 					3)
+		with assert_raises(ValueError):
+			self.mm_direct.get_momentum_matrix_elems(0,0,0,0,-1,0)
 
 	def test_get_reciprocal_fullfw(self):
 		res = self.mm_real.get_reciprocal_fullfw(0,0,0)
@@ -85,6 +96,8 @@ class TestMomentumMatrix:
 				assert_almost_equal(res[i],
 					self.recipspace_wf[grid[i][0],grid[i][1],grid[i][2]],
 					3)
+		with assert_raises(ValueError):
+			self.mm_real.get_reciprocal_fullfw(50,0,0)
 
 	def test_g_from_wf(self):
 		grid = self.mm_real.momentum_grid
@@ -94,4 +107,6 @@ class TestMomentumMatrix:
 				assert_almost_equal(self.mm_real.g_from_wf(0,0,0,0,0,0,grid[i]),
 					self.recipspace_chg[grid[i][0],grid[i][1],grid[i][2]],
 					3)
+		with assert_raises(ValueError):
+			self.mm_real.g_from_wf(100,0,0,0,0,0,[0,0,0])
 		

@@ -221,12 +221,14 @@ cdef class PWFPointer:
 
 	@staticmethod
 	cdef PWFPointer from_pointer_and_kpts(ppc.pswf_t* ptr,
-		structure, kpts, band_props, allkpts, weights):
+		structure, kpts, band_props, allkpts, weights, symprec,
+		time_reversal_symmetry):
 
 		return_kpts_and_weights = False
 		if (allkpts is None) or (weights is None):
 			return_kpts_and_weights = True
-			allkpts, orig_kptnums, op_nums, symmops, trs = get_nosym_kpoints(kpts, structure)
+			allkpts, orig_kptnums, op_nums, symmops, trs = get_nosym_kpoints(
+			    kpts, structure, symprec=symprec, fil_trsym=time_reversal_symmetry)
 			weights = np.ones(allkpts.shape[0], dtype=np.float64, order='C')
 			# need to change this if spin orbit coupling is added in later
 			for i in range(allkpts.shape[0]):
@@ -234,7 +236,8 @@ cdef class PWFPointer:
 					weights[i] *= 0.5
 			weights /= np.sum(weights)
 		else:
-			orig_kptnums, op_nums, symmops, trs = get_kpt_mapping(allkpts, kpts, structure)
+			orig_kptnums, op_nums, symmops, trs = get_kpt_mapping(
+			allkpts, kpts, structure, symprec=symprec)
 
 		ops, drs = make_c_ops(op_nums, symmops)
 
@@ -487,6 +490,12 @@ cdef class CWavefunction(PseudoWavefunction):
 
 	def _write_realspace_state(self, filename1, filename2, double scale,
 							   int b, int k, int s, remove_phase = False):
+		if b < 0 or b >= self.nband:
+			raise ValueError("Invalid band choice")
+		if k < 0 or k >= self.nwk:
+			raise ValueError("Invalid k-point choice")
+		if s < 0 or s >= self.nspin:
+			raise ValueError("Invalid spin choice")
 		filename1 = bytes(filename1.encode('utf-8'))
 		filename2 = bytes(filename2.encode('utf-8'))
 		res = self._get_realspace_state(b, k, s, remove_phase)
@@ -509,9 +518,11 @@ cdef class CWavefunction(PseudoWavefunction):
 		ppc.write_volumetric(filename, &resv[0], &self.fdimv[0], scale);
 		return res
 
-	def _desymmetrized_pwf(self, structure, band_props, allkpts = None, weights = None):
+	def _desymmetrized_pwf(self, structure, band_props, allkpts=None, weights=None,
+	                       symprec=1e-4, time_reversal_symmetry=True):
 		return PWFPointer.from_pointer_and_kpts(<ppc.pswf_t*> self.wf_ptr, structure,
-							self.kpts, band_props, allkpts, weights)
+							self.kpts, band_props, allkpts, weights, symprec,
+							time_reversal_symmetry)
 
 	def _get_occs(self):
 		nk = self.nwk * self.nspin
@@ -526,6 +537,9 @@ cdef class CWavefunction(PseudoWavefunction):
 		Helper function to get a list of energy levels for a given list
 		of bands. Used by defect_band_analysis in the Projector class.
 		"""
+		for b in bands:
+			if b < 0 or b >= self.nband:
+				raise ValueError("Invalid band choice")
 		energy_list = {}
 		for b in bands:
 			energy_list[b] = []
@@ -534,15 +548,6 @@ cdef class CWavefunction(PseudoWavefunction):
 					energy_list[b].append([ppc.get_energy(self.wf_ptr, b, k, s),\
 										ppc.get_occ(self.wf_ptr, b, k, s)])
 		return energy_list
-
-	#def _setup_partial_wave_transforms(self, encut):
-	#	self.pw_ft_densities = ppc.get_transforms()
-	#	self._setup_momentum_grid(encut)
-	#	self._setup_partial_wave_transforms(encut)
-
-
-	#def _spher_momentum_test(self, int d):
-	#	return pp.spher_momentum()
 
 
 cdef class CNCLWavefunction(CWavefunction):
@@ -579,6 +584,12 @@ cdef class CNCLWavefunction(CWavefunction):
 
 	def _write_realspace_state(self, filename1, filename2, filename3, filename4,
 								double scale, int b, int k, int s):
+		if b < 0 or b >= self.nband:
+			raise ValueError("Invalid band choice")
+		if k < 0 or k >= self.nwk:
+			raise ValueError("Invalid k-point choice")
+		if s < 0 or s >= self.nspin:
+			raise ValueError("Invalid spin choice")
 		filename1 = bytes(filename1.encode('utf-8'))
 		filename2 = bytes(filename2.encode('utf-8'))
 		filename3 = bytes(filename3.encode('utf-8'))
@@ -747,10 +758,7 @@ cdef class CMomentumMatrix:
 		cdef int[::1] gbv = self.gbounds
 		cdef int[::1] gdv = self.gdim
 		gridv = self.ggrid
-		print(self.ggrid.shape[0], actual_size)
-		print(np.max(self.ggrid), np.min(self.ggrid))
 		ppc.grid_bounds(&gbv[0], &gdv[0], &gridv[0], actual_size)
-		print(self.gdim)
 		grid3d = -1 * np.ones(self.gdim[0]*self.gdim[1]*self.gdim[2], dtype=np.int32)
 		cdef int[::1] g3v = grid3d
 		ppc.list_to_grid_map(&g3v[0], &gbv[0], &gdv[0], &gridv[0], actual_size)

@@ -6,7 +6,8 @@ import time
 import scipy
 
 import numpy as np
-from numpy.testing import assert_almost_equal, assert_equal
+from numpy.testing import assert_almost_equal, assert_equal,\
+						assert_raises
 
 from scipy.special import lpmn, sph_harm
 from scipy.interpolate import CubicSpline
@@ -426,6 +427,7 @@ class TestMem:
 			stdout=f, stderr=f)
 		f.close()
 
+
 class TestPy:
 
 	def setup(self):
@@ -446,6 +448,9 @@ class TestPy:
 			'POTCAR', 'vasprun.xml', False)
 		wf = Wavefunction.from_files('CONTCAR', 'WAVECAR2.gz',
 			'POTCAR', 'vasprun.xml', False)
+		with assert_raises(FileNotFoundError):
+			wf = Wavefunction.from_files('bubbles', 'WAVECAR',
+				'POTCAR', 'vasprun.xml', True)
 
 	def test_writestate(self):
 		print("TEST WRITE")
@@ -470,6 +475,8 @@ class TestPy:
 		filename2 = "%s_IMAG" % filename_base
 		#os.remove(filename1)
 		#os.remove(filename2)
+		with assert_raises(ValueError):
+			wf.write_state_realspace(-1, 0, 0)
 
 	def test_density(self):
 		print("TEST DENSITY")
@@ -555,7 +562,11 @@ class TestPy:
 				assert_almost_equal(c, 0, decimal=8)
 			else:
 				assert_almost_equal(v, 0, decimal=8)
-				assert_almost_equal(c, 1, decimal=4)	
+				assert_almost_equal(c, 1, decimal=4)
+
+		with assert_raises(ValueError):
+			pr.proportion_conduction(100)
+			pr.proportion_conduction(-1)
 
 	def test_projector_gz(self):
 		print("TEST PROJGZ")

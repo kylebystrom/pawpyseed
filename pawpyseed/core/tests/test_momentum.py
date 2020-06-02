@@ -36,9 +36,9 @@ class TestMomentumMatrix:
 	def setup(self):
 		self.currdir = os.getcwd()
 		os.chdir(os.path.join(MODULE_DIR, '../../../test_files'))
-		self.initiate_wf_and_mm()
+		self.initialize_wf_and_mm()
 
-	def initiate_wf_and_mm(self):
+	def initialize_wf_and_mm(self):
 		SIZE = 60
 		self.wf = Wavefunction.from_directory('.')
 		vol = self.wf.structure.volume

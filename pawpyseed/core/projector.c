@@ -799,7 +799,7 @@ void compensation_terms(double complex* overlap, int BAND_NUM, pswf_t* wf_S, psw
 	int num_M, int num_N_R, int num_N_S, int num_N_RS,
 	int* M_R, int* M_S, int* N_R, int* N_S, int* N_RS_R, int* N_RS_S,
 	int* proj_labels, double* proj_coords, int* ref_labels, double* ref_coords,
-	int* fft_grid) {
+	int* fft_grid, int flip_spin) {
 
 	setbuf(stdout, NULL);
 	
@@ -818,7 +818,16 @@ void compensation_terms(double complex* overlap, int BAND_NUM, pswf_t* wf_S, psw
 	for (int w = 0; w < NUM_BANDS * NUM_KPTS; w++) {
 		int ni = 0, nj = 0;
 
-		kpoint_t* kpt_R = wf_R->kpts[w%NUM_KPTS];
+		int kpt_ind_R = w%NUM_KPTS;
+		if (wf_R->nspin == 2 && flip_spin) {
+			if (kpt_ind_R < wf_R->nwk) {
+				kpt_ind_R += wf_R->nwk;
+			} else {
+				kpt_ind_R -= wf_R->nwk;
+			}
+		}
+
+		kpoint_t* kpt_R = wf_R->kpts[kpt_ind_R];
 		kpoint_t* kpt_S = wf_S->kpts[w%NUM_KPTS];
 		band_t* band_R = kpt_R->bands[w/NUM_KPTS];
 		band_t* band_S = kpt_S->bands[BAND_NUM];
@@ -902,7 +911,7 @@ void compensation_terms_recip(double complex* overlap, int BAND_NUM, pswf_t* wf_
 	int num_M, int num_N_R, int num_N_S, int num_N_RS,
 	int* M_R, int* M_S, int* N_R, int* N_S, int* N_RS_R, int* N_RS_S,
 	int* proj_labels, double* proj_coords, int* ref_labels, double* ref_coords,
-	int* fft_grid) {
+	int* fft_grid, int flip_spin) {
 
 	setbuf(stdout, NULL);
 	
@@ -922,7 +931,16 @@ void compensation_terms_recip(double complex* overlap, int BAND_NUM, pswf_t* wf_
 
 		int ni = 0, nj = 0;
 
-		kpoint_t* kpt_R = wf_R->kpts[w%NUM_KPTS];
+		int kpt_ind_R = w%NUM_KPTS;
+		if (wf_R->nspin == 2 && flip_spin) {
+			if (kpt_ind_R < wf_R->nwk) {
+				kpt_ind_R += wf_R->nwk;
+			} else {
+				kpt_ind_R -= wf_R->nwk;
+			}
+		}
+
+		kpoint_t* kpt_R = wf_R->kpts[kpt_ind_R];
 		kpoint_t* kpt_S = wf_S->kpts[w%NUM_KPTS];
 		band_t* band_R = kpt_R->bands[w/NUM_KPTS];
 		band_t* band_S = kpt_S->bands[BAND_NUM];

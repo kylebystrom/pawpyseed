@@ -199,22 +199,22 @@ class Projector(pawpyc.CProjector):
 			dim = self.wf.dim * 2
 		return self._realspace_projection(band_num, dim)
 
-	def _single_band_projection_aug_real(self, band_num):
+	def _single_band_projection_aug_real(self, band_num, flip_spin=False):
 		"""
 		All electron projection of the band_num band of self
 		onto all the bands of basis. High frequency components
 		are filtered out from the partial waves, which are then
 		projected onto the pseudo wavefunctions in real space.
 		"""
-		res = self.wf.pseudoprojection(band_num, self.basis)
+		res = self.wf.pseudoprojection(band_num, self.basis, flip_spin)
 		start = time.monotonic()
-		self._add_augmentation_terms(res, band_num)
+		self._add_augmentation_terms(res, band_num, flip_spin)
 		end = time.monotonic()
 		Timer.augmentation_time(end-start)
 		#print('---------\nran compensation_terms in %f seconds\n-----------' % (end-start))
 		return res
 
-	def _single_band_projection_aug_recip(self, band_num):
+	def _single_band_projection_aug_recip(self, band_num, flip_spin=False):
 		"""
 		All electron projection of the band_num band of self
 		onto all the bands of basis. High frequency components
@@ -223,8 +223,8 @@ class Projector(pawpyc.CProjector):
 		space, and then projected onto the pseudo wavefunction
 		in reciprocal space.
 		"""
-		res = self.wf.pseudoprojection(band_num, self.basis)
-		self._projection_recip(res, band_num)
+		res = self.wf.pseudoprojection(band_num, self.basis, flip_spin)
+		self._projection_recip(res, band_num, flip_spin)
 		return res
 
 	def single_band_projection(self, band_num, **kwargs):
@@ -238,6 +238,14 @@ class Projector(pawpyc.CProjector):
 
 		Arguments:
 			band_num (int): band which is projected onto basis
+			kwargs:
+				For method=='realspace':
+					dim (tuple or numpy array): Set a custom grid dimension
+				For method=='aug_*':
+					flip_spin (bool): If true, swap the spins of basis
+						for the projection. I.e. instead of
+						<basis;b,k,s|wf;b0,k,s>, you get
+						<basis;b,k,1-s|wf;b0,k,s> if and only if nspin==2
 
 		Returns:
 			(np.array): overlap operator expectation values

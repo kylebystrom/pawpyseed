@@ -11,6 +11,7 @@ from numpy.testing import assert_almost_equal, assert_equal,\
 
 from scipy.special import lpmn, sph_harm
 from scipy.interpolate import CubicSpline
+from scipy.special import factorial2 as fac2
 from nose import SkipTest
 from nose.tools import nottest
 from nose.plugins.skip import Skip
@@ -142,7 +143,6 @@ class TestC:
 	def test_radial(self):
 		try:
 			import pawpyseed.core.tests.reference as gint
-			from scipy.misc import factorial2 as fac2
 		except ImportError:
 			print("No McMurchie-Davidson installed, skipping radial test")
 			raise SkipTest()
@@ -695,3 +695,19 @@ class TestPy:
 		Chgcar(Poscar(wf.structure), {'total': newchg}).write_file('DIFFCHGCAR.vasp')
 		print(np.sum(chg)/40**3, np.sum(tstchg)/40**3)
 		assert_almost_equal(reldiff, 0, decimal=3)
+
+	def test_flip_spin(self):
+
+		wf = Wavefunction.from_directory('.', False)
+		basis = Wavefunction.from_directory('.', False)
+		pr = Projector(wf, basis)
+		for b in range(wf.nband):
+			res = pr.single_band_projection(b, flip_spin=True)
+			res = np.abs(res)**2
+			print(b,res)
+			for br in range(basis.nband):
+				expected = 1 if b == br else 0
+				decimal = 4 if b == br else 8
+				for k in range(basis.nspin * basis.nwk):
+					assert_almost_equal(np.sum(res[br*basis.nwk*basis.nspin + k]),
+										expected, decimal=decimal)

@@ -233,22 +233,27 @@ void free_ppot(ppot_t* pp) {
 		free(pp->funcs[i].aewave);
 		free(pp->funcs[i].diffwave);
 		free(pp->funcs[i].kwave);
+		free(pp->funcs[i].smooth_diffwave);
 		for (int j = 0; j < 3; j++) {
 			free(pp->funcs[i].proj_spline[j]);
 			free(pp->funcs[i].aewave_spline[j]);
 			free(pp->funcs[i].pswave_spline[j]);
 			free(pp->funcs[i].diffwave_spline[j]);
 			free(pp->funcs[i].kwave_spline[j]);
+			free(pp->funcs[i].smooth_diffwave_spline[j]);
 		}
 		free(pp->funcs[i].proj_spline);
 		free(pp->funcs[i].aewave_spline);
 		free(pp->funcs[i].pswave_spline);
 		free(pp->funcs[i].diffwave_spline);
 		free(pp->funcs[i].kwave_spline);
+		free(pp->funcs[i].smooth_diffwave_spline);
 	}
 	free(pp->funcs);
 	free(pp->wave_grid);
+	free(pp->kwave_grid);
 	free(pp->proj_grid);
+	free(pp->smooth_grid);
 	free(pp->pspw_overlap_matrix);
 	free(pp->aepw_overlap_matrix);
 	free(pp->diff_overlap_matrix);
@@ -275,6 +280,12 @@ void free_pswf(pswf_t* wf) {
 	free(wf->reclattice);
 	if (wf->pps != NULL) {
 		free_ppot_list(wf->pps, wf->num_elems);
+	}
+	if (wf->dcoords != NULL) {
+		free(wf->dcoords);
+	}
+	if (wf->fftg != NULL) {
+		free(wf->fftg);
 	}
 	free(wf);
 }

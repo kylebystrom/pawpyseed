@@ -41,8 +41,8 @@ typedef struct funcset {
 	double** kwave_spline; ///< spline coefficients for kwave
 	double* smooth_diffwave; ///< diffwave on linear grid with high-frequency components removed
 	double** smooth_diffwave_spline; ///< spline coefficients for smooth_diffwave
-	double* dense_kwave;
-	double** dense_kwave_spline;
+	double* dense_kwave; ///< unused
+	double** dense_kwave_spline; ///< unused
 } funcset_t;
 
 typedef struct ppot {
@@ -61,8 +61,8 @@ typedef struct ppot {
 	double* wave_grid; ///< real radial grid for partial waves
 	double* kwave_grid; ///< reciprocal radial grid for partial waves
 	double* proj_grid; ///< real radial grid for projector functions
-	double* smooth_grid;
-	double* dense_kgrid;
+	double* smooth_grid; ///< Grid for Fourier-filtered partial wave differences
+	double* dense_kgrid; ///< unused
 } ppot_t;
 
 typedef struct projection {

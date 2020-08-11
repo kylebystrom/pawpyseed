@@ -74,7 +74,7 @@ void min_cart_path(double* coord, double* center, double* lattice, double* path,
 				}
 			}
 		}
-	}	
+	}
 }
 
 void frac_from_spherical(double* ion_frac, double r, double theta, double phi,
@@ -462,7 +462,7 @@ double complex Ylm2(int l, int m, double costheta, double phi) {
 
 double proj_interpolate(double r, double rmax, int size, double* x,
 	double* proj, double** proj_spline) {
-	
+
 	if (r > x[size-1]) return 0;
 	if (r < x[0]) return proj[0];
 	int ind = min((int)(r/rmax*size), size-2);
@@ -480,7 +480,7 @@ double wave_interpolate(double r, int size, double* x, double* f,
 	if (r < x[0]) return f[0];
 	int ind = min((int) (log(r/x[0]) / log(x[1]/x[0])), size-2);
 	double rem = r - x[ind];
-	return f[ind] + rem * (wave_spline[0][ind] + 
+	return f[ind] + rem * (wave_spline[0][ind] +
 				rem * (wave_spline[1][ind] +
 				rem * wave_spline[2][ind]));
 }
@@ -569,7 +569,7 @@ double complex smooth_wave_value(funcset_t funcs, double* x, int m, double rmax,
 
 void setup_site(real_proj_site_t* sites, ppot_t* pps, int num_sites, int* site_nums,
 	int* labels, double* coords, double* lattice, int* fftg, int pr0_pw1) {
-	
+
 	double vol = determinant(lattice);
 
 	for (int s = 0; s < num_sites; s++) {
@@ -848,6 +848,10 @@ pswf_t* expand_symm_wf(pswf_t* rwf, int num_kpts, int* maps,
 		kpt->k[0] -= kdiff[0];
 		kpt->k[1] -= kdiff[1];
 		kpt->k[2] -= kdiff[2];
+
+        if (fabs(kpt->k[0] + 0.5) < 0.0001){ kdiff[0] -= 1; kpt->k[0] += 1; }
+        if (fabs(kpt->k[1] + 0.5) < 0.0001){ kdiff[1] -= 1; kpt->k[1] += 1; }
+        if (fabs(kpt->k[2] + 0.5) < 0.0001){ kdiff[2] -= 1; kpt->k[2] += 1; }
 		//printf("OLD KPT %lf %lf %lf\n", rkpt->k[0], rkpt->k[1], rkpt->k[2]);
 		//printf("NEW KPT %lf %lf %lf\n", kpt->k[0], kpt->k[1], kpt->k[2]);
 		//kpt->Gs = (int*) malloc(3 * kpt->num_waves * sizeof(int));
@@ -1014,7 +1018,7 @@ pswf_t* expand_symm_wf(pswf_t* rwf, int num_kpts, int* maps,
 			}
 			//printf("energies %lf %lf %e\n", kpt->bands[b]->energy, okpt->bands[b]->energy, total);
 		}
-	
+
 		free(gmaps);
 		free(kptinds);
 		free(factors);

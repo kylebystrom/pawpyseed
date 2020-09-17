@@ -659,9 +659,11 @@ class TestPy:
 	def test_writestate_ncl(self):
 		print("TEST WRITE NCL")
 		sys.stdout.flush()
+		from pymatgen.io.vasp.outputs import Chgcar
 		wf = NCLWavefunction.from_directory('noncollinear')
 		fileprefix = ''
 		b, k, s = 10, 1, 0
+		state1, state2 = wf.write_state_realspace(b, k, s, fileprefix = "")
 		state1, state2 = wf.write_state_realspace(b, k, s, fileprefix = "", 
 			dim=np.array([30,30,30]))
 		assert state1.shape[0] == 30
@@ -673,6 +675,14 @@ class TestPy:
 		filename2 = "%s_UP_IMAG" % filename_base
 		filename3 = "%s_DOWN_REAL" % filename_base
 		filename4 = "%s_DOWN_IMAG" % filename_base
+		chg1 = Chgcar.from_file(filename1)
+		chg2 = Chgcar.from_file(filename2)
+		chg3 = Chgcar.from_file(filename3)
+		chg4 = Chgcar.from_file(filename4)
+		upart = chg1.data['total']**2 + chg2.data['total']**2
+		dpart = chg3.data['total']**2 + chg4.data['total']**2
+		vol = chg1.poscar.structure.volume
+		assert_almost_equal(np.sum((upart + dpart) * vol / 30**3), 1, 2)
 		os.remove(filename1)
 		os.remove(filename2)
 		os.remove(filename3)

@@ -697,6 +697,7 @@ class TestPy:
 		print("FINISHED LOAD WAVEFUNCTION")
 		sys.stdout.flush()
 		#wf = wf.desymmetrized_copy()
+		wf.write_density_realspace(scale = wf.structure.lattice.volume)
 		wf.write_density_realspace(dim=np.array([40,40,40]), scale = wf.structure.lattice.volume)
 		tstchg = Chgcar.from_file("AECCAR2").data['total']# / wf.structure.volume
 		chg = Chgcar.from_file("PYAECCAR").data['total']

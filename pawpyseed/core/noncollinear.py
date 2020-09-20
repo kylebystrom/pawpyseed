@@ -146,5 +146,5 @@ class NCLWavefunction(pawpyc.CNCLWavefunction, Wavefunction):
 		if dim is not None:
 			self.update_dim(np.array(dim))
 		res = self._write_realspace_density(filename, scale)
-		self._convert_to_vasp_volumetric(filename, dim)
+		self._convert_to_vasp_volumetric(filename, self.dim)
 		return res

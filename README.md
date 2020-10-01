@@ -232,7 +232,7 @@ on citing specific functionals.
     * G. Kresse and J. Furthmüller. Efficient iterative schemes for ab initio total-energy calculations using a plane-wave basis set. Phys. Rev. B, 54:11169, 1996.
     * G. Kresse and D. Joubert. From ultrasoft pseudopotentials to the projector augmented-wave method. Phys. Rev. B, 59:1758, 1999.
 3. **NUMSBT**:
-NUMSBT is a code written by J. D. Talman, which implements an algorithm that
+NUMSBT is a code written by J.D. Talman, which implements an algorithm that
 calculates the spherical Bessel transform (SBT) in O(NlogN) time.
 PAWpySeed
 employs the high-k transform algorithm implemented in NUMSBT
@@ -285,6 +285,6 @@ You can view the paper here: <https://arxiv.org/abs/1904.11572>
 
 ## Questions and Comments
 
-Find a bug? Areas of code unclearly documented? Other questions? Feel free to contact
+Find a bug? Areas of code unclearly documented? Other questions? Feel free to Contact
 Kyle Bystrom at kylebystrom@gmail.com with the subject "pawpyseed: (Your Topic)"
 AND/OR create an issue on the Github page at <https://github.com/kylebystrom/pawpyseed>.

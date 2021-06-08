@@ -111,15 +111,15 @@ class NCLWavefunction(pawpyc.CNCLWavefunction, Wavefunction):
 			self.update_dim(np.array(dim))
 		filename_base = "%sB%dK%dS%d" % (fileprefix, b, k, s)
 		filename1 = "%s_UP_REAL" % filename_base
-		filename2 = "%s_DOWN_REAL" % filename_base
-		filename3 = "%s_UP_IMAG" % filename_base
+		filename2 = "%s_UP_IMAG" % filename_base
+		filename3 = "%s_DOWN_REAL" % filename_base
 		filename4 = "%s_DOWN_IMAG" % filename_base
 		res0, res1 = self._write_realspace_state(filename1, filename2, filename3, filename4,
 											scale, b, k, s)
-		self._convert_to_vasp_volumetric(filename1, dim)
-		self._convert_to_vasp_volumetric(filename2, dim)
-		self._convert_to_vasp_volumetric(filename3, dim)
-		self._convert_to_vasp_volumetric(filename4, dim)
+		self._convert_to_vasp_volumetric(filename1, self.dim)
+		self._convert_to_vasp_volumetric(filename2, self.dim)
+		self._convert_to_vasp_volumetric(filename3, self.dim)
+		self._convert_to_vasp_volumetric(filename4, self.dim)
 		return res0, res1
 
 	def write_density_realspace(self, filename = "PYAECCAR", dim=None, scale = 1):
@@ -146,5 +146,5 @@ class NCLWavefunction(pawpyc.CNCLWavefunction, Wavefunction):
 		if dim is not None:
 			self.update_dim(np.array(dim))
 		res = self._write_realspace_density(filename, scale)
-		self._convert_to_vasp_volumetric(filename, dim)
+		self._convert_to_vasp_volumetric(filename, self.dim)
 		return res

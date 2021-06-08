@@ -96,15 +96,6 @@ ppot_t* get_projector_list(int num_els, int* labels, int* ls, double* wave_grids
 			funcs[k].aewave_spline = spline_coeff(pps[i].wave_grid, funcs[k].aewave, pps[i].wave_gridsize);
 			funcs[k].pswave_spline = spline_coeff(pps[i].wave_grid, funcs[k].pswave, pps[i].wave_gridsize);
 			funcs[k].diffwave_spline = spline_coeff(pps[i].wave_grid, funcs[k].diffwave, pps[i].wave_gridsize);
-
-			double* dense_diffwave = (double*) malloc(DENSE_GRID_SCALE * pps[i].wave_gridsize * sizeof(double));
-			dense_diffwave[0] = funcs[k].diffwave[0];
-			for (int p = 1; p < pps[i].wave_gridsize * DENSE_GRID_SCALE; p++) {
-				dense_diffwave[p] = wave_interpolate(dense_wavegrid[p], pps[i].wave_gridsize,
-					pps[i].wave_grid, funcs[k].diffwave, funcs[k].diffwave_spline);
-			}
-			funcs[k].smooth_diffwave = dense_diffwave;
-
 		}
 
 		sbt_descriptor_t* d = spherical_bessel_transform_setup(1e7, 0, pps[i].lmax,
@@ -114,18 +105,6 @@ ppot_t* get_projector_list(int num_els, int* labels, int* ls, double* wave_grids
 			//funcs[k].kwave = besselt(pps[i].wave_grid, pps[i].kwave_grid, funcs[k].diffwave, 520.0, pps[i].wave_gridsize, funcs[k].l);
 			funcs[k].kwave_spline = spline_coeff(pps[i].kwave_grid, funcs[k].kwave, pps[i].wave_gridsize);
 		}
-		//free_sbt_descriptor(d);
-		/*
-		pps[i].dense_kgrid = (double*) malloc (pps[i].wave_gridsize * DENSE_GRID_SCALE * sizeof(double*));
-		d = spherical_bessel_transform_setup(grid_encut, 1e7, pps[i].lmax,
-            pps[i].wave_gridsize * DENSE_GRID_SCALE, dense_wavegrid, pps[i].dense_kgrid);
-        for (int k = 0; k < pps[i].num_projs; k++) {
-            funcs[k].dense_kwave = wave_spherical_bessel_transform(d, funcs[k].smooth_diffwave, funcs[k].l);
-            funcs[k].dense_kwave_spline = spline_coeff(pps[i].dense_kgrid, funcs[k].dense_kwave,
-                pps[i].wave_gridsize * DENSE_GRID_SCALE);
-        }
-		free_sbt_descriptor(d);
-		*/
 		for (int k = 0; k < pps[i].num_projs; k++) {
 			//double* dense_kwave = wave_spherical_bessel_transform(d2, funcs[k].smooth_diffwave, funcs[k].l);
 			double* dense_kwave = (double*) calloc(pps[i].wave_gridsize * DENSE_GRID_SCALE, sizeof(double));
@@ -148,7 +127,6 @@ ppot_t* get_projector_list(int num_els, int* labels, int* ls, double* wave_grids
 			}
 			if (funcs[k].l == 0) sdw[0] = sdw[1];
 			double** sdw_spline = spline_coeff(pps[i].smooth_grid, sdw, pps[i].proj_gridsize);
-			free(funcs[k].smooth_diffwave);
 			funcs[k].smooth_diffwave = sdw;
 			funcs[k].smooth_diffwave_spline = sdw_spline;
 			free(smooth_diffwave);

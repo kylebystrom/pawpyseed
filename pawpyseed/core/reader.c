@@ -166,6 +166,8 @@ pswf_t* read_wavecar(WAVECAR* wc, double* kpt_weights) {
 	wf->nwk = nwk;
 	wf->nband = nband;
 	wf->is_ncl = 0;
+	wf->dcoords = NULL;
+	wf->fftg = NULL;
 	wf->overlaps = NULL;
 	wf->num_projs = NULL;
 

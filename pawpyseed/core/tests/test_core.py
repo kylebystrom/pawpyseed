@@ -700,26 +700,28 @@ class TestPy:
 
 		wf = Wavefunction.from_directory('.', False)
 		basis = Wavefunction.from_directory('.', False)
-		pr = Projector(wf, basis)
-		for b in range(wf.nband):
+		pr = DummyProjector(wf, basis)
+		for b in range(wf.nband//2):
 			res = pr.single_band_projection(b, flip_spin=True)
 			res = np.abs(res)**2
 			print(b,res)
-			for br in range(basis.nband):
+			for br in range(basis.nband//2):
 				expected = 1 if b == br else 0
 				decimal = 4 if b == br else 8
+				decimal = 2 if b == br else 4
 				for k in range(basis.nspin * basis.nwk):
 					assert_almost_equal(np.sum(res[br*basis.nwk*basis.nspin + k]),
 										expected, decimal=decimal)
 
-		pr = Projector(wf, basis, method='aug_recip')
-		for b in range(wf.nband):
+		pr = DummyProjector(wf, basis, method='aug_recip')
+		for b in range(wf.nband//2):
 			res = pr.single_band_projection(b, flip_spin=True)
 			res = np.abs(res)**2
 			print(b,res)
-			for br in range(basis.nband):
+			for br in range(basis.nband//2):
 				expected = 1 if b == br else 0
 				decimal = 4 if b == br else 8
+				decimal = 2 if b == br else 4
 				for k in range(basis.nspin * basis.nwk):
 					assert_almost_equal(np.sum(res[br*basis.nwk*basis.nspin + k]),
 										expected, decimal=decimal)

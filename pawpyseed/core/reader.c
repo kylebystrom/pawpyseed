@@ -124,7 +124,68 @@ void setup(int nspin, int nwk, int nband,
 	*nb3 = nb3max;
 }
 
+int gamma_halfx_condition(int gx, int gy, int gz) {
+	return (gx > 0) ||
+			((gx == 0) && (gy > 0)) ||
+			((gx == 0) && (gy == 0) && (gz >= 0))
+}
+
+int gamma_halfz_condition(int gx, int gy, int gz) {
+	return (gz > 0) ||
+			((gz == 0) && (gy > 0)) ||
+			((gz == 0) && (gy == 0) && (gx >= 0))
+}
+
+void fill_gamma_wf(float complex* Cs, int* Gs, int* G_bounds,
+				   int nplane, int wnghalf) {
+	if (wnghalf == 0) {
+		return
+	}
+	double ngrid[3];
+	ngrid[0] = G_bounds[1] - G_bounds[0] + 1;
+	ngrid[1] = G_bounds[3] - G_bounds[2] + 1;
+	ngrid[2] = G_bounds[5] - G_bounds[4] + 1;
+	int gridsize = ngrid[0] * ngrid[1] * ngrid[2];
+	float complex* x = (float complex*) mkl_calloc(
+		gridsize, sizeof(float complex), 64);
+	for (int w = 0; w < gridsize; w++) {
+		x[w] = 0;
+	}
+	int g1, g2, g3;
+	float sqrt2 = sqrtf(2);
+	for (int w = 0; w < nplane; w++) {
+		g1 = (Gs[3*w+0]+fftg[0]) % fftg[0];
+		g2 = (Gs[3*w+1]+fftg[1]) % fftg[1];
+		g3 = (Gs[3*w+2]+fftg[2]) % fftg[2];
+		if (
+				(wnghalf == 1 &&
+				gamma_halfx_condition(Gs[3*w+0], Gs[3*w+1], Gs[3*w+2]))
+				||
+				(wnghalf == 2 &&
+				gamma_halfz_condition(Gs[3*w+0], Gs[3*w+1], Gs[3*w+2]))
+			) {
+			x[g1*fftg[1]*fftg[2] + g2*fftg[2] + g3] = Cs[w] / sqrt2;
+			g1 = (-Gs[3*w+0]+fftg[0]) % fftg[0];
+			g2 = (-Gs[3*w+1]+fftg[1]) % fftg[1];
+			g3 = (-Gs[3*w+2]+fftg[2]) % fftg[2];
+			x[g1*fftg[1]*fftg[2] + g2*fftg[2] + g3] = conj(Cs[w]) / sqrt2;
+		}
+	}
+	x[0] *= sqrt2;
+	for (int w = 0; w < nplane; w++) {
+		g1 = (Gs[3*w+0]+fftg[0]) % fftg[0];
+		g2 = (Gs[3*w+1]+fftg[1]) % fftg[1];
+		g3 = (Gs[3*w+2]+fftg[2]) % fftg[2];
+		Cs[w] = x[g1*fftg[1]*fftg[2] + g2*fftg[2] + g3];
+	}
+
+	mkl_free(x);
+}
+
 pswf_t* read_wavecar(WAVECAR* wc, double* kpt_weights) {
+
+	// 0=full wng, 1=wngxhalf (serial), 2=wngzhalf (parallel)
+	int wnghalf = 0;
 
 	int nrecli, nspin, nwk, nband, nprec;
 	double nb1max, nb2max, nb3max, encut;
@@ -269,6 +330,7 @@ pswf_t* read_wavecar(WAVECAR* wc, double* kpt_weights) {
 				igall[3*(nplane/2+iplane)+1] = igall[3*iplane+1];
 				igall[3*(nplane/2+iplane)+2] = igall[3*iplane+2];
 			}
+		} else if (ncnt == 2 * nplane - 1) {
 		} else if (ncnt != nplane) {
 			printf("ERROR %d %d %lf %lf %lf %lf\n", ncnt, nplane, kx,ky,kz, c);
 		}
@@ -282,8 +344,28 @@ pswf_t* read_wavecar(WAVECAR* wc, double* kpt_weights) {
 			//fseek(wc->fp, (long)irec*nrecl+2*(long)nrecl, SEEK_SET);
 			//fread(cptr, 8, nrecl/8, wc->fp);
 			float complex* coeff = malloc(nplane*sizeof(float complex));
-			for (int iplane = 0; iplane < nplane; iplane++) {
-				coeff[iplane] = cptr[iplane];
+			if (wnghalf == 0) {
+				for (int iplane = 0; iplane < nplane; iplane++) {
+					coeff[iplane] = cptr[iplane];
+				}
+			}
+			else {
+				int count = 0;
+				for (int iplane = 0; iplane < ncnt; iplane++) {
+					if (
+							(wnghalf == 1 &&
+							gamma_halfx_condition(igall[3*w+0], igall[3*w+1], igall[3*w+2]))
+							||
+							(wnghalf == 2 &&
+							gamma_halfz_condition(igall[3*w+0], igall[3*w+1], igall[3*w+2]))
+						)
+					{
+						coeff[iplane] = cptr[count];
+						count++;
+					}
+				}
+				fill_gamma_wf(coeff, igall, G_bounds, ncnt, wnghalf);
+				kpt->num_waves = ncnt;
 			}
 			kpt->bands[iband]->Cs = coeff;
 		}

@@ -127,27 +127,29 @@ void setup(int nspin, int nwk, int nband,
 int gamma_halfx_condition(int gx, int gy, int gz) {
 	return (gx > 0) ||
 			((gx == 0) && (gy > 0)) ||
-			((gx == 0) && (gy == 0) && (gz >= 0))
+			((gx == 0) && (gy == 0) && (gz >= 0));
 }
 
 int gamma_halfz_condition(int gx, int gy, int gz) {
 	return (gz > 0) ||
 			((gz == 0) && (gy > 0)) ||
-			((gz == 0) && (gy == 0) && (gx >= 0))
+			((gz == 0) && (gy == 0) && (gx >= 0));
 }
 
-void fill_gamma_wf(float complex* Cs, int* Gs, int* G_bounds,
+void fill_gamma_wf(float complex* Cs, int* Gs, pswf_t* wf,
 				   int nplane, int wnghalf) {
 	if (wnghalf == 0) {
-		return
+		return;
 	}
+	int* G_bounds = wf->G_bounds;
+	int* fftg = wf->fftg;
 	double ngrid[3];
 	ngrid[0] = G_bounds[1] - G_bounds[0] + 1;
 	ngrid[1] = G_bounds[3] - G_bounds[2] + 1;
 	ngrid[2] = G_bounds[5] - G_bounds[4] + 1;
 	int gridsize = ngrid[0] * ngrid[1] * ngrid[2];
-	float complex* x = (float complex*) mkl_calloc(
-		gridsize, sizeof(float complex), 64);
+	float complex* x = (float complex*) calloc(
+		gridsize, sizeof(float complex));
 	for (int w = 0; w < gridsize; w++) {
 		x[w] = 0;
 	}
@@ -179,7 +181,7 @@ void fill_gamma_wf(float complex* Cs, int* Gs, int* G_bounds,
 		Cs[w] = x[g1*fftg[1]*fftg[2] + g2*fftg[2] + g3];
 	}
 
-	mkl_free(x);
+	free(x);
 }
 
 pswf_t* read_wavecar(WAVECAR* wc, double* kpt_weights) {
@@ -354,17 +356,19 @@ pswf_t* read_wavecar(WAVECAR* wc, double* kpt_weights) {
 				for (int iplane = 0; iplane < ncnt; iplane++) {
 					if (
 							(wnghalf == 1 &&
-							gamma_halfx_condition(igall[3*w+0], igall[3*w+1], igall[3*w+2]))
+							gamma_halfx_condition(igall[3*iplane+0],
+								igall[3*iplane+1], igall[3*iplane+2]))
 							||
 							(wnghalf == 2 &&
-							gamma_halfz_condition(igall[3*w+0], igall[3*w+1], igall[3*w+2]))
+							gamma_halfz_condition(igall[3*iplane+0],
+								igall[3*iplane+1], igall[3*iplane+2]))
 						)
 					{
 						coeff[iplane] = cptr[count];
 						count++;
 					}
 				}
-				fill_gamma_wf(coeff, igall, G_bounds, ncnt, wnghalf);
+				fill_gamma_wf(coeff, igall, wf, ncnt, wnghalf);
 				kpt->num_waves = ncnt;
 			}
 			kpt->bands[iband]->Cs = coeff;

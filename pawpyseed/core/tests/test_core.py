@@ -568,6 +568,54 @@ class TestPy:
 			pr.proportion_conduction(100)
 			pr.proportion_conduction(-1)
 
+	def test_projector_gamma(self):
+		print("TEST GAMMA")
+		sys.stdout.flush()
+		# test ae projections
+		wf1 = Wavefunction.from_directory('gam', False)
+		basis = Wavefunction.from_directory('gam', False)
+		pr = Projector(wf1, basis)
+		for b in range(wf1.nband):
+			v, c = pr.proportion_conduction(b)
+			if b < 6:
+				assert_almost_equal(v, 1, decimal=4)
+				assert_almost_equal(c, 0, decimal=8)
+			else:
+				assert_almost_equal(v, 0, decimal=8)
+				assert_almost_equal(c, 1, decimal=4)
+
+		generator = Projector.setup_multiple_projections('.', ['.', '.'])
+		for wf_dir, wf in generator:
+			wf.defect_band_analysis(4, 10, spinpol=True)
+
+		wf1 = Wavefunction.from_directory('.', False)
+		basis = Wavefunction.from_directory('.', False)
+		pr = Projector(wf1, basis, 'aug_recip')
+		for b in range(wf1.nband):
+			v, c = pr.proportion_conduction(b)
+			if b < 6:
+				assert_almost_equal(v, 1, decimal=4)
+				assert_almost_equal(c, 0, decimal=8)
+			else:
+				assert_almost_equal(v, 0, decimal=8)
+				assert_almost_equal(c, 1, decimal=4)
+
+		wf1 = Wavefunction.from_directory('.', False)
+		basis = Wavefunction.from_directory('.', False)
+		pr = Projector(wf1, basis, 'realspace')
+		for b in range(wf1.nband):
+			v, c = pr.proportion_conduction(b)
+			if b < 6:
+				assert_almost_equal(v, 1, decimal=4)
+				assert_almost_equal(c, 0, decimal=8)
+			else:
+				assert_almost_equal(v, 0, decimal=8)
+				assert_almost_equal(c, 1, decimal=4)
+
+		with assert_raises(ValueError):
+			pr.proportion_conduction(100)
+			pr.proportion_conduction(-1)
+
 	def test_projector_gz(self):
 		print("TEST PROJGZ")
 		sys.stdout.flush()

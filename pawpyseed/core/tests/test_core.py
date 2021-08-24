@@ -485,14 +485,14 @@ class TestPy:
 		#wf = wf.desymmetrized_copy()
 		wf.write_density_realspace(dim=np.array([40,40,40]), scale = wf.structure.lattice.volume)
 		tstchg = Chgcar.from_file("AECCAR2").data['total']# / wf.structure.volume
-		chg = Chgcar.from_file("PYAECCAR").data['total']
+		chg = Chgcar.from_file("PYAECCAR.vasp").data['total']
 		reldiff = np.sqrt(np.mean(((chg-tstchg)/tstchg)**2))
 		newchg = chg-tstchg
 		Chgcar(Poscar(wf.structure), {'total': newchg}).write_file('DIFFCHGCAR.vasp')
 		print(np.sum(chg)/40**3, np.sum(tstchg)/40**3)
 		assert_almost_equal(reldiff, 0, decimal=2)
 		wf = Wavefunction.from_directory('nosym')
-		res = wf.write_density_realspace(filename="BAND4DENS", bands=4)
+		res = wf.write_density_realspace(filename="BAND4DENS.vasp", bands=4)
 		#os.remove('PYAECCAR')
 		print("DENS shape", res.shape)
 		assert_almost_equal(np.sum(res)*wf.structure.lattice.volume/np.cumprod(res.shape)[-1], 1, 4)
@@ -671,10 +671,10 @@ class TestPy:
 		assert state1.shape[2] == 30
 		assert state1.dtype == np.complex128
 		filename_base = "%sB%dK%dS%d" % (fileprefix, b, k, s)
-		filename1 = "%s_UP_REAL" % filename_base
-		filename2 = "%s_UP_IMAG" % filename_base
-		filename3 = "%s_DOWN_REAL" % filename_base
-		filename4 = "%s_DOWN_IMAG" % filename_base
+		filename1 = "%s_UP_REAL.vasp" % filename_base
+		filename2 = "%s_UP_IMAG.vasp" % filename_base
+		filename3 = "%s_DOWN_REAL.vasp" % filename_base
+		filename4 = "%s_DOWN_IMAG.vasp" % filename_base
 		chg1 = Chgcar.from_file(filename1)
 		chg2 = Chgcar.from_file(filename2)
 		chg3 = Chgcar.from_file(filename3)
@@ -697,15 +697,15 @@ class TestPy:
 		print("FINISHED LOAD WAVEFUNCTION")
 		sys.stdout.flush()
 		#wf = wf.desymmetrized_copy()
-		wf.write_density_realspace(scale = wf.structure.lattice.volume)
-		wf.write_density_realspace(dim=np.array([40,40,40]), scale = wf.structure.lattice.volume)
+		wf.write_density_realspace(scale=wf.structure.lattice.volume)
+		wf.write_density_realspace(dim=np.array([40,40,40]), scale=wf.structure.lattice.volume)
 		tstchg = Chgcar.from_file("AECCAR2").data['total']# / wf.structure.volume
-		chg = Chgcar.from_file("PYAECCAR").data['total']
+		chg = Chgcar.from_file("PYAECCAR.vasp").data['total']
 		reldiff = np.sqrt(np.mean(((chg-tstchg)/tstchg)**2))
 		newchg = chg-tstchg
 		Chgcar(Poscar(wf.structure), {'total': newchg}).write_file('DIFFCHGCAR.vasp')
 		print(np.sum(chg)/40**3, np.sum(tstchg)/40**3)
-		assert_almost_equal(reldiff, 0, decimal=3)
+		assert_almost_equal(reldiff, 0, decimal=2)
 
 	def test_flip_spin(self):
 

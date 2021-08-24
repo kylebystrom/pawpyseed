@@ -507,16 +507,16 @@ class Wavefunction(pawpyc.CWavefunction):
 		if dim is not None:
 			self.update_dim(np.array(dim))
 		filename_base = "%sB%dK%dS%d" % (fileprefix, b, k, s)
-		filename1 = "%s_REAL" % filename_base
-		filename2 = "%s_IMAG" % filename_base
+		filename1 = "%s_REAL.vasp" % filename_base
+		filename2 = "%s_IMAG.vasp" % filename_base
 		res = self._write_realspace_state(filename1, filename2, scale,
 										  b, k, s, remove_phase)
 		self._convert_to_vasp_volumetric(filename1, self.dim)
 		self._convert_to_vasp_volumetric(filename2, self.dim)
 		return res
 
-	def write_density_realspace(self, filename = "PYAECCAR", dim=None,
-								scale = 1, bands=None):
+	def write_density_realspace(self, filename="PYAECCAR.vasp", dim=None,
+								scale=1, bands=None):
 		"""
 		Writes the real and imaginary parts of a given band to two files,
 		prefixed by fileprefix
@@ -545,8 +545,8 @@ class Wavefunction(pawpyc.CWavefunction):
 		self._convert_to_vasp_volumetric(filename, self.dim*2)
 		return res
 
-	def get_nosym_kpoints(self, init_kpts = None, symprec=None,
-		gen_trsym = True, fil_trsym = True):
+	def get_nosym_kpoints(self, init_kpts=None, symprec=None,
+		gen_trsym=True, fil_trsym=True):
 		"""
 		Helper function to get a non-symmetry-reduced k-point
 		mesh based on the symmetry-reduced mesh of self.
@@ -557,7 +557,7 @@ class Wavefunction(pawpyc.CWavefunction):
 		return pawpy_symm.get_nosym_kpoints(kpts, self.structure, init_kpts,
 										symprec, gen_trsym, fil_trsym)
 
-	def get_kpt_mapping(self, allkpts, symprec=None, gen_trsym = True):
+	def get_kpt_mapping(self, allkpts, symprec=None, gen_trsym=True):
 		"""
 		Helper function to find the mappings from self.kpts to
 		allkpts using the symmetry operations of self.structure

@@ -36,7 +36,7 @@ class Projector(pawpyc.CProjector):
 				wavefunctions (pseudo wavefunctions).
 				Sacrifices orthogonalization and
 				normalization for speed. Not recommended except for
-				very rough, qualitative informtation.
+				very rough, qualitative information.
 	"""
 
 	METHODS = ["pseudo", "realspace", "aug_recip", "aug_real"]
@@ -114,7 +114,7 @@ class Projector(pawpyc.CProjector):
 		Organizes sites into sets for use in the projection scheme. M_R and M_S contain site indices
 		of sites which are identical in structures R (basis) and S (self). N_R and N_S contain all other
 		site indices, and N_RS contains pairs of indices in R and S with overlapping augmentation
-		spheres in the PAW formalism. R si for self.basis, S is for self.wf
+		spheres in the PAW formalism. R is for self.basis, S is for self.wf
 
 		Returns:
 			M_R (numpy array): Indices of sites in basis which have an identical site in

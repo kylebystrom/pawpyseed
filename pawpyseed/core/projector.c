@@ -343,6 +343,9 @@ void onto_projector_ncl(kpoint_t* kpt, int band_num, real_proj_site_t* sites, in
 		lattice, reclattice, k, num_cart_gridpts, fftg, band->up_projections);
 	onto_projector_helper(kpt->bands[band_num], xdown, sites, num_sites,
 		lattice, reclattice, k, num_cart_gridpts, fftg, band->down_projections);
+
+    mkl_free(xup);
+    mkl_free(xdown);
 }
 
 void onto_smoothpw(kpoint_t* kpt, int band_num, real_proj_site_t* sites, int num_sites,
@@ -520,7 +523,7 @@ void setup_projections(pswf_t* wf, ppot_t* pps, int num_elems,
 	printf("calculating projector_values\n");
 	real_proj_site_t* sites = projector_values(num_sites, labels, coords,
 		wf->lattice, wf->reclattice, pps, fftg);
-	printf("onto_projector calcs\n");
+	printf("onto_projector calcs %d %d\n", NUM_BANDS, NUM_KPTS);
 #if defined(_OPENMP)
 	omp_set_num_threads(omp_get_max_threads());
 #endif
@@ -528,12 +531,13 @@ void setup_projections(pswf_t* wf, ppot_t* pps, int num_elems,
 	for (int w = 0; w < NUM_BANDS * NUM_KPTS; w++) {
 		kpoint_t* kpt = wf->kpts[w % NUM_KPTS];
 		int band_num = w / NUM_KPTS;
-		onto_projector(kpt, band_num, sites, num_sites,
-			wf->G_bounds, wf->lattice, wf->reclattice, num_cart_gridpts, fftg);
-		if (wf->is_ncl) {
+        if (wf->is_ncl) {
 			onto_projector_ncl(kpt, band_num, sites, num_sites,
 				wf->G_bounds, wf->lattice, wf->reclattice, num_cart_gridpts, fftg);
-		}
+		} else {
+            onto_projector(kpt, band_num, sites, num_sites,
+                wf->G_bounds, wf->lattice, wf->reclattice, num_cart_gridpts, fftg);
+        }
 	}
 	printf("Done \n");
 	free_real_proj_site_list(sites, num_sites);	

@@ -11,6 +11,6 @@ double laguerre(double x, int n, int alpha);
 
 double hradial(int n, int l, double r);
 
-double* yk(int k, int size, double* r, double* P1, double* P2);
+double *yk(int k, int size, double *r, double *P1, double *P2);
 
 #endif

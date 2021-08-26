@@ -17,12 +17,6 @@ with codecs.open("README.md", "r", encoding="utf8") as fh:
 
 DEBUG = True
 
-reqs = (
-    "numpy>=1.14,scipy>=1.0,pymatgen>=2018.2.13,sympy>=1.1.1,matplotlib>=0.2.5".split(
-        ","
-    )
-)
-
 srcfiles = [
     "density",
     "gaunt",
@@ -179,7 +173,13 @@ setup(
     author="Kyle Bystrom",
     author_email="kylebystrom@berkeley.edu",
     license="BSD",
-    install_requires=reqs,
+    install_requires=[
+        "numpy>=1.14",
+        "scipy>=1.0",
+        "pymatgen>=2018.2.13",
+        "sympy>=1.1.1",
+        "matplotlib>=0.2.5",
+    ],
     packages=packages,
     # package_data={'pawpyseed.core': cfiles+hfiles},
     data_files=[("", ["LICENSE", "README.md"])],

@@ -37,7 +37,7 @@ void test_get_projector_list() {
 	double ps[10] = {0,0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9};
 	double p[10] = {0,0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9};
 	ppot_t* lst = get_projector_list(1, labels, ls, pg, wg, p, ae, ps, rm, 7000);
-	
+
 	make_pwave_overlap_matrices(lst);
 	free_ppot_list(lst, 1);
 }

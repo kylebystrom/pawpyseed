@@ -23,7 +23,7 @@ double* ncl_ae_state_density(int BAND_NUM, pswf_t* wf, int* fftg, int* labels, d
         P[i] += creal(x[i] * conj(x[i]));
     }
     mkl_free(x);
-    return P;	
+    return P;
 }
 */
 
@@ -139,7 +139,7 @@ void ae_state_density(double* P, int BAND_NUM, int KPOINT_NUM, pswf_t* wf,
 									* pros.overlaps[n] * conj(pros.overlaps[m])
 									);
 							}
-								
+
 							//	wave_value(pp.funcs[pros.ns[n]],
 							//	pp.wave_gridsize, pp.wave_grid,
 							//	pros.ms[n], coords+3*p, frac, lattice)
@@ -303,7 +303,7 @@ void realspace_state(double complex* x, int BAND_NUM, int KPOINT_NUM,
 								pros.ls[n], pros.ms[n],
 								testcoord)
 								* pros.overlaps[n] * cexp(2*PI*I*phase);
-								
+
 							//	wave_value(pp.funcs[pros.ns[n]],
 							//	pp.wave_gridsize, pp.wave_grid,
 							//	pros.ms[n], coords+3*p, frac, lattice)

@@ -81,7 +81,7 @@ state, for a structure
 */
 typedef struct band {
 	int n; ///< band number
-	int num_waves; ///< number of plane waves 
+	int num_waves; ///< number of plane waves
 	double occ; ///< occupancy of the band
 	double N;
 	double energy; ///< energy of the band

@@ -1,8 +1,11 @@
 # cython : language_level=3
 
+cimport numpy as np
+
 from pawpyseed.core cimport pawpyc_extern as ppc
-cimport numpy as np 
+
 import numpy as np
+
 
 cdef class PWFPointer:
 
@@ -50,7 +53,7 @@ cdef class CProjector:
     cdef int[::1] N_RS_S
 
     cdef int num_M_R
-    cdef int num_M_S 
+    cdef int num_M_S
     cdef int num_N_R
     cdef int num_N_S
     cdef int num_N_RS_R

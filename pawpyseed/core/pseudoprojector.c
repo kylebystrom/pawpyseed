@@ -18,7 +18,7 @@ void vc_pseudoprojection(pswf_t* wf_ref, pswf_t* wf_proj, int BAND_NUM, double* 
 	double* cband = (double*) calloc(NUM_KPTS, sizeof(double));
 	double* vband = (double*) calloc(NUM_KPTS, sizeof(double));
 
-	#pragma omp parallel for 
+	#pragma omp parallel for
 	for (int b = 0; b < NUM_BANDS; b++)
 	{
 		for (int kpt_num = 0; kpt_num < NUM_KPTS; kpt_num++)
@@ -70,7 +70,7 @@ void pseudoprojection(double complex* projections, pswf_t* wf_ref, pswf_t* wf_pr
 	int NUM_KPTS = wf_ref->nwk * wf_ref->nspin;
 	int NUM_BANDS = wf_ref->nband;
 
-	#pragma omp parallel for 
+	#pragma omp parallel for
 	for (int b = 0; b < NUM_BANDS; b++)
 	{
 		for (int kpt_num = 0; kpt_num < NUM_KPTS; kpt_num++)

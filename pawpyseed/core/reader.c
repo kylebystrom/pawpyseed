@@ -68,7 +68,7 @@ void setup(int nspin, int nwk, int nband,
 	double magb3 = mag(reclattice+6);
 	double vtemp[3];
 	double vmag, sinphi123;
-	
+
 	double phi12 = acos(dot(reclattice+0, reclattice+3) / (magb1 * magb2));
 	vcross(vtemp, reclattice+0, reclattice+3);
 	vmag = mag(vtemp);
@@ -79,7 +79,7 @@ void setup(int nspin, int nwk, int nband,
 	//printf("%lf %lf %lf %lf %lf %lf\n", sin(phi12), pow(encut*c,0.5),
 	//			phi12, vmag, sinphi123, magb3*abs(sinphi123));
 	int npmaxA = (int) round(4.0/3.0*PI*nb1maxA*nb2maxA*nb3maxA);
-	
+
 	double phi13 = acos(dot(reclattice+0, reclattice+6) / (magb1 * magb3));
 	vcross(vtemp, reclattice+0, reclattice+6);
 	vmag = mag(vtemp);
@@ -199,7 +199,7 @@ pswf_t* read_wavecar(WAVECAR* wc, double* kpt_weights) {
 		wcread(kptr, 8, nrecl/8, wc);
 		//fseek(wc->fp, irec*nrecl+2*nrecl, SEEK_SET);
 		//fread(kptr, 8, nrecl/8, wc->fp);
-		
+
 		int nplane = (int) round(kptr[0]);
 		kpt->num_waves = nplane;
 		int* igall = malloc(3*nplane*sizeof(int));
@@ -287,7 +287,7 @@ pswf_t* read_wavecar(WAVECAR* wc, double* kpt_weights) {
 			}
 			kpt->bands[iband]->Cs = coeff;
 		}
-		
+
 		//printf("iwk %d\n", iwk);
 		kpt->weight = kpt_weights[iwk%nwk];
 		kpt->Gs = igall;

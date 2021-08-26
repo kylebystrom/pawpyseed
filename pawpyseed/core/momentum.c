@@ -66,7 +66,7 @@ float complex pseudo_momentum(int* GP, int* G_bounds, double* lattice,
 		x[g1*fftg[1]*fftg[2] + g2*fftg[2] + g3] = conj(C1s[w]);
 	}
 	for (int w = 0; w < num_waves2; w++) {
-		if ( G2s[3*w+0]+GP[0] >= G_bounds[0] && G2s[3*w+0]+GP[0] <= G_bounds[1] 
+		if ( G2s[3*w+0]+GP[0] >= G_bounds[0] && G2s[3*w+0]+GP[0] <= G_bounds[1]
 		  && G2s[3*w+1]+GP[1] >= G_bounds[2] && G2s[3*w+1]+GP[1] <= G_bounds[3]
 		  && G2s[3*w+2]+GP[2] >= G_bounds[4] && G2s[3*w+2]+GP[2] <= G_bounds[5]) {
 			g1 = (G2s[3*w+0]+GP[0] +fftg[0]) % fftg[0];
@@ -145,7 +145,7 @@ double complex spher_momentum(density_ft_t densities, double* G) {
 	int l1=densities.l1, l2=densities.l2,
 		m1=densities.m1, m2=densities.m2;
 	transform_spline_t* transforms = densities.transforms;
-	
+
 	double complex total = 0;
 
 	int lx, ly, mx, my;
@@ -424,7 +424,7 @@ void fill_grid(float complex* x, int* Gs, float complex* Cs, int* fftg, int numg
 		g3 = (Gs[3*w+2]%fftg[2] + fftg[2]) % fftg[2];
 		x[g1*fftg[1]*fftg[2] + g2*fftg[2] + g3] = Cs[w];
 	}
-	
+
 }
 
 void fullwf_reciprocal(double complex* Cs, int* igall, pswf_t* wf, int numg,
@@ -500,7 +500,7 @@ void fullwf_reciprocal(double complex* Cs, int* igall, pswf_t* wf, int numg,
 							* 4 * PI * inv_sqrt_vol;
 					p++;
 				}
-			} 
+			}
 		}
 	}
 

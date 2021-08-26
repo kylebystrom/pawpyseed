@@ -8,21 +8,26 @@
 # is unsafe because some of the error
 # catching is in Python.
 
+from cpython cimport array
+from libc.stdio cimport FILE
+from libc.stdlib cimport free, malloc
+
 from pawpyseed.core cimport pawpyc
 from pawpyseed.core cimport pawpyc_extern as ppc
 
-from cpython cimport array
-from libc.stdlib cimport malloc, free
-from libc.stdio cimport FILE
+import numpy as np
+from monty.io import zopen
+from numpy.testing import assert_almost_equal
 from pymatgen.core.structure import Structure
 from pymatgen.io.vasp.outputs import Vasprun
-from monty.io import zopen
-import numpy as np
-from numpy.testing import assert_almost_equal
+
 cimport numpy as np
-import time
+
 import sys
+import time
+
 from libc.stdint cimport uintptr_t
+
 from pawpyseed.core.symmetry import *
 
 ###################
@@ -45,7 +50,7 @@ class Timer:
 
 ################################
 #  MISCELLANEOUS PYTHON UTILS  #
-################################  
+################################
 
 def el(site):
 	"""
@@ -204,7 +209,7 @@ cdef class PWFPointer:
 		else:
 			filename = str(filename)
 			if type(vr) == str:
-				vr = Vasprun(vr) 
+				vr = Vasprun(vr)
 			self.weights = np.array(vr.actual_kpoints_weights, dtype=np.float64)
 			self.kpts = np.array(vr.actual_kpoints, dtype=np.float64)
 			self.band_props = np.array(vr.eigenvalue_band_properties)
@@ -336,7 +341,7 @@ cdef class CWavefunction(PseudoWavefunction):
 		readonly int projector_owner: Whether projector functions have
 			been initialized
 	"""
-	
+
 	def __init__(self, PWFPointer pwf):
 		"""
 		Initializes a CWavefunction from a PWFPointer
@@ -664,7 +669,7 @@ cdef class CProjector:
 		cdef int* N_S = NULL if self.num_N_S == 0 else &self.N_S[0]
 		cdef int* N_RS_R = NULL if self.num_N_RS_R == 0 else &self.N_RS_R[0]
 		cdef int* N_RS_S = NULL if self.num_N_RS_S == 0 else &self.N_RS_S[0]
-		
+
 		# choose function
 		if recip:
 			ppc.overlap_setup_recip(self.basis.wf_ptr, self.wf.wf_ptr,
@@ -678,7 +683,7 @@ cdef class CProjector:
 				self.num_N_R, self.num_N_S, self.num_N_RS_R)
 
 	def _add_augmentation_terms(self, np.ndarray[double complex, ndim=1] res, band_num, flip_spin):
-		
+
 		cdef double complex[::1] resv = res
 
 		# set up site lists
@@ -697,7 +702,7 @@ cdef class CProjector:
 			&self.wf.dimv[0], int(flip_spin))
 
 	def _projection_recip(self, np.ndarray[double complex, ndim=1] res, band_num, flip_spin):
-		
+
 		cdef double complex[::1] resv = res
 
 		# set up site lists
@@ -724,7 +729,7 @@ cdef class CProjector:
 			dimv = self.wf.dimv
 		else:
 			dimv = np.array(dim, dtype=np.float64, order='C', copy=False)
-		ppc.project_realspace_state(&resv[0], 
+		ppc.project_realspace_state(&resv[0],
 			band_num, self.wf.wf_ptr, self.basis.wf_ptr,
 			&dimv[0], &self.wf.nums[0], &self.wf.coords[0],
 			&self.basis.nums[0], &self.basis.coords[0])

@@ -25,7 +25,7 @@ double* get_sbtd_ks(sbt_descriptor_t* d) {
 }
 
 int fft_check(char* wavecar, double* kpt_weights, int* fftg) {
-	
+
 	setbuf(stdout, NULL);
 
 	pswf_t* wf = read_wavefunctions(wavecar, kpt_weights);
@@ -142,7 +142,7 @@ void proj_check(int BAND_NUM, int KPOINT_NUM,
 					testcoord[2] = (double) k / fftg[2] - coords[3*p+2];
 					frac_to_cartesian(testcoord, lattice);
 					if (mag(testcoord) < rmax) {
-						
+
 						ii = (i%fftg[0] + fftg[0]) % fftg[0];
 						jj = (j%fftg[1] + fftg[1]) % fftg[1];
 						kk = (k%fftg[2] + fftg[2]) % fftg[2];

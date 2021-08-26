@@ -66,7 +66,7 @@ sbt_descriptor_t* spherical_bessel_transform_setup(double encut, double enbuf, i
 			-sin(7*phi)/(1680*pow(rad,7));
 		for (int j = 1; j <= 10; j++)
 			phi1 += atan((2*t)/(2*j-1));
-		
+
 		phi2 = -atan(tanh(PI*t/2));
 		phi = phi1 + phi2 + phi3;
 		mult_table[0][i] = pow(PI/2, 0.5) * cexp(I * phi) / N;
@@ -183,7 +183,7 @@ double* inverse_wave_spherical_bessel_transform(sbt_descriptor_t* d, double* f, 
 	for (int m = 0; m < N; m++) {
 		x[m] = pow(r[m], 1.5) * fs[m];
 	}
-	
+
 	status = DftiComputeBackward(handle, x);
 	CHECK_STATUS(status);
 	for (int n = 0; n < N; n++) {

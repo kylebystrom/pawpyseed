@@ -57,4 +57,3 @@ DEPRECATED, DO NOT USE: function to read a single band from a WAVECAR
 kpoint_t** read_one_band(int* G_bounds, double* kpt_weights, int* ns, int* nk, int* nb, int BAND_NUM, char* filename);
 
 #endif
-

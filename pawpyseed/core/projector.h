@@ -126,4 +126,3 @@ O(N^2) spherical Bessel transform
 double* besselt(double* r, double* k, double* f, double encut, int N, int l);
 
 #endif
-

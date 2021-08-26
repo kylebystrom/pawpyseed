@@ -1052,4 +1052,3 @@ double* get_smooth_wave(ppot_t* lst, int num) {
 	//return lst[num].funcs[0].smooth_diffwave;
 	return lst[num].smooth_grid;
 }
-

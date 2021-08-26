@@ -159,7 +159,7 @@ of a system. The strong Coulombic forces near an atomic
 nucleus creates quickly oscillating wavefunctions that are
 not well described by plane waves without prohibitively
 large basis sets, so a "pseudopotential" is introduced
-near the atomic nuclei which results in smooth 
+near the atomic nuclei which results in smooth
 "pseudo wavefunctions" well described by plane waves. The
 full wavefunctions can be recovered by a linear transform
 of the pseudowavefunctions. The PAW method requires

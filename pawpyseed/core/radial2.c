@@ -106,5 +106,3 @@ double complex offsite_wave_overlap(double* dcoord, double* r1, double* f1, doub
 	}
 	return integral;
 }
-
-

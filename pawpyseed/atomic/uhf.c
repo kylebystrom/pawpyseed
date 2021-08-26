@@ -51,7 +51,7 @@ awf_t* construct_basis(int Z, int N, int maxN, int maxL, double* r) {
 	wf->v = 0;
 	wf->X = X;
 	wf->h = h;
-	
+
 	double*** yks = (double***) malloc(XT*XT * sizeof(double**));
 	int b1, b2, n1, n2, l1, l2;
 	for (int l1 = 0; l1 < L; l1++) {
@@ -192,7 +192,7 @@ void solve(awf_t* wf, in nsteps, double tol) {
 				F[mu*X+nu] += h[mu*X+nu];
 				for (int lambda = 0; lambda < X; lambda++) {
 					for (int sigma = 0; sigma < X; sigma++) {
-						F[mu*X+nu] += DM[lambda*X+sigma] * 
+						F[mu*X+nu] += DM[lambda*X+sigma] *
 							(EE[mu*X+nu][lambda*X+sigma] - EE[mu*X+sigma][lambda*X+nu]);
 					}
 				}

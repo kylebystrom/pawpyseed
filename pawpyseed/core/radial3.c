@@ -73,7 +73,7 @@ double complex offsite_wave_overlap(double* dcoord, double* r1, double* f1, doub
 	double R = mag(dcoord);
 	double complex total = 0;
 	double dx, dy, Ii, Ij, ri, rj = 0;
-	
+
 	int lx = l1, ly = l2, mx = m1, my = m2;
 	if (m1 < 0 && m2 < 0) {
 		mx = -m1;
@@ -106,5 +106,3 @@ double complex offsite_wave_overlap(double* dcoord, double* r1, double* f1, doub
 
 	return total * pow(-1, lx);
 }
-
-

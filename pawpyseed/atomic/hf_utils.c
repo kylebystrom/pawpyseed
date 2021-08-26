@@ -6,7 +6,7 @@
 #include "../core/utils.h"
 
 //double legendre(int l, int m, double x) {
-//	double l0 = 
+//	double l0 =
 //
 //}
 
@@ -70,7 +70,7 @@ double* dft_ecoul(int size, double* r, double* yks, double* chg) {
 }
 
 double* ykint(int k, int size, double* r, double* integrand1, double* integrand2) {
-	
+
 	double** spline1 = spline_coeff(r, integrand1, size);
 	double** spline2 = spline_coeff(r, integrand2, size);
 	double* integrals1 = (double*) malloc(size * sizeof(double));
@@ -108,4 +108,3 @@ double* ykint(int k, int size, double* r, double* integrand1, double* integrand2
 	return integrals1;
 
 }
-

@@ -19,7 +19,7 @@ double kinetic(double* R, double** states, int* ls, int size; int Z) {
 double elec_nuc(double* R, double** states, int* ls, int size, int Z) {
 	double en = 0;
 	for (int n = 0; n < Z; n++) {
-		
+
 	}
 }
 

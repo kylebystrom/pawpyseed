@@ -65,4 +65,3 @@ double* get_Ps(awf_t* wf, int l) {
 }
 
 #endif
-

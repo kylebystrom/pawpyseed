@@ -71,6 +71,6 @@ void fwd_fft3d(double complex* x, int* G_bounds, double* lattice,
 		g3 = (Gs[3*w+2]+fftg[2]) % fftg[2];
 		Cs[w] = x[g1*fftg[1]*fftg[2] + g2*fftg[2] + g3];
 	}
-	
+
 	DftiFreeDescriptor(&handle);
 }

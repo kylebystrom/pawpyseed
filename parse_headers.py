@@ -10,9 +10,9 @@ def write_pxd(pxdname, files):
     full_file += "# cython : language_level=3\n"
     full_file += "from libc.stdio cimport FILE\n"
     for fname in files:
-        f = open(directory + fname + ".h", "r")
+        f = open(directory + fname + ".h")
         code = f.read()
-        code = re.sub("/\*([^*]|[\r\n]|(\*+([^*/]|[\r\n])))*\*+/", "", code)
+        code = re.sub("/\\*([^*]|[\r\n]|(\\*+([^*/]|[\r\n])))*\\*+/", "", code)
         code = re.sub("; +", ";", code)
         code = re.sub("(//|#)[^\n]+\n", "", code)
         code = code.replace("{", ":;").replace("typedef", "ctypedef")

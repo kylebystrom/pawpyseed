@@ -1,5 +1,3 @@
-# coding: utf-8
-
 ## @package pawpyseed.core.projector
 # Defines the Projector class for evaluating
 # AE and PS projection operators.
@@ -109,7 +107,7 @@ class Projector(pawpyc.CProjector):
             basis.check_c_projectors()
             wf.check_c_projectors()
 
-        super(Projector, self).__init__(wf, basis)
+        super().__init__(wf, basis)
 
         if "aug" in self.method:
             self.setup_overlap()

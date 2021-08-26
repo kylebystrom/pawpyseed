@@ -1,5 +1,3 @@
-# coding: utf-8
-
 import os
 import shutil
 from shutil import rmtree
@@ -23,7 +21,7 @@ class DummyFirework:
         self.fw_id = path
 
 
-class DefectWorkflowWavefunctionHandle(object):
+class DefectWorkflowWavefunctionHandle:
     """
     This class is made to run Kyle's
     wavefunction parsing code...
@@ -59,7 +57,7 @@ class DefectWorkflowWavefunctionHandle(object):
             if not os.path.exists(filepat):
                 filepat = os.path.join(path, file)
             if not os.path.exists(filepat):
-                print("Could not find {}! Skipping this defect...".format(file))
+                print(f"Could not find {file}! Skipping this defect...")
                 return False
 
             # COPY file to kyle_file
@@ -139,7 +137,7 @@ class DefectWorkflowWavefunctionHandle(object):
             for fw in size_set:
                 try:
                     launch_dir = fw.launches[-1].launch_dir
-                    print("start parsing of {} wavefunction".format(fw.name))
+                    print(f"start parsing of {fw.name} wavefunction")
 
                     # setup file path,
                     print("\tsetting up files")

@@ -33,7 +33,7 @@ class MomentumMatrix(pawpyc.CMomentumMatrix):
         wf.check_c_projectors()
         if encut == None:
             encut = 4 * wf.encut
-        super(MomentumMatrix, self).__init__(wf, encut)
+        super().__init__(wf, encut)
 
     @property
     def momentum_grid(self):
@@ -64,7 +64,7 @@ class MomentumMatrix(pawpyc.CMomentumMatrix):
         return self._get_momentum_matrix_elems(b1, k1, s1, b2, k2, s2)
 
     def get_reciprocal_fullfw(self, b, k, s):
-        """
+        r"""
         Calculates C(b,k,s,G) such that
         | b, k, s > = 1/sqrt(V) \sum_G C(b,k,s,G) exp(i * (k + G) * r).
         If the basis set is complete, \sum_G C(b,k,s,G) = 1.

@@ -5,7 +5,7 @@ filename = sys.argv[1]
 
 p = re.compile("#[0-9A-Fa-f]{6}")
 
-f = open(filename, 'r')
+f = open(filename)
 string = f.read()
 f.close()
 res = p.findall(string)

@@ -1,5 +1,3 @@
-# coding: utf-8
-
 import codecs
 import configparser
 import os
@@ -42,7 +40,7 @@ srcfiles = [
 # READ CONFIGURATION FILE
 config = configparser.ConfigParser()
 user_cfg_file = os.path.expanduser("~/.pawpyseed-site.cfg")
-config.read_file(open("site.cfg.default", "r"))
+config.read_file(open("site.cfg.default"))
 if os.path.isfile("site.cfg"):
     config.read("site.cfg")
 elif os.path.isfile(user_cfg_file):
@@ -91,7 +89,7 @@ else:
     else:
         threadlib = "-lmkl_sequential"
         omplib = ""
-    link_args = "%s %s -lmkl_core %s -lpthread -lm -ldl" % (
+    link_args = "{} {} -lmkl_core {} -lpthread -lm -ldl".format(
         interfacelib,
         threadlib,
         omplib,

@@ -1,5 +1,3 @@
-# coding: utf-8
-
 import os
 import subprocess
 import sys
@@ -39,7 +37,7 @@ from pawpyseed.core.wavefunction import *
 
 class DummyProjector(Projector):
     def make_site_lists(self):
-        M_R, M_S, N_R, N_S, N_RS = super(DummyProjector, self).make_site_lists()
+        M_R, M_S, N_R, N_S, N_RS = super().make_site_lists()
         return [], [], M_R, M_S, [pair for pair in zip(M_R, M_S)]
 
 

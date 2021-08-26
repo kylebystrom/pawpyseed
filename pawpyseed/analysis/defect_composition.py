@@ -1,5 +1,3 @@
-# coding: utf-8
-
 ## File presenting the PawpyData class
 # and its children for analysis of pawpyseed
 # output primarily from core.projector.Projector
@@ -106,7 +104,7 @@ class PawpyData:
         Reads a PawpyData instance from
         a file called filename.
         """
-        f = open(filename, "r")
+        f = open(filename)
         data = yaml.load(f.read().encode("utf-8"), Loader=yaml.Loader)
         return cls.from_dict(data)
 
@@ -152,10 +150,10 @@ class BulkCharacter(PawpyData):
             if "nspin" in metadata:
                 self.nspin = metadata["nspin"]
         self.metadata = metadata
-        super(BulkCharacter, self).__init__(structure, data, dos, vbm, cbm)
+        super().__init__(structure, data, dos, vbm, cbm)
 
     def as_dict(self):
-        data = super(BulkCharacter, self).as_dict()
+        data = super().as_dict()
         data["energy_levels"] = self.energy_levels
         data["metadata"] = {}
         if self.nspin is not None:

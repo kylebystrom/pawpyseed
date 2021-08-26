@@ -1,5 +1,3 @@
-# coding: utf-8
-
 ## @package pawpyseed.core.wavefunction
 # Base class containing Python classes for parsing files
 # and storing and analyzing wavefunction data.
@@ -203,7 +201,7 @@ class Wavefunction(pawpyc.CWavefunction):
                 Wavefunction object
         """
         self.band_props = pwf.band_props.copy(order="C")
-        super(Wavefunction, self).__init__(pwf)
+        super().__init__(pwf)
         if self.ncl:
             raise PAWpyError(
                 "Pseudowavefunction is noncollinear! Call NCLWavefunction(...) instead"
@@ -307,7 +305,7 @@ class Wavefunction(pawpyc.CWavefunction):
         """
         for fname in [struct, wavecar, cr, vr]:
             if not os.path.isfile(fname):
-                raise FileNotFoundError("File {} does not exist.".format(fname))
+                raise FileNotFoundError(f"File {fname} does not exist.")
         vr = Vasprun(vr)
         dim = np.array(
             [vr.parameters["NGX"], vr.parameters["NGY"], vr.parameters["NGZ"]]
@@ -375,7 +373,7 @@ class Wavefunction(pawpyc.CWavefunction):
             if not os.path.exists(filepat):
                 filepat = os.path.join(path, file)
             if not os.path.exists(filepat):
-                print("Could not find {}! Skipping this defect...".format(file))
+                print(f"Could not find {file}! Skipping this defect...")
                 return False
 
             paths.append(filepat)
@@ -501,7 +499,7 @@ class Wavefunction(pawpyc.CWavefunction):
             lines += "%10.6f%10.6f%10.6f\n" % tuple(site.frac_coords)
         lines += " \n"
 
-        f = open(filename, "r")
+        f = open(filename)
         nums = f.read()
         f.close()
         f = open(filename, "w")

@@ -1,5 +1,3 @@
-# coding: utf-8
-
 ## @package pawpyseed.core.symmetry
 # Utilities related to symmetry of the crystal structure,
 # namely finding symmetrically identical k-points and the

@@ -72,7 +72,7 @@ else:
     link_args = ["-Wl,--no-as-needed"]
 
 if sdl:
-    libs.extend(["mkl_rt", "iomp5"])
+    libs.extend(["mkl_rt"])
 else:
     interfacelib = "mkl_intel_lp64"
     if threaded_mkl:

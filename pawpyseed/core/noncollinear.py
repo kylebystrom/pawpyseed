@@ -130,7 +130,15 @@ class NCLWavefunction(pawpyc.CNCLWavefunction, Wavefunction):
         filename3 = "%s_DOWN_REAL.vasp" % filename_base
         filename4 = "%s_DOWN_IMAG.vasp" % filename_base
         res0, res1 = self._write_realspace_state(
-            filename1, filename2, filename3, filename4, scale, b, k, s, remove_phase=remove_phase
+            filename1,
+            filename2,
+            filename3,
+            filename4,
+            scale,
+            b,
+            k,
+            s,
+            remove_phase=remove_phase,
         )
         self._convert_to_vasp_volumetric(filename1, self.dim)
         self._convert_to_vasp_volumetric(filename2, self.dim)

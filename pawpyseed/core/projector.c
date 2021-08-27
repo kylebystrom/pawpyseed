@@ -386,7 +386,7 @@ void onto_projector_ncl(kpoint_t *kpt, int band_num, real_proj_site_t *sites,
   onto_projector_helper(kpt->bands[band_num], xdown, sites, num_sites, lattice,
                         reclattice, k, num_cart_gridpts, fftg,
                         band->down_projections);
-  
+
   mkl_free(xup);
   mkl_free(xdown);
 }

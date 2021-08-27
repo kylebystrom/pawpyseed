@@ -450,7 +450,6 @@ class TestMem:
 
 
 class TestPy:
-
     def setup(self):
         self.currdir = os.getcwd()
         os.chdir(os.path.join(MODULE_DIR, "../../../test_files"))

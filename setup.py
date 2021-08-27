@@ -4,12 +4,19 @@ import os
 import sys
 
 import numpy as np
-from Cython.Build import cythonize
 from setuptools import Extension, setup
 
 
 class PawpyBuildError(Exception):
     pass
+
+
+try:
+    from Cython.Build import cythonize
+except ImportError:
+    raise ImportError(
+        "Need Cython>=0.29.21 to build pawpyseed. Please run 'pip install cython'"
+    )
 
 
 with codecs.open("README.md", "r", encoding="utf8") as fh:

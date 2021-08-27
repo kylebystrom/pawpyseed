@@ -31,16 +31,17 @@ srcfiles = [
     "momentum",
 ]
 
-# READ CONFIGURATION FILE
+# SEARCH FOR AND READ CONFIGURATION FILE
 config = configparser.ConfigParser()
 user_cfg_file = os.path.expanduser("~/.pawpyseed-site.cfg")
-config.read_file(open("site.cfg.default"))
 if os.path.isfile("site.cfg"):
     config.read("site.cfg")
 elif os.path.isfile(user_cfg_file):
     config.read(user_cfg_file)
+else:
+    config.read_file(open("site.cfg.default"))
 
-# SET COMPILER AND LINKER
+# SET COMPILER AND LINKER IF SET IN CONFIG FILE
 if "compiler_name" in config["compiler"]:
     os.environ["CC"] = config["compiler"]["compiler_name"]
     if not "linker_name" in config["compiler"]:
@@ -48,11 +49,10 @@ if "compiler_name" in config["compiler"]:
 if "linker_name" in config["compiler"]:
     os.environ["LDSHARED"] = config["compiler"]["linker_name"]
 
-# set parallelization and interface options
+# SET PARALLELIZATION AND INTERFACE OPTIONS
 sdl = config["mkl"].getboolean("sdl")
 omp_loops = config["threading"].getboolean("omp_loops")
 threaded_mkl = config["threading"].getboolean("threaded_mkl")
-interface32 = config["mkl"].getboolean("interface32")
 
 if sys.platform == "darwin":
     # platform_link_args = ['-lmkl_avx512']
@@ -69,14 +69,7 @@ else:
 if sdl:
     link_args = sdl_platform_link_args + "-lmkl_rt -liomp5 -lpthread -lm -ldl".split()
 else:
-    # interface layer
-    if interface32:
-        interfacelib = "-lmkl_intel_lp64"
-    else:
-        print("WARNING: Not supporting 64-bit interface currently")
-        interfacelib = "-lmkl_intel_lp64"
-        # interfacelib = '-lmkl_intel_ilp64'
-    # threading
+    interfacelib = "-lmkl_intel_lp64"
     if threaded_mkl:
         threadlib = "-lmkl_intel_thread"
         omplib = "-liomp5"
@@ -90,12 +83,12 @@ else:
     )
     link_args = platform_link_args + link_args.split()
 
-# set compiler openmp flag
+# SET OTHER COMPILER ARGS
 extra_args = "-std=c11 -fPIC -Wall".split()
 if omp_loops:
     extra_args.append("-fopenmp")
 
-# add additional MKL libraries if found in cfg
+# ADD ADDITIONAL MKL LIBRARIES IF FOUND IN CONFIG
 lib_dirs = []
 inc_dirs = ["pawpyseed/core", np.get_include()]
 if "root" in config["mkl"]:
@@ -116,9 +109,6 @@ ext_files = ["pawpyseed/core/" + f for f in ext_files]
 if DEBUG:
     inc_dirs.append("pawpyseed/core/tests")
 rt_lib_dirs = lib_dirs[:]
-# if 'LD_LIBRARY_PATH' in os.environ:
-# 	for item in os.environ['LD_LIBRARY_PATH'].split(':'):
-# 		rt_lib_dirs.append(item)
 
 if not DEBUG:
     extra_args += ["-g0", "-O2"]
@@ -140,7 +130,7 @@ extensions = [
         include_dirs=inc_dirs,
     )
 ]
-# depends=[os.path.join('pawpyseed/core', '*.h'), os.path.join('pawpyseed/core', '*.pxd')])]
+
 if DEBUG:
     extensions.append(
         Extension(
@@ -158,7 +148,6 @@ if DEBUG:
             include_dirs=inc_dirs,
         )
     )
-    # depends=[os.path.join('pawpyseed/core/tests', '*.h'), os.path.join('pawpyseed/core/tests', '*.pxd')]))
 
 packages = ["pawpyseed", "pawpyseed.core", "pawpyseed.analysis"]
 if DEBUG:
@@ -175,6 +164,7 @@ setup(
     maintainer="Kyle Bystrom",
     maintainer_email="kylebystrom@gmail.com",
     license="BSD",
+    setup_requires=["mkl-devel", "numpy>1.14", "Cython>=0.29.21"],
     install_requires=[
         "mkl-devel",
         "numpy>=1.14",

@@ -61,34 +61,30 @@ sdl = config["mkl"].getboolean("sdl")
 omp_loops = config["threading"].getboolean("omp_loops")
 threaded_mkl = config["threading"].getboolean("threaded_mkl")
 
+libs = []
 if sys.platform == "darwin":
     # platform_link_args = ['-lmkl_avx512']
-    platform_link_args = []
-    sdl_platform_link_args = []
+    link_args = []
     os.environ[
         "CPATH"
     ] = "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include"
 else:
-    platform_link_args = ["-Wl,--no-as-needed", "-lmkl_def"]
-    sdl_platform_link_args = ["-Wl,--no-as-needed"]
-
+    link_args = ["-Wl,--no-as-needed"]
 
 if sdl:
-    link_args = sdl_platform_link_args + "-lmkl_rt -liomp5 -lpthread -lm -ldl".split()
+    libs.extend(["mkl_rt", "iomp5"])
 else:
-    interfacelib = "-lmkl_intel_lp64"
+    interfacelib = "mkl_intel_lp64"
     if threaded_mkl:
-        threadlib = "-lmkl_intel_thread"
-        omplib = "-liomp5"
+        threadlib = "mkl_intel_thread"
+        omplib = "iomp5"
     else:
-        threadlib = "-lmkl_sequential"
-        omplib = ""
-    link_args = "{} {} -lmkl_core {} -lpthread -lm -ldl".format(
-        interfacelib,
-        threadlib,
-        omplib,
-    )
-    link_args = platform_link_args + link_args.split()
+        threadlib = "mkl_sequential"
+        omplib = None
+    libs.extend([interfacelib, threadlib, "mkl_core"])
+    if omplib is not None:
+        libs.append(omplib)
+libs.extend(["pthread", "m", "dl"])
 
 # SET OTHER COMPILER ARGS
 extra_args = "-std=c11 -fPIC -Wall".split()
@@ -97,24 +93,68 @@ if omp_loops:
 
 # ADD ADDITIONAL MKL LIBRARIES IF FOUND IN CONFIG
 lib_dirs = []
-inc_dirs = ["pawpyseed/core", np.get_include()]
+include_dirs = ["pawpyseed/core", np.get_include()]
 if "root" in config["mkl"]:
     root_dirs = config["mkl"]["root"].split(":")
     for r in root_dirs:
         lib_dirs.append(os.path.join(r, "lib/intel64"))
         lib_dirs.append(os.path.join(r, "lib"))
-        inc_dirs.append(os.path.join(r, "include"))
+        include_dirs.append(os.path.join(r, "include"))
 if "extra_libs" in config["compiler"]:
     extra_dirs = config["compiler"]["extra_libs"].split(":")
     for d in extra_dirs:
         lib_dirs.append(d)
+
+macros = [
+    ("MKL_Complex16", "double complex"),
+    ("MKL_Complex8", "float complex"),
+]
+cython_macros = {}  # Cython macros in .pyx files
+comp_direct = {  # compiler_directives
+    "language_level": 3,  # use python 3
+    "embedsignature": True,  # write function signature in doc-strings
+}
+# using path search of tenpy: https://github.com/tenpy/tenpy/blob/main/setup.py
+HAVE_MKL = 0
+MKL_DIR = os.getenv("MKL_DIR", os.getenv("MKLROOT", os.getenv("MKL_HOME", "")))
+if MKL_DIR:
+    include_dirs.append(os.path.join(MKL_DIR, "include"))
+    lib_dirs.append(os.path.join(MKL_DIR, "lib", "intel64"))
+    HAVE_MKL = 1
+CONDA_PREFIX = os.getenv("CONDA_PREFIX")
+if CONDA_PREFIX:
+    include_dirs.append(os.path.join(CONDA_PREFIX, "include"))
+    lib_dirs.append(os.path.join(CONDA_PREFIX, "lib"))
+    if not HAVE_MKL:
+        # check whether mkl-devel is installed
+        HAVE_MKL = int(os.path.exists(os.path.join(CONDA_PREFIX, "include", "mkl.h")))
+PYTHON_BASE = sys.base_prefix
+if PYTHON_BASE != CONDA_PREFIX:
+    nclude_dirs.append(os.path.join(PYTHON_BASE, "include"))
+    lib_dirs.append(os.path.join(PYTHON_BASE, "lib"))
+    if not HAVE_MKL:
+        # check whether mkl-devel is installed
+        HAVE_MKL = int(os.path.exists(os.path.join(PYTHON_BASE, "include", "mkl.h")))
+HAVE_MKL = int(os.getenv("HAVE_MKL", HAVE_MKL))
+cython_macros["HAVE_MKL"] = HAVE_MKL
+if HAVE_MKL:
+    if os.getenv("MKL_INTERFACE_LAYER", "LP64").startswith("ILP64"):
+        macros.append(("MKL_ILP64", None))
+        cython_macros["MKL_INTERFACE_LAYER"] = 1
+    else:
+        cython_macros["MKL_INTERFACE_LAYER"] = 0
+else:
+    raise PawpyBuildError(
+        "Must have MKL installed to build pawpyseed. Please run 'pip install mkl-devel'"
+    )
+
 
 # SET UP COMPILE/LINK ARGS AND THREADING
 cfiles = [f + ".c" for f in srcfiles]
 ext_files = cfiles
 ext_files = ["pawpyseed/core/" + f for f in ext_files]
 if DEBUG:
-    inc_dirs.append("pawpyseed/core/tests")
+    include_dirs.append("pawpyseed/core/tests")
 rt_lib_dirs = lib_dirs[:]
 
 if not DEBUG:
@@ -126,15 +166,13 @@ extensions = [
     Extension(
         "pawpyseed.core.pawpyc",
         ext_files + ["pawpyseed/core/pawpyc.pyx"],
-        define_macros=[
-            ("MKL_Complex16", "double complex"),
-            ("MKL_Complex8", "float complex"),
-        ],
+        define_macros=macros,
+        libraries=libs,
         library_dirs=lib_dirs,
         extra_link_args=extra_args + link_args,
         extra_compile_args=extra_args,
         runtime_library_dirs=rt_lib_dirs,
-        include_dirs=inc_dirs,
+        include_dirs=include_dirs,
     )
 ]
 
@@ -144,15 +182,13 @@ if DEBUG:
             "pawpyseed.core.tests.testc",
             ["pawpyseed/core/tests/testc.pyx", "pawpyseed/core/tests/tests.c"]
             + ext_files,
-            define_macros=[
-                ("MKL_Complex16", "double complex"),
-                ("MKL_Complex8", "float complex"),
-            ],
+            define_macros=macros,
+            libraries=libs,
             library_dirs=lib_dirs,
             extra_link_args=extra_args + link_args,
             extra_compile_args=extra_args,
             runtime_library_dirs=rt_lib_dirs,
-            include_dirs=inc_dirs,
+            include_dirs=include_dirs,
         )
     )
 
@@ -191,6 +227,8 @@ setup(
     ext_modules=cythonize(
         extensions,
         include_path=[os.path.join(os.path.abspath(__file__), "pawpyseed/core")],
+        compile_time_env=cython_macros,
+        compiler_directives=comp_direct,
     ),
     zip_safe=False,
 )

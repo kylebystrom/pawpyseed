@@ -6,6 +6,7 @@ plane-wave coefficients).
 #ifndef PSEUDOPROJECTOR_H
 #define PSEUDOPROJECTOR_H
 #include "utils.h"
+#include <complex.h>
 
 /**
 DEPRECATED, DO NOT USE

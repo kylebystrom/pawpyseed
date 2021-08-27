@@ -8,7 +8,6 @@ CPC license.
 
 #ifndef SBT_H
 #define SBT_H
-
 #include <complex.h>
 
 /**

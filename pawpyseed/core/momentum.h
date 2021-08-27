@@ -4,6 +4,7 @@ Momentum matrix elements
 
 #ifndef MOMENTUM_H
 #define MOMENTUM_H
+#include "utils.h"
 #include <complex.h>
 #include <math.h>
 

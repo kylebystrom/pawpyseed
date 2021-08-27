@@ -7,6 +7,8 @@ VASP for the onto_projector and projector_values evaluation.
 #ifndef PROJECTOR_H
 #define PROJECTOR_H
 #include "linalg.h"
+#include "utils.h"
+#include <complex.h>
 
 /**
 Returns a point to a list of ppot_t objects, one for each element in a POTCAR

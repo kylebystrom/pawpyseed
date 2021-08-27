@@ -5,7 +5,6 @@ of two overlapping spheres
 
 #ifndef RADIAL_H
 #define RADIAL_H
-
 #include <complex.h>
 
 /**

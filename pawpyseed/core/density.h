@@ -5,6 +5,8 @@ Also handles I/O of Kohn-Sham states and all electron (AE) charge density.
 
 #ifndef DENSITY_H
 #define DENSITY_H
+#include "utils.h"
+#include <complex.h>
 
 /**
 Calculates the AE Kohn Sham state of band BAND_NUM at kpoint KPOINT_NUM in real

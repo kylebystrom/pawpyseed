@@ -9,6 +9,7 @@ https://www.andrew.cmu.edu/user/feenstra/wavetrans/
 #ifndef READER_H
 #define READER_H
 #include "utils.h"
+#include <stdio.h>
 
 typedef struct WAVECAR_FILE {
   int type;

@@ -6,8 +6,8 @@ ICC_FLAGS = -std=c11 -DMKL_Complex16="double complex" -lmkl_rt -fopenmp -lpthrea
 ICC_SRC = hf.c hf_utils.c condon_shortley.c
 ICC_OBJ = hf.o hf_utils.o condon_shortley.o
 
-GCC_LIBS = 
-GCC_INCS = 
+GCC_LIBS =
+GCC_INCS =
 GCC_FLAGS = -std=c11 -fopenmp -lpthread -ldl -lm -O3 -fPIC -Wall
 
 hfc: $(ICC_SRC)

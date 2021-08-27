@@ -7,7 +7,7 @@ cdef extern from "tests/tests.h":
     cdef int fft_check(char* wavecar, double* kpt_weights, int* fftg)
     cdef void proj_check(int BAND_NUM, int KPOINT_NUM,
         pswf_t* wf, int* fftg, int* labels, double* coords)
-    
+
 
 cdef extern from "utils.h":
 
@@ -180,4 +180,3 @@ cdef extern from "utils.h":
     cdef void CHECK_ALLOCATION(void* ptr)
     cdef void ALLOCATION_FAILED()
     cdef void CHECK_STATUS(int status)
-    

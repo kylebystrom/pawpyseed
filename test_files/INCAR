@@ -10,10 +10,9 @@ LREAL = Auto
 LWAVE = True
 NCORE = 1
 NELM = 100
-NSW = 0 
+NSW = 0
 PREC = normal
 ISMEAR = 0
 SIGMA = 0.2
 NSIM=1
 NELM=1
-

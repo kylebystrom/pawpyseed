@@ -173,7 +173,7 @@ cdef extern from "utils.h":
     cdef void CHECK_ALLOCATION(void* ptr)
     cdef void ALLOCATION_FAILED()
     cdef void CHECK_STATUS(int status)
-    
+
 
 cdef extern from "projector.h":
 
@@ -218,14 +218,14 @@ cdef extern from "projector.h":
         int* proj_labels, double* proj_coords, int* ref_labels, double* ref_coords,
         int* fft_grid, int spin_flip)
     cdef double* besselt(double* r, double* k, double* f, double encut, int N, int l)
-    
+
 
 cdef extern from "pseudoprojector.h":
 
     cdef void vc_pseudoprojection(pswf_t* wf_ref, pswf_t* wf_proj, int BAND_NUM, double* results)
     cdef void pseudoprojection(double complex* projections, pswf_t* wf_ref, pswf_t* wf_proj, int BAND_NUM,
                             int flip_spin)
-    
+
 
 cdef extern from "reader.h":
 
@@ -245,7 +245,7 @@ cdef extern from "reader.h":
     cdef pswf_t* read_wavefunctions(char* filename, double* kpt_weights)
     cdef pswf_t* read_wavefunctions_from_str(char* start, double* kpt_weights)
     cdef kpoint_t** read_one_band(int* G_bounds, double* kpt_weights, int* ns, int* nk, int* nb, int BAND_NUM, char* filename)
-    
+
 
 cdef extern from "density.h":
 
@@ -274,7 +274,7 @@ cdef extern from "density.h":
         pswf_t* wf, int* fftg, int* labels, double* coords)
     cdef void write_density_noreturn(char* filename, pswf_t* wf,
         int* fftg, int* labels, double* coords)
-    
+
 
 cdef extern from "sbt.h":
 
@@ -295,7 +295,7 @@ cdef extern from "sbt.h":
     cdef double* wave_spherical_bessel_transform(sbt_descriptor_t* d, double* f, int l)
     cdef double* inverse_wave_spherical_bessel_transform(sbt_descriptor_t* d, double* f, int l)
     cdef void free_sbt_descriptor(sbt_descriptor_t* d)
-    
+
 
 cdef extern from "linalg.h":
 
@@ -303,7 +303,7 @@ cdef extern from "linalg.h":
         double* kpt, int* Gs, float complex* Cs, int num_waves, int* fftg)
     cdef void fwd_fft3d(double complex* x, int* G_bounds, double* lattice,
         double* kpt, int* Gs, float complex* Cs, int num_waves, int* fftg)
-    
+
 
 cdef extern from "radial.h":
 
@@ -314,7 +314,7 @@ cdef extern from "radial.h":
         double* k1, double* f1, double** s1, int size1,
         double* k2, double* f2, double** s2, int size2,
         double* lattice, int l1, int m1, int l2, int m2)
-    
+
 
 cdef extern from "momentum.h":
 
@@ -369,4 +369,3 @@ cdef extern from "momentum.h":
         int l, int m, double* pos)
     cdef double complex quick_overlap(int* dG, double complex* C1s, double complex* C2s, int numg,
         int* Gs, int* gmap, int* G_bounds, int* gdim)
-    

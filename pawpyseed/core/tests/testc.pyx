@@ -1,23 +1,30 @@
 # cython : profile=True
 # cython : language_level=3
 
-from pawpyseed.core.tests cimport testc_extern as tc
-from pawpyseed.core cimport pawpyc
-
 from cpython cimport array
-from libc.stdlib cimport malloc, free
 from libc.stdio cimport FILE
+from libc.stdlib cimport free, malloc
+
+from pawpyseed.core cimport pawpyc
+from pawpyseed.core.tests cimport testc_extern as tc
+
+import numpy as np
+from monty.io import zopen
+from numpy.testing import assert_almost_equal
 from pymatgen.core.structure import Structure
 from pymatgen.io.vasp.outputs import Vasprun
-from monty.io import zopen
-import numpy as np
-from numpy.testing import assert_almost_equal
+
 cimport numpy as np
-import time
+
 import sys
+import time
+
 from libc.stdint cimport uintptr_t
+
+import matplotlib.pyplot as plt
+
 from pawpyseed.core.symmetry import *
-import matplotlib.pyplot as plt 
+
 
 cpdef fft_check(str wavecar, np.ndarray[double, ndim=1] kpt_weights,
 	np.ndarray[int, ndim=1] fftgrid):

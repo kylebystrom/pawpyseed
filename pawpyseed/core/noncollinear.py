@@ -125,12 +125,12 @@ class NCLWavefunction(pawpyc.CNCLWavefunction, Wavefunction):
         if dim is not None:
             self.update_dim(np.array(dim))
         filename_base = "%sB%dK%dS%d" % (fileprefix, b, k, s)
-        filename1 = "%s_UP_REAL" % filename_base
-        filename2 = "%s_UP_IMAG" % filename_base
-        filename3 = "%s_DOWN_REAL" % filename_base
-        filename4 = "%s_DOWN_IMAG" % filename_base
+        filename1 = "%s_UP_REAL.vasp" % filename_base
+        filename2 = "%s_UP_IMAG.vasp" % filename_base
+        filename3 = "%s_DOWN_REAL.vasp" % filename_base
+        filename4 = "%s_DOWN_IMAG.vasp" % filename_base
         res0, res1 = self._write_realspace_state(
-            filename1, filename2, filename3, filename4, scale, b, k, s
+            filename1, filename2, filename3, filename4, scale, b, k, s, remove_phase=remove_phase
         )
         self._convert_to_vasp_volumetric(filename1, self.dim)
         self._convert_to_vasp_volumetric(filename2, self.dim)
@@ -138,7 +138,7 @@ class NCLWavefunction(pawpyc.CNCLWavefunction, Wavefunction):
         self._convert_to_vasp_volumetric(filename4, self.dim)
         return res0, res1
 
-    def write_density_realspace(self, filename="PYAECCAR", dim=None, scale=1):
+    def write_density_realspace(self, filename="PYAECCAR.vasp", dim=None, scale=1):
         """
         Writes the real and imaginary parts of a given band to two files,
         prefixed by fileprefix
@@ -157,7 +157,6 @@ class NCLWavefunction(pawpyc.CNCLWavefunction, Wavefunction):
                         with complex double values for the realspace wavefunction
                 The charge density is written with z the slow index.
         """
-
         self.check_c_projectors()
         if dim is not None:
             self.update_dim(np.array(dim))

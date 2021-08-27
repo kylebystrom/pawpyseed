@@ -588,7 +588,7 @@ cdef class CNCLWavefunction(CWavefunction):
 		return res
 
 	def _write_realspace_state(self, filename1, filename2, filename3, filename4,
-								double scale, int b, int k, int s):
+						double scale, int b, int k, int s, remove_phase=False):
 		if b < 0 or b >= self.nband:
 			raise ValueError("Invalid band choice")
 		if k < 0 or k >= self.nwk:
@@ -599,7 +599,7 @@ cdef class CNCLWavefunction(CWavefunction):
 		filename2 = bytes(filename2.encode('utf-8'))
 		filename3 = bytes(filename3.encode('utf-8'))
 		filename4 = bytes(filename4.encode('utf-8'))
-		res0, res1 = self._get_realspace_state(b, k, s)
+		res0, res1 = self._get_realspace_state(b, k, s, remove_phase=remove_phase)
 
 		res2 = res0.view()
 		res2.shape = self.gridsize

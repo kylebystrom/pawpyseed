@@ -539,8 +539,8 @@ class Wavefunction(pawpyc.CWavefunction):
         if dim is not None:
             self.update_dim(np.array(dim))
         filename_base = "%sB%dK%dS%d" % (fileprefix, b, k, s)
-        filename1 = "%s_REAL" % filename_base
-        filename2 = "%s_IMAG" % filename_base
+        filename1 = "%s_REAL.vasp" % filename_base
+        filename2 = "%s_IMAG.vasp" % filename_base
         res = self._write_realspace_state(
             filename1, filename2, scale, b, k, s, remove_phase
         )
@@ -549,7 +549,7 @@ class Wavefunction(pawpyc.CWavefunction):
         return res
 
     def write_density_realspace(
-        self, filename="PYAECCAR", dim=None, scale=1, bands=None
+        self, filename="PYAECCAR.vasp", dim=None, scale=1, bands=None
     ):
         """
         Writes the real and imaginary parts of a given band to two files,

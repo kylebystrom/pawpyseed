@@ -203,7 +203,7 @@ class Projector(pawpyc.CProjector):
         and integrated on a real space FFT grid, with the default
         dimension being the fine FFT grid from VASP.
         """
-        if dim == None:
+        if dim is None:
             dim = self.wf.dim * 2
         return self._realspace_projection(band_num, dim)
 

@@ -409,8 +409,8 @@ void ncl_realspace_state(double complex *x, int BAND_NUM, int KPOINT_NUM,
               xdown[ii * fftg[1] * fftg[2] + jj * fftg[2] + kk] +=
                   wave_value2(pp.wave_grid, pp.funcs[down_pros.ns[n]].diffwave,
                               pp.funcs[down_pros.ns[n]].diffwave_spline,
-                              pp.wave_gridsize, down_pros.ls[n], down_pros.ms[n],
-                              testcoord) *
+                              pp.wave_gridsize, down_pros.ls[n],
+                              down_pros.ms[n], testcoord) *
                   down_pros.overlaps[n] * cexp(2 * PI * I * phase);
             }
           }

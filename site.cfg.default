@@ -4,9 +4,8 @@
 # extra_libs = /usr/lib
 
 [mkl]
+sdl = True
 # root = ~/.local/lib:/usr/lib
-interface32 = True
-sdl = False
 
 [threading]
 omp_loops = True

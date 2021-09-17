@@ -71,8 +71,9 @@ if sys.platform == "darwin":
 else:
     link_args = ["-Wl,--no-as-needed"]
 
+print("SDL!!!", sdl)
 if sdl:
-    libs.extend(["mkl_rt"])
+    libs.extend(["mkl_rt", 'iomp5'])
 else:
     interfacelib = "mkl_intel_lp64"
     if threaded_mkl:

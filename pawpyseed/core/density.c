@@ -233,12 +233,9 @@ void realspace_state(double complex *x, int BAND_NUM, int KPOINT_NUM,
                      pswf_t *wf, int *fftg, int *labels, double *coords) {
 
   ppot_t *pps = wf->pps;
-  // double complex* x = mkl_calloc(fftg[0]*fftg[1]*fftg[2], sizeof(double
-  // complex), 64); printf("START FT\n");
   fft3d(x, wf->G_bounds, wf->lattice, wf->kpts[KPOINT_NUM]->k,
         wf->kpts[KPOINT_NUM]->Gs, wf->kpts[KPOINT_NUM]->bands[BAND_NUM]->Cs,
         wf->kpts[KPOINT_NUM]->bands[BAND_NUM]->num_waves, fftg);
-  // printf("FINISH FT\n");
   double *lattice = wf->lattice;
   double vol = determinant(lattice);
   for (int i = 0; i < fftg[0]; i++) {
@@ -304,12 +301,6 @@ void realspace_state(double complex *x, int BAND_NUM, int KPOINT_NUM,
                               pp.wave_gridsize, pros.ls[n], pros.ms[n],
                               testcoord) *
                   pros.overlaps[n] * cexp(2 * PI * I * phase);
-
-              //	wave_value(pp.funcs[pros.ns[n]],
-              //	pp.wave_gridsize, pp.wave_grid,
-              //	pros.ms[n], coords+3*p, frac, lattice)
-              //	* pros.overlaps[n] * cexp(2*PI*I*phase);
-              //	* Ylm(thetaphi[0], thetaphi[1]);
             }
           }
         }
@@ -338,8 +329,7 @@ void ncl_realspace_state(double complex *x, int BAND_NUM, int KPOINT_NUM,
                          pswf_t *wf, int *fftg, int *labels, double *coords) {
 
   ppot_t *pps = wf->pps;
-  double complex *xup =
-      x; // mkl_calloc(2*fftg[0]*fftg[1]*fftg[2], sizeof(double complex), 64);
+  double complex *xup = x;
   double complex *xdown = x + fftg[0] * fftg[1] * fftg[2];
   int num_waves = wf->kpts[KPOINT_NUM]->bands[BAND_NUM]->num_waves / 2;
   fft3d(xup, wf->G_bounds, wf->lattice, wf->kpts[KPOINT_NUM]->k,
@@ -411,14 +401,16 @@ void ncl_realspace_state(double complex *x, int BAND_NUM, int KPOINT_NUM,
             phase = dot(phasecoord, wf->kpts[KPOINT_NUM]->k);
             for (int n = 0; n < up_pros.total_projs; n++) {
               xup[ii * fftg[1] * fftg[2] + jj * fftg[2] + kk] +=
-                  wave_value(pp.funcs[up_pros.ns[n]], pp.wave_gridsize,
-                             pp.wave_grid, up_pros.ms[n], coords + 3 * p, frac,
-                             lattice) *
+                  wave_value2(pp.wave_grid, pp.funcs[up_pros.ns[n]].diffwave,
+                              pp.funcs[up_pros.ns[n]].diffwave_spline,
+                              pp.wave_gridsize, up_pros.ls[n], up_pros.ms[n],
+                              testcoord) *
                   up_pros.overlaps[n] * cexp(2 * PI * I * phase);
               xdown[ii * fftg[1] * fftg[2] + jj * fftg[2] + kk] +=
-                  wave_value(pp.funcs[down_pros.ns[n]], pp.wave_gridsize,
-                             pp.wave_grid, down_pros.ms[n], coords + 3 * p,
-                             frac, lattice) *
+                  wave_value2(pp.wave_grid, pp.funcs[down_pros.ns[n]].diffwave,
+                              pp.funcs[down_pros.ns[n]].diffwave_spline,
+                              pp.wave_gridsize, down_pros.ls[n], down_pros.ms[n],
+                              testcoord) *
                   down_pros.overlaps[n] * cexp(2 * PI * I * phase);
             }
           }

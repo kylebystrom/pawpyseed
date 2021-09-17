@@ -71,7 +71,6 @@ if sys.platform == "darwin":
 else:
     link_args = ["-Wl,--no-as-needed"]
 
-print("SDL!!!", sdl)
 if sdl:
     libs.extend(["mkl_rt", "iomp5"])
 else:

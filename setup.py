@@ -130,7 +130,7 @@ if CONDA_PREFIX:
         HAVE_MKL = int(os.path.exists(os.path.join(CONDA_PREFIX, "include", "mkl.h")))
 PYTHON_BASE = sys.base_prefix
 if PYTHON_BASE != CONDA_PREFIX:
-    nclude_dirs.append(os.path.join(PYTHON_BASE, "include"))
+    include_dirs.append(os.path.join(PYTHON_BASE, "include"))
     lib_dirs.append(os.path.join(PYTHON_BASE, "lib"))
     if not HAVE_MKL:
         # check whether mkl-devel is installed

@@ -130,7 +130,7 @@ if CONDA_PREFIX:
         HAVE_MKL = int(os.path.exists(os.path.join(CONDA_PREFIX, "include", "mkl.h")))
 PYTHON_BASE = sys.base_prefix
 if PYTHON_BASE != CONDA_PREFIX:
-    nclude_dirs.append(os.path.join(PYTHON_BASE, "include"))
+    include_dirs.append(os.path.join(PYTHON_BASE, "include"))
     lib_dirs.append(os.path.join(PYTHON_BASE, "lib"))
     if not HAVE_MKL:
         # check whether mkl-devel is installed
@@ -198,7 +198,7 @@ if DEBUG:
 
 setup(
     name="pawpyseed",
-    version="0.7.0",
+    version="0.7.1",
     description="Parallel C/Python package for numerical analysis of PAW DFT wavefunctions",
     long_description=long_description,
     long_description_content_type="text/markdown",
